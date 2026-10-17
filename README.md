@@ -1,12 +1,19 @@
-# Nexo – Ein Bot. Alle Funktionen.
+<p align="center">
+  <img src="assets/banner.svg" alt="Nexo – Ein Bot. Alle Funktionen." width="100%">
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/discord.js"><img src="https://img.shields.io/npm/v/discord.js?style=flat-square&labelColor=%23202225&color=%23202225&logo=npm&logoColor=white&logoWidth=20" alt="discord.js"></a>
+  <img src="https://img.shields.io/badge/-TypeScript-%233178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript">
+  <img src="https://img.shields.io/badge/-PostgreSQL-%23336791?logo=postgresql&logoColor=white&style=flat-square&logoWidth=20" alt="PostgreSQL">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/Lizenz-MIT-7C5CFF?style=flat-square" alt="Lizenz: MIT"></a>
+</p>
 
 **NexoBot** (Anzeigename „Nexo“) ist ein modularer Discord-Community-Bot mit Moderation, Economy, Leveling, Tickets, Musik, Giveaways, Verifizierung und vielen Werkzeugen. Geschrieben in TypeScript mit discord.js v14, PostgreSQL als Datenspeicher.
 
-[![Discord.js](https://img.shields.io/npm/v/discord.js?style=flat-square&labelColor=%23202225&color=%23202225&logo=npm&logoColor=white&logoWidth=20)](https://www.npmjs.com/package/discord.js)
-![TypeScript](https://img.shields.io/badge/-TypeScript-%233178C6?logo=typescript&logoColor=white&style=flat-square)
-![PostgreSQL](https://img.shields.io/badge/-PostgreSQL-%23336791?logo=postgresql&logoColor=white&style=flat-square&logoWidth=20)
+> **Herkunft:** NexoBot basiert auf [TitanBot](https://github.com/codebymitch/TitanBot) von codebymitch (MIT-Lizenz) und wurde für diesen Bot überarbeitet: Rebranding, Umstellung auf TypeScript, zusammengefasste Commands und deutsche Texte.
 
-## Inhalt
+## <img src="assets/icons/contents.svg" height="33" align="absmiddle" alt="">Inhalt
 
 - [Funktionen](#funktionen)
 - [Commands](#commands)
@@ -16,10 +23,8 @@
   - [Railway](#railway)
 - [Umgebungsvariablen](#umgebungsvariablen)
 - [Intents und Berechtigungen](#intents-und-berechtigungen)
-- [Mitwirken](CONTRIBUTING.md)
-- [Lizenz und Credits](#lizenz-und-credits)
 
-## Funktionen
+## <img src="assets/icons/features.svg" height="33" align="absmiddle" alt="">Funktionen
 
 - **Moderation** – Ban, Kick, Timeout, Verwarnungen, Fälle, Massenaktionen, Kanal-Sperren, Nutzernotizen
 - **Economy** – Kontostand, Arbeit, Shop, Inventar, Glücksspiel, Überweisungen, Bestenliste
@@ -33,15 +38,15 @@
 
 Alle Funktionen lassen sich pro Server über `/configwizard` und `/commands` konfigurieren und einzeln sperren.
 
-## Commands
+## <img src="assets/icons/commands.svg" height="33" align="absmiddle" alt="">Commands
 
 NexoBot bündelt die Funktionen in thematische Commands mit Subcommands, zum Beispiel `/eco balance`, `/mod warn` oder `/music play`. Die vollständige Zuordnung der früheren Einzel-Commands steht in [docs/COMMAND_MIGRATION.md](docs/COMMAND_MIGRATION.md). `/help` zeigt alle Commands im Bot an.
 
-## Einrichtung
+## <img src="assets/icons/setup.svg" height="33" align="absmiddle" alt="">Einrichtung
 
 Voraussetzungen: ein Bot im [Discord Developer Portal](https://discord.com/developers/applications) mit Token und Client-ID sowie den unten genannten Intents.
 
-### Lokal
+### <img src="assets/icons/local.svg" height="26" align="absmiddle" alt="">Lokal
 
 Benötigt Node.js 20.10 oder neuer und PostgreSQL.
 
@@ -64,7 +69,7 @@ docker compose up -d db
 
 Die Compose-Datenbank läuft dann auf `127.0.0.1:5432` (User/Passwort/DB aus `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`). Sie hat kein SSL: Setze `POSTGRES_SSL=false`, sonst schlägt die Verbindung mit `NODE_ENV=production` fehl und der Bot läuft im In-Memory-Modus.
 
-### Docker
+### <img src="assets/icons/docker.svg" height="26" align="absmiddle" alt="">Docker
 
 ```bash
 cp .env.example .env   # mindestens DISCORD_TOKEN, CLIENT_ID, GUILD_ID setzen
@@ -79,7 +84,7 @@ docker compose --profile local-lavalink up -d
 
 Fertige Images: `ghcr.io/robertwlt03/nexobot`.
 
-### Railway
+### <img src="assets/icons/railway.svg" height="26" align="absmiddle" alt="">Railway
 
 1. Repository in Railway verbinden und einen PostgreSQL-Dienst hinzufügen.
 2. Im Bot-Dienst `DISCORD_TOKEN`, `CLIENT_ID` und `GUILD_ID` setzen und `POSTGRES_URL` bzw. `DATABASE_URL` auf die private Railway-Datenbank-URL verweisen lassen.
@@ -87,7 +92,7 @@ Fertige Images: `ghcr.io/robertwlt03/nexobot`.
 
 Healthchecks: `GET /health` (Prozess lebt) und `GET /ready` (Bot verbunden und Datenbank bereit).
 
-## Umgebungsvariablen
+## <img src="assets/icons/env.svg" height="33" align="absmiddle" alt="">Umgebungsvariablen
 
 Alle Variablen mit Beispielwerten stehen in [.env.example](.env.example). Die wichtigsten:
 
@@ -108,7 +113,7 @@ Alle Variablen mit Beispielwerten stehen in [.env.example](.env.example). Die wi
 
 Ohne erreichbare Datenbank läuft der Bot in einem eingeschränkten In-Memory-Modus. Für den Produktivbetrieb ist PostgreSQL Pflicht.
 
-### Datenbank-Werkzeuge
+### <img src="assets/icons/database.svg" height="26" align="absmiddle" alt="">Datenbank-Werkzeuge
 
 ```bash
 npm run migrate          # Schema-Migrationen anwenden
@@ -119,7 +124,7 @@ npm run restore:db       # Backup einspielen
 
 Die Skripte laufen aus `dist/scripts/`, also vorher `npm run build` ausführen.
 
-## Intents und Berechtigungen
+## <img src="assets/icons/permissions.svg" height="33" align="absmiddle" alt="">Intents und Berechtigungen
 
 Im Developer Portal aktivieren (Privileged Gateway Intents):
 
@@ -135,8 +140,8 @@ Einladung mit den Scopes `bot` und `applications.commands` und diesen Berechtigu
 - Mitglieder kicken, Mitglieder bannen, Mitglieder moderieren (Timeout)
 - Verbinden und Sprechen (Musik)
 
-## Lizenz und Credits
-
-NexoBot steht unter der MIT-Lizenz, siehe [LICENSE](LICENSE).
-
-Based on TitanBot by codebymitch, licensed under MIT. Basiert auf [TitanBot](https://github.com/codebymitch/TitanBot) von codebymitch.
+<p align="center">
+  <img src="assets/banner-footer.svg" alt="NexoBot – © 2026 Robertwlt03, MIT-Lizenz. Basiert auf TitanBot von codebymitch (MIT)." width="100%">
+  <br>
+  <sub><a href="LICENSE">Lizenz</a> · <a href="https://github.com/codebymitch/TitanBot">TitanBot</a> · <a href="docs/COMMAND_MIGRATION.md">Command-Migration</a></sub>
+</p>

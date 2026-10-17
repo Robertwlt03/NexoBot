@@ -1,8 +1,10 @@
-# Command-Migration: 99 → 36 Commands
+<p align="center">
+  <img src="../assets/banner-commands.svg" alt="Command-Migration: 99 → 36 Commands" width="100%">
+</p>
 
 NexoBot fasst die früheren Einzel-Commands thematisch zusammen. Aus 99 Top-Level-Commands werden 36. Command-Namen innerhalb der Gruppen, Optionen und Buttons bleiben gleich.
 
-## Was gleich bleibt
+## <img src="../assets/icons/unchanged-check.svg" height="33" align="absmiddle" alt="">Was gleich bleibt
 
 - **Gesperrte Commands:** Sperren aus `/commands` mit alten Namen gelten weiter. Ein gesperrtes `/balance` sperrt `/eco balance`, ein gesperrtes `/usernotes` sperrt `/msg notes`. Gesperrte Kategorien gelten auch für Commands, die in eine andere Kategorie gewandert sind (z. B. `/weather` aus Utility).
 - **Prefix-Commands:** Alte Namen und Aliase funktionieren weiter: `!bal` → `/eco balance`, `!unban` → `/ban remove`, `!usernotes view @User` → `/msg notes view @User`.
@@ -11,13 +13,13 @@ NexoBot fasst die früheren Einzel-Commands thematisch zusammen. Aus 99 Top-Leve
 
 Bei Namen, die es alt und neu gibt (`/ban`, `/kick`, `/rank`, `/welcome`), behält ein alter Eintrag seine alte Bedeutung: Ein gesperrtes `/ban` sperrt nur `/ban user`, ein gesperrtes `/welcome` nur `/welcome message`. Wer heute den ganzen neuen Command sperrt, sperrt alle Subcommands.
 
-## Unverändert
+## <img src="../assets/icons/unchanged-lock.svg" height="33" align="absmiddle" alt="">Unverändert
 
 `/help`, `/commands`, `/configwizard`, `/todo`, `/report`, `/wipedata`, `/apply`, `/app-admin`, `/count`, `/ticket`, `/cases`, `/verify`, `/birthday`, `/jointocreate`, `/logging`, `/reactroles`, `/search`, `/serverstats`
 
 Bestehende Subcommands bleiben außerdem direkt erhalten bei `/economy` (dashboard), `/music` (pause, resume, skip, …), `/level` (setup, dashboard) und `/verification` (setup, remove, dashboard).
 
-## Zuordnung
+## <img src="../assets/icons/mapping.svg" height="33" align="absmiddle" alt="">Zuordnung
 
 `…` bedeutet: Die alten Subcommands bleiben unter der neuen Gruppe erhalten, z. B. `/usernotes add` → `/msg notes add`.
 
@@ -100,3 +102,7 @@ Bestehende Subcommands bleiben außerdem direkt erhalten bei `/economy` (dashboa
 | `/goodbye …` | `/welcome goodbye …` | Welcome |
 | `/greet …` | `/welcome greet …` | Welcome |
 | `/welcome …` | `/welcome message …` | Welcome |
+
+<p align="center">
+  <img src="../assets/banner-footer.svg" alt="NexoBot – © 2026 Robertwlt03, MIT-Lizenz. Basiert auf TitanBot von codebymitch (MIT)." width="100%">
+</p>
