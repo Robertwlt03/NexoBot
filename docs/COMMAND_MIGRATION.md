@@ -110,5 +110,6 @@ Bestehende Subcommands bleiben außerdem direkt erhalten bei `/economy` (dashboa
 <p align="center">
   <b>Nexo · Ein Bot. Alle Funktionen.</b><br>
   <sub>© 2026 Robertwlt03 · Veröffentlicht unter der <a href="../LICENSE">MIT-Lizenz</a></sub><br>
+  <sub>Hilfe, Bugs und Ideen: <a href="https://discord.gg/DuhdCbTaB">Discord-Server</a></sub><br>
   <sub>Basiert auf <a href="https://github.com/codebymitch/TitanBot">TitanBot</a> von codebymitch (MIT) und für NexoBot überarbeitet</sub>
 </p>
