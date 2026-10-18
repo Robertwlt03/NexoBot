@@ -12,5 +12,5 @@
     "allowImportingTsExtensions": false,
     "types": []
   },
-  "include": ["src", "vite.config.ts", "../src/web/apiTypes.ts", "../src/web/dto"]
+  "include": ["src", "vite.config.ts", "../src/web/apiTypes.ts", "../src/web/dto", "../src/config/links.ts"]
 }

@@ -4,12 +4,15 @@ import { CHANNEL_TYPES } from '../../../src/web/apiTypes';
 import type { ApiChannel, ApiRole } from '../../../src/web/apiTypes';
 import { useGuild } from '../api';
 import { Icon, IconTile, type IconName } from '../icons';
+import { useEnter } from './motion';
 
 // ---------- Layout ----------
 
 export function PageHeader({ icon, title, description, actions }: { icon: IconName; title: string; description: string; actions?: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEnter(ref, { y: 0, x: -10 });
   return (
-    <div className="page-head">
+    <div className="page-head" ref={ref}>
       <IconTile name={icon} size={48} />
       <div>
         <h1>{title}</h1>
@@ -23,8 +26,10 @@ export function PageHeader({ icon, title, description, actions }: { icon: IconNa
 export function Card({ title, description, icon, right, disabled, children }: {
   title?: string; description?: string; icon?: IconName; right?: ReactNode; disabled?: boolean; children?: ReactNode;
 }) {
+  const ref = useRef<HTMLElement>(null);
+  useEnter(ref);
   return (
-    <section className={`card${disabled ? ' disabled-section' : ''}`}>
+    <section className={`card${disabled ? ' disabled-section' : ''}`} ref={ref}>
       {(title || right) && (
         <div className="card-head">
           <div>

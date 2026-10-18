@@ -1,6 +1,7 @@
 import type { Guild, PresenceData } from 'discord.js';
 import { logger } from '../utils/logger.js';
 import { getEnv } from './env.js';
+import { LINKS } from './links.js';
 
 const env = getEnv();
 
@@ -93,12 +94,7 @@ export const botConfig = {
   // =========================
   // LINKS
   // =========================
-  links: {
-    // Discord server for support, bug reports and feature ideas.
-    supportServer: "https://discord.gg/DuhdCbTaB",
-    // Public source code repository.
-    repository: "https://github.com/Robertwlt03/NexoBot",
-  },
+  links: LINKS,
 
   // =========================
   // EMBED COLORS & BRANDING
