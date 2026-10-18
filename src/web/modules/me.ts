@@ -1,0 +1,120 @@
+// Member area "Mein Profil" (/dashboard/api/me/...): any logged-in Discord user, no guild permission needed.
+// Kristalle and cosmetics are global per user. Contract: web/dto/profile.ts.
+
+import express from 'express';
+import type { Router } from 'express';
+import type { NexoClient } from '../../types/index.js';
+import type { CosmeticItem } from '../../shared/cosmetics.js';
+import type {
+  AchievementsResponse, DailyClaimResult, MeProfileResponse, ProfileLevel,
+} from '../dto/profile.js';
+import { locals, sendError } from '../dashboard.js';
+import { HttpError, badRequest, body } from '../http.js';
+import { isBotOwner } from '../../config/bot.js';
+import { getXpForLevel } from '../../services/leveling/leveling.js';
+import { NO_DB_MESSAGE, T, cosmeticsPool, isSnowflake, requirePool } from '../../services/cosmetics/db.js';
+import { loadCatalog } from '../../services/cosmetics/catalog.js';
+import { parseProfileSettings, readProfileSettings, writeProfileSettings } from '../../services/cosmetics/profile.js';
+import { claimDaily, getDailyState, listTransactions, walletSummary } from '../../services/cosmetics/wallet.js';
+import { blackMarketResponse, gift, ownedItems, purchase, shopResponse } from '../../services/cosmetics/shop.js';
+import { listAchievements, syncAchievements } from '../../services/cosmetics/achievements.js';
+import { userRankings } from '../../services/cosmetics/rankings.js';
+
+async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[]> {
+  const result = await requirePool().query<{ guild_id: string; level: number; xp: string; rank: string }>(
+    `SELECT u.guild_id, u.level, u.xp,
+       (SELECT COUNT(*) + 1 FROM ${T.user_levels} o WHERE o.guild_id = u.guild_id AND o.total_xp > u.total_xp) AS rank
+     FROM ${T.user_levels} u WHERE u.user_id = $1 ORDER BY u.level DESC, u.total_xp DESC LIMIT 50`,
+    [userId],
+  );
+  return result.rows.flatMap((row) => {
+    const guild = client.guilds.cache.get(row.guild_id);
+    if (!guild) return [];
+    return [{ guildId: guild.id, guildName: guild.name, level: row.level, xp: Number(row.xp), xpNeeded: getXpForLevel(row.level), rank: Number(row.rank) }];
+  });
+}
+
+async function profileResponse(client: NexoClient, userId: string): Promise<MeProfileResponse> {
+  const [wallet, profile, inventory, levelList, daily] = await Promise.all([
+    walletSummary(userId), readProfileSettings(userId), ownedItems(userId), levels(client, userId), getDailyState(userId),
+  ]);
+  return { isOwner: isBotOwner(userId), wallet, profile, inventory, levels: levelList, daily };
+}
+
+export function meRouter(client: NexoClient): Router {
+  const router = express.Router();
+
+  router.use((_req, res, next) => (cosmeticsPool() ? next() : sendError(res, 503, NO_DB_MESSAGE)));
+
+  router.get('/profile', async (_req, res) => {
+    res.json(await profileResponse(client, locals(res).session.userId));
+  });
+
+  router.put('/profile', async (req, res) => {
+    const { userId } = locals(res).session;
+    const [catalog, owned] = await Promise.all([loadCatalog(), ownedItems(userId)]);
+    const settings = parseProfileSettings(req.body, catalog, new Set(owned.map((entry) => entry.itemId)));
+    await writeProfileSettings(userId, settings);
+    res.json(await profileResponse(client, userId));
+  });
+
+  router.post('/daily', async (_req, res) => {
+    const { userId } = locals(res).session;
+    const { claimed } = await claimDaily(userId);
+    await syncAchievements(userId);
+    const result: DailyClaimResult = { claimed, wallet: await walletSummary(userId), daily: await getDailyState(userId) };
+    res.json(result);
+  });
+
+  router.get('/shop', async (_req, res) => {
+    res.json(await shopResponse(locals(res).session.userId));
+  });
+
+  router.get('/blackmarket', async (_req, res) => {
+    res.json(await blackMarketResponse(locals(res).session.userId));
+  });
+
+  /** Catalog data for owned and listed items (inventory view): every active item plus inactive owned ones. */
+  router.get('/items', async (_req, res) => {
+    const { userId } = locals(res).session;
+    const [catalog, owned] = await Promise.all([loadCatalog(), ownedItems(userId)]);
+    const ownedIds = new Set(owned.map((entry) => entry.itemId));
+    const items: CosmeticItem[] = [...catalog.values()].filter((entry) => entry.active || ownedIds.has(entry.id));
+    res.json(items);
+  });
+
+  router.post('/shop/buy', async (req, res) => {
+    res.json(await purchase(locals(res).session.userId, body(req.body).itemId));
+  });
+
+  router.post('/shop/gift', async (req, res) => {
+    const { session } = locals(res);
+    const input = body(req.body);
+    if (!isSnowflake(input.toUserId)) throw badRequest('Bitte gib eine gültige Nutzer-ID ein.');
+    const recipient = await client.users.fetch(input.toUserId).catch(() => null);
+    if (!recipient) throw new HttpError(404, 'Diesen Discord-Nutzer gibt es nicht.');
+    if (recipient.bot) throw badRequest('Bots können keine Geschenke bekommen.');
+    res.json(await gift(session.userId, {
+      itemId: input.itemId, toUserId: recipient.id, toName: recipient.displayName,
+      fromName: session.globalName ?? session.username, message: input.message,
+    }));
+  });
+
+  router.get('/transactions', async (req, res) => {
+    const raw = typeof req.query.page === 'string' ? Number(req.query.page) : 1;
+    const page = Number.isInteger(raw) && raw >= 1 && raw <= 10_000 ? raw : 1;
+    res.json(await listTransactions(locals(res).session.userId, page, (guildId) => client.guilds.cache.get(guildId)?.name ?? null));
+  });
+
+  router.get('/rankings', async (_req, res) => {
+    const { session } = locals(res);
+    res.json(await userRankings(client, session.userId, session.guilds.map((guild) => guild.id)));
+  });
+
+  router.get('/achievements', async (_req, res) => {
+    const result: AchievementsResponse = { achievements: await listAchievements(locals(res).session.userId) };
+    res.json(result);
+  });
+
+  return router;
+}

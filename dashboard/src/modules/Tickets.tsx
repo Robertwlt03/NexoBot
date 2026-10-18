@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import type { TicketOverview, TicketPanelState, TicketSettings } from '../../../src/web/dto/tickets';
 import { DEFAULT_BUTTON_LABEL, DEFAULT_PANEL_MESSAGE, OPEN_TICKET_LIMIT } from '../../../src/web/dto/tickets';
 import { useAction, useApi, useGuild, useSettings } from '../api';
+import { useConfirm } from '../components/ConfirmDialog';
 import {
-  Badge, Card, ChannelSelect, Empty, Field, MessagePreview, Modal, Notice, NumberInput, PageHeader, RoleSelect,
-  SettingsPage, Spinner, SwitchRow, TextArea, TextInput,
+  Badge, Card, ChannelSelect, Empty, Field, MessagePreview, Notice, NumberInput, PageHeader, RoleSelect,
+  SettingsPage, Spinner, Stats, SwitchRow, TableWrap, TextArea, TextInput,
 } from '../components/ui';
 import { Icon } from '../icons';
 
@@ -22,17 +23,6 @@ function formatDuration(ms: number | null) {
   return hours > 0 ? `${hours} h ${minutes} min` : `${minutes} min`;
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="list-item">
-      <div className="grow">
-        <div className="faint">{label}</div>
-        <div className="title" style={{ fontSize: 20 }}>{value}</div>
-      </div>
-    </div>
-  );
-}
-
 function Overview({ overview, canPost, onPosted, onRefresh }: {
   overview: ReturnType<typeof useApi<TicketOverview>>; canPost: boolean; onPosted: () => void; onRefresh: () => void;
 }) {
@@ -46,63 +36,66 @@ function Overview({ overview, canPost, onPosted, onRefresh }: {
   };
 
   return (
-    <Card icon="ticket" title="Übersicht" description="Panel-Status, Statistik und offene Tickets."
-      right={<button type="button" className="icon-btn" onClick={onRefresh} aria-label="Aktualisieren"><Icon name="refresh" size={18} /></button>}>
-      {!data && overview.loading && <Spinner />}
-      {overview.error && !data && <Notice tone="danger">{overview.error}</Notice>}
+    <>
       {data && (
-        <div className="stack">
-          <div className="row">
-            <span className="field-label" style={{ margin: 0 }}>Panel</span>
-            <Badge on={PANEL_STATE[data.panel.state].on}>{PANEL_STATE[data.panel.state].label}</Badge>
-            {data.panel.url && <a href={data.panel.url} target="_blank" rel="noreferrer">In Discord öffnen <Icon name="external" size={14} /></a>}
-            {data.panel.state === 'panel_deleted' && (
-              <button type="button" className="btn btn-primary btn-sm" disabled={!canPost || busy !== null} onClick={post}
-                title={canPost ? undefined : 'Speichere zuerst deine Änderungen.'}>
-                <Icon name="send" size={16} />Panel posten
-              </button>
+        <Stats items={[
+          { label: 'Offene Tickets', value: data.stats.openCount },
+          { label: 'Geschlossene Tickets', value: data.stats.closedCount },
+          { label: 'Ø Zeit bis Schließen', value: formatDuration(data.stats.avgCloseTimeMs) },
+          { label: 'Feedback', value: data.stats.avgRating !== null ? `${data.stats.avgRating}/5` : 'Noch keins', hint: data.stats.avgRating !== null ? `${data.stats.feedbackCount} Bewertungen` : undefined },
+        ]} />
+      )}
+      <Card icon="ticket" title="Übersicht" description="Panel-Status und offene Tickets."
+        right={<button type="button" className="icon-btn" onClick={onRefresh} aria-label="Aktualisieren"><Icon name="refresh" size={18} /></button>}>
+        {!data && overview.loading && <Spinner />}
+        {overview.error && !data && <Notice tone="danger">{overview.error}</Notice>}
+        {data && (
+          <div className="stack">
+            <div className="row">
+              <span className="field-label">Panel</span>
+              <Badge on={PANEL_STATE[data.panel.state].on}>{PANEL_STATE[data.panel.state].label}</Badge>
+              {data.panel.url && <a href={data.panel.url} target="_blank" rel="noreferrer">In Discord öffnen <Icon name="external" size={14} /></a>}
+              {data.panel.state === 'panel_deleted' && (
+                <button type="button" className="btn btn-primary btn-sm" disabled={!canPost || busy !== null} onClick={post}
+                  title={canPost ? undefined : 'Speichere zuerst deine Änderungen.'}>
+                  <Icon name="send" size={16} />Panel posten
+                </button>
+              )}
+            </div>
+            <span className="faint">{PANEL_STATE[data.panel.state].hint}</span>
+
+            {data.openTickets.length === 0 ? (
+              <Empty title="Keine offenen Tickets">Sobald jemand ein Ticket öffnet, siehst du es hier.</Empty>
+            ) : (
+              <>
+                <TableWrap>
+                  <thead>
+                    <tr><th>Ticket</th><th>Von</th><th>Übernommen</th><th>Priorität</th><th>Erstellt</th></tr>
+                  </thead>
+                  <tbody>
+                    {data.openTickets.map((ticket) => (
+                      <tr key={ticket.channelId}>
+                        <td>
+                          <a href={`https://discord.com/channels/${guild.id}/${ticket.channelId}`} target="_blank" rel="noreferrer">
+                            #{ticket.channelName ?? 'gelöschter-kanal'}
+                          </a>
+                          {ticket.reason && <div className="faint">{ticket.reason}</div>}
+                        </td>
+                        <td>{ticket.userName}</td>
+                        <td>{ticket.claimedByName ?? <span className="faint">–</span>}</td>
+                        <td>{ticket.priority ?? <span className="faint">–</span>}</td>
+                        <td>{new Date(ticket.createdAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </TableWrap>
+                {data.openTickets.length >= OPEN_TICKET_LIMIT && <span className="faint">Es werden die neuesten {OPEN_TICKET_LIMIT} Tickets angezeigt.</span>}
+              </>
             )}
           </div>
-          <span className="faint">{PANEL_STATE[data.panel.state].hint}</span>
-
-          <div className="grid">
-            <Stat label="Offene Tickets" value={String(data.stats.openCount)} />
-            <Stat label="Geschlossene Tickets" value={String(data.stats.closedCount)} />
-            <Stat label="Ø Zeit bis Schließen" value={formatDuration(data.stats.avgCloseTimeMs)} />
-            <Stat label="Feedback" value={data.stats.avgRating !== null ? `${data.stats.avgRating}/5 (${data.stats.feedbackCount})` : 'Noch keins'} />
-          </div>
-
-          {data.openTickets.length === 0 ? (
-            <Empty title="Keine offenen Tickets">Sobald jemand ein Ticket öffnet, siehst du es hier.</Empty>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table className="table">
-                <thead>
-                  <tr><th>Ticket</th><th>Von</th><th>Übernommen</th><th>Priorität</th><th>Erstellt</th></tr>
-                </thead>
-                <tbody>
-                  {data.openTickets.map((ticket) => (
-                    <tr key={ticket.channelId}>
-                      <td>
-                        <a href={`https://discord.com/channels/${guild.id}/${ticket.channelId}`} target="_blank" rel="noreferrer">
-                          #{ticket.channelName ?? 'gelöschter-kanal'}
-                        </a>
-                        {ticket.reason && <div className="faint">{ticket.reason}</div>}
-                      </td>
-                      <td>{ticket.userName}</td>
-                      <td>{ticket.claimedByName ?? <span className="faint">–</span>}</td>
-                      <td>{ticket.priority ?? <span className="faint">–</span>}</td>
-                      <td>{new Date(ticket.createdAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {data.openTickets.length >= OPEN_TICKET_LIMIT && <span className="faint">Es werden die neuesten {OPEN_TICKET_LIMIT} Tickets angezeigt.</span>}
-            </div>
-          )}
-        </div>
-      )}
-    </Card>
+        )}
+      </Card>
+    </>
   );
 }
 
@@ -110,8 +103,8 @@ export default function TicketsPage() {
   const { guild } = useGuild();
   const settings = useSettings<TicketSettings>('tickets');
   const overview = useApi<TicketOverview>(`/guilds/${guild.id}/tickets/overview`);
-  const { run, busy } = useAction();
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const { run } = useAction();
+  const { confirm, dialog } = useConfirm();
 
   // The panel state depends on the saved panel channel: refresh the overview after it was saved.
   const savedChannel = settings.dirty || !settings.value ? undefined : settings.value.panelChannelId;
@@ -125,7 +118,6 @@ export default function TicketsPage() {
 
   const deleteSystem = async () => {
     const result = await run<TicketSettings>(`/guilds/${guild.id}/tickets/actions/delete-system`, {}, 'Ticket-System gelöscht.');
-    setConfirmDelete(false);
     if (result) {
       settings.reload();
       overview.reload();
@@ -156,7 +148,7 @@ export default function TicketsPage() {
                 <div className="stack">
                   <span className="field-label">Vorschau</span>
                   <MessagePreview embed={{ title: 'Support-Tickets', description: value.panelMessage, color: 'var(--blurple)' }} sample={{}} />
-                  <div><span className="btn btn-sm" style={{ cursor: 'default' }}>📩 {value.buttonLabel || DEFAULT_BUTTON_LABEL}</span></div>
+                  <div><span className="btn btn-primary btn-sm pointer-events-none">📩 {value.buttonLabel || DEFAULT_BUTTON_LABEL}</span></div>
                 </div>
               </div>
             </Card>
@@ -176,7 +168,7 @@ export default function TicketsPage() {
                   <ChannelSelect kind="category" value={value.closedCategoryId} onChange={(closedCategoryId) => settings.set({ closedCategoryId })} placeholder="Nicht verschieben" />
                 </Field>
               </div>
-              <div style={{ marginTop: 14 }}>
+              <div className="mt-4">
                 <SwitchRow title="DM beim Schließen" description="Das Mitglied bekommt eine DM, wenn sein Ticket geschlossen wird."
                   checked={value.dmOnClose} onChange={(dmOnClose) => settings.set({ dmOnClose })} />
               </div>
@@ -194,23 +186,15 @@ export default function TicketsPage() {
             </Card>
 
             <Card icon="trash" title="Ticket-System löschen" description="Entfernt das Panel, alle gespeicherten Tickets und die Ticket-Einstellungen."
-              right={<button type="button" className="btn btn-danger btn-sm" onClick={() => setConfirmDelete(true)}>System löschen</button>} />
+              right={<button type="button" className="btn btn-danger btn-sm" onClick={() => confirm({
+                title: 'Ticket-System löschen?', confirmLabel: 'Endgültig löschen', onConfirm: deleteSystem,
+                text: 'Das Panel, alle gespeicherten Tickets und die Ticket-Einstellungen werden gelöscht. Das lässt sich nicht rückgängig machen. Bestehende Ticket-Kanäle sowie Log- und Transkript-Kanal bleiben erhalten.',
+              })}>System löschen</button>} />
           </>
         )}
       </SettingsPage>
 
-      {confirmDelete && (
-        <Modal title="Ticket-System löschen?" onClose={() => setConfirmDelete(false)}
-          footer={(
-            <>
-              <button type="button" className="btn btn-ghost" onClick={() => setConfirmDelete(false)}>Abbrechen</button>
-              <button type="button" className="btn btn-danger" disabled={busy !== null} onClick={deleteSystem}>Endgültig löschen</button>
-            </>
-          )}>
-          <p>Das Panel, alle gespeicherten Tickets und die Ticket-Einstellungen werden gelöscht. Das lässt sich nicht rückgängig machen.</p>
-          <p className="muted">Bestehende Ticket-Kanäle sowie Log- und Transkript-Kanal bleiben erhalten.</p>
-        </Modal>
-      )}
+      {dialog}
     </>
   );
 }

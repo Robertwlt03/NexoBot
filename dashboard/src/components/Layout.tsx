@@ -1,36 +1,68 @@
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import type { ApiGuildDetail, ApiGuildSummary } from '../../../src/web/apiTypes';
 import { DirtyContext, GuildContext, useApi, UserContext } from '../api';
 import { Icon } from '../icons';
 import { GROUPS, MODULES } from '../modules/registry';
 import { Spinner, Notice } from './ui';
 import { NexoLogo } from './NexoLogo';
+import { Glyph } from '../me/visuals';
 
-function guildInitials(name: string) {
+gsap.registerPlugin(useGSAP);
+
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+export function guildInitials(name: string) {
   return name.split(/\s+/).map((part) => part[0]).join('').slice(0, 3);
 }
 
+export function GuildIcon({ guild, className = '' }: { guild: { name: string; iconUrl: string | null }; className?: string }) {
+  return guild.iconUrl
+    ? <img src={guild.iconUrl} alt="" className={`object-cover ${className}`} />
+    : <span className={`grid place-items-center bg-raised font-semibold text-ink ${className}`}>{guildInitials(guild.name)}</span>;
+}
+
+/** Discord-style server column: Nexo home button plus every server Nexo is on. */
 export function ServerRail({ guilds, activeId }: { guilds: ApiGuildSummary[]; activeId?: string }) {
   const navigate = useNavigate();
+  const user = useContext(UserContext);
+  const onProfile = /^\/(me|owner)(\/|$)/.test(useLocation().pathname);
+  const item = 'group relative grid h-11 w-11 place-items-center overflow-hidden rounded-[22px] bg-surface transition-all duration-200 hover:rounded-[14px]';
   return (
-    <nav className="rail" aria-label="Server">
-      <button className="rail-item" title="Alle Server" onClick={() => navigate('/servers')}>
-        <span className="rail-logo"><NexoLogo animated={false} /></span>
+    <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2.5 overflow-y-auto border-r border-white/[.05] bg-rail py-4 lg:flex" aria-label="Server">
+      <button className={`${item} cursor-pointer border-0 bg-surface p-0 ring-1 ring-white/[.06] hover:ring-accent/40`} title="Alle Server" onClick={() => navigate('/servers')}>
+        <NexoLogo className="w-9 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" animated={false} />
       </button>
-      <div className="rail-sep" />
-      {guilds.filter((g) => g.botPresent).map((guild) => (
-        <button key={guild.id} title={guild.name} className={`rail-item${guild.id === activeId ? ' active' : ''}`}
-          onClick={() => navigate(`/servers/${guild.id}`)}>
-          {guild.iconUrl ? <img src={guild.iconUrl} alt="" /> : guildInitials(guild.name)}
-        </button>
-      ))}
+      {user && (
+        <div className="relative flex w-full justify-center">
+          <span className={`absolute left-0 top-1/2 w-[3px] -translate-y-1/2 rounded-r bg-ink transition-all duration-200 ${onProfile ? 'h-8' : 'h-0'}`} />
+          <button title="Mein Profil" onClick={() => navigate('/me')}
+            className={`${item} cursor-pointer border-0 p-0 ${onProfile ? 'rounded-[14px] ring-1 ring-white/25' : 'opacity-80 hover:opacity-100'}`}>
+            <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
+          </button>
+        </div>
+      )}
+      <div className="my-1 h-px w-7 bg-white/10" />
+      {guilds.filter((g) => g.botPresent).map((guild) => {
+        const active = guild.id === activeId;
+        return (
+          <div key={guild.id} className="relative flex w-full justify-center">
+            <span className={`absolute left-0 top-1/2 w-[3px] -translate-y-1/2 rounded-r bg-ink transition-all duration-200 ${active ? 'h-8' : 'h-0 group-hover:h-4'}`} />
+            <button title={guild.name} onClick={() => navigate(`/servers/${guild.id}`)}
+              className={`${item} cursor-pointer border-0 p-0 ${active ? 'rounded-[14px] ring-1 ring-white/25' : 'opacity-80 hover:opacity-100'}`}>
+              <GuildIcon guild={guild} className="h-full w-full" />
+            </button>
+          </div>
+        );
+      })}
     </nav>
   );
 }
 
-export function UserPanel() {
+export function UserPanel({ compact = false }: { compact?: boolean }) {
   const user = useContext(UserContext);
   const logout = async () => {
     await fetch('/dashboard/auth/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => undefined);
@@ -38,9 +70,13 @@ export function UserPanel() {
   };
   if (!user) return null;
   return (
-    <div className="user-panel">
-      <img src={user.avatarUrl} alt="" />
-      <div className="name">{user.globalName ?? user.username}<div className="sub">@{user.username}</div></div>
+    <div className={`flex items-center gap-2.5 ${compact ? '' : 'm-3 rounded-2xl border border-white/[.06] bg-surface px-3 py-2.5'}`}>
+      <img src={user.avatarUrl} alt="" className="h-9 w-9 rounded-full ring-1 ring-white/15" />
+      <div className="min-w-0 flex-1 leading-tight">
+        <div className="truncate text-sm font-medium text-ink">{user.globalName ?? user.username}</div>
+        <div className="truncate text-xs text-mute">@{user.username}</div>
+      </div>
+      <Link to="/me" className="icon-btn" title="Mein Profil" aria-label="Mein Profil"><Glyph name="user" size={18} /></Link>
       <button className="icon-btn" title="Abmelden" onClick={logout}><Icon name="logout" size={18} /></button>
     </div>
   );
@@ -54,6 +90,9 @@ export function GuildLayout() {
   const [dirty, setDirty] = useState(false);
   const guilds = useApi<ApiGuildSummary[]>('/guilds');
   const detail = useApi<ApiGuildDetail>(guildId ? `/guilds/${guildId}` : null);
+  const navRef = useRef<HTMLElement>(null);
+  const markerRef = useRef<HTMLDivElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
 
   const setGuard = useCallback((value: boolean) => setDirty(value), []);
   useEffect(() => setMenuOpen(false), [location.pathname]);
@@ -64,35 +103,71 @@ export function GuildLayout() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [dirty]);
 
+  // Sliding highlight behind the active navigation entry: slides on navigation, snaps when the layout shifts
+  // (styles/fonts arriving, window resize).
+  const placeMarker = useCallback((animate: boolean) => {
+    const active = navRef.current?.querySelector<HTMLElement>('a[aria-current="page"]');
+    const marker = markerRef.current;
+    if (!marker) return;
+    if (!active) { gsap.set(marker, { autoAlpha: 0 }); return; }
+    const target = { y: active.offsetTop, height: active.offsetHeight, autoAlpha: 1 };
+    if (animate && !reducedMotion() && marker.dataset.placed === '1') gsap.to(marker, { ...target, duration: 0.35, ease: 'power3.out', overwrite: true });
+    else gsap.set(marker, { ...target, overwrite: true });
+    marker.dataset.placed = '1';
+  }, []);
+  useGSAP(() => placeMarker(true), { dependencies: [location.pathname, placeMarker] });
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const observer = new ResizeObserver(() => placeMarker(false));
+    Array.from(nav.children).forEach((child) => observer.observe(child));
+    void document.fonts?.ready.then(() => placeMarker(false));
+    return () => observer.disconnect();
+  }, [placeMarker]);
+
+  // Page transition on every module change.
+  useGSAP(() => {
+    if (!pageRef.current || reducedMotion()) return;
+    gsap.fromTo(pageRef.current, { y: 14, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.4, ease: 'power2.out', clearProps: 'transform' });
+  }, { dependencies: [location.pathname] });
+
   // Block in-app navigation while there are unsaved changes (Discord behaviour: the save bar shakes).
   const guardClick = (event: MouseEvent) => {
     if (!dirty) return;
     event.preventDefault();
     const bar = document.getElementById('save-bar');
-    bar?.classList.remove('shake');
-    void bar?.offsetWidth;
-    bar?.classList.add('shake');
+    if (!bar) return;
+    bar.classList.add('shake');
+    gsap.fromTo(bar, { x: -8 }, { x: 0, duration: 0.5, ease: 'elastic.out(1.2, 0.3)', onComplete: () => bar.classList.remove('shake') });
   };
 
   const current = MODULES.find((m) => location.pathname.endsWith(`/${m.id}`));
+  const navLink = 'relative z-10 flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] font-medium transition-colors hover:no-underline';
 
   return (
-    <div className="app">
+    <div className="flex h-full bg-canvas">
       <ServerRail guilds={guilds.data ?? []} activeId={guildId} />
-      <aside className={`sidebar${menuOpen ? ' open' : ''}`}>
-        <div className="sidebar-header">
-          {detail.data?.iconUrl ? <img src={detail.data.iconUrl} alt="" /> : null}
-          <span>{detail.data?.name ?? 'Server'}</span>
+
+      {menuOpen && <button aria-label="Menü schließen" className="fixed inset-0 z-30 border-0 bg-black/60 lg:hidden" onClick={() => setMenuOpen(false)} />}
+      <aside className={`fixed inset-y-0 left-0 z-40 flex w-[264px] flex-col border-r border-white/[.05] bg-panel transition-transform duration-300 lg:static lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/[.05] px-4">
+          {detail.data && <GuildIcon guild={detail.data} className="h-9 w-9 shrink-0 rounded-xl ring-1 ring-white/10" />}
+          <div className="min-w-0 leading-tight">
+            <div className="truncate text-[14px] font-semibold text-ink">{detail.data?.name ?? 'Server'}</div>
+            {detail.data && <div className="text-xs text-mute">{detail.data.memberCount.toLocaleString('de-DE')} Mitglieder</div>}
+          </div>
         </div>
-        <nav className="sidebar-nav" onClickCapture={guardClick}>
-          <NavLink end to={`/servers/${guildId}`} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+        <nav ref={navRef} className="relative flex-1 overflow-y-auto px-3 py-3" onClickCapture={guardClick}>
+          <div ref={markerRef} className="invisible absolute left-3 right-3 top-0 rounded-xl border border-white/[.06] bg-white/[.05] before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r before:bg-accent" />
+          <NavLink end to={`/servers/${guildId}`} className={({ isActive }) => `${navLink} ${isActive ? 'text-ink' : 'text-mute hover:bg-white/[.03] hover:text-ink'}`}>
             <Icon name="home" size={18} /> Übersicht
           </NavLink>
           {GROUPS.map((group) => (
-            <div className="nav-group" key={group}>
-              <div className="nav-group-title">{group}</div>
+            <div className="mt-5" key={group}>
+              <div className="mb-1 px-3 text-[11.5px] font-medium text-faint">{group}</div>
               {MODULES.filter((m) => m.group === group).map((m) => (
-                <NavLink key={m.id} to={`/servers/${guildId}/${m.id}`} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+                <NavLink key={m.id} to={`/servers/${guildId}/${m.id}`}
+                  className={({ isActive }) => `${navLink} ${isActive ? 'text-ink' : 'text-mute hover:bg-white/[.03] hover:text-ink'}`}>
                   <Icon name={m.icon} size={18} /> {m.label}
                 </NavLink>
               ))}
@@ -101,16 +176,19 @@ export function GuildLayout() {
         </nav>
         <UserPanel />
       </aside>
-      <main className="main">
-        <div className="topbar">
-          <button className="icon-btn mobile-toggle" onClick={() => setMenuOpen((open) => !open)} aria-label="Menü"><Icon name="menu" /></button>
-          <span className="crumb">{detail.data?.name}</span>
-          <span className="crumb">/</span>
-          <span>{current?.label ?? 'Übersicht'}</span>
-        </div>
-        <div className="content">
-          <div className="content-inner">
-            {detail.loading && !detail.data && <Spinner />}
+
+      <main className="relative flex min-w-0 flex-1 flex-col bg-canvas">
+        <header className="flex h-16 shrink-0 items-center gap-3 border-b border-white/[.05] bg-canvas/80 px-4 backdrop-blur-md md:px-8">
+          <button className="icon-btn lg:hidden" onClick={() => setMenuOpen((open) => !open)} aria-label="Menü"><Icon name="menu" /></button>
+          <Link to="/servers" className="hidden text-sm text-mute hover:text-ink hover:no-underline sm:inline">Server</Link>
+          <span className="hidden text-faint sm:inline">/</span>
+          <Link to={`/servers/${guildId}`} className="max-w-[30vw] truncate text-sm text-mute hover:text-ink hover:no-underline">{detail.data?.name}</Link>
+          <span className="text-faint">/</span>
+          <span className="truncate text-sm font-medium text-ink">{current?.label ?? 'Übersicht'}</span>
+        </header>
+        <div className="flex-1 overflow-y-auto px-4 pb-32 pt-9 md:px-10">
+          <div ref={pageRef} className="mx-auto max-w-[1040px]">
+            {detail.loading && !detail.data && <div className="center"><Spinner /></div>}
             {detail.error && (
               <Notice tone="danger">
                 {detail.error} <Link to="/servers">Zur Serverauswahl</Link>

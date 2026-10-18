@@ -5,6 +5,7 @@ import { logger } from '../../../utils/logger.js';
 import { NexoBotError, ErrorTypes } from '../../../utils/errorHandler.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
+import { rewardMinigame } from '../../../services/cosmetics/hooks.js';
 export default {
     data: new SlashCommandBuilder()
     .setName("roll")
@@ -76,6 +77,7 @@ export default {
       `${resultsDetail}**Gesamtwurf:** ${totalRoll}${modifierText} = **${finalTotal}**`,
     );
 
+    await rewardMinigame(embed, interaction.user, interaction.guildId, 'roll');
     await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
     logger.debug(`Roll command executed by user ${interaction.user.id} with notation ${notation} in guild ${interaction.guildId}`);
   },

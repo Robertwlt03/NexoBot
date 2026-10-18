@@ -2,7 +2,10 @@
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
+/* `.list-item` is our list row component; keep Tailwind from generating its display:list-item utility. */
+@source not inline("list-item");
 @import "@fontsource-variable/unbounded";
+@import "@fontsource-variable/inter";
 
 @theme {
   --font-display: "Unbounded Variable", "gg sans", "Inter", sans-serif;
@@ -16,6 +19,25 @@
   --color-dc-line: #3f4147;
   --color-dc-text: #dbdee1;
   --color-dc-muted: #949ba4;
+
+  /* Dashboard (premium dark). One accent; status colours only for state. Mirrors :root in styles.css. */
+  --font-sans: "Inter Variable", "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --color-rail: #08080b;
+  --color-canvas: #0b0b0f;
+  --color-panel: #0f0f14;
+  --color-surface: #15151b;
+  --color-raised: #1c1c24;
+  --color-field: #0e0e13;
+  --color-ink: #f4f4f6;
+  --color-body: #c4c4cc;
+  --color-mute: #8b8b97;
+  --color-faint: #63636e;
+  --color-accent: #a99bff;
+  --color-accent-strong: #8b7bff;
+  --color-accent-ink: #15112b;
+  --color-pos: #4ade80;
+  --color-neg: #f87171;
+  --color-warn: #fbbf24;
 }
 
 /* Landing intro: hidden until GSAP reveals them, so nothing flashes before the animation starts. */

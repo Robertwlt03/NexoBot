@@ -9,6 +9,8 @@ import { logEvent, EVENT_TYPES } from '../loggingService.js';
 import { formatLogLine } from '../../utils/logging/logEmbeds.js';
 import { Mutex } from '../../utils/mutex.js';
 import { wrapServiceBoundary } from '../../utils/errorHandler.js';
+import { onXpGained } from '../cosmetics/hooks.js';
+import { levelUpCardAttachment } from '../profileCardRenderer.js';
 
 export interface AddXpResult {
   level: number;
@@ -58,9 +60,16 @@ export const addXp = wrapServiceBoundary(async function addXp(client: NexoClient
       }
     }
 
+    // Kristalle: awaited on level-up so the card shows what was really credited (daily cap); otherwise fire-and-forget.
+    let reward = 0;
+    if (!member.user.bot) {
+      if (didLevelUp) reward = await onXpGained(guild, member.user.id, xpToAdd, initialLevel, levelData.level);
+      else void onXpGained(guild, member.user.id, xpToAdd, initialLevel, levelData.level);
+    }
+
     if (didLevelUp) {
       if (config.announceLevelUp) {
-        await sendLevelUpAnnouncement(guild, member, levelData, config);
+        await sendLevelUpAnnouncement(client, guild, member, levelData, config, reward);
       }
 
       try {
@@ -85,6 +94,7 @@ export const addXp = wrapServiceBoundary(async function addXp(client: NexoClient
     }
 
     await saveUserLevelData(client, guild.id, member.user.id, levelData);
+    // Global Kristalle economy: monthly activity score and level-up income (best effort, never blocks XP).
 
     return {
       level: levelData.level,
@@ -120,7 +130,7 @@ async function awardRoleReward(guild: Guild, member: GuildMember, roleId: string
   }
 }
 
-async function sendLevelUpAnnouncement(guild: Guild, member: GuildMember, levelData: LevelData, config: GuildLevelingConfig): Promise<void> {
+async function sendLevelUpAnnouncement(client: NexoClient, guild: Guild, member: GuildMember, levelData: LevelData, config: GuildLevelingConfig, reward: number): Promise<void> {
   try {
     const levelUpChannel = config.levelUpChannel
       ? guild.channels.cache.get(config.levelUpChannel)
@@ -142,7 +152,9 @@ async function sendLevelUpAnnouncement(guild: Guild, member: GuildMember, levelD
       .replace(/{xp}/g, String(levelData.xp))
       .replace(/{xpNeeded}/g, String(getXpForLevel(levelData.level + 1)));
 
-    await levelUpChannel.send(message).catch(error => {
+    // Level-up card in the member's style; without AttachFiles or on render errors only the text is sent.
+    const card = permissions.has('AttachFiles') ? await levelUpCardAttachment(client, member, levelData.level, reward) : null;
+    await levelUpChannel.send({ content: message, files: card ? [card] : [] }).catch(error => {
       logger.error(`Failed to send level up message in channel ${levelUpChannel.id}:`, error);
     });
   } catch (error) {

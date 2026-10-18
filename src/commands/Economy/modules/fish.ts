@@ -5,6 +5,7 @@ import { getEconomyData, setEconomyData } from '../../../utils/economy.js';
 import type { EconomyData } from '../../../utils/economy.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
+import { rewardMinigame } from '../../../services/cosmetics/hooks.js';
 
 const FISH_COOLDOWN = 45 * 60 * 1000; 
 const BASE_MIN_REWARD = 300;
@@ -137,6 +138,7 @@ export default {
                 )
                 .setFooter({ text: `Nächster Angelausflug in 45 Minuten möglich.` });
 
+            await rewardMinigame(embed, interaction.user, guildId, 'fish');
             await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
     }, { command: 'fish' })
 } satisfies Command;

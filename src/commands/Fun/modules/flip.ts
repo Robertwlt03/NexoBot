@@ -5,6 +5,7 @@ import { logger } from '../../../utils/logger.js';
 import { NexoBotError, ErrorTypes } from '../../../utils/errorHandler.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
+import { rewardMinigame } from '../../../services/cosmetics/hooks.js';
 export default {
     data: new SlashCommandBuilder()
     .setName("flip")
@@ -20,6 +21,7 @@ export default {
       `Die Münze zeigt... **${result}** ${emoji}!`,
     );
 
+    await rewardMinigame(embed, interaction.user, interaction.guildId, 'flip');
     await InteractionHelper.safeReply(interaction, { embeds: [embed] });
     logger.debug(`Flip command executed by user ${interaction.user.id} in guild ${interaction.guildId}`);
   },

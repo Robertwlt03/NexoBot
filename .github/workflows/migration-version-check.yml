@@ -35,8 +35,8 @@ jobs:
       POSTGRES_USER: nexobot
       POSTGRES_PASSWORD: nexobot
       POSTGRES_SSL: "false"
-      SCHEMA_VERSION: "1"
-      SCHEMA_VERSION_LABEL: "baseline-v1"
+      SCHEMA_VERSION: "4"
+      SCHEMA_VERSION_LABEL: "nexo-cosmetics"
 
     steps:
       - name: Checkout

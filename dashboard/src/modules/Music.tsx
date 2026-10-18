@@ -1,7 +1,7 @@
 import type { MusicState } from '../../../src/web/dto/music';
 import { useAction, useApi, useGuild } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
-import { Badge, Card, Empty, Notice, PageHeader, Spinner, SwitchRow } from '../components/ui';
+import { Actions, Badge, Card, Empty, Notice, PageHeader, Spinner, SwitchRow } from '../components/ui';
 import { Icon } from '../icons';
 
 const LOOP_LABELS: Record<string, string> = { none: 'Aus', track: 'Titel', queue: 'Warteschlange' };
@@ -34,61 +34,61 @@ export default function MusicPage() {
         description="Sieh, was gerade läuft, und schalte den 24/7-Modus."
         actions={<button type="button" className="btn btn-secondary" onClick={reload} disabled={loading}><Icon name="refresh" size={16} />Aktualisieren</button>}
       />
-      <div className="stack">
+      <div className="stack mb-4">
         <Notice>Der Musikstatus liegt nur im Arbeitsspeicher. Bei einem Neustart von Nexo werden Wiedergabe, Warteschlange und 24/7-Modus zurückgesetzt.</Notice>
-        {loading && !data && <Spinner />}
         {error && !data && <Notice tone="danger">{error}</Notice>}
         {data && !data.available && <Notice tone="warn">Musik ist auf diesem Bot nicht verfügbar – Lavalink ist nicht konfiguriert.</Notice>}
-        {data && data.available && (
-          <>
-            <Card icon="music" title="Gerade läuft" right={data.active && <Badge on={!data.paused}>{data.paused ? 'Pausiert' : 'Spielt'}</Badge>}>
-              {!data.nowPlaying ? (
-                <Empty title="Gerade läuft nichts">Starte Musik in Discord mit /play.</Empty>
-              ) : (
-                <div className="stack">
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: 16 }}>
-                      {data.nowPlaying.uri ? <a href={data.nowPlaying.uri} target="_blank" rel="noreferrer">{data.nowPlaying.title}</a> : data.nowPlaying.title}
-                    </div>
-                    <div className="muted">{data.nowPlaying.author}</div>
-                  </div>
-                  <div className="row">
-                    <span className="chip" style={{ paddingRight: 10 }}>{formatTime(data.positionMs)} / {formatTime(data.nowPlaying.lengthMs)}</span>
-                    <span className="chip" style={{ paddingRight: 10 }}>{data.queueLength} in der Warteschlange</span>
-                    <span className="chip" style={{ paddingRight: 10 }}>Lautstärke {data.volume} %</span>
-                    <span className="chip" style={{ paddingRight: 10 }}>Wiederholen: {LOOP_LABELS[data.loop] ?? data.loop}</span>
-                    {voiceChannel && <span className="chip" style={{ paddingRight: 10 }}>🔊 {voiceChannel.name}</span>}
-                  </div>
-                </div>
-              )}
-              {data.active && (
-                <div className="stack" style={{ marginTop: 16 }}>
-                  {!data.canControl && <Notice>Wie bei den Commands kannst du die Wiedergabe nur steuern, wenn du im selben Sprachkanal wie Nexo bist.</Notice>}
-                  <div className="row">
-                    <button type="button" className="btn btn-secondary" disabled={!data.canControl || !data.nowPlaying || busy !== null}
-                      onClick={() => act('skip', {}, 'Titel übersprungen.')}>Überspringen</button>
-                    <button type="button" className="btn btn-danger" disabled={!data.canControl || busy !== null}
-                      onClick={() => confirm({
-                        title: 'Wiedergabe stoppen?', confirmLabel: 'Stoppen',
-                        text: `Die Wiedergabe wird gestoppt und die Warteschlange (${data.queueLength} Titel) geleert.`,
-                        onConfirm: () => act('stop', {}, 'Wiedergabe gestoppt.'),
-                      })}>Stoppen</button>
-                  </div>
-                </div>
-              )}
-            </Card>
-            <Card icon="settings" title="Einstellungen">
-              <SwitchRow
-                title="24/7-Modus"
-                description="Nexo bleibt im Sprachkanal, auch wenn die Warteschlange leer ist. Sonst verlässt Nexo den Kanal nach 30 Sekunden Leerlauf."
-                checked={data.twentyFourSeven}
-                disabled={busy !== null}
-                onChange={(enabled) => act('twentyfourseven', { enabled }, enabled ? '24/7-Modus aktiviert.' : '24/7-Modus deaktiviert.')}
-              />
-            </Card>
-          </>
-        )}
       </div>
+      {loading && !data && <Spinner />}
+      {data && data.available && (
+        <>
+          <Card icon="music" title="Gerade läuft" right={data.active && <Badge on={!data.paused}>{data.paused ? 'Pausiert' : 'Spielt'}</Badge>}>
+            {!data.nowPlaying ? (
+              <Empty title="Gerade läuft nichts">Starte Musik in Discord mit /play.</Empty>
+            ) : (
+              <div className="stack">
+                <div>
+                  <div className="text-base font-semibold">
+                    {data.nowPlaying.uri ? <a href={data.nowPlaying.uri} target="_blank" rel="noreferrer">{data.nowPlaying.title}</a> : data.nowPlaying.title}
+                  </div>
+                  <div className="muted">{data.nowPlaying.author}</div>
+                </div>
+                <div className="chips">
+                  <span className="badge">{formatTime(data.positionMs)} / {formatTime(data.nowPlaying.lengthMs)}</span>
+                  <span className="badge">{data.queueLength} in der Warteschlange</span>
+                  <span className="badge">Lautstärke {data.volume} %</span>
+                  <span className="badge">Wiederholen: {LOOP_LABELS[data.loop] ?? data.loop}</span>
+                  {voiceChannel && <span className="badge">🔊 {voiceChannel.name}</span>}
+                </div>
+              </div>
+            )}
+            {data.active && (
+              <>
+                {!data.canControl && <div className="mt-4"><Notice>Wie bei den Commands kannst du die Wiedergabe nur steuern, wenn du im selben Sprachkanal wie Nexo bist.</Notice></div>}
+                <Actions>
+                  <button type="button" className="btn btn-secondary" disabled={!data.canControl || !data.nowPlaying || busy !== null}
+                    onClick={() => act('skip', {}, 'Titel übersprungen.')}>Überspringen</button>
+                  <button type="button" className="btn btn-danger" disabled={!data.canControl || busy !== null}
+                    onClick={() => confirm({
+                      title: 'Wiedergabe stoppen?', confirmLabel: 'Stoppen',
+                      text: `Die Wiedergabe wird gestoppt und die Warteschlange (${data.queueLength} Titel) geleert.`,
+                      onConfirm: () => act('stop', {}, 'Wiedergabe gestoppt.'),
+                    })}>Stoppen</button>
+                </Actions>
+              </>
+            )}
+          </Card>
+          <Card icon="settings" title="Einstellungen">
+            <SwitchRow
+              title="24/7-Modus"
+              description="Nexo bleibt im Sprachkanal, auch wenn die Warteschlange leer ist. Sonst verlässt Nexo den Kanal nach 30 Sekunden Leerlauf."
+              checked={data.twentyFourSeven}
+              disabled={busy !== null}
+              onChange={(enabled) => act('twentyfourseven', { enabled }, enabled ? '24/7-Modus aktiviert.' : '24/7-Modus deaktiviert.')}
+            />
+          </Card>
+        </>
+      )}
       {dialog}
     </>
   );

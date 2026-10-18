@@ -4,6 +4,7 @@ import { successEmbed, warningEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
+import { rewardMinigame } from '../../../services/cosmetics/hooks.js';
 const rand = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 const EMBED_DESCRIPTION_LIMIT = 4096;
 
@@ -78,6 +79,7 @@ export default {
       description
     );
 
+    if (winner.id === challenger.id) await rewardMinigame(embed, challenger, interaction.guildId, 'fight');
     await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
     logger.debug(`Fight command executed between ${challenger.id} and ${opponent.id} in guild ${interaction.guildId}`);
   },

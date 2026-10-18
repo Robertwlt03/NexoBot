@@ -1,6 +1,7 @@
 import { logger } from '../utils/logger.js';
 import type { Guild } from 'discord.js';
 import type { NexoClient } from '../types/index.js';
+import { onCountingCorrect } from './cosmetics/hooks.js';
 
 interface CountingSystem {
   label: string;
@@ -265,6 +266,7 @@ export async function recordCorrectCount(client: NexoClient, guildId: string, us
     nextNumber: (config.nextNumber || 1) + 1,
   };
 
+  void onCountingCorrect(guildId, userId);
   return saveCountingGameConfig(client, guildId, updatedConfig);
 }
 

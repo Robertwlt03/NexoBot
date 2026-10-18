@@ -1,13 +1,13 @@
-import { Events, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
-import type { ColorResolvable, Guild, GuildMember, GuildTextBasedChannel, Role } from 'discord.js';
-import { getColor, botConfig } from '../config/bot.js';
+import { Events } from 'discord.js';
+import type { Guild, GuildMember, Role } from 'discord.js';
 import { getGuildConfig } from '../services/config/guildConfig.js';
 import { getWelcomeConfig } from '../utils/database.js';
-import { formatWelcomeMessage } from '../utils/welcome.js';
+import { sendGreeting } from '../utils/welcome.js';
 import { logEvent, EVENT_TYPES } from '../services/loggingService.js';
 import { getServerCounters, updateCounter } from '../services/serverstatsService.js';
 import { setBirthday as dbSetBirthday } from '../utils/database.js';
 import { logger } from '../utils/logger.js';
+import { recordJoin } from '../services/statsTracker.js';
 import type { BirthdayEntry } from '../utils/database.js';
 import type { VerificationConfig } from '../services/verificationService.js';
 import type { BotEvent, NexoClient } from '../types/index.js';
@@ -18,6 +18,7 @@ export default {
   once: false,
   
   async execute(member) {
+    recordJoin(member.guild);
     try {
         const { guild, user } = member;
         
@@ -25,64 +26,13 @@ export default {
         
         const welcomeConfig = await getWelcomeConfig(member.client, guild.id);
         
-        const welcomeChannelId = welcomeConfig?.channelId;
-
-        if (welcomeConfig?.enabled && welcomeChannelId) {
-            const channel = guild.channels.cache.get(welcomeChannelId);
-            const me = guild.members.me;
-            const permissions = channel?.isTextBased?.() && me ? channel.permissionsFor(me) : null;
-            // Skip only the welcome message if permissions are missing; the rest of the
+        if (welcomeConfig?.enabled && welcomeConfig.channelId) {
+            // Missing permissions or a failed send skip only the welcome message; the rest of the
             // join pipeline (auto-role, verification, logging, counters) must still run.
-            if (permissions?.has([PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages])) {
-                const formatData = { user, guild, member };
-                const welcomeMessage = formatWelcomeMessage(
-                    welcomeConfig.welcomeMessage || welcomeConfig.welcomeEmbed?.description || botConfig.welcome?.defaultWelcomeMessage || 'Willkommen {user} auf {server}!',
-                    formatData
-                );
-
-                const messageContent = welcomeConfig.welcomePing ? user.toString() : null;
-
-                const embedTitle = formatWelcomeMessage(
-                    welcomeConfig.welcomeEmbed?.title || '🎉 Willkommen!',
-                    formatData
-                );
-                const embedFooter = welcomeConfig.welcomeEmbed?.footer
-                    ? formatWelcomeMessage(welcomeConfig.welcomeEmbed.footer, formatData)
-                    : `Willkommen auf ${guild.name}!`;
-
-                const canEmbed = permissions.has(PermissionFlagsBits.EmbedLinks);
-
-                if (!canEmbed) {
-                    await (channel as GuildTextBasedChannel).send({
-                        content: messageContent || welcomeMessage
-                    });
-                } else {
-                    const embed = new EmbedBuilder()
-                        .setColor((welcomeConfig.welcomeEmbed?.color || getColor('success')) as ColorResolvable)
-                        .setTitle(embedTitle)
-                        .setDescription(welcomeMessage)
-                        .setThumbnail(user.displayAvatarURL())
-                        .addFields(
-                            { name: 'Nutzer', value: `${user.tag} (${user.id})`, inline: true },
-                            { name: 'Mitglieder', value: guild.memberCount.toString(), inline: true }
-                        )
-                        .setTimestamp()
-                        .setFooter({ text: embedFooter });
-                    
-                    // Stored embed config may carry an image object (not part of WelcomeEmbedConfig).
-                    const welcomeEmbedImage = welcomeConfig.welcomeEmbed?.image as { url?: string } | undefined;
-                    if (welcomeConfig.welcomeImage) {
-                        embed.setImage(welcomeConfig.welcomeImage);
-                    } else if (welcomeEmbedImage?.url) {
-                        embed.setImage(welcomeEmbedImage.url);
-                    }
-                    
-                    await (channel as GuildTextBasedChannel).send({ 
-                        // discord.js serializes null content as empty; the typings only allow string | undefined.
-                        content: messageContent as string | undefined,
-                        embeds: [embed] 
-                    });
-                }
+            try {
+                await sendGreeting('welcome', member, welcomeConfig);
+            } catch (error) {
+                logger.warn(`Welcome message failed in guild ${guild.id}:`, error);
             }
         }
         

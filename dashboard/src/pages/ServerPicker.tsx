@@ -1,51 +1,111 @@
+import { useContext, useRef } from 'react';
 import { Link } from 'react-router';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import type { ApiGuildSummary } from '../../../src/web/apiTypes';
-import { useApi } from '../api';
-import { ServerRail, UserPanel } from '../components/Layout';
-import { Empty, Notice, Spinner } from '../components/ui';
+import type { MeProfileResponse } from '../../../src/web/dto/profile';
+import { useApi, UserContext } from '../api';
+import { GuildIcon, UserPanel } from '../components/Layout';
+import { NexoLogo } from '../components/NexoLogo';
+import { Empty, Notice, PageHeader, Spinner } from '../components/ui';
 import { Icon } from '../icons';
+import { Kristalle } from '../me/visuals';
+
+gsap.registerPlugin(useGSAP);
 
 export function ServerPicker() {
+  const user = useContext(UserContext);
   const { data, error, loading, reload } = useApi<ApiGuildSummary[]>('/guilds');
+  const profile = useApi<MeProfileResponse>('/me/profile').data;
   const guilds = data ?? [];
+  const root = useRef<HTMLDivElement>(null);
   const refresh = async () => { await fetch('/dashboard/api/guilds?refresh=1', { credentials: 'same-origin' }); reload(); };
 
+  // Server cards arrive with the data; fromTo + revertOnUpdate so a re-run never starts from a half-faded state.
+  useGSAP(() => {
+    if (!data?.length) return;
+    const mm = gsap.matchMedia();
+    mm.add('(prefers-reduced-motion: no-preference)', () => {
+      gsap.fromTo('.js-server', { y: 30, autoAlpha: 0, scale: 0.97 }, { y: 0, autoAlpha: 1, scale: 1, duration: 0.55, stagger: 0.07, ease: 'power3.out', clearProps: 'transform' });
+    });
+    return () => mm.revert();
+  }, { scope: root, dependencies: [data?.length ?? 0], revertOnUpdate: true });
+
+  const active = guilds.filter((g) => g.botPresent).length;
+
   return (
-    <div className="app app-picker">
-      <ServerRail guilds={guilds} />
-      <main className="main">
-        <div className="topbar">Server auswählen</div>
-        <div className="content">
-          <div className="content-inner">
-            <div className="page-head">
-              <div>
-                <h1>Deine Server</h1>
-                <p>Server, auf denen du „Server verwalten“ darfst. Wähle einen aus, um Nexo einzurichten.</p>
+    <div ref={root} className="min-h-full bg-canvas">
+      <header className="sticky top-0 z-20 border-b border-white/[.05] bg-canvas/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-5 md:px-8">
+          <Link to="/servers" className="flex items-center gap-2.5 text-ink hover:no-underline">
+            <NexoLogo className="h-9 w-auto" animated={false} />
+            <span className="font-display text-lg font-semibold tracking-tight">Nexo</span>
+          </Link>
+          <div className="ml-auto w-[240px] max-w-[60vw]"><UserPanel compact /></div>
+        </div>
+      </header>
+
+      <main className="relative mx-auto max-w-6xl px-5 pb-24 pt-12 md:px-8">
+        <div className="pointer-events-none absolute -top-32 left-1/2 h-64 w-[640px] -translate-x-1/2 rounded-full bg-accent/[.07] blur-[120px]" />
+        <div className="relative">
+          <PageHeader
+            kicker="Serverauswahl"
+            title={`Hey ${user?.globalName ?? user?.username ?? ''}, wo legen wir los?`}
+            description={data && guilds.length === 0
+              ? 'Dein Profil, den Shop und die Ranglisten kannst du immer nutzen – ganz ohne eigenen Server.'
+              : <>Hier siehst du alle Server, auf denen du „Server verwalten“ darfst.{data ? ` Nexo ist auf ${active} von ${guilds.length} aktiv.` : ''}</>}
+            actions={<button className="btn btn-secondary" onClick={refresh}><Icon name="refresh" size={16} /> Aktualisieren</button>}
+          />
+        </div>
+
+        {/* Member area: open to everyone, also without a manageable server. The page's one hero card. */}
+        <Link to="/me" className="card card-hero group relative mb-8 flex flex-wrap items-center gap-5 text-body hover:no-underline">
+          {user && <img src={user.avatarUrl} alt="" className="h-16 w-16 rounded-2xl ring-1 ring-white/15" />}
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[20px]">Mein Profil</h2>
+            <p className="mt-1 text-[14px] text-[#cbc4f0]">Profilkarte gestalten, Kristalle verdienen und im Shop ausgeben, Ranglisten und Erfolge.</p>
+            {profile && (
+              <div className="mt-3 flex flex-wrap gap-2 text-[12.5px]">
+                <span className="rounded-full border border-white/10 bg-white/[.05] px-3 py-1 text-ink"><Kristalle amount={profile.wallet.balance} /></span>
+                {profile.daily.available && <span className="rounded-full border border-white/10 bg-white/[.05] px-3 py-1 text-body"><span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-pos align-middle" />Tagesbonus bereit</span>}
               </div>
-              <div className="actions"><button className="btn btn-secondary" onClick={refresh}><Icon name="refresh" size={16} /> Aktualisieren</button></div>
-            </div>
-            {loading && !data && <Spinner />}
-            {error && <Notice tone="danger">{error}</Notice>}
-            {data && guilds.length === 0 && <Empty title="Keine Server gefunden">Du brauchst auf einem Server die Berechtigung „Server verwalten“.</Empty>}
-            <div className="server-grid">
-              {guilds.map((guild) => (
-                <div className="server-card" key={guild.id}>
-                  <div className="banner" style={guild.iconUrl ? { backgroundImage: `linear-gradient(135deg, rgba(124,92,255,.55), rgba(34,211,238,.35)), url(${guild.iconUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}>
-                    <div className="icon">{guild.iconUrl ? <img src={guild.iconUrl} alt="" /> : guild.name.slice(0, 2)}</div>
-                  </div>
-                  <div className="body">
-                    <div className="name">{guild.name}</div>
+            )}
+          </div>
+          <span className="btn btn-primary">Profil öffnen</span>
+        </Link>
+
+        <div className="relative mt-4">
+          {loading && !data && <div className="center"><Spinner /></div>}
+          {error && <Notice tone="danger">{error}</Notice>}
+          {data && guilds.length === 0 && <Empty title="Keine Server zum Verwalten">Server erscheinen hier, sobald du auf einem die Berechtigung „Server verwalten“ hast. Bis dahin: ab in dein Profil!</Empty>}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {guilds.map((guild) => (
+              <article key={guild.id} className="js-server group relative overflow-hidden rounded-[20px] border border-white/[.06] bg-surface transition duration-300 hover:-translate-y-0.5 hover:border-white/[.14]">
+                <div className="relative h-24 overflow-hidden">
+                  {guild.iconUrl
+                    ? <img src={guild.iconUrl} alt="" className="absolute inset-0 h-full w-full scale-150 object-cover opacity-30 blur-2xl saturate-[.8] transition duration-500 group-hover:scale-[1.7] group-hover:opacity-40" />
+                    : <div className="absolute inset-0 bg-white/[.03]" />}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface" />
+                </div>
+                <div className="relative -mt-10 px-5 pb-5">
+                  <GuildIcon guild={guild} className="h-14 w-14 rounded-2xl text-lg ring-4 ring-surface" />
+                  <div className="mt-3 flex items-center gap-2">
+                    <h3 className="min-w-0 flex-1 truncate text-[15px] font-medium">{guild.name}</h3>
                     {guild.botPresent
-                      ? <Link className="btn btn-primary" to={`/servers/${guild.id}`}>Einrichten</Link>
-                      : <a className="btn btn-secondary" href={guild.inviteUrl ?? '#'}><Icon name="plus" size={16} /> Nexo einladen</a>}
+                      ? <span className="badge badge-on">Aktiv</span>
+                      : <span className="badge badge-off">Nicht eingeladen</span>}
+                  </div>
+                  <div className="mt-4">
+                    {guild.botPresent
+                      ? <Link className="btn btn-primary w-full" to={`/servers/${guild.id}`}>Dashboard öffnen</Link>
+                      : <a className="btn btn-secondary w-full" href={guild.inviteUrl ?? '#'}><Icon name="plus" size={16} /> Nexo einladen</a>}
                   </div>
                 </div>
-              ))}
-            </div>
+              </article>
+            ))}
           </div>
         </div>
       </main>
-      <div className="picker-user"><UserPanel /></div>
     </div>
   );
 }

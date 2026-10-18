@@ -196,6 +196,163 @@ export const indexStatements = [
     `CREATE INDEX IF NOT EXISTS idx_cache_data_expires_at ON ${t.cache_data}(expires_at)`,
 ];
 
+/**
+ * SQL for every schema version after the v1 baseline (labels in config/database/schemaVersion.ts).
+ * Statements must be idempotent: a crashed run is simply repeated.
+ */
+export const migrationStatements: Record<number, string[]> = {
+    // v2 guild-daily-stats: one row per guild and UTC day, written by services/statsTracker.ts.
+    2: [
+        `CREATE TABLE IF NOT EXISTS ${t.guild_daily_stats} (
+            guild_id TEXT NOT NULL,
+            day DATE NOT NULL,
+            joins INTEGER NOT NULL DEFAULT 0,
+            leaves INTEGER NOT NULL DEFAULT 0,
+            messages INTEGER NOT NULL DEFAULT 0,
+            active_members INTEGER NOT NULL DEFAULT 0,
+            voice_minutes INTEGER NOT NULL DEFAULT 0,
+            member_count INTEGER,
+            PRIMARY KEY (guild_id, day)
+        )`,
+    ],
+    // v3 insights-detail: per member, channel and UTC hour (services/statsTracker.ts), purged after DETAIL_RETENTION_DAYS.
+    3: [
+        `CREATE TABLE IF NOT EXISTS ${t.member_daily_stats} (
+            guild_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            day DATE NOT NULL,
+            messages INTEGER NOT NULL DEFAULT 0,
+            voice_minutes INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (guild_id, user_id, day)
+        )`,
+        `CREATE TABLE IF NOT EXISTS ${t.member_hourly_stats} (
+            guild_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            day DATE NOT NULL,
+            hour SMALLINT NOT NULL CHECK (hour BETWEEN 0 AND 23),
+            messages INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (guild_id, user_id, day, hour)
+        )`,
+        `CREATE TABLE IF NOT EXISTS ${t.channel_daily_stats} (
+            guild_id TEXT NOT NULL,
+            channel_id TEXT NOT NULL,
+            day DATE NOT NULL,
+            messages INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (guild_id, channel_id, day)
+        )`,
+        `CREATE TABLE IF NOT EXISTS ${t.guild_hourly_stats} (
+            guild_id TEXT NOT NULL,
+            day DATE NOT NULL,
+            hour SMALLINT NOT NULL CHECK (hour BETWEEN 0 AND 23),
+            messages INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (guild_id, day, hour)
+        )`,
+        // The primary keys cover per-member lookups and guild_hourly_stats; these serve (guild_id, day) range scans.
+        `CREATE INDEX IF NOT EXISTS idx_member_daily_stats_guild_day ON ${t.member_daily_stats}(guild_id, day)`,
+        `CREATE INDEX IF NOT EXISTS idx_member_hourly_stats_guild_day ON ${t.member_hourly_stats}(guild_id, day)`,
+        `CREATE INDEX IF NOT EXISTS idx_channel_daily_stats_guild_day ON ${t.channel_daily_stats}(guild_id, day)`,
+        // Retention purge scans by day across all guilds.
+        `CREATE INDEX IF NOT EXISTS idx_member_daily_stats_day ON ${t.member_daily_stats}(day)`,
+        `CREATE INDEX IF NOT EXISTS idx_member_hourly_stats_day ON ${t.member_hourly_stats}(day)`,
+        `CREATE INDEX IF NOT EXISTS idx_channel_daily_stats_day ON ${t.channel_daily_stats}(day)`,
+        `CREATE INDEX IF NOT EXISTS idx_guild_hourly_stats_day ON ${t.guild_hourly_stats}(day)`,
+    ],
+    // v4 nexo-cosmetics: global Kristalle wallet, cosmetics shop and monthly rankings (services/cosmetics/*).
+    4: [
+        `CREATE TABLE IF NOT EXISTS ${t.user_wallets} (
+            user_id TEXT PRIMARY KEY,
+            balance BIGINT NOT NULL DEFAULT 0 CHECK (balance >= 0),
+            lifetime_earned BIGINT NOT NULL DEFAULT 0,
+            daily_earned INTEGER NOT NULL DEFAULT 0,
+            daily_day DATE,
+            daily_streak INTEGER NOT NULL DEFAULT 0,
+            last_daily_claim DATE,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )`,
+        `CREATE TABLE IF NOT EXISTS ${t.wallet_transactions} (
+            id BIGSERIAL PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            amount BIGINT NOT NULL,
+            reason TEXT NOT NULL,
+            label TEXT NOT NULL,
+            guild_id TEXT,
+            meta JSONB,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )`,
+        `CREATE INDEX IF NOT EXISTS idx_wallet_transactions_user_created ON ${t.wallet_transactions}(user_id, created_at)`,
+        `CREATE INDEX IF NOT EXISTS idx_wallet_transactions_created ON ${t.wallet_transactions}(created_at)`,
+        `CREATE TABLE IF NOT EXISTS ${t.user_inventory} (
+            user_id TEXT NOT NULL,
+            item_id TEXT NOT NULL,
+            source TEXT NOT NULL,
+            acquired_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (user_id, item_id)
+        )`,
+        `CREATE TABLE IF NOT EXISTS ${t.user_profiles} (
+            user_id TEXT PRIMARY KEY,
+            settings JSONB NOT NULL DEFAULT '{}',
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )`,
+        `CREATE TABLE IF NOT EXISTS ${t.shop_items} (
+            id TEXT PRIMARY KEY,
+            slot TEXT NOT NULL,
+            rarity TEXT NOT NULL,
+            price INTEGER NOT NULL DEFAULT 0 CHECK (price >= 0),
+            availability TEXT NOT NULL,
+            event_id TEXT,
+            achievement_id TEXT,
+            active BOOLEAN NOT NULL DEFAULT TRUE,
+            name TEXT NOT NULL,
+            description TEXT NOT NULL DEFAULT '',
+            data JSONB NOT NULL DEFAULT '{}',
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )`,
+        `CREATE TABLE IF NOT EXISTS ${t.shop_events} (
+            id TEXT PRIMARY KEY,
+            kind TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT NOT NULL DEFAULT '',
+            starts_at TIMESTAMPTZ NOT NULL,
+            ends_at TIMESTAMPTZ NOT NULL,
+            discount INTEGER NOT NULL DEFAULT 0 CHECK (discount BETWEEN 0 AND 90),
+            slots JSONB,
+            active BOOLEAN NOT NULL DEFAULT TRUE
+        )`,
+        `CREATE TABLE IF NOT EXISTS ${t.black_market_weeks} (
+            week_start DATE PRIMARY KEY,
+            item_ids JSONB NOT NULL,
+            pinned BOOLEAN NOT NULL DEFAULT FALSE
+        )`,
+        `CREATE TABLE IF NOT EXISTS ${t.monthly_scores} (
+            guild_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            month DATE NOT NULL,
+            minigame_points INTEGER NOT NULL DEFAULT 0,
+            xp_gained BIGINT NOT NULL DEFAULT 0,
+            PRIMARY KEY (guild_id, user_id, month)
+        )`,
+        `CREATE INDEX IF NOT EXISTS idx_monthly_scores_month_guild ON ${t.monthly_scores}(month, guild_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_monthly_scores_user ON ${t.monthly_scores}(user_id)`,
+        `CREATE TABLE IF NOT EXISTS ${t.monthly_payouts} (
+            guild_id TEXT NOT NULL,
+            month DATE NOT NULL,
+            kind TEXT NOT NULL,
+            paid_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (guild_id, month, kind)
+        )`,
+        `CREATE TABLE IF NOT EXISTS ${t.user_achievements} (
+            user_id TEXT NOT NULL,
+            achievement_id TEXT NOT NULL,
+            unlocked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (user_id, achievement_id)
+        )`,
+        `CREATE TABLE IF NOT EXISTS ${t.economy_config} (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            config JSONB NOT NULL DEFAULT '{}'
+        )`,
+    ],
+};
+
 export const UPDATE_TIMESTAMP_FUNCTION = `
     CREATE OR REPLACE FUNCTION update_updated_at_column()
     RETURNS TRIGGER AS $$

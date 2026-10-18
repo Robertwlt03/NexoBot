@@ -5,6 +5,7 @@ import { getEconomyData, setEconomyData } from '../../../utils/economy.js';
 import type { EconomyData } from '../../../utils/economy.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
+import { rewardMinigame } from '../../../services/cosmetics/hooks.js';
 
 const MINE_COOLDOWN = 60 * 60 * 1000;
 const BASE_MIN_REWARD = 400;
@@ -90,6 +91,7 @@ userData.lastMine = now;
                 })
                 .setFooter({ text: `Nächstes Schürfen in 1 Stunde möglich.` });
 
+            await rewardMinigame(embed, interaction.user, guildId, 'mine');
             await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
     }, { command: 'mine' })
 } satisfies Command;

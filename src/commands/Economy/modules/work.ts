@@ -5,6 +5,7 @@ import { getEconomyData, setEconomyData } from '../../../utils/economy.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { logger } from '../../../utils/logger.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
+import { rewardMinigame } from '../../../services/cosmetics/hooks.js';
 import { botConfig } from '../../../config/bot.js';
 
 const WORK_COOLDOWN = botConfig.economy?.cooldowns?.work ?? 30 * 60 * 1000;
@@ -119,6 +120,7 @@ export default {
                     iconURL: interaction.user.displayAvatarURL(),
                 });
 
+            await rewardMinigame(embed, interaction.user, guildId, 'work');
             await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
     }, { command: 'work' })
 } satisfies Command;

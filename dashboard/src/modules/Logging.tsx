@@ -18,7 +18,7 @@ function UserIdList({ value, names, onChange }: { value: string[]; names: Record
     setDraft('');
   };
   return (
-    <div className="stack" style={{ gap: 8 }}>
+    <div className="flex flex-col gap-2">
       {value.length > 0 && (
         <div className="chips">
           {value.map((id) => (
@@ -53,7 +53,7 @@ export default function LoggingPage() {
               </Card>
 
               <Card icon="hash" title="Log-Kanäle" description="Nexo braucht dort „Kanal ansehen“, „Nachrichten senden“ und „Links einbetten“.">
-                <div className="grid">
+                <div className="auto-grid">
                   {LOG_DESTINATIONS.map((dest) => (
                     <Field key={dest} label={DESTINATIONS[dest].label} hint={DESTINATIONS[dest].hint}>
                       <ChannelSelect value={value.channels[dest]} placeholder="Kein Kanal" onChange={(channelId) =>
@@ -64,13 +64,13 @@ export default function LoggingPage() {
               </Card>
 
               <Card icon="check" title="Ereignisse" description={value.enabled ? "Wähle aus, welche Ereignisse protokolliert werden." : "Wähle aus, welche Ereignisse protokolliert werden. Greift erst, wenn das Logging an ist."}>
-                <div className="grid">
+                <div className="auto-grid">
                   {value.categories.map((category) => {
                     const types = category.events.map((event) => event.type);
                     const allOn = types.every((type) => value.events[type]);
                     return (
-                      <div key={category.key} className="stack" style={{ gap: 4 }}>
-                        <div className="row" style={{ justifyContent: 'space-between' }}>
+                      <div key={category.key} className="flex flex-col gap-1">
+                        <div className="row justify-between">
                           <div>
                             <h3>{category.label}</h3>
                             <span className="faint">→ {DESTINATIONS[category.destination].label}</span>

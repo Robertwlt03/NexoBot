@@ -37,7 +37,7 @@ export default function BirthdaysPage() {
                 </Field>
               </div>
               {!value.channelId && value.roleId && (
-                <div style={{ marginTop: 14 }}><Notice tone="warn">Ohne Geburtstagskanal läuft die tägliche Prüfung nicht – die Rolle wird dann auch nicht vergeben.</Notice></div>
+                <div className="mt-4"><Notice tone="warn">Ohne Geburtstagskanal läuft die tägliche Prüfung nicht – die Rolle wird dann auch nicht vergeben.</Notice></div>
               )}
             </Card>
 
@@ -60,7 +60,7 @@ export default function BirthdaysPage() {
                   {value.entries.map((entry) => (
                     <div className="list-item" key={entry.userId}>
                       <div className="grow"><div className="title">{entry.name}</div><div className="faint">{formatDay(entry)}</div></div>
-                      <button type="button" className="btn btn-sm btn-ghost" aria-label={`Geburtstag von ${entry.name} entfernen`} disabled={busy !== null} onClick={() => remove(entry)}>
+                      <button type="button" className="btn btn-ghost btn-sm" aria-label={`Geburtstag von ${entry.name} entfernen`} disabled={busy !== null} onClick={() => remove(entry)}>
                         <Icon name="trash" size={16} />
                       </button>
                     </div>

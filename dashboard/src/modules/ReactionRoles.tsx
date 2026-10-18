@@ -2,8 +2,9 @@ import { useState } from 'react';
 import type { CreateReactionRolePanel, ReactionRolePanel, ReactionRolesData } from '../../../src/web/dto/reactionroles';
 import { DESCRIPTION_MAX, MAX_PANELS, MAX_ROLES, TITLE_MAX } from '../../../src/web/dto/reactionroles';
 import { api, useApi, useGuild, useToast } from '../api';
+import { useConfirm } from '../components/ConfirmDialog';
 import {
-  Badge, Card, ChannelSelect, Empty, Field, MessagePreview, Modal, MultiRoleSelect, Notice, PageHeader, RoleSelect,
+  Actions, Badge, Card, ChannelSelect, Empty, Field, MessagePreview, Modal, MultiRoleSelect, Notice, PageHeader, RoleSelect,
   Spinner, TextArea, TextInput,
 } from '../components/ui';
 import { Icon } from '../icons';
@@ -13,8 +14,6 @@ const STATUS: Record<ReactionRolePanel['status'], { text: string; on: boolean }>
   deleted: { text: 'Nachricht gelöscht', on: false },
   channel_missing: { text: 'Kanal fehlt', on: false },
 };
-
-interface Confirm { title: string; text: string; danger: string; run: () => Promise<void> }
 
 function PanelEditor({ initial, onCancel, onSave, busy, withRoles }: {
   initial: CreateReactionRolePanel; onCancel: () => void; onSave: (value: CreateReactionRolePanel) => void; busy: boolean; withRoles: boolean;
@@ -26,7 +25,7 @@ function PanelEditor({ initial, onCancel, onSave, busy, withRoles }: {
   return (
     <Modal title={withRoles ? 'Panel erstellen' : 'Panel-Text bearbeiten'} onClose={onCancel} footer={(
       <>
-        <button type="button" className="btn btn-ghost" onClick={onCancel}>Abbrechen</button>
+        <button type="button" className="btn btn-secondary" onClick={onCancel}>Abbrechen</button>
         <button type="button" className="btn btn-primary" disabled={busy} onClick={() => onSave(value)}>{withRoles ? 'Panel posten' : 'Speichern'}</button>
       </>
     )}>
@@ -65,7 +64,7 @@ function PanelCard({ panel, busy, onAddRole, onRemoveRole, onEdit, onRepost, onD
       right={<Badge on={status.on}>{status.text}</Badge>}>
       <div className="stack">
         {panel.legacy && <Notice>Altes Reaktions-Panel (Emojis). Du kannst es hier nur löschen.</Notice>}
-        {panel.description && <p className="muted" style={{ whiteSpace: 'pre-wrap' }}>{panel.description}</p>}
+        {panel.description && <p className="muted whitespace-pre-wrap">{panel.description}</p>}
         <div className="field">
           <span className="field-label">Rollen ({panel.roleIds.length}/{MAX_ROLES})</span>
           <div className="chips">
@@ -84,23 +83,21 @@ function PanelCard({ panel, busy, onAddRole, onRemoveRole, onEdit, onRepost, onD
         {editable && panel.roleIds.length < MAX_ROLES && (
           <RoleSelect value={null} assignableOnly placeholder="Rolle hinzufügen" onChange={(id) => id && onAddRole(id)} />
         )}
-        <div className="row">
-          {panel.url && (
-            <a className="btn btn-ghost btn-sm" href={panel.url} target="_blank" rel="noreferrer"><Icon name="external" size={14} />Nachricht öffnen</a>
-          )}
-          <div className="row" style={{ marginLeft: 'auto' }}>
-            {editable && (
-              <button type="button" className="btn btn-secondary btn-sm" disabled={busy || panel.status !== 'ok'} onClick={onEdit}>Text bearbeiten</button>
-            )}
-            {editable && (
-              <button type="button" className="btn btn-secondary btn-sm" disabled={busy || panel.status === 'channel_missing'} onClick={onRepost}>
-                <Icon name="refresh" size={14} />Neu posten
-              </button>
-            )}
-            <button type="button" className="btn btn-danger btn-sm" disabled={busy} onClick={onDelete}><Icon name="trash" size={14} />Löschen</button>
-          </div>
-        </div>
       </div>
+      <Actions>
+        {panel.url && (
+          <a className="btn btn-ghost btn-sm mr-auto" href={panel.url} target="_blank" rel="noreferrer"><Icon name="external" size={14} />Nachricht öffnen</a>
+        )}
+        {editable && (
+          <button type="button" className="btn btn-secondary btn-sm" disabled={busy || panel.status !== 'ok'} onClick={onEdit}>Text bearbeiten</button>
+        )}
+        {editable && (
+          <button type="button" className="btn btn-secondary btn-sm" disabled={busy || panel.status === 'channel_missing'} onClick={onRepost}>
+            <Icon name="refresh" size={14} />Neu posten
+          </button>
+        )}
+        <button type="button" className="btn btn-danger btn-sm" disabled={busy} onClick={onDelete}><Icon name="trash" size={14} />Löschen</button>
+      </Actions>
     </Card>
   );
 }
@@ -113,7 +110,7 @@ export default function ReactionRolesPage() {
   const [busy, setBusy] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ReactionRolePanel | null>(null);
-  const [confirm, setConfirm] = useState<Confirm | null>(null);
+  const { confirm, dialog } = useConfirm();
 
   const mutate = async (method: string, path: string, body: unknown, success: string): Promise<boolean> => {
     setBusy(true);
@@ -145,8 +142,8 @@ export default function ReactionRolesPage() {
       {loading && !data && <Spinner />}
       {error && !data && <Notice tone="danger">{error}</Notice>}
       {data && (
-        <div className="stack">
-          <span className="faint">{panels.length}/{MAX_PANELS} Panels · bis zu {MAX_ROLES} Rollen pro Panel</span>
+        <>
+          <p className="faint mb-4">{panels.length}/{MAX_PANELS} Panels · bis zu {MAX_ROLES} Rollen pro Panel</p>
           {panels.length === 0 && (
             <Card><Empty title="Noch keine Panels">Erstelle ein Panel, damit sich Mitglieder ihre Rollen selbst geben können.</Empty></Card>
           )}
@@ -156,13 +153,13 @@ export default function ReactionRolesPage() {
               onRemoveRole={(roleId) => {
                 const last = panel.roleIds.length === 1;
                 const name = guild.roles.find((r) => r.id === roleId)?.name ?? 'diese Rolle';
-                setConfirm({
-                  title: 'Rolle entfernen',
+                confirm({
+                  title: 'Rolle entfernen?',
                   text: last
                     ? `@${name} ist die letzte Rolle im Panel. Wenn du sie entfernst, wird das ganze Panel samt Nachricht gelöscht.`
                     : `@${name} aus dem Panel entfernen? Mitglieder behalten die Rolle, können sie aber nicht mehr selbst wählen.`,
-                  danger: last ? 'Rolle und Panel löschen' : 'Entfernen',
-                  run: async () => {
+                  confirmLabel: last ? 'Rolle und Panel löschen' : 'Entfernen',
+                  onConfirm: async () => {
                     await mutate('DELETE', `/${panel.messageId}/roles/${roleId}`, undefined,
                       last ? 'Das war die letzte Rolle im Panel. Das Panel wurde gelöscht.' : 'Rolle entfernt.');
                   },
@@ -170,15 +167,15 @@ export default function ReactionRolesPage() {
               }}
               onEdit={() => setEditing(panel)}
               onRepost={() => void mutate('POST', `/${panel.messageId}/repost`, {}, 'Panel erneut gepostet.')}
-              onDelete={() => setConfirm({
-                title: 'Panel löschen',
+              onDelete={() => confirm({
+                title: 'Panel löschen?',
                 text: `Du bist dabei, das Panel „${panel.title || 'Panel ohne Titel'}“ dauerhaft zu löschen. Dabei werden die Discord-Nachricht und alle zugehörigen Reaktionsrollen-Zuweisungen entfernt.`,
-                danger: 'Endgültig löschen',
-                run: async () => { await mutate('DELETE', `/${panel.messageId}`, undefined, 'Panel gelöscht.'); },
+                confirmLabel: 'Endgültig löschen',
+                onConfirm: async () => { await mutate('DELETE', `/${panel.messageId}`, undefined, 'Panel gelöscht.'); },
               })}
             />
           ))}
-        </div>
+        </>
       )}
 
       {creating && (
@@ -194,17 +191,7 @@ export default function ReactionRolesPage() {
             if (await mutate('PATCH', `/${editing.messageId}`, { title: value.title, description: value.description }, 'Titel und Beschreibung wurden aktualisiert.')) setEditing(null);
           }} />
       )}
-      {confirm && (
-        <Modal title={confirm.title} onClose={() => setConfirm(null)} footer={(
-          <>
-            <button type="button" className="btn btn-ghost" onClick={() => setConfirm(null)}>Abbrechen</button>
-            <button type="button" className="btn btn-danger" disabled={busy}
-              onClick={async () => { await confirm.run(); setConfirm(null); }}>{confirm.danger}</button>
-          </>
-        )}>
-          <p>{confirm.text}</p>
-        </Modal>
-      )}
+      {dialog}
     </>
   );
 }

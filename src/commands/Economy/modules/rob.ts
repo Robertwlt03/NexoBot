@@ -4,6 +4,7 @@ import { successEmbed, warningEmbed, buildUserErrorEmbed } from '../../../utils/
 import { getEconomyData, setEconomyData } from '../../../utils/economy.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
+import { rewardMinigame } from '../../../services/cosmetics/hooks.js';
 import { BotConfig } from '../../../config/bot.js';
 
 const ROB_COOLDOWN = BotConfig.economy?.cooldowns?.rob ?? 4 * 60 * 60 * 1000;
@@ -150,6 +151,7 @@ export default {
                 )
                 .setFooter({ text: `Nächster Raub in ${Math.ceil(ROB_COOLDOWN / (60 * 60 * 1000))} Stunden möglich.` });
 
+            if (isSuccessful) await rewardMinigame(resultEmbed, interaction.user, guildId, 'rob');
             await InteractionHelper.safeEditReply(interaction, { embeds: [resultEmbed] });
     }, { command: 'rob' })
 } satisfies Command;

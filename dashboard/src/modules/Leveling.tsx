@@ -5,9 +5,10 @@ import type {
 import { LEVEL_UP_PLACEHOLDERS, LEVELING_LEADERBOARD_MAX, LEVELING_MAX_LEVEL } from '../../../src/web/dto/leveling';
 import { api, useAction, useApi, useGuild, useSettings, useToast, useUser } from '../api';
 import {
-  Card, ChannelSelect, Field, MessagePreview, Modal, MultiChannelSelect, MultiRoleSelect, Notice, NumberInput, PageHeader,
+  Actions, Card, ChannelSelect, Field, MessagePreview, MultiChannelSelect, MultiRoleSelect, Notice, NumberInput, PageHeader,
   RoleSelect, Select, SettingsPage, SwitchRow, TextArea,
 } from '../components/ui';
+import { useConfirm } from '../components/ConfirmDialog';
 import { Icon } from '../icons';
 import { RankList, isUserId } from './rankingKit';
 
@@ -15,29 +16,31 @@ function RewardsEditor({ value, onChange }: { value: LevelRoleReward[]; onChange
   const update = (index: number, patch: Partial<LevelRoleReward>) => onChange(value.map((reward, i) => (i === index ? { ...reward, ...patch } : reward)));
   const nextLevel = Math.min(500, (value.reduce((max, reward) => Math.max(max, reward.level || 0), 0)) + 5);
   return (
-    <div className="stack" style={{ gap: 10 }}>
-      {value.length === 0 && <p className="faint">Noch keine Rollen-Belohnungen.</p>}
-      {value.map((reward, index) => (
-        <div className="row" key={index} style={{ flexWrap: 'nowrap' }}>
-          <span className="faint" style={{ whiteSpace: 'nowrap' }}>Ab Level</span>
-          <div style={{ width: 110, flexShrink: 0 }}>
-            <NumberInput value={reward.level} min={1} max={500} onChange={(level) => update(index, { level })} />
+    <>
+      <div className="stack">
+        {value.length === 0 && <p className="faint">Noch keine Rollen-Belohnungen.</p>}
+        {value.map((reward, index) => (
+          <div className="flex items-center gap-3" key={index}>
+            <span className="faint whitespace-nowrap">Ab Level</span>
+            <div className="w-[110px] shrink-0">
+              <NumberInput value={reward.level} min={1} max={500} onChange={(level) => update(index, { level })} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <RoleSelect value={reward.roleId} assignableOnly onChange={(roleId) => update(index, { roleId: roleId ?? '' })} />
+            </div>
+            <button type="button" className="btn btn-ghost btn-sm" aria-label="Belohnung entfernen" onClick={() => onChange(value.filter((_, i) => i !== index))}>
+              <Icon name="trash" size={16} />
+            </button>
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <RoleSelect value={reward.roleId} assignableOnly onChange={(roleId) => update(index, { roleId: roleId ?? '' })} />
-          </div>
-          <button type="button" className="icon-btn" aria-label="Belohnung entfernen" onClick={() => onChange(value.filter((_, i) => i !== index))}>
-            <Icon name="trash" size={18} />
-          </button>
-        </div>
-      ))}
-      <div>
+        ))}
+      </div>
+      <Actions align="start">
         <button type="button" className="btn btn-secondary btn-sm" disabled={value.length >= 100}
           onClick={() => onChange([...value, { level: nextLevel, roleId: '' }])}>
           <Icon name="plus" size={16} /> Belohnung hinzufügen
         </button>
-      </div>
-    </div>
+      </Actions>
+    </>
   );
 }
 
@@ -56,7 +59,7 @@ function MemberTools({ initialId, disabled, onChanged }: { initialId: string; di
   const [loading, setLoading] = useState(false);
   const [action, setAction] = useState<LevelingMemberAction>('add');
   const [amount, setAmount] = useState(1);
-  const [confirm, setConfirm] = useState(false);
+  const { confirm, dialog } = useConfirm();
 
   const load = async (id: string) => {
     if (!isUserId(id)) { toast('Bitte gib eine gültige Nutzer-ID ein.', true); return; }
@@ -73,7 +76,6 @@ function MemberTools({ initialId, disabled, onChanged }: { initialId: string; di
   useEffect(() => { if (initialId) void load(initialId); }, []);
 
   const execute = async () => {
-    setConfirm(false);
     if (!member) return;
     const result = await run<LevelingMember>(`/guilds/${guild.id}/leveling/members/${member.userId}`, { action, amount }, 'Level aktualisiert.');
     if (result) { setMember(result); onChanged(); }
@@ -86,8 +88,8 @@ function MemberTools({ initialId, disabled, onChanged }: { initialId: string; di
 
   return (
     <Card icon="users" title="Mitglied bearbeiten" description="Setze Level oder gib/zieh Level ab – wie /levelset, /leveladd und /levelremove.">
-      {disabled && <div style={{ marginBottom: 14 }}><Notice tone="warn">Das Leveling ist deaktiviert. Level lassen sich erst ändern, wenn es aktiv und gespeichert ist.</Notice></div>}
       <div className="stack">
+        {disabled && <Notice tone="warn">Das Leveling ist deaktiviert. Level lassen sich erst ändern, wenn es aktiv und gespeichert ist.</Notice>}
         <Field label="Nutzer-ID" hint="Rechtsklick auf ein Mitglied → „Nutzer-ID kopieren“ (Entwicklermodus) oder in der Bestenliste auf „Bearbeiten“ klicken.">
           <div className="input-group">
             <input className="input" value={userId} placeholder="z. B. 123456789012345678" onChange={(e) => setUserId(e.target.value)}
@@ -98,7 +100,7 @@ function MemberTools({ initialId, disabled, onChanged }: { initialId: string; di
         {member && (
           <>
             <div className="list-item">
-              <img src={member.avatarUrl ?? 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" width={40} height={40} style={{ borderRadius: '50%' }} />
+              <img src={member.avatarUrl ?? 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" className="h-8 w-8 rounded-full" />
               <div className="grow">
                 <div className="title">{member.name}</div>
                 <div className="faint">Level {member.level} · {member.xp.toLocaleString('de-DE')} XP im Level · {member.totalXp.toLocaleString('de-DE')} XP gesamt</div>
@@ -110,25 +112,22 @@ function MemberTools({ initialId, disabled, onChanged }: { initialId: string; di
                 <NumberInput value={amount} min={min} max={LEVELING_MAX_LEVEL} onChange={setAmount} />
               </Field>
             </div>
-            <div>
-              <button type="button" className={`btn ${action === 'add' ? 'btn-primary' : 'btn-danger'}`} disabled={!amountValid || busy !== null || disabled}
-                onClick={() => (action === 'add' ? void execute() : setConfirm(true))}>
-                {ACTIONS.find((a) => a.value === action)?.label}
-              </button>
-            </div>
           </>
         )}
       </div>
-      {confirm && (
-        <Modal title="Bist du sicher?" onClose={() => setConfirm(false)} footer={(
-          <>
-            <button type="button" className="btn btn-ghost" onClick={() => setConfirm(false)}>Abbrechen</button>
-            <button type="button" className="btn btn-danger" onClick={() => void execute()}>Bestätigen</button>
-          </>
-        )}>
-          <p className="muted">{summary} Das lässt sich nicht automatisch rückgängig machen.</p>
-        </Modal>
+      {member && (
+        <Actions>
+          <button type="button" className={`btn ${action === 'add' ? 'btn-primary' : 'btn-danger'}`} disabled={!amountValid || busy !== null || disabled}
+            onClick={() => (action === 'add' ? void execute() : confirm({
+              title: 'Bist du sicher?', confirmLabel: 'Bestätigen',
+              text: `${summary} Das lässt sich nicht automatisch rückgängig machen.`,
+              onConfirm: execute,
+            }))}>
+            {ACTIONS.find((a) => a.value === action)?.label}
+          </button>
+        </Actions>
       )}
+      {dialog}
     </Card>
   );
 }
@@ -139,7 +138,7 @@ function Leaderboard({ version, onSelect }: { version: number; onSelect: (userId
   const board = useApi<LevelingLeaderboard>(`/guilds/${guild.id}/leveling/leaderboard?page=${page}&v=${version}`);
   return (
     <Card icon="stats" title="Bestenliste" description={`Die aktivsten Mitglieder nach Gesamt-XP (Top ${LEVELING_LEADERBOARD_MAX}).`}
-      right={<button type="button" className="btn btn-ghost btn-sm" onClick={board.reload}><Icon name="refresh" size={16} /> Aktualisieren</button>}>
+      right={<button type="button" className="btn btn-secondary btn-sm" onClick={board.reload}><Icon name="refresh" size={16} /> Aktualisieren</button>}>
       <RankList
         rows={board.data?.entries.map((entry) => ({
           ...entry,
@@ -183,7 +182,7 @@ export default function LevelingPage() {
             </Card>
 
             <Card icon="settings" title="XP-Vergabe" description="Pro Nachricht gibt es eine zufällige Menge XP im gewählten Bereich." disabled={!value.enabled}>
-              <div className="grid">
+              <div className="auto-grid">
                 <Field label="Minimale XP" error={value.xpMin > value.xpMax ? 'Darf nicht größer als die maximalen XP sein.' : null}>
                   <NumberInput value={value.xpMin} min={1} max={500} onChange={(xpMin) => settings.set({ xpMin })} />
                 </Field>
@@ -240,7 +239,7 @@ export default function LevelingPage() {
             </Card>
 
             <Leaderboard version={version} onSelect={(userId) => { setSelected(userId); document.getElementById('level-member-tools')?.scrollIntoView({ behavior: 'smooth' }); }} />
-            <div id="level-member-tools" style={{ marginTop: 16 }}>
+            <div id="level-member-tools" className="mt-4">
               <MemberTools key={selected} initialId={selected} disabled={!value.enabled}
                 onChanged={() => setVersion((v) => v + 1)} />
             </div>

@@ -1,22 +1,22 @@
 import { useState } from 'react';
 import type { CommandCategory, CommandEntry, CommandsOverview } from '../../../src/web/dto/commands';
 import { useAction, useApi, useGuild } from '../api';
-import { Badge, Empty, Modal, Notice, PageHeader, Spinner, Switch } from '../components/ui';
-import './Commands.css';
+import { useConfirm } from '../components/ConfirmDialog';
+import { Badge, Card, Empty, Notice, PageHeader, Spinner, Switch } from '../components/ui';
 
 function CommandRow({ command, category, busy, onToggle }: {
   command: CommandEntry; category: CommandCategory; busy: boolean; onToggle: (enabled: boolean) => void;
 }) {
   const inherited = !command.enabled && !command.disabledDirectly;
   return (
-    <div className="list-item cmd-row" style={{ marginLeft: command.depth * 24 }}>
+    <div className="list-item" style={{ marginLeft: command.depth * 24 }}>
       <div className="grow">
-        <div className="row" style={{ gap: 8 }}>
-          <code>/{command.name}</code>
+        <div className="flex flex-wrap items-center gap-2">
+          <code className="text-(--text-strong)">/{command.name}</code>
           {command.locked && <Badge>Geschützt</Badge>}
           {inherited && <span className="faint">Aus über {category.disabled ? 'die Kategorie' : 'den übergeordneten Command'}</span>}
         </div>
-        <div className="desc">{command.description}</div>
+        <div className="faint">{command.description}</div>
       </div>
       <Switch checked={command.enabled} disabled={busy || command.locked || inherited} label={`/${command.name}`} onChange={onToggle} />
     </div>
@@ -29,7 +29,7 @@ export default function CommandsPage() {
   const { data, setData, error, loading } = useApi<CommandsOverview>(base);
   const { run, busy } = useAction();
   const [query, setQuery] = useState('');
-  const [resetTarget, setResetTarget] = useState<CommandCategory | null>(null);
+  const { confirm, dialog } = useConfirm();
 
   const act = async (action: string, body: unknown, success: string) => {
     const result = await run<CommandsOverview>(`${base}/actions/${action}`, body, success);
@@ -53,30 +53,35 @@ export default function CommandsPage() {
   return (
     <>
       {header}
-      <div className="card">
-        <div className="row" style={{ justifyContent: 'space-between' }}>
-          <input className="input" style={{ maxWidth: 360 }} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Command suchen, z. B. ban oder msg notes" />
+      <Card>
+        <div className="row justify-between">
+          <input className="input max-w-[360px]" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Command suchen, z. B. ban oder msg notes" />
           <span className="muted"><strong>{data.enabledTotal}/{data.totalCommands}</strong> Einträge aktiv · Änderungen gelten sofort.</span>
         </div>
-      </div>
+      </Card>
 
-      {categories.length === 0 && <div className="card"><Empty title="Nichts gefunden">Kein Command passt zu „{query}“.</Empty></div>}
+      {categories.length === 0 && <Card><Empty title="Nichts gefunden">Kein Command passt zu „{query}“.</Empty></Card>}
 
       {categories.map(({ category, commands }) => (
-        <details key={category.key} className="card cmd-category" open={q ? true : undefined}>
-          <summary>
-            <span style={{ fontSize: 20 }}>{category.icon}</span>
-            <div className="grow">
+        <details key={category.key} className="card group" open={q ? true : undefined}>
+          <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden before:text-xl before:leading-none before:text-(--text-faint) before:transition-transform before:content-['›'] group-open:before:rotate-90">
+            <span className="text-xl">{category.icon}</span>
+            <div className="min-w-0 flex-1">
               <h3>{category.name}</h3>
               <span className="faint">{category.disabled ? 'Kategorie ist aus' : `${category.enabledCount}/${category.totalCount} aktiv`}</span>
             </div>
             <span className="row" onClick={(e) => e.preventDefault()}>
-              <button type="button" className="btn btn-ghost btn-sm" disabled={busy !== null} onClick={() => setResetTarget(category)}>Zurücksetzen</button>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={busy !== null} onClick={() => confirm({
+                title: `${category.name} zurücksetzen?`,
+                text: 'Die Kategorie wird eingeschaltet und alle einzeln ausgeschalteten Commands darin wieder aktiviert.',
+                confirmLabel: 'Zurücksetzen',
+                onConfirm: () => act('reset', { key: category.key }, `${category.name} wurde zurückgesetzt.`),
+              })}>Zurücksetzen</button>
               <Switch checked={!category.disabled} disabled={busy !== null} label={`Kategorie ${category.name}`}
                 onChange={(enabled) => act('category', { key: category.key, enabled }, enabled ? `${category.name} ist jetzt an.` : `${category.name} ist jetzt aus.`)} />
             </span>
           </summary>
-          <div className="list">
+          <div className="list mt-4">
             {commands.map((command) => (
               <CommandRow key={command.name} command={command} category={category} busy={busy !== null}
                 onToggle={(enabled) => act('command', { name: command.name, enabled }, enabled ? `/${command.name} ist jetzt an.` : `/${command.name} ist jetzt aus.`)} />
@@ -85,18 +90,7 @@ export default function CommandsPage() {
         </details>
       ))}
 
-      {resetTarget && (
-        <Modal title={`${resetTarget.name} zurücksetzen?`} onClose={() => setResetTarget(null)}
-          footer={<>
-            <button type="button" className="btn btn-ghost" onClick={() => setResetTarget(null)}>Abbrechen</button>
-            <button type="button" className="btn btn-danger" disabled={busy !== null} onClick={async () => {
-              await act('reset', { key: resetTarget.key }, `${resetTarget.name} wurde zurückgesetzt.`);
-              setResetTarget(null);
-            }}>Zurücksetzen</button>
-          </>}>
-          <p className="muted">Die Kategorie wird eingeschaltet und alle einzeln ausgeschalteten Commands darin wieder aktiviert.</p>
-        </Modal>
-      )}
+      {dialog}
     </>
   );
 }

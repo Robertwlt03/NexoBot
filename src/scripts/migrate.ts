@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { logger } from '../utils/logger.js';
 import { getEnv } from '../config/env.js';
-import { EXPECTED_SCHEMA_LABEL, EXPECTED_SCHEMA_VERSION } from '../config/database/schemaVersion.js';
+import { EXPECTED_SCHEMA_LABEL, EXPECTED_SCHEMA_VERSION, pendingSchemaVersions } from '../config/database/schemaVersion.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
@@ -19,6 +19,7 @@ const {
   indexStatements,
   UPDATE_TIMESTAMP_FUNCTION,
   triggerDefinitions,
+  migrationStatements,
 } = await import('../utils/database/schema.js');
 const { assertAllowlistedIdentifier, quoteIdentifier } = await import('../utils/sqlIdentifiers.js');
 
@@ -54,15 +55,22 @@ const ensureMigrationLedger = async (client: PoolClient): Promise<void> => {
   `);
 };
 
-const recordSchemaVersion = async (client: PoolClient): Promise<void> => {
-  await ensureMigrationLedger(client);
-  await client.query(
-    `INSERT INTO ${migrationTable} (version, label)
-     VALUES ($1, $2)
-     ON CONFLICT (version)
-     DO UPDATE SET label = EXCLUDED.label, applied_at = CURRENT_TIMESTAMP`,
-    [EXPECTED_SCHEMA_VERSION, EXPECTED_SCHEMA_LABEL]
-  );
+/** Runs every schema version after the recorded one (SQL from utils/database/schema.ts) and records each. */
+const applySchemaVersions = async (client: PoolClient): Promise<void> => {
+  const current = await getCurrentSchemaVersion(client);
+  for (const { version, label } of pendingSchemaVersions(current ? Number(current.version) : 0)) {
+    for (const statement of migrationStatements[version] ?? []) {
+      await client.query(statement);
+    }
+    await client.query(
+      `INSERT INTO ${migrationTable} (version, label)
+       VALUES ($1, $2)
+       ON CONFLICT (version)
+       DO UPDATE SET label = EXCLUDED.label, applied_at = CURRENT_TIMESTAMP`,
+      [version, label]
+    );
+    logger.info(`📌 Applied schema version v${version} (${label})`);
+  }
 };
 
 const getCurrentSchemaVersion = async (client: PoolClient): Promise<SchemaMigrationRow | null> => {
@@ -149,7 +157,7 @@ const migrate = async () => {
     await createTables(client);
     await createIndexes(client);
     await createTriggers(client);
-    await recordSchemaVersion(client);
+    await applySchemaVersions(client);
 
     logger.info('✨ Migration completed successfully!');
     logger.info(`📌 Schema version recorded: v${EXPECTED_SCHEMA_VERSION} (${EXPECTED_SCHEMA_LABEL})`);

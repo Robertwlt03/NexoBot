@@ -39,6 +39,8 @@ export interface GuildConfigExtras {
   maxTicketsPerUser?: number;
   tickets?: { enablePriority?: boolean };
   automod?: { alertChannelId?: string | null; exemptRoleIds?: string[]; exemptChannelIds?: string[] };
+  /** Statistiken: per-member activity is recorded unless memberTracking is false (default true). */
+  insights?: { memberTracking?: boolean };
 }
 
 /** Stored per-guild configuration (passthrough: unknown keys are kept). */

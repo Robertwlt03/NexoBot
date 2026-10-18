@@ -6,19 +6,20 @@ import {
   APPLICATION_NAME_MAX_LENGTH, MAX_QUESTIONS, QUESTION_MAX_LENGTH, REVIEW_REASON_MAX_LENGTH,
 } from '../../../src/web/dto/applications';
 import { api, useAction, useApi, useGuild, useSettings, useToast } from '../api';
+import { useConfirm } from '../components/ConfirmDialog';
 import {
-  Badge, Card, ChannelSelect, Empty, Field, Modal, MultiRoleSelect, Notice, NumberInput, PageHeader, RoleSelect,
+  Badge, Card, ChannelSelect, Empty, Field, Modal, MultiRoleSelect, Notice, NumberInput, PageHeader, Pager, RoleSelect,
   Select, SettingsPage, Spinner, Switch, SwitchRow, TextArea, TextInput,
 } from '../components/ui';
 import { Icon } from '../icons';
 
 function QuestionsEditor({ value, onChange }: { value: string[]; onChange: (value: string[]) => void }) {
   return (
-    <div className="stack" style={{ gap: 8 }}>
+    <div className="flex flex-col gap-2">
       {value.map((question, index) => (
-        <div className="row" key={index} style={{ flexWrap: 'nowrap' }}>
-          <span className="faint" style={{ width: 20 }}>{index + 1}.</span>
-          <div style={{ flex: 1 }}>
+        <div className="flex items-center gap-3" key={index}>
+          <span className="faint w-5">{index + 1}.</span>
+          <div className="flex-1">
             <TextInput value={question} maxLength={QUESTION_MAX_LENGTH} placeholder="Frage eingeben"
               onChange={(text) => onChange(value.map((q, i) => (i === index ? text : q)))} />
           </div>
@@ -41,10 +42,10 @@ function RoleEditor({ value, globalQuestions, onChange, onDelete, locked }: {
   const role = guild.roles.find((r) => r.id === value.roleId);
   const set = (patch: Partial<ApplicationRoleConfig>) => onChange({ ...value, ...patch });
   return (
-    <div className="card" style={{ background: 'var(--bg-input)' }}>
-      <div className="row" style={{ justifyContent: 'space-between' }}>
+    <div className="rounded-xl border border-(--border) bg-(--bg-input) p-5">
+      <div className="row justify-between">
         <div>
-          <div className="title" style={{ fontWeight: 600 }}>{value.name}</div>
+          <div className="font-semibold text-(--text-strong)">{value.name}</div>
           <span className="faint">{role ? `@${role.name}` : 'Rolle gelöscht'} · /apply submit application:{value.name}</span>
         </div>
         <div className="row">
@@ -54,8 +55,8 @@ function RoleEditor({ value, globalQuestions, onChange, onDelete, locked }: {
             title={locked ? 'Speichere zuerst deine Änderungen.' : undefined}><Icon name="trash" size={18} /></button>
         </div>
       </div>
-      {!role && <div style={{ marginTop: 12 }}><Notice tone="warn">Die Discord-Rolle existiert nicht mehr. Annehmen klappt erst, wenn du die Bewerbung neu anlegst.</Notice></div>}
-      <div className="stack" style={{ marginTop: 14 }}>
+      {!role && <div className="mt-3"><Notice tone="warn">Die Discord-Rolle existiert nicht mehr. Annehmen klappt erst, wenn du die Bewerbung neu anlegst.</Notice></div>}
+      <div className="stack mt-4">
         <Field label="Log-Kanal">
           <ChannelSelect value={value.logChannelId} onChange={(logChannelId) => set({ logChannelId })} placeholder="Globalen Log-Kanal nutzen" />
         </Field>
@@ -168,21 +169,21 @@ function Submissions() {
       {data && data.items.length > 0 && (
         <div className="list">
           {data.items.map((entry) => (
-            <div key={entry.id} className="list-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-              <div className="row" style={{ flexWrap: 'nowrap', cursor: 'pointer' }} onClick={() => setOpen(open === entry.id ? null : entry.id)}>
-                {entry.avatarUrl && <img src={entry.avatarUrl} alt="" width={32} height={32} style={{ borderRadius: '50%' }} />}
-                <div className="grow" style={{ flex: 1, minWidth: 0 }}>
+            <div key={entry.id} className="list-item flex-col items-stretch!">
+              <div className="flex cursor-pointer items-center gap-3" onClick={() => setOpen(open === entry.id ? null : entry.id)}>
+                {entry.avatarUrl && <img src={entry.avatarUrl} alt="" className="h-8 w-8 rounded-full" />}
+                <div className="grow">
                   <div className="title">{entry.userName} · {entry.roleName}</div>
                   <span className="faint">{new Date(entry.createdAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })} · ID {entry.id}</span>
                 </div>
                 <StatusBadge status={entry.status} />
               </div>
               {open === entry.id && (
-                <div className="stack" style={{ marginTop: 12, gap: 10 }}>
+                <div className="mt-3 flex flex-col gap-2.5">
                   {entry.answers.map((answer, index) => (
                     <div key={index}>
                       <div className="faint">{index + 1}. {answer.question}</div>
-                      <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{answer.answer || '–'}</div>
+                      <div className="whitespace-pre-wrap break-words">{answer.answer || '–'}</div>
                     </div>
                   ))}
                   {entry.status !== 'pending' && (
@@ -204,13 +205,7 @@ function Submissions() {
           ))}
         </div>
       )}
-      {data && pages > 1 && (
-        <div className="row" style={{ justifyContent: 'center', marginTop: 14 }}>
-          <button type="button" className="btn btn-secondary btn-sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Zurück</button>
-          <span className="faint">Seite {page} von {pages}</span>
-          <button type="button" className="btn btn-secondary btn-sm" disabled={page >= pages} onClick={() => setPage(page + 1)}>Weiter</button>
-        </div>
-      )}
+      {data && <Pager page={page} pages={pages} onPage={setPage} busy={list.loading} />}
       {review && <ReviewModal entry={review.entry} approve={review.approve} onClose={() => setReview(null)} onDone={() => { setReview(null); list.reload(); }} />}
     </Card>
   );
@@ -221,26 +216,27 @@ export default function ApplicationsPage() {
   const toast = useToast();
   const settings = useSettings<ApplicationSettingsDto>('applications');
   const [creating, setCreating] = useState(false);
-  const [deleting, setDeleting] = useState<ApplicationRoleConfig | null>(null);
-  const [busy, setBusy] = useState(false);
+  const { confirm, dialog } = useConfirm();
 
   const deleteRole = async (role: ApplicationRoleConfig) => {
-    setBusy(true);
     try {
       const result = await api<{ deletedApplications: number }>(`/guilds/${guild.id}/applications/roles/${role.roleId}`, { method: 'DELETE' });
       toast(`Bewerbung „${role.name}“ gelöscht (${result.deletedApplications} gespeicherte Bewerbung${result.deletedApplications === 1 ? '' : 'en'}).`);
       settings.reload();
     } catch (err) {
       toast(err instanceof Error ? err.message : String(err), true);
-    } finally {
-      setBusy(false);
-      setDeleting(null);
     }
   };
 
   return (
     <>
-      <PageHeader icon="clipboard" title="Bewerbungen" description="Team-Bewerbungen einrichten, Fragen festlegen und Bewerbungen prüfen." />
+      <PageHeader icon="clipboard" title="Bewerbungen" description="Team-Bewerbungen einrichten, Fragen festlegen und Bewerbungen prüfen."
+        actions={settings.value && (
+          <button type="button" className="btn btn-primary" disabled={settings.dirty} onClick={() => setCreating(true)}
+            title={settings.dirty ? 'Speichere zuerst deine Änderungen.' : undefined}>
+            <Icon name="plus" size={16} />Neue Bewerbung
+          </button>
+        )} />
       <SettingsPage settings={settings}>
         {(value) => (
           <>
@@ -269,20 +265,18 @@ export default function ApplicationsPage() {
               <QuestionsEditor value={value.questions} onChange={(questions) => settings.set({ questions })} />
             </Card>
 
-            <Card icon="users" title="Bewerbungen" description="Rollen, auf die sich Mitglieder bewerben können."
-              right={(
-                <button type="button" className="btn btn-primary btn-sm" disabled={settings.dirty} onClick={() => setCreating(true)}
-                  title={settings.dirty ? 'Speichere zuerst deine Änderungen.' : undefined}>
-                  <Icon name="plus" size={16} />Neue Bewerbung
-                </button>
-              )}>
+            <Card icon="users" title="Bewerbungen" description="Rollen, auf die sich Mitglieder bewerben können.">
               {value.roles.length === 0 ? (
-                <Empty title="Noch keine Bewerbungen">Leg eine an, damit sich Mitglieder mit /apply bewerben können.</Empty>
+                <Empty title="Noch keine Bewerbungen">Leg oben rechts eine an, damit sich Mitglieder mit /apply bewerben können.</Empty>
               ) : (
                 <div className="stack">
                   {value.roles.map((role) => (
                     <RoleEditor key={role.roleId} value={role} globalQuestions={value.questions} locked={settings.dirty}
-                      onDelete={() => setDeleting(role)}
+                      onDelete={() => confirm({
+                        title: 'Bewerbung löschen?', confirmLabel: 'Endgültig löschen',
+                        text: <><strong>{role.name}</strong> wird mit allen Einstellungen und gespeicherten Bewerbungen gelöscht. Das lässt sich nicht rückgängig machen. Die Discord-Rolle selbst bleibt bestehen.</>,
+                        onConfirm: () => deleteRole(role),
+                      })}
                       onChange={(next) => settings.set({ roles: value.roles.map((r) => (r.roleId === next.roleId ? next : r)) })} />
                   ))}
                 </div>
@@ -297,20 +291,9 @@ export default function ApplicationsPage() {
         )}
       </SettingsPage>
 
-      <Submissions />
+      <div className="mt-4"><Submissions /></div>
 
-      {deleting && (
-        <Modal title="Bewerbung löschen?" onClose={() => setDeleting(null)}
-          footer={(
-            <>
-              <button type="button" className="btn btn-ghost" onClick={() => setDeleting(null)}>Abbrechen</button>
-              <button type="button" className="btn btn-danger" disabled={busy} onClick={() => deleteRole(deleting)}>Endgültig löschen</button>
-            </>
-          )}>
-          <p><strong>{deleting.name}</strong> wird mit allen Einstellungen und gespeicherten Bewerbungen gelöscht. Das lässt sich nicht rückgängig machen.</p>
-          <p className="muted">Die Discord-Rolle selbst bleibt bestehen.</p>
-        </Modal>
-      )}
+      {dialog}
     </>
   );
 }
