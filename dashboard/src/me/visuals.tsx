@@ -1,6 +1,7 @@
 // Small CSS/SVG previews of cosmetic items (shop tiles, slot editor), the badge glyphs and member-area icons.
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { CURRENCY, RARITY_LABELS, SLOT_LABELS } from '../../../src/shared/cosmetics';
+import { CrystalIcon } from '../components/CrystalIcon';
 import type {
   BackgroundData, BadgeGlyph, CosmeticItem, EffectData, FontData, FrameData, LevelupData, NameStyleData, Rarity, XpBarData,
 } from '../../../src/shared/cosmetics';
@@ -74,7 +75,11 @@ export function RarityLabel({ rarity }: { rarity: Rarity }) {
 }
 
 export function Kristalle({ amount, className = '' }: { amount: number; className?: string }) {
-  return <span className={`whitespace-nowrap tabular-nums ${className}`}><span className="mr-1 opacity-60">{CURRENCY.symbol}</span>{num(amount)}</span>;
+  return (
+    <span className={`inline-flex items-center gap-[0.3em] whitespace-nowrap tabular-nums ${className}`}>
+      <CrystalIcon className="h-[1.05em] w-[1.05em]" title={CURRENCY.name} />{num(amount)}
+    </span>
+  );
 }
 
 /** Price with the base price struck through while an event discount applies. */

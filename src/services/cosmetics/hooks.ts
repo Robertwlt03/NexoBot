@@ -33,7 +33,7 @@ function appendLine(embed: EmbedBuilder, line: string): void {
 
 /**
  * Successful mini game: a small random Kristall reward (daily cap applies) plus one monthly ranking point, and
- * "+N ◆ Kristalle" appended to the reply embed when the reward arrives in time.
+ * "+N 💎 Kristalle" appended to the reply embed when the reward arrives in time.
  */
 export async function rewardMinigame(embed: EmbedBuilder, user: { id: string; bot: boolean }, guildId: string | null, game: MinigameId): Promise<void> {
   if (user.bot || !cosmeticsPool()) return;

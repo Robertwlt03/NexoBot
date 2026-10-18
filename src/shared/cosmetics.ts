@@ -2,7 +2,8 @@
 // only Nexo hands out (level-ups, mini games, monthly rankings, achievements, daily bonus). Import-free: shared by
 // the bot, the card renderer and the dashboard.
 
-export const CURRENCY = { name: 'Kristalle', singular: 'Kristall', short: 'K', symbol: '◆' } as const;
+/** `symbol` is for Discord text (no custom graphics there); the dashboard and the cards draw the crystal from shared/crystal.ts. */
+export const CURRENCY = { name: 'Kristalle', singular: 'Kristall', short: 'K', symbol: '💎' } as const;
 
 export const RARITIES = ['common', 'rare', 'epic', 'legendary', 'mythic'] as const;
 export type Rarity = (typeof RARITIES)[number];

@@ -2,6 +2,7 @@
 // bot (@napi-rs/canvas). Import-free apart from types, like welcomeCard.ts, so both sides draw the same pixels.
 // Randomness (patterns, effects) is seeded by the member's name, so preview == bot.
 
+import { drawCrystal } from './crystal.js';
 import type {
   BackgroundData, BadgeData, BadgeGlyph, EffectData, FrameData, LayoutData, LevelupData, NameStyleData, PatternKind,
   ProfileCardSubject, ResolvedCosmetics, StickerData, XpBarData,
@@ -1041,11 +1042,12 @@ function drawAvatar(ctx: Ctx, image: ProfileImage | null, { cx, cy, r }: Circle,
 
 // ---------- Text pieces ----------
 
-interface Run { text?: string; glyph?: BadgeGlyph; font: string; color: string; size?: number; gap?: number }
+/** `crystal` draws the Kristalle currency icon (shared/crystal.ts) instead of text or a badge glyph. */
+interface Run { text?: string; glyph?: BadgeGlyph; crystal?: boolean; font: string; color: string; size?: number; gap?: number }
 
 function runWidths(ctx: Ctx, runs: Run[]): number[] {
   return runs.map((run) => {
-    if (run.glyph) return (run.size ?? 16) + (run.gap ?? 6);
+    if (run.glyph || run.crystal) return (run.size ?? 16) + (run.gap ?? 6);
     ctx.font = run.font;
     return ctx.measureText(run.text ?? '').width + (run.gap ?? 0);
   });
@@ -1060,7 +1062,10 @@ function drawRuns(ctx: Ctx, runs: Run[], x: number, y: number, align: 'left' | '
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   runs.forEach((run, index) => {
-    if (run.glyph) {
+    if (run.crystal) {
+      const size = run.size ?? 16;
+      drawCrystal(ctx, cursor + size / 2, y - size * 0.36, size * 1.15);
+    } else if (run.glyph) {
       const size = run.size ?? 16;
       drawGlyph(ctx, run.glyph, cursor + size / 2, y - size * 0.36, size, run.color);
     } else {
@@ -1108,7 +1113,7 @@ function statValue(key: StatKey, subject: ProfileCardSubject): string {
 
 function valueRuns(key: StatKey, subject: ProfileCardSubject, size: number, accent: string): Run[] {
   const value = { text: statValue(key, subject), font: font('inter', 700, size), color: key === 'level' ? lighten(accent, 0.2) : TEXT };
-  return key === 'balance' ? [{ glyph: 'diamond', size: Math.round(size * 0.66), color: accent, font: '', gap: Math.round(size * 0.26) }, value] : [value];
+  return key === 'balance' ? [{ crystal: true, size: Math.round(size * 0.66), color: accent, font: '', gap: Math.round(size * 0.26) }, value] : [value];
 }
 
 function drawStats(ctx: Ctx, block: StatBlock, subject: ProfileCardSubject, accent: string) {
@@ -1498,7 +1503,7 @@ export function renderLevelUpCard<I extends ProfileImage>(
 
   if (reward > 0) {
     const runs: Run[] = [
-      { glyph: 'diamond', size: 16, color: highlight, font: '', gap: 8 },
+      { crystal: true, size: 16, color: highlight, font: '', gap: 8 },
       { text: `+${formatNumber(reward)}`, font: font('inter', 700, 16), color: TEXT, gap: 6 },
       { text: 'Kristalle', font: font('inter', 400, 16), color: SOFT },
     ];
