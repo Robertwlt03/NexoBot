@@ -74,10 +74,11 @@ export function RarityLabel({ rarity }: { rarity: Rarity }) {
   return <span className={`text-[12px] font-medium ${RARITY_CLASS[rarity].text}`}>{RARITY_LABELS[rarity]}</span>;
 }
 
-export function Kristalle({ amount, className = '' }: { amount: number; className?: string }) {
+/** `large` shows the full Nexo crystal (visor, eyes, moon) for big hero numbers. */
+export function Kristalle({ amount, className = '', large = false }: { amount: number; className?: string; large?: boolean }) {
   return (
     <span className={`inline-flex items-center gap-[0.3em] whitespace-nowrap tabular-nums ${className}`}>
-      <CrystalIcon className="h-[1.05em] w-[1.05em]" title={CURRENCY.name} />{num(amount)}
+      <CrystalIcon className={large ? 'h-[1.15em] w-[1.15em]' : 'h-[1.05em] w-[1.05em]'} detail={large ? 'full' : 'small'} title={CURRENCY.name} />{num(amount)}
     </span>
   );
 }
