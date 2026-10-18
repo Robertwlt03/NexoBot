@@ -7,6 +7,7 @@ import { formatDuration } from '../../../utils/embeds.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { logger } from '../../../utils/logger.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
+import { rewardMinigame } from '../../../services/cosmetics/hooks.js';
 import { botConfig } from '../../../config/bot.js';
 
 const DAILY_COOLDOWN = 24 * 60 * 60 * 1000;
@@ -100,6 +101,7 @@ export default {
                         : `Nächste Abholung in 24 Stunden.`,
                 });
 
+            await rewardMinigame(embed, interaction.user, guildId, 'daily');
             await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
     }, { command: 'daily' })
 } satisfies Command;

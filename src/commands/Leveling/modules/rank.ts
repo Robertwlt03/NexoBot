@@ -2,6 +2,7 @@ import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from 'discord.js';
 import { logger } from '../../../utils/logger.js';
 import { NexoBotError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { getUserLevelData, getLevelingConfig, getXpForLevel } from '../../../services/leveling/leveling.js';
+import { canAttachFiles, profileCardAttachment } from '../../../services/profileCardRenderer.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import type { Command } from '../../../types/index.js';
@@ -45,6 +46,13 @@ export default {
         ErrorTypes.USER_INPUT,
         'Der angegebene Nutzer wurde auf diesem Server nicht gefunden.'
       );
+    }
+
+    // Image card first; the text embed below stays as fallback (no AttachFiles or rendering failed).
+    const card = canAttachFiles(interaction) ? await profileCardAttachment(client, member, 'rang.png') : null;
+    if (card) {
+      await InteractionHelper.safeEditReply(interaction, { files: [card] });
+      return;
     }
 
     const userData = await getUserLevelData(client, interaction.guildId!, targetUser.id);

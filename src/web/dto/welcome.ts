@@ -13,6 +13,8 @@ export interface WelcomeMessageSettings {
   embedColor: string;
   /** Image card attached to the embed (replaces imageUrl while enabled). */
   card: WelcomeCard;
+  /** Card avatar uses the member's Nexo profile frame/accent (only for members who allow it). */
+  memberStyle: boolean;
 }
 
 export interface WelcomeSettings {

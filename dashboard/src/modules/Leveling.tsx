@@ -182,7 +182,7 @@ export default function LevelingPage() {
             </Card>
 
             <Card icon="settings" title="XP-Vergabe" description="Pro Nachricht gibt es eine zufällige Menge XP im gewählten Bereich." disabled={!value.enabled}>
-              <div className="grid">
+              <div className="auto-grid">
                 <Field label="Minimale XP" error={value.xpMin > value.xpMax ? 'Darf nicht größer als die maximalen XP sein.' : null}>
                   <NumberInput value={value.xpMin} min={1} max={500} onChange={(xpMin) => settings.set({ xpMin })} />
                 </Field>

@@ -6,7 +6,8 @@ import { logger } from './logger.js';
 import { botConfig, getColor } from '../config/bot.js';
 import type { WelcomeConfig } from './database.js';
 import type { WelcomeCard } from '../shared/welcomeCard.js';
-import { cardSubjectFromMember, renderWelcomeCard } from '../services/welcomeCardRenderer.js';
+import { applyMemberStyle, cardSubjectFromMember, renderWelcomeCard } from '../services/welcomeCardRenderer.js';
+import { getProfileSettings, getResolvedCosmetics } from '../services/cosmetics/store.js';
 
 const DEFAULT_TEMPLATES = {
     welcome: 'Willkommen {user} auf {server}!',
@@ -110,9 +111,13 @@ export type GreetingResult =
     | { status: 'no_permission' };
 
 /** Renders the configured image card; null when off, not allowed or failing (caller falls back to the static image). */
-async function renderCardAttachment(card: WelcomeCard | undefined, member: GuildMember | PartialGuildMember, name: string): Promise<AttachmentBuilder | null> {
+async function renderCardAttachment(card: WelcomeCard | undefined, member: GuildMember | PartialGuildMember, name: string, memberStyle: boolean): Promise<AttachmentBuilder | null> {
     if (!card?.enabled) return null;
     try {
+        if (memberStyle && (await getProfileSettings(member.id)).showOnWelcome) {
+            const cosmetics = await getResolvedCosmetics(member.id);
+            card = applyMemberStyle(card, cosmetics.frame, cosmetics.accent);
+        }
         const png = await renderWelcomeCard(card, cardSubjectFromMember(member));
         return new AttachmentBuilder(png, { name });
     } catch (error) {
@@ -173,7 +178,8 @@ export async function sendGreeting(kind: GreetingKind, member: GuildMember | Par
 
     const fileName = isWelcome ? 'welcome.png' : 'goodbye.png';
     const attachment = permissions.has(PermissionFlagsBits.AttachFiles)
-        ? await renderCardAttachment(isWelcome ? config.welcomeCard : config.goodbyeCard, member, fileName)
+        ? await renderCardAttachment(isWelcome ? config.welcomeCard : config.goodbyeCard, member, fileName,
+            (isWelcome ? config.welcomeMemberStyle : config.goodbyeMemberStyle) === true)
         : null;
     if (attachment) {
         embed.setImage(`attachment://${fileName}`);

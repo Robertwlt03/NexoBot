@@ -54,6 +54,9 @@ function MessageEditor({ kind, value, onChange }: {
             </Field>
             <SwitchRow title={isWelcome ? 'Neues Mitglied erwähnen' : 'Mitglied erwähnen'} description="Pingt das Mitglied zusätzlich zur Nachricht."
               checked={value.ping} onChange={(ping) => set({ ping })} />
+            <SwitchRow title="Profil-Stil der Mitglieder zeigen"
+              description="Der Avatar auf der Karte bekommt Rahmen- und Akzentfarbe aus dem Nexo-Profil – bei allen, die das in ihrem Profil erlauben."
+              checked={value.memberStyle} onChange={(memberStyle) => set({ memberStyle })} />
           </div>
           <div className="stack">
             <span className="field-label">Vorschau</span>

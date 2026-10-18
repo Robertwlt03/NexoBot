@@ -23,6 +23,17 @@ const configuredTables = {
     member_hourly_stats: 'member_hourly_stats',
     channel_daily_stats: 'channel_daily_stats',
     guild_hourly_stats: 'guild_hourly_stats',
+    user_wallets: 'user_wallets',
+    wallet_transactions: 'wallet_transactions',
+    user_inventory: 'user_inventory',
+    user_profiles: 'user_profiles',
+    shop_items: 'shop_items',
+    shop_events: 'shop_events',
+    black_market_weeks: 'black_market_weeks',
+    monthly_scores: 'monthly_scores',
+    monthly_payouts: 'monthly_payouts',
+    user_achievements: 'user_achievements',
+    economy_config: 'economy_config',
 };
 
 const allowedTableIdentifiers = new Set([
@@ -47,6 +58,17 @@ const allowedTableIdentifiers = new Set([
     'member_hourly_stats',
     'channel_daily_stats',
     'guild_hourly_stats',
+    'user_wallets',
+    'wallet_transactions',
+    'user_inventory',
+    'user_profiles',
+    'shop_items',
+    'shop_events',
+    'black_market_weeks',
+    'monthly_scores',
+    'monthly_payouts',
+    'user_achievements',
+    'economy_config',
 ]);
 
 const validatedTables = Object.fromEntries(

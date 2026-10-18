@@ -52,7 +52,7 @@ function CasesTab() {
 
   return (
     <Card icon="gavel" title="Moderationsfälle" description="Alle Fälle aus /cases: Banns, Kicks, Timeouts, Verwarnungen und mehr.">
-      <div className="grid mb-4">
+      <div className="auto-grid mb-4">
         <Field label="Aktion">
           <Select value={filter.action} onChange={(action) => update({ action })}
             options={[{ value: '', label: 'Alle Aktionen' }, ...(data?.actions ?? [])]} />

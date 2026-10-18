@@ -13,6 +13,7 @@ import {
   CARD_FONTS, CARD_FONT_KEYS, CARD_FONT_WEIGHTS, CARD_HEIGHT, CARD_WIDTH, cardHasAvatar, cardImageUrls, renderCard,
   type CardVars, type WelcomeCard,
 } from '../shared/welcomeCard.js';
+import type { AccentData, FrameData } from '../shared/cosmetics.js';
 import { logger } from '../utils/logger.js';
 
 // src/services and dist/services are both two levels below the project root.
@@ -111,7 +112,7 @@ const CACHE_TTL_MS = 10 * 60_000;
 const CACHE_MAX = 50;
 const imageCache = new Map<string, { image: Image; expires: number }>();
 
-async function loadRemoteImage(url: string): Promise<Image | null> {
+export async function loadRemoteImage(url: string): Promise<Image | null> {
   const cached = imageCache.get(url);
   if (cached && cached.expires > Date.now()) return cached.image;
   try {
@@ -120,7 +121,7 @@ async function loadRemoteImage(url: string): Promise<Image | null> {
     if (imageCache.size > CACHE_MAX) imageCache.delete(imageCache.keys().next().value as string);
     return image;
   } catch (error) {
-    logger.debug(`Welcome card image failed (${url}):`, error);
+    logger.debug(`Card image failed (${url}):`, error);
     return null;
   }
 }
@@ -138,6 +139,23 @@ export function cardSubjectFromMember(member: GuildMember | PartialGuildMember):
     username: member.user.username,
     server: member.guild.name,
     memberCount: member.guild.memberCount.toLocaleString('de-DE'),
+  };
+}
+
+/**
+ * "Profil-Stil der Mitglieder": the avatar border takes the member's profile frame colour (or accent) and a frame
+ * width scaled to the avatar size. The welcome card only has a plain border, so frame styles map to their main colour.
+ */
+export function applyMemberStyle(card: WelcomeCard, frame: FrameData | null, accent: AccentData | null): WelcomeCard {
+  const color = frame?.colors[0] ?? accent?.color;
+  if (!color) return card;
+  return {
+    ...card,
+    layers: card.layers.map((layer) => {
+      if (layer.type !== 'avatar') return layer;
+      const width = frame ? Math.round((frame.width * layer.size) / 176) : layer.borderWidth || 6;
+      return { ...layer, borderColor: color, borderWidth: Math.min(40, Math.max(layer.borderWidth, width, 2)) };
+    }),
   };
 }
 

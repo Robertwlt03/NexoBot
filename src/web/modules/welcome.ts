@@ -40,6 +40,7 @@ async function readSettings(client: NexoClient, guildId: string): Promise<Welcom
       embedFooter: config.welcomeEmbed?.footer ?? 'Willkommen auf {server}!',
       embedColor: toHex(config.welcomeEmbed?.color, toHex(getColor('success'), '#57F287')),
       card: config.welcomeCard ?? defaultCard(),
+      memberStyle: config.welcomeMemberStyle === true,
     },
     goodbye: {
       enabled: config.goodbyeEnabled,
@@ -51,6 +52,7 @@ async function readSettings(client: NexoClient, guildId: string): Promise<Welcom
       embedFooter: config.leaveEmbed?.footer ?? 'Tschüss von {server}!',
       embedColor: toHex(config.leaveEmbed?.color, toHex(getColor('error'), '#ED4245')),
       card: config.goodbyeCard ?? defaultCard(),
+      memberStyle: config.goodbyeMemberStyle === true,
     },
     autoRole: { roleId: config.roleIds[0] ?? null, delaySeconds: config.autoRoleDelay ?? 0 },
     verificationActive: Boolean(guildConfig.verification?.enabled || guildConfig.verification?.autoVerify?.enabled),
@@ -78,6 +80,7 @@ function parseMessage(guild: Guild, raw: unknown, label: string): WelcomeMessage
     embedFooter: str(input.embedFooter, `${label}: Fußzeile`, { max: 2048 }),
     embedColor: hexColor(input.embedColor, `${label}: Farbe`),
     card: parseCard(input.card, `${label}: Karte`),
+    memberStyle: bool(input.memberStyle, `${label}: Profil-Stil`),
   };
   if (result.enabled && !result.channelId) throw badRequest(`${label}: Bitte wähle einen Kanal aus.`);
   return result;
@@ -114,12 +117,14 @@ export const welcomeModule: DashboardModule = {
         welcomePing: welcome.ping,
         welcomeImage: welcome.imageUrl,
         welcomeCard: welcome.card,
+        welcomeMemberStyle: welcome.memberStyle,
         welcomeEmbed: { ...existing.welcomeEmbed, title: welcome.embedTitle, footer: welcome.embedFooter, color: welcome.embedColor },
         goodbyeEnabled: goodbye.enabled,
         goodbyeChannelId: goodbye.channelId,
         leaveMessage: goodbye.message,
         goodbyePing: goodbye.ping,
         goodbyeCard: goodbye.card,
+        goodbyeMemberStyle: goodbye.memberStyle,
         leaveEmbed: { ...existing.leaveEmbed, title: goodbye.embedTitle, footer: goodbye.embedFooter, color: goodbye.embedColor, image: goodbye.imageUrl ?? undefined },
         roleIds: autoRoleId ? [autoRoleId] : [],
         autoRoleDelay: delaySeconds,

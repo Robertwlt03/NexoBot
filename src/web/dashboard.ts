@@ -20,6 +20,8 @@ import {
 } from './session.js';
 import type { ApiGuildDetail, ApiGuildSummary, ApiUser } from './apiTypes.js';
 import { dashboardModules } from './modules/index.js';
+import { meRouter } from './modules/me.js';
+import { ownerRouter } from './modules/owner.js';
 import { HttpError } from './http.js';
 import { ErrorTypes, NexoBotError } from '../utils/errorHandler.js';
 import type { ErrorType } from '../utils/errorHandler.js';
@@ -301,6 +303,9 @@ export function createDashboardRouter(client: NexoClient): Router {
     guildRouter.use(`/${module.id}`, module.router(client));
   }
 
+  // Kristalle and cosmetics are global per user: no guild permission, owner routes check OWNER_IDS.
+  api.use('/me', meRouter(client));
+  api.use('/owner', ownerRouter(client));
   api.use('/guilds/:guildId', guildRouter);
   api.use((_req, res) => sendError(res, 404, 'Unbekannter API-Pfad.'));
   router.use('/api', api);

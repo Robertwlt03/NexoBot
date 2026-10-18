@@ -5,6 +5,7 @@ import { getEconomyData, setEconomyData } from '../../../utils/economy.js';
 import type { EconomyData } from '../../../utils/economy.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
+import { rewardMinigame } from '../../../services/cosmetics/hooks.js';
 
 const BASE_WIN_CHANCE = 0.4;
 const CLOVER_WIN_BONUS = 0.1;
@@ -128,6 +129,7 @@ userData.lastGamble = now;
                 });
             }
 
+            if (win) await rewardMinigame(resultEmbed, interaction.user, guildId, 'gamble');
             await InteractionHelper.safeEditReply(interaction, { embeds: [resultEmbed] });
     }, { command: 'gamble' })
 } satisfies Command;

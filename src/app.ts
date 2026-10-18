@@ -25,6 +25,7 @@ import type { ServerCounter } from './services/serverstatsService.js';
 import type { NexoClient } from './types/index.js';
 import { createDashboardRouter } from './web/dashboard.js';
 import { startStatsTracker, stopStatsTracker } from './services/statsTracker.js';
+import { startCosmetics } from './services/cosmetics/hooks.js';
 
 /** Shape read by /health and /ready, including their fallbacks when no status is available. */
 interface DbStatusView {
@@ -131,6 +132,7 @@ class NexoBot extends Client {
       
       this.setupCronJobs();
       startStatsTracker(this);
+      void startCosmetics(this);
     } catch (error) {
       logger.error('Failed to start bot:', error);
       process.exit(1);

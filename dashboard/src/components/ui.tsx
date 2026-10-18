@@ -88,8 +88,8 @@ export function Pager({ page, pages, onPage, busy }: { page: number; pages: numb
 }
 
 /** Scroll container for wide tables, so they never stretch the page on small screens. */
-export function TableWrap({ children }: { children: ReactNode }) {
-  return <div className="table-wrap"><table className="table">{children}</table></div>;
+export function TableWrap({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return <div className={`table-wrap ${className}`}><table className="table">{children}</table></div>;
 }
 
 /** Row of number tiles (overview, ticket stats, counting status …). */
@@ -375,7 +375,7 @@ export function Empty({ title, children }: { title: string; children?: ReactNode
   return <div className="empty"><h3>{title}</h3>{children && <p>{children}</p>}</div>;
 }
 
-export function Modal({ title, children, footer, onClose }: { title: string; children: ReactNode; footer: ReactNode; onClose: () => void }) {
+export function Modal({ title, children, footer, onClose, wide = false }: { title: string; children: ReactNode; footer: ReactNode; onClose: () => void; wide?: boolean }) {
   const backdrop = useRef<HTMLDivElement>(null);
   useGSAP(() => {
     const mm = gsap.matchMedia();
@@ -387,7 +387,7 @@ export function Modal({ title, children, footer, onClose }: { title: string; chi
   }, { scope: backdrop });
   return (
     <div ref={backdrop} className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal" role="dialog" aria-label={title}>
+      <div className={`modal${wide ? ' modal-wide' : ''}`} role="dialog" aria-label={title}>
         <div className="modal-body"><h2>{title}</h2>{children}</div>
         <div className="modal-foot">{footer}</div>
       </div>

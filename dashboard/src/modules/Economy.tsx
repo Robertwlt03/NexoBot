@@ -63,7 +63,7 @@ function MoneyTools({ initialId, money, onChanged }: { initialId: string; money:
                 <div className="faint">Geldbörse {money(member.wallet)} · Bank {money(member.bank)} / {money(member.maxBank)}</div>
               </div>
             </div>
-            <div className="grid">
+            <div className="auto-grid">
               <Field label="Aktion">
                 <Select value={action} onChange={setAction} options={[{ value: 'add', label: 'Geld hinzufügen' }, { value: 'remove', label: 'Geld abziehen' }]} />
               </Field>

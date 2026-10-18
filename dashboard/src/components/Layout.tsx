@@ -9,6 +9,7 @@ import { Icon } from '../icons';
 import { GROUPS, MODULES } from '../modules/registry';
 import { Spinner, Notice } from './ui';
 import { NexoLogo } from './NexoLogo';
+import { Glyph } from '../me/visuals';
 
 gsap.registerPlugin(useGSAP);
 
@@ -27,12 +28,23 @@ export function GuildIcon({ guild, className = '' }: { guild: { name: string; ic
 /** Discord-style server column: Nexo home button plus every server Nexo is on. */
 export function ServerRail({ guilds, activeId }: { guilds: ApiGuildSummary[]; activeId?: string }) {
   const navigate = useNavigate();
+  const user = useContext(UserContext);
+  const onProfile = /^\/(me|owner)(\/|$)/.test(useLocation().pathname);
   const item = 'group relative grid h-11 w-11 place-items-center overflow-hidden rounded-[22px] bg-surface transition-all duration-200 hover:rounded-[14px]';
   return (
     <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2.5 overflow-y-auto border-r border-white/[.05] bg-rail py-4 lg:flex" aria-label="Server">
       <button className={`${item} cursor-pointer border-0 bg-surface p-0 ring-1 ring-white/[.06] hover:ring-accent/40`} title="Alle Server" onClick={() => navigate('/servers')}>
         <NexoLogo className="w-9 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" animated={false} />
       </button>
+      {user && (
+        <div className="relative flex w-full justify-center">
+          <span className={`absolute left-0 top-1/2 w-[3px] -translate-y-1/2 rounded-r bg-ink transition-all duration-200 ${onProfile ? 'h-8' : 'h-0'}`} />
+          <button title="Mein Profil" onClick={() => navigate('/me')}
+            className={`${item} cursor-pointer border-0 p-0 ${onProfile ? 'rounded-[14px] ring-1 ring-white/25' : 'opacity-80 hover:opacity-100'}`}>
+            <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
+          </button>
+        </div>
+      )}
       <div className="my-1 h-px w-7 bg-white/10" />
       {guilds.filter((g) => g.botPresent).map((guild) => {
         const active = guild.id === activeId;
@@ -64,6 +76,7 @@ export function UserPanel({ compact = false }: { compact?: boolean }) {
         <div className="truncate text-sm font-medium text-ink">{user.globalName ?? user.username}</div>
         <div className="truncate text-xs text-mute">@{user.username}</div>
       </div>
+      <Link to="/me" className="icon-btn" title="Mein Profil" aria-label="Mein Profil"><Glyph name="user" size={18} /></Link>
       <button className="icon-btn" title="Abmelden" onClick={logout}><Icon name="logout" size={18} /></button>
     </div>
   );

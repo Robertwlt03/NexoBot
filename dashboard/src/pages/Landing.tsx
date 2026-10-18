@@ -30,9 +30,9 @@ const STEPS = [
   { title: 'Einrichten', text: 'Module anschalten, Kanäle wählen, speichern. Nexo legt sofort los.' },
 ];
 
-// Slash command counts (37 top-level commands + 157 subcommands). Update when commands change.
+// Slash command counts (38 top-level commands + 160 subcommands). Update when commands change.
 const STATS: { value: string; label: string; detail?: string }[] = [
-  { value: '194', label: 'Befehle insgesamt', detail: '37 Commands + 157 Unterbefehle' },
+  { value: '198', label: 'Befehle insgesamt', detail: '38 Commands + 160 Unterbefehle' },
   { value: '19', label: 'Module im Dashboard' },
   { value: '0 €', label: 'für immer kostenlos' },
 ];

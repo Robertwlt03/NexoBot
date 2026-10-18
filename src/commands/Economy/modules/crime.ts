@@ -5,6 +5,7 @@ import { getEconomyData, setEconomyData } from '../../../utils/economy.js';
 import type { EconomyData } from '../../../utils/economy.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
+import { rewardMinigame } from '../../../services/cosmetics/hooks.js';
 
 const CRIME_COOLDOWN = 60 * 60 * 1000;
 const JAIL_TIME = 2 * 60 * 60 * 1000;
@@ -99,6 +100,7 @@ export default {
                     `Dein Coup „${crime.label}“ war erfolgreich und hat dir **${amountEarned}** Münzen eingebracht!`
                 );
                 
+                await rewardMinigame(embed, interaction.user, guildId, 'crime');
                 await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
             } else {
                 // Fine is based on the potential haul of the attempted crime

@@ -6,6 +6,7 @@ import type { EconomyData } from '../../../utils/economy.js';
 import { botConfig } from '../../../config/bot.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
+import { rewardMinigame } from '../../../services/cosmetics/hooks.js';
 
 const COOLDOWN = 30 * 60 * 1000;
 const MIN_WIN = Number(botConfig?.economy?.begMin) || 50;
@@ -96,6 +97,7 @@ userData.lastBeg = Date.now();
 
             await setEconomyData(client, guildId, userId, userData);
 
+            if (success) await rewardMinigame(replyEmbed, interaction.user, guildId, 'beg');
             await InteractionHelper.safeEditReply(interaction, { embeds: [replyEmbed] });
     }, { command: 'beg' })
 } satisfies Command;
