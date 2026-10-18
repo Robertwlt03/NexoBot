@@ -86,12 +86,12 @@ export function NexoLogo({ className, animated = true, followPointer = false, ti
           <stop offset="0" stopColor="#2A2066" /><stop offset="1" stopColor="#140F33" />
         </linearGradient>
         <linearGradient id={`${id}-orbit`} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#C4B5FD" stopOpacity="0.15" /><stop offset="0.5" stopColor="#D8B4FE" stopOpacity="0.9" /><stop offset="1" stopColor="#7DD3FC" stopOpacity="0.9" />
+          <stop offset="0" stopColor="#C4B5FD" stopOpacity="0" /><stop offset="0.3" stopColor="#C4B5FD" stopOpacity="0.6" /><stop offset="0.6" stopColor="#E9D5FF" stopOpacity="1" /><stop offset="1" stopColor="#7DD3FC" stopOpacity="1" />
         </linearGradient>
         <clipPath id={`${id}-front`}><rect x="-600" y="0" width="1200" height="600" /></clipPath>
       </defs>
 
-      <g transform={`translate(${ORBIT.cx} ${ORBIT.cy}) rotate(-10)`} opacity="0.55">
+      <g transform={`translate(${ORBIT.cx} ${ORBIT.cy}) rotate(-10)`} opacity="0.7">
         <ellipse rx={ORBIT.rx} ry={ORBIT.ry} fill="none" stroke={ref('orbit')} strokeWidth="14" />
       </g>
       <circle className="nx-moon-back" cx={start.x} cy={start.y} r="13" fill="#FFFFFF" opacity="0.6" />

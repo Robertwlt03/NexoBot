@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Navigate } from 'react-router';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
 import { useGSAP } from '@gsap/react';
 import { UserContext } from '../api';
 import { Icon } from '../icons';
@@ -10,7 +11,7 @@ import type { IconName } from '../icons';
 import { NexoLogo } from '../components/NexoLogo';
 import { LINKS } from '../../../src/config/links';
 
-gsap.registerPlugin(ScrollTrigger, useGSAP);
+gsap.registerPlugin(ScrollTrigger, DrawSVGPlugin, useGSAP);
 
 const FEATURES: { icon: IconName; title: string; text: string; wide?: boolean }[] = [
   { icon: 'shield', title: 'Moderation & AutoMod', wide: true, text: 'Spam, Links, Einladungen und Schimpfwörter filtert Discords eigener AutoMod – auch wenn Nexo mal offline ist. Fälle, Verwarnungen und Notizen siehst du gesammelt im Browser.' },
@@ -42,15 +43,14 @@ export function Landing() {
       const q = gsap.utils.selector(root);
 
       // Hero entrance
-      const underline = root.current?.querySelector<SVGPathElement>('.js-underline') ?? undefined;
-      const length = underline?.getTotalLength() ?? 0;
       // `.js-intro` elements start hidden in CSS (no flash before the animation); autoAlpha reveals them.
       gsap.timeline({ defaults: { ease: 'power3.out' } })
         .fromTo(q('.js-nav'), { y: -24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.6 })
         .fromTo(q('.js-kicker'), { y: 12, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.5 }, '-=0.3')
         .fromTo(q('.js-word'), { yPercent: 110, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.8, stagger: 0.08 }, '-=0.2')
-        .set(q('.js-underline-svg'), { autoAlpha: 1 }, '-=0.3')
-        .fromTo(underline ?? {}, { strokeDasharray: length, strokeDashoffset: length }, { strokeDashoffset: 0, duration: 0.9, ease: 'power2.inOut' }, '<')
+        // DrawSVG hides the round line caps at 0%, so no dot shows at the right end before drawing.
+        .fromTo(q('.js-underline'), { drawSVG: '0%' }, { drawSVG: '100%', duration: 0.9, ease: 'power2.inOut' }, '-=0.3')
+        .set(q('.js-underline-svg'), { autoAlpha: 1 }, '<')
         .fromTo(q('.js-hero-fade'), { y: 18, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.6, stagger: 0.08 }, '-=0.7')
         .fromTo(q('.js-chat'), { x: 40, rotate: 3, autoAlpha: 0 }, { x: 0, rotate: 0, autoAlpha: 1, duration: 0.9 }, 0.35)
         .fromTo(q('.js-robot'), { scale: 0.4, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 1, ease: 'back.out(1.6)' }, 0.6)
