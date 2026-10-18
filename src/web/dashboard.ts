@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import type { NextFunction, Request, Response, Router } from 'express';
-import { OAuth2Scopes, PermissionFlagsBits, PermissionsBitField } from 'discord.js';
+import { PermissionFlagsBits } from 'discord.js';
 import type { Guild, GuildMember } from 'discord.js';
 import type { NexoClient } from '../types/index.js';
 import { getEnv } from '../config/env.js';
@@ -30,15 +30,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const GUILD_REFRESH_MS = 60_000;
 export const CSRF_HEADER = 'x-nexo-dashboard';
 
-/** Permissions Nexo asks for when invited from the dashboard. */
-const INVITE_PERMISSIONS = new PermissionsBitField([
-  PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks,
-  PermissionFlagsBits.AttachFiles, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.AddReactions,
-  PermissionFlagsBits.UseExternalEmojis, PermissionFlagsBits.ManageMessages, PermissionFlagsBits.ManageChannels,
-  PermissionFlagsBits.ManageRoles, PermissionFlagsBits.ManageGuild, PermissionFlagsBits.KickMembers,
-  PermissionFlagsBits.BanMembers, PermissionFlagsBits.ModerateMembers, PermissionFlagsBits.ViewAuditLog,
-  PermissionFlagsBits.Connect, PermissionFlagsBits.Speak, PermissionFlagsBits.MoveMembers,
-]).bitfield.toString();
 
 export interface DashboardLocals {
   session: DashboardSession;
@@ -81,6 +72,22 @@ function frontendDir(): string | null {
   // dist/web -> dist/dashboard (production); src/web -> dist/dashboard (tsx dev after a frontend build)
   const candidates = [path.join(__dirname, '../dashboard'), path.join(__dirname, '../../dist/dashboard')];
   return candidates.find((dir) => existsSync(path.join(dir, 'index.html'))) ?? null;
+}
+
+const SNOWFLAKE = /^\d{17,20}$/;
+
+/** The guild arrives over the gateway shortly after the invite; wait up to ~5 s for it. */
+async function waitForGuild(client: NexoClient, guildId: string): Promise<boolean> {
+  for (let i = 0; i < 20 && !client.guilds.cache.has(guildId); i += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  return client.guilds.cache.has(guildId);
+}
+
+/** Public dashboard address for links in Discord (help, etc.), or null when the dashboard is off. */
+export function publicDashboardUrl(): string | null {
+  const config = readConfig();
+  return config ? `${config.baseUrl}/dashboard` : null;
 }
 
 function canManage(guild: { owner: boolean; permissions: string }): boolean {
@@ -128,6 +135,14 @@ export function createDashboardRouter(client: NexoClient): Router {
     res.redirect(authorizeUrl(config, state));
   });
 
+  // Invite Nexo and log in at once; `?guild=` preselects the server.
+  router.get('/auth/invite', (req, res) => {
+    const guildId = typeof req.query.guild === 'string' && SNOWFLAKE.test(req.query.guild) ? req.query.guild : undefined;
+    const state = randomToken();
+    setSignedCookie(res, STATE_COOKIE, state, config.sessionSecret, { maxAgeSeconds: 600, secure: config.secureCookies });
+    res.redirect(authorizeUrl(config, state, { guildId }));
+  });
+
   router.get('/auth/callback', async (req, res) => {
     const code = typeof req.query.code === 'string' ? req.query.code : null;
     const state = typeof req.query.state === 'string' ? req.query.state : null;
@@ -154,6 +169,11 @@ export function createDashboardRouter(client: NexoClient): Router {
       await saveSession(session);
       setSignedCookie(res, SESSION_COOKIE, session.id, config.sessionSecret, { maxAgeSeconds: SESSION_TTL_SECONDS, secure: config.secureCookies });
       logger.info('Dashboard login', { userId: user.id });
+      // After an invite Discord sends the chosen server; open it once the bot has received the guild.
+      const invitedGuild = typeof req.query.guild_id === 'string' && SNOWFLAKE.test(req.query.guild_id) ? req.query.guild_id : null;
+      if (invitedGuild && await waitForGuild(client, invitedGuild)) {
+        return res.redirect(`/dashboard/servers/${invitedGuild}`);
+      }
       return res.redirect('/dashboard/servers');
     } catch (error) {
       logger.warn('Dashboard login failed:', error);
@@ -221,13 +241,7 @@ export function createDashboardRouter(client: NexoClient): Router {
           name: guild.name,
           iconUrl: guildIconUrl(guild),
           botPresent,
-          inviteUrl: botPresent ? null : `https://discord.com/oauth2/authorize?${new URLSearchParams({
-            client_id: config.clientId,
-            scope: [OAuth2Scopes.Bot, OAuth2Scopes.ApplicationsCommands].join(' '),
-            permissions: INVITE_PERMISSIONS,
-            guild_id: guild.id,
-            disable_guild_select: 'true',
-          })}`,
+          inviteUrl: botPresent ? null : `/dashboard/auth/invite?guild=${guild.id}`,
         };
       })
       .sort((a, b) => Number(b.botPresent) - Number(a.botPresent) || a.name.localeCompare(b.name));

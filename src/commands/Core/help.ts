@@ -7,6 +7,7 @@ import {
 import type { Command, NexoClient } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 import { BotConfig } from '../../config/bot.js';
+import { publicDashboardUrl } from '../../web/dashboard.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { createEmbed } from "../../utils/embeds.js";
 import { formatCategoryName, getCategoryIcon } from "../../config/commands/commandCategories.js";
@@ -52,6 +53,7 @@ export async function createInitialHelpMenu(client: NexoClient) {
     ];
 
     const botName = client?.user?.username || "Nexo";
+    const dashboardUrl = publicDashboardUrl();
     const embed = createEmbed({
         title: `📖 ${botName} – Hilfe`,
         description: 'Richte deinen Server ein, wähle aus, was aktiv sein soll, und stöbere dann unten durch die Commands.',
@@ -61,7 +63,9 @@ export async function createInitialHelpMenu(client: NexoClient) {
             {
                 name: '🚀 Erste Schritte',
                 value: [
-                    '**1. Einrichtung starten** — Mit `/configwizard` legst du Prefix, Moderator-Rolle und Logs fest.',
+                    dashboardUrl
+                        ? `**1. Einrichtung starten** — Im [Web-Dashboard](${dashboardUrl}) stellst du alles bequem im Browser ein, alternativ mit \`/configwizard\`.`
+                        : '**1. Einrichtung starten** — Mit `/configwizard` legst du Prefix, Moderator-Rolle und Logs fest.',
                     '**2. Systeme aktivieren** — Mit `/commands dashboard` schaltest du Kategorien an oder aus.',
                     '**3. Commands entdecken** — Im Menü unten findest du alle Kategorien und Commands.',
                 ].join('\n'),
@@ -107,6 +111,7 @@ export async function createInitialHelpMenu(client: NexoClient) {
     );
 
     const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents([
+        ...(dashboardUrl ? [new ButtonBuilder().setLabel("Dashboard").setURL(dashboardUrl).setStyle(ButtonStyle.Link)] : []),
         bugReportButton,
         supportButton,
     ]);

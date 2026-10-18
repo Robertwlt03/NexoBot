@@ -17,7 +17,11 @@ export function Landing() {
           <h1>Ein Bot. <span className="grad">Alle Funktionen.</span></h1>
           <p>Richte Nexo bequem im Browser ein: Willkommensnachrichten, Leveling, AutoMod, Tickets und alles andere – ohne einen einzigen Befehl.</p>
           {loginFailed && <div className="notice danger" style={{ maxWidth: 420, margin: '0 auto 20px' }}>Die Anmeldung hat nicht geklappt. Bitte versuch es noch einmal.</div>}
-          <a className="btn btn-gradient btn-lg" href="/dashboard/auth/login"><DiscordLogo /> Mit Discord anmelden</a>
+          <div className="landing-actions">
+            <a className="btn btn-gradient btn-lg" href="/dashboard/auth/invite"><Icon name="plus" size={20} /> Nexo einladen</a>
+            <a className="btn btn-secondary btn-lg" href="/dashboard/auth/login"><DiscordLogo /> Mit Discord anmelden</a>
+          </div>
+          <p className="faint landing-hint">Nach dem Einladen landest du direkt im Dashboard deines Servers.</p>
           <div className="feature-row">
             {['Moderation & AutoMod', 'Willkommen', 'Leveling', 'Tickets', 'Verifizierung', 'Giveaways', 'Musik'].map((f) => <span key={f}>{f}</span>)}
           </div>
