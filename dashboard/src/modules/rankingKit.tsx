@@ -1,6 +1,6 @@
 // Shared leaderboard list with paging (leveling, economy, counting).
 import type { ReactNode } from 'react';
-import { Empty, Notice, Spinner } from '../components/ui';
+import { Empty, Notice, Pager, Spinner } from '../components/ui';
 
 export interface RankRow {
   rank: number;
@@ -23,17 +23,17 @@ export function RankList({ rows, loading, error, emptyTitle, emptyText, page, pa
   if (!rows) return loading ? <Spinner /> : null;
   if (rows.length === 0) return <Empty title={emptyTitle}>{emptyText}</Empty>;
   return (
-    <div className="stack" style={{ gap: 12, opacity: loading ? 0.6 : 1 }}>
+    <div className={loading ? 'opacity-60' : undefined}>
       <div className="list">
         {rows.map((row) => (
           <div className="list-item" key={row.userId}>
-            <span style={{ width: 32, textAlign: 'center', fontWeight: 700 }}>{MEDALS[row.rank - 1] ?? `#${row.rank}`}</span>
-            <img src={row.avatarUrl ?? DEFAULT_AVATAR} alt="" width={32} height={32} style={{ borderRadius: '50%' }} />
+            <span className="w-8 text-center font-bold">{MEDALS[row.rank - 1] ?? `#${row.rank}`}</span>
+            <img src={row.avatarUrl ?? DEFAULT_AVATAR} alt="" className="h-8 w-8 rounded-full" />
             <div className="grow">
               <div className="title">{row.name}</div>
               <div className="faint">{row.userId}</div>
             </div>
-            <div style={{ textAlign: 'right' }}>
+            <div className="text-right">
               <div>{row.value}</div>
               {row.detail && <div className="faint">{row.detail}</div>}
             </div>
@@ -41,13 +41,7 @@ export function RankList({ rows, loading, error, emptyTitle, emptyText, page, pa
           </div>
         ))}
       </div>
-      {onPage && page !== undefined && pages !== undefined && pages > 1 && (
-        <div className="row" style={{ justifyContent: 'center' }}>
-          <button type="button" className="btn btn-secondary btn-sm" disabled={page <= 1 || loading} onClick={() => onPage(page - 1)}>← Zurück</button>
-          <span className="faint">Seite {page} von {pages}</span>
-          <button type="button" className="btn btn-secondary btn-sm" disabled={page >= pages || loading} onClick={() => onPage(page + 1)}>Weiter →</button>
-        </div>
-      )}
+      {onPage && page !== undefined && pages !== undefined && <Pager page={page} pages={pages} onPage={onPage} busy={loading} />}
     </div>
   );
 }

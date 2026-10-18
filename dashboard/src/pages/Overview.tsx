@@ -5,6 +5,7 @@ import { useGSAP } from '@gsap/react';
 import { CHANNEL_TYPES } from '../../../src/web/apiTypes';
 import { useGuild } from '../api';
 import { GuildIcon } from '../components/Layout';
+import { PageHeader, Stats } from '../components/ui';
 import { Icon, IconTile } from '../icons';
 import { GROUPS, MODULES } from '../modules/registry';
 
@@ -24,7 +25,6 @@ export function Overview() {
   useGSAP(() => {
     const mm = gsap.matchMedia();
     mm.add('(prefers-reduced-motion: no-preference)', () => {
-      gsap.fromTo('.js-hero', { y: 20, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.6, ease: 'power3.out', clearProps: 'transform' });
       gsap.fromTo('.js-tile', { y: 24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.5, stagger: 0.035, ease: 'power3.out', delay: 0.15, clearProps: 'transform' });
       // Count the stats up from zero.
       gsap.utils.toArray<HTMLElement>('.js-count').forEach((el) => {
@@ -38,25 +38,14 @@ export function Overview() {
 
   return (
     <div ref={root}>
-      <section className="js-hero relative mb-10 overflow-hidden rounded-3xl border border-white/[.07] bg-[#1a1b1f] p-6 md:p-8">
-        {guild.iconUrl && <img src={guild.iconUrl} alt="" className="pointer-events-none absolute -right-10 -top-16 h-72 w-72 scale-125 object-cover opacity-25 blur-3xl" />}
-        <div className="pointer-events-none absolute -left-20 -top-24 h-64 w-64 rounded-full bg-blurple/20 blur-3xl" />
-        <div className="relative flex flex-wrap items-center gap-5">
-          <GuildIcon guild={guild} className="h-20 w-20 rounded-3xl text-2xl ring-4 ring-white/10" />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-[.14em] text-nexo-cyan">Übersicht</p>
-            <h1 className="mt-1 truncate text-3xl">{guild.name}</h1>
-          </div>
-        </div>
-        <dl className="relative m-0 mt-7 grid grid-cols-2 gap-3 md:grid-cols-4">
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-2xl border border-white/[.06] bg-black/20 px-4 py-3">
-              <dt className="js-count font-display text-2xl font-semibold text-white" data-value={stat.value}>{stat.value.toLocaleString('de-DE')}</dt>
-              <dd className="m-0 text-sm text-dc-muted">{stat.label}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      <PageHeader
+        kicker="Übersicht"
+        media={<GuildIcon guild={guild} className="h-[52px] w-[52px] shrink-0 rounded-[14px] text-lg" />}
+        title={guild.name}
+        description="Wähle ein Modul, um es für diesen Server einzurichten."
+      />
+      <Stats items={stats.map((stat) => ({ label: stat.label, value: <span className="js-count" data-value={stat.value}>{stat.value.toLocaleString('de-DE')}</span> }))} />
+      <div className="mb-8" />
 
       {GROUPS.map((group) => (
         <section key={group} className="mb-9">

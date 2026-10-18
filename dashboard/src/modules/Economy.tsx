@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import type { EconomyLeaderboard, EconomyMember, EconomyMoneyType, EconomySettings } from '../../../src/web/dto/economy';
 import { ECONOMY_MAX_AMOUNT } from '../../../src/web/dto/economy';
 import { api, useAction, useApi, useGuild, useSettings, useToast } from '../api';
-import { Card, Field, Modal, Notice, NumberInput, PageHeader, RoleSelect, Select, SettingsPage } from '../components/ui';
+import { useConfirm } from '../components/ConfirmDialog';
+import { Actions, Card, Field, Notice, NumberInput, PageHeader, RoleSelect, Select, SettingsPage, Stats } from '../components/ui';
 import { Icon } from '../icons';
 import { RankList, isUserId } from './rankingKit';
 
@@ -18,7 +19,7 @@ function MoneyTools({ initialId, money, onChanged }: { initialId: string; money:
   const [action, setAction] = useState<'add' | 'remove'>('add');
   const [type, setType] = useState<EconomyMoneyType>('wallet');
   const [amount, setAmount] = useState(100);
-  const [confirm, setConfirm] = useState(false);
+  const { confirm, dialog } = useConfirm();
 
   const load = async (id: string) => {
     if (!isUserId(id)) { toast('Bitte gib eine gültige Nutzer-ID ein.', true); return; }
@@ -35,7 +36,6 @@ function MoneyTools({ initialId, money, onChanged }: { initialId: string; money:
   useEffect(() => { if (initialId) void load(initialId); }, []);
 
   const execute = async () => {
-    setConfirm(false);
     if (!member) return;
     const result = await run<EconomyMember>(`/guilds/${guild.id}/economy/members/${member.userId}`, { action, type, amount },
       action === 'add' ? 'Geld hinzugefügt.' : 'Geld abgezogen.');
@@ -57,7 +57,7 @@ function MoneyTools({ initialId, money, onChanged }: { initialId: string; money:
         {member && (
           <>
             <div className="list-item">
-              <img src={member.avatarUrl ?? 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" width={40} height={40} style={{ borderRadius: '50%' }} />
+              <img src={member.avatarUrl ?? 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="" className="h-8 w-8 rounded-full" />
               <div className="grow">
                 <div className="title">{member.name}</div>
                 <div className="faint">Geldbörse {money(member.wallet)} · Bank {money(member.bank)} / {money(member.maxBank)}</div>
@@ -74,25 +74,22 @@ function MoneyTools({ initialId, money, onChanged }: { initialId: string; money:
                 <NumberInput value={amount} min={1} max={ECONOMY_MAX_AMOUNT} onChange={setAmount} />
               </Field>
             </div>
-            <div>
-              <button type="button" className={`btn ${action === 'add' ? 'btn-primary' : 'btn-danger'}`} disabled={!amountValid || busy !== null}
-                onClick={() => (action === 'add' ? void execute() : setConfirm(true))}>
-                {action === 'add' ? 'Geld hinzufügen' : 'Geld abziehen'}
-              </button>
-            </div>
           </>
         )}
       </div>
-      {confirm && member && (
-        <Modal title="Geld abziehen?" onClose={() => setConfirm(false)} footer={(
-          <>
-            <button type="button" className="btn btn-ghost" onClick={() => setConfirm(false)}>Abbrechen</button>
-            <button type="button" className="btn btn-danger" onClick={() => void execute()}>Abziehen</button>
-          </>
-        )}>
-          <p className="muted">{member.name} werden {money(amount)} aus der {where} abgezogen.</p>
-        </Modal>
+      {member && (
+        <Actions>
+          <button type="button" className={`btn ${action === 'add' ? 'btn-primary' : 'btn-danger'}`} disabled={!amountValid || busy !== null}
+            onClick={() => (action === 'add' ? void execute() : confirm({
+              title: 'Geld abziehen?', confirmLabel: 'Abziehen',
+              text: `${member.name} werden ${money(amount)} aus der ${where} abgezogen.`,
+              onConfirm: execute,
+            }))}>
+            {action === 'add' ? 'Geld hinzufügen' : 'Geld abziehen'}
+          </button>
+        </Actions>
       )}
+      {dialog}
     </Card>
   );
 }
@@ -103,11 +100,12 @@ function Leaderboard({ version, money, onSelect }: { version: number; money: Mon
   const board = useApi<EconomyLeaderboard>(`/guilds/${guild.id}/economy/leaderboard?page=${page}&v=${version}`);
   return (
     <Card icon="stats" title="Bestenliste" description="Die reichsten Mitglieder dieses Servers (Geldbörse + Bank). Kontostände gelten pro Server."
-      right={<button type="button" className="btn btn-ghost btn-sm" onClick={board.reload}><Icon name="refresh" size={16} /> Aktualisieren</button>}>
+      right={<button type="button" className="btn btn-secondary btn-sm" onClick={board.reload}><Icon name="refresh" size={16} /> Aktualisieren</button>}>
       {board.data && board.data.total > 0 && (
-        <p className="faint" style={{ marginBottom: 12 }}>
-          {board.data.total.toLocaleString('de-DE')} Konten · {money(board.data.totalInCirculation)} im Umlauf
-        </p>
+        <Stats items={[
+          { label: 'Konten', value: board.data.total.toLocaleString('de-DE') },
+          { label: 'Im Umlauf', value: money(board.data.totalInCirculation) },
+        ]} />
       )}
       <RankList
         rows={board.data?.entries.map((entry) => ({
@@ -144,18 +142,18 @@ export default function EconomyPage() {
               </Card>
 
               <Card icon="coins" title="Währung">
-                <div className="grid-2">
-                  <Field label="Name"><input className="input" value={value.currency.name} readOnly disabled /></Field>
-                  <Field label="Symbol"><input className="input" value={value.currency.symbol} readOnly disabled /></Field>
-                </div>
-                <div style={{ marginTop: 14 }}>
+                <div className="stack">
+                  <div className="grid-2">
+                    <Field label="Name"><input className="input" value={value.currency.name} readOnly disabled /></Field>
+                    <Field label="Symbol"><input className="input" value={value.currency.symbol} readOnly disabled /></Field>
+                  </div>
                   <Notice>Die Währung gilt global für alle Server mit Nexo und kann nur vom Bot-Owner geändert werden.</Notice>
                 </div>
               </Card>
 
               <Leaderboard version={version} money={money}
                 onSelect={(userId) => { setSelected(userId); document.getElementById('eco-member-tools')?.scrollIntoView({ behavior: 'smooth' }); }} />
-              <div id="eco-member-tools" style={{ marginTop: 16 }}>
+              <div id="eco-member-tools" className="mt-4">
                 <MoneyTools key={selected} initialId={selected} money={money} onChanged={() => setVersion((v) => v + 1)} />
               </div>
             </>

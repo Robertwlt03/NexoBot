@@ -69,22 +69,25 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; border: 3px solid transparent; background-clip: padding-box; }
 ::-webkit-scrollbar-thumb:hover { background-color: rgba(255, 255, 255, 0.18); }
 
-.page-head { display: flex; align-items: center; gap: 18px; margin-bottom: 28px; }
+/* Shared components live in the components layer, so Tailwind utilities on the same element always win. */
+@layer components {
+.page-head { display: flex; align-items: center; gap: 18px; margin-bottom: 28px; flex-wrap: wrap; }
 .page-head .icon-tile { width: 52px; height: 52px; border-radius: 14px; }
-.page-head p { color: var(--text-muted); margin-top: 6px; }
-.page-head .actions { margin-left: auto; display: flex; gap: 8px; }
+.page-kicker { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; color: var(--accent); margin-bottom: 4px; }
+.page-desc { color: var(--text-muted); margin-top: 6px; max-width: 680px; }
+.page-head .actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* ---------- Cards & sections ---------- */
 .card { background: var(--bg-card); border-radius: var(--radius-lg); padding: 22px; border: 1px solid var(--border); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset; }
 .card + .card, .card + .grid, .grid + .card { margin-top: 16px; }
+.save-bar + .card, .save-bar + .grid, .save-bar + .tabs, .notice + .card, .notice + .tabs, .notice + .stats, .notice + .notice, .card + .notice, .stats + .card { margin-top: 16px; }
 .card-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
 .card-head h3 { display: flex; align-items: center; gap: 10px; font-size: 16px; }
 .card-head h3 svg { color: var(--accent); }
 .card-head p { color: var(--text-faint); font-size: 14px; margin-top: 3px; }
 .card-head .right { margin-left: auto; }
 .card.disabled-section > :not(.card-head) { opacity: .45; pointer-events: none; }
-/* Layered so Tailwind's own `grid` utility is not overridden. */
-@layer components { .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); } }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 .grid-2 { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
 @media (max-width: 700px) { .grid-2 { grid-template-columns: 1fr; } }
 .stack { display: flex; flex-direction: column; gap: 16px; }
@@ -169,8 +172,28 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 .table tbody tr:hover { background: rgba(255, 255, 255, .025); }
 .table tr:last-child td { border-bottom: 0; }
 
+/* ---------- Tabs, paging, stats, action rows ---------- */
+.tabs { position: relative; display: inline-flex; gap: 2px; padding: 4px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 16px; max-width: 100%; overflow-x: auto; }
+.tabs-pill { position: absolute; top: 4px; bottom: 4px; left: 0; border-radius: 9px; background: var(--bg-card-hover); border: 1px solid var(--border-strong); visibility: hidden; }
+.tab { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 7px; border: 0; background: none; color: var(--text-muted); font: inherit; font-size: 14px; font-weight: 600; padding: 7px 14px; border-radius: 9px; cursor: pointer; white-space: nowrap; transition: color .15s; }
+.tab:hover, .tab[aria-selected="true"] { color: var(--text-strong); }
+.tab-count { font-size: 12px; padding: 0 7px; border-radius: 999px; background: rgba(255, 255, 255, .08); color: var(--text-muted); }
+.tab[aria-selected="true"] .tab-count { background: rgba(88, 101, 242, .3); color: #fff; }
+.pager { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 16px; color: var(--text-faint); font-size: 13px; }
+.pager b { color: var(--text-strong); }
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+.table-wrap .table th:first-child, .table-wrap .table td:first-child { padding-left: 16px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 0 0 16px; }
+.stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; }
+.stat dt { font-family: var(--font-display); font-size: 24px; font-weight: 650; color: var(--text-strong); line-height: 1.2; }
+.stat dd { margin: 2px 0 0; color: var(--text-muted); font-size: 13px; }
+.stat .stat-hint { color: var(--text-faint); font-size: 12px; }
+.actions-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+.actions-end { justify-content: flex-end; }
+.actions-between { justify-content: space-between; }
+
 /* ---------- Feedback ---------- */
-.notice { display: flex; gap: 10px; align-items: flex-start; padding: 13px 15px; border-radius: var(--radius); background: rgba(88, 101, 242, .1); border: 1px solid rgba(88, 101, 242, .3); color: var(--text); font-size: 14px; }
+.notice { display: block; padding: 13px 15px; line-height: 1.5; border-radius: var(--radius); background: rgba(88, 101, 242, .1); border: 1px solid rgba(88, 101, 242, .3); color: var(--text); font-size: 14px; }
 .notice.warn { background: rgba(240, 178, 50, .08); border-color: rgba(240, 178, 50, .3); }
 .notice.danger { background: rgba(218, 55, 60, .08); border-color: rgba(218, 55, 60, .35); }
 .empty { text-align: center; padding: 40px 16px; color: var(--text-faint); }
@@ -206,3 +229,4 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 .embed .e-image { margin-top: 10px; max-width: 100%; border-radius: 4px; }
 .embed .e-footer { margin-top: 8px; font-size: 12px; color: var(--text-faint); }
 .mention { background: rgba(88, 101, 242, .3); color: #c9cdfb; border-radius: 3px; padding: 0 2px; font-weight: 500; }
+}

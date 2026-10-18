@@ -6,7 +6,6 @@ import {
   SettingsPage, Switch, TextArea, TextInput,
 } from '../components/ui';
 import { Icon } from '../icons';
-import './Verification.css';
 
 const CRITERIA: { value: AutoVerifyCriteria; label: string }[] = [
   { value: 'account_age', label: 'Account-Alter' },
@@ -23,9 +22,9 @@ const PANEL_STATUS: Record<VerificationSettings['panel']['status'], { text: stri
 
 function PanelPreview({ message, buttonText }: { message: string; buttonText: string }) {
   return (
-    <div className="stack" style={{ gap: 6 }}>
+    <div className="flex flex-col gap-1.5">
       <MessagePreview embed={{ title: 'Server-Verifizierung', description: message, color: '#57F287' }} sample={{}} />
-      <div className="verify-preview-btn"><span>✅</span>{buttonText || 'Verifizieren'}</div>
+      <div className="ml-[70px] inline-flex items-center gap-1.5 self-start rounded-(--radius-sm) bg-(--success) px-3.5 py-1.5 text-sm font-medium text-white"><span>✅</span>{buttonText || 'Verifizieren'}</div>
     </div>
   );
 }
@@ -52,7 +51,7 @@ export default function VerificationPage() {
           return (
             <>
               {value.autoRoleConfigured && (
-                <div style={{ marginBottom: 16 }}>
+                <div className="mb-4">
                   <Notice tone="warn">
                     Unter „Willkommen“ ist eine Auto-Rolle eingerichtet. Solange sie aktiv ist, kannst du weder die Verifizierung noch AutoVerify einschalten.
                   </Notice>
@@ -61,41 +60,41 @@ export default function VerificationPage() {
 
               <Card icon="verify" title="Verifizierungs-Panel" description="Mitglieder klicken auf den Button und bekommen die Rolle."
                 right={<Switch checked={value.enabled} onChange={(enabled) => settings.set({ enabled })} label="Verifizierung aktiv" />}>
-                {value.enabled && av.enabled && (
-                  <div style={{ marginBottom: 16 }}>
+                <div className="stack">
+                  {value.enabled && av.enabled && (
                     <Notice tone="warn">Verifizierung und AutoVerify schließen sich aus. Schalte eins davon aus.</Notice>
-                  </div>
-                )}
-                <div className="row" style={{ marginBottom: 16 }}>
-                  <Badge on={status.on}>{status.text}</Badge>
-                  <Badge>{value.verifiedCount.toLocaleString('de-DE')} verifiziert</Badge>
-                  {value.panel.url && (
-                    <a className="btn btn-ghost btn-sm" href={value.panel.url} target="_blank" rel="noreferrer"><Icon name="external" size={14} />Panel ansehen</a>
                   )}
-                  <button type="button" className="btn btn-secondary btn-sm" style={{ marginLeft: 'auto' }}
-                    disabled={!value.enabled || !value.channelId || settings.dirty || busy !== null} onClick={repost}
-                    title={settings.dirty ? 'Speichere zuerst deine Änderungen.' : undefined}>
-                    <Icon name="refresh" size={14} />Panel neu posten
-                  </button>
-                </div>
-                <div className="grid-2">
-                  <div className="stack">
-                    <Field label="Kanal" hint="Hier postet Nexo das Panel. Beim Wechsel wird es verschoben.">
-                      <ChannelSelect value={value.channelId} onChange={(channelId) => settings.set({ channelId })} />
-                    </Field>
-                    <Field label="Verifizierungsrolle" hint="Nexos eigene Rolle muss darüber stehen.">
-                      <RoleSelect value={value.roleId} assignableOnly onChange={(roleId) => settings.set({ roleId })} />
-                    </Field>
-                    <Field label="Nachricht">
-                      <TextArea value={value.message} onChange={(message) => settings.set({ message })} maxLength={2000} />
-                    </Field>
-                    <Field label="Button-Text">
-                      <TextInput value={value.buttonText} onChange={(buttonText) => settings.set({ buttonText })} maxLength={80} />
-                    </Field>
+                  <div className="row">
+                    <Badge on={status.on}>{status.text}</Badge>
+                    <Badge>{value.verifiedCount.toLocaleString('de-DE')} verifiziert</Badge>
+                    {value.panel.url && (
+                      <a className="btn btn-ghost btn-sm" href={value.panel.url} target="_blank" rel="noreferrer"><Icon name="external" size={14} />Panel ansehen</a>
+                    )}
+                    <button type="button" className="btn btn-secondary btn-sm ml-auto"
+                      disabled={!value.enabled || !value.channelId || settings.dirty || busy !== null} onClick={repost}
+                      title={settings.dirty ? 'Speichere zuerst deine Änderungen.' : undefined}>
+                      <Icon name="refresh" size={14} />Panel neu posten
+                    </button>
                   </div>
-                  <div className="stack">
-                    <span className="field-label">Vorschau</span>
-                    <PanelPreview message={value.message} buttonText={value.buttonText} />
+                  <div className="grid-2">
+                    <div className="stack">
+                      <Field label="Kanal" hint="Hier postet Nexo das Panel. Beim Wechsel wird es verschoben.">
+                        <ChannelSelect value={value.channelId} onChange={(channelId) => settings.set({ channelId })} />
+                      </Field>
+                      <Field label="Verifizierungsrolle" hint="Nexos eigene Rolle muss darüber stehen.">
+                        <RoleSelect value={value.roleId} assignableOnly onChange={(roleId) => settings.set({ roleId })} />
+                      </Field>
+                      <Field label="Nachricht">
+                        <TextArea value={value.message} onChange={(message) => settings.set({ message })} maxLength={2000} />
+                      </Field>
+                      <Field label="Button-Text">
+                        <TextInput value={value.buttonText} onChange={(buttonText) => settings.set({ buttonText })} maxLength={80} />
+                      </Field>
+                    </div>
+                    <div className="stack">
+                      <span className="field-label">Vorschau</span>
+                      <PanelPreview message={value.message} buttonText={value.buttonText} />
+                    </div>
                   </div>
                 </div>
               </Card>

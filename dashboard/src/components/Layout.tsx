@@ -90,16 +90,27 @@ export function GuildLayout() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [dirty]);
 
-  // Sliding highlight behind the active navigation entry.
-  useGSAP(() => {
+  // Sliding highlight behind the active navigation entry: slides on navigation, snaps when the layout shifts
+  // (styles/fonts arriving, window resize).
+  const placeMarker = useCallback((animate: boolean) => {
     const active = navRef.current?.querySelector<HTMLElement>('a[aria-current="page"]');
     const marker = markerRef.current;
-    if (!active || !marker) return;
+    if (!marker) return;
+    if (!active) { gsap.set(marker, { autoAlpha: 0 }); return; }
     const target = { y: active.offsetTop, height: active.offsetHeight, autoAlpha: 1 };
-    if (reducedMotion() || marker.dataset.placed !== '1') gsap.set(marker, target);
-    else gsap.to(marker, { ...target, duration: 0.35, ease: 'power3.out' });
+    if (animate && !reducedMotion() && marker.dataset.placed === '1') gsap.to(marker, { ...target, duration: 0.35, ease: 'power3.out', overwrite: true });
+    else gsap.set(marker, { ...target, overwrite: true });
     marker.dataset.placed = '1';
-  }, { dependencies: [location.pathname, Boolean(detail.data)] });
+  }, []);
+  useGSAP(() => placeMarker(true), { dependencies: [location.pathname, placeMarker] });
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const observer = new ResizeObserver(() => placeMarker(false));
+    Array.from(nav.children).forEach((child) => observer.observe(child));
+    void document.fonts?.ready.then(() => placeMarker(false));
+    return () => observer.disconnect();
+  }, [placeMarker]);
 
   // Page transition on every module change.
   useGSAP(() => {

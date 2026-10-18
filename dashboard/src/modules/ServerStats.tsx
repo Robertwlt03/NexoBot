@@ -3,7 +3,7 @@ import type { CounterCreate, CounterItem, CounterType, ServerStatsState } from '
 import { COUNTER_TYPES } from '../../../src/web/dto/serverstats';
 import { useAction, useApi, useGuild, useToast } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
-import { Card, ChannelSelect, Empty, Field, Notice, PageHeader, Select, Spinner } from '../components/ui';
+import { Actions, Card, ChannelSelect, Empty, Field, Notice, PageHeader, Select, Spinner } from '../components/ui';
 import { Icon } from '../icons';
 
 type Result = ServerStatsState & { nameUpdated?: boolean };
@@ -38,7 +38,7 @@ export default function ServerStatsPage() {
       {loading && !data && <Spinner />}
       {error && !data && <Notice tone="danger">{error}</Notice>}
       {data && (
-        <div className="stack">
+        <>
           <Card icon="stats" title="Zähler" description="Die Namen werden automatisch alle 15 Minuten aktualisiert. Pro Typ ist ein Zähler möglich.">
             {data.counters.length === 0 ? <Empty title="Noch keine Zähler">Erstelle unten deinen ersten Zähler.</Empty> : (
               <div className="list">
@@ -50,7 +50,7 @@ export default function ServerStatsPage() {
                       <div className="faint">{typeLabel(counter.type)} · ID {counter.id}</div>
                     </div>
                     {counter.channelName && (
-                      <div style={{ minWidth: 180 }}>
+                      <div className="min-w-[180px]">
                         <Select<CounterType>
                           value={counter.type as CounterType}
                           onChange={(type) => changeType(counter, type)}
@@ -58,7 +58,7 @@ export default function ServerStatsPage() {
                         />
                       </div>
                     )}
-                    <button type="button" className="btn btn-sm btn-ghost" aria-label="Zähler löschen" disabled={busy !== null}
+                    <button type="button" className="btn btn-ghost btn-sm" aria-label="Zähler löschen" disabled={busy !== null}
                       onClick={() => confirm({
                         title: 'Zähler & Kanal löschen?', confirmLabel: 'Löschen',
                         text: <>Der Zähler <b>{typeLabel(counter.type)}</b> und sein Kanal{counter.channelName ? <> <b>{counter.channelName}</b></> : ''} werden dauerhaft gelöscht.</>,
@@ -74,28 +74,30 @@ export default function ServerStatsPage() {
 
           <Card icon="plus" title="Zähler erstellen" description="Nexo legt dafür einen neuen Kanal in der gewählten Kategorie an.">
             {free.length === 0 ? <Notice>Alle Zählertypen sind schon angelegt.</Notice> : (
-              <div className="stack">
-                <div className="grid-2">
-                  <Field label="Typ">
-                    <Select<CounterType> value={draftType ?? 'members'} onChange={(type) => setDraft({ ...draft, type })} options={free} />
-                  </Field>
-                  <Field label="Kanaltyp" hint="Sprachkanäle sind empfohlen: niemand kann hineinschreiben.">
-                    <Select<'voice' | 'text'> value={draft.channelType} onChange={(channelType) => setDraft({ ...draft, channelType })}
-                      options={[{ value: 'voice', label: 'Sprachkanal' }, { value: 'text', label: 'Textkanal' }]} />
+              <>
+                <div className="stack">
+                  <div className="grid-2">
+                    <Field label="Typ">
+                      <Select<CounterType> value={draftType ?? 'members'} onChange={(type) => setDraft({ ...draft, type })} options={free} />
+                    </Field>
+                    <Field label="Kanaltyp" hint="Sprachkanäle sind empfohlen: niemand kann hineinschreiben.">
+                      <Select<'voice' | 'text'> value={draft.channelType} onChange={(channelType) => setDraft({ ...draft, channelType })}
+                        options={[{ value: 'voice', label: 'Sprachkanal' }, { value: 'text', label: 'Textkanal' }]} />
+                    </Field>
+                  </div>
+                  <Field label="Kategorie">
+                    <ChannelSelect kind="category" value={draft.categoryId} onChange={(categoryId) => setDraft({ ...draft, categoryId })} placeholder="Kategorie auswählen" />
                   </Field>
                 </div>
-                <Field label="Kategorie">
-                  <ChannelSelect kind="category" value={draft.categoryId} onChange={(categoryId) => setDraft({ ...draft, categoryId })} placeholder="Kategorie auswählen" />
-                </Field>
-                <div className="row" style={{ justifyContent: 'flex-end' }}>
+                <Actions>
                   <button type="button" className="btn btn-primary" disabled={busy !== null || !draft.categoryId} onClick={create}>
                     {busy ? 'Wird erstellt …' : 'Zähler erstellen'}
                   </button>
-                </div>
-              </div>
+                </Actions>
+              </>
             )}
           </Card>
-        </div>
+        </>
       )}
       {dialog}
     </>

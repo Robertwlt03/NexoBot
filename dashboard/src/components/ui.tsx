@@ -5,24 +5,99 @@ import type { ApiChannel, ApiRole } from '../../../src/web/apiTypes';
 import { useGuild } from '../api';
 import { Icon, IconTile, type IconName } from '../icons';
 import { useEnter } from './motion';
+import { useLocation } from 'react-router';
+import { MODULES } from '../modules/registry';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 
 // ---------- Layout ----------
 
-export function PageHeader({ icon, title, description, actions }: { icon: IconName; title: string; description: string; actions?: ReactNode }) {
+/**
+ * The one page header used everywhere: small section label (the module's sidebar group by default), title,
+ * description, optional media (defaults to the icon tile) and actions on the right.
+ */
+export function PageHeader({ icon, title, description, actions, kicker, media }: {
+  icon?: IconName; title: string; description: ReactNode; actions?: ReactNode; kicker?: string; media?: ReactNode;
+}) {
   const ref = useRef<HTMLDivElement>(null);
+  const location = useLocation();
   useEnter(ref, { y: 0, x: -10 });
+  const label = kicker ?? MODULES.find((m) => location.pathname.endsWith(`/${m.id}`))?.group;
   return (
-    <div className="page-head" ref={ref}>
-      <IconTile name={icon} size={48} />
-      <div>
+    <header className="page-head" ref={ref}>
+      {media ?? (icon && <IconTile name={icon} size={52} />)}
+      <div className="min-w-0 flex-1">
+        {label && <p className="page-kicker">{label}</p>}
         <h1>{title}</h1>
-        <p>{description}</p>
+        <p className="page-desc">{description}</p>
       </div>
       {actions && <div className="actions">{actions}</div>}
+    </header>
+  );
+}
+
+/** Segmented tabs with a highlight that slides to the active tab. */
+export function Tabs<T extends string>({ value, onChange, items }: {
+  value: T; onChange: (value: T) => void; items: { id: T; label: string; count?: number }[];
+}) {
+  const root = useRef<HTMLDivElement>(null);
+  const pill = useRef<HTMLSpanElement>(null);
+  useGSAP(() => {
+    const active = root.current?.querySelector<HTMLElement>('[aria-selected="true"]');
+    if (!active || !pill.current) return;
+    const target = { x: active.offsetLeft, width: active.offsetWidth, autoAlpha: 1 };
+    const instant = pill.current.dataset.placed !== '1' || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (instant) gsap.set(pill.current, target);
+    else gsap.to(pill.current, { ...target, duration: 0.35, ease: 'power3.out' });
+    pill.current.dataset.placed = '1';
+  }, { dependencies: [value, items.length] });
+  return (
+    <div className="tabs" role="tablist" ref={root}>
+      <span className="tabs-pill" ref={pill} />
+      {items.map((item) => (
+        <button key={item.id} type="button" role="tab" aria-selected={item.id === value} className="tab" onClick={() => onChange(item.id)}>
+          {item.label}{item.count !== undefined && <span className="tab-count">{item.count}</span>}
+        </button>
+      ))}
     </div>
   );
+}
+
+/** Previous / next paging under lists and tables. Renders nothing for a single page. */
+export function Pager({ page, pages, onPage, busy }: { page: number; pages: number; onPage: (page: number) => void; busy?: boolean }) {
+  if (pages <= 1) return null;
+  return (
+    <div className="pager">
+      <button type="button" className="btn btn-secondary btn-sm" disabled={page <= 1 || busy} onClick={() => onPage(page - 1)}>Zurück</button>
+      <span>Seite <b>{page}</b> von {pages}</span>
+      <button type="button" className="btn btn-secondary btn-sm" disabled={page >= pages || busy} onClick={() => onPage(page + 1)}>Weiter</button>
+    </div>
+  );
+}
+
+/** Scroll container for wide tables, so they never stretch the page on small screens. */
+export function TableWrap({ children }: { children: ReactNode }) {
+  return <div className="table-wrap"><table className="table">{children}</table></div>;
+}
+
+/** Row of number tiles (overview, ticket stats, counting status …). */
+export function Stats({ items }: { items: { label: string; value: ReactNode; hint?: ReactNode }[] }) {
+  return (
+    <dl className="stats">
+      {items.map((item) => (
+        <div className="stat" key={item.label}>
+          <dt>{item.value}</dt>
+          <dd>{item.label}</dd>
+          {item.hint && <dd className="stat-hint">{item.hint}</dd>}
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** Buttons at the end of a card or form, right-aligned. */
+export function Actions({ children, align = 'end' }: { children: ReactNode; align?: 'start' | 'end' | 'between' }) {
+  return <div className={`actions-row actions-${align}`}>{children}</div>;
 }
 
 export function Card({ title, description, icon, right, disabled, children }: {
@@ -107,7 +182,7 @@ export function TextArea({ value, onChange, placeholder, maxLength, variables, r
     <>
       <textarea ref={ref} className="textarea" rows={rows} value={value} placeholder={placeholder} maxLength={maxLength} onChange={(e) => onChange(e.target.value)} />
       {(variables?.length || maxLength) ? (
-        <div className="row" style={{ justifyContent: 'space-between' }}>
+        <div className="row justify-between">
           <div className="var-list">{variables?.map((v) => <button key={v} type="button" onClick={() => insert(v)}>{v}</button>)}</div>
           {maxLength && <span className="faint">{value.length}/{maxLength}</span>}
         </div>
@@ -128,7 +203,7 @@ export function ColorInput({ value, onChange }: { value: string; onChange: (valu
   return (
     <div className="input-group">
       <input className="input" type="color" value={/^#[0-9a-f]{6}$/i.test(value) ? value : '#7c5cff'} onChange={(e) => onChange(e.target.value)} />
-      <input className="input" value={value} onChange={(e) => onChange(e.target.value)} placeholder="#7C5CFF" maxLength={7} style={{ maxWidth: 140 }} />
+      <input className="input max-w-[140px]" value={value} onChange={(e) => onChange(e.target.value)} placeholder="#7C5CFF" maxLength={7} />
     </div>
   );
 }
@@ -209,7 +284,7 @@ export function MultiRoleSelect({ value, onChange, assignableOnly = false, max }
   const byId = new Map(guild.roles.map((role) => [role.id, role]));
   const available = guild.roles.filter((role) => !role.managed && !value.includes(role.id) && (!assignableOnly || role.assignable));
   return (
-    <div className="stack" style={{ gap: 8 }}>
+    <div className="stack gap-2">
       {value.length > 0 && <div className="chips">{value.map((id) => <RoleChip key={id} role={byId.get(id)} onRemove={() => onChange(value.filter((v) => v !== id))} />)}</div>}
       {(!max || value.length < max) && (
         <select className="select" value="" onChange={(e) => e.target.value && onChange([...value, e.target.value])}>
@@ -226,7 +301,7 @@ export function MultiChannelSelect({ value, onChange, kind = 'text' }: { value: 
   const byId = new Map(guild.channels.map((channel) => [channel.id, channel]));
   const available = guild.channels.filter((c) => KIND_TYPES[kind].includes(c.type) && !value.includes(c.id));
   return (
-    <div className="stack" style={{ gap: 8 }}>
+    <div className="stack gap-2">
       {value.length > 0 && (
         <div className="chips">
           {value.map((id) => (
@@ -256,7 +331,7 @@ export function TagInput({ value, onChange, placeholder = 'Eintrag hinzufügen u
     setDraft('');
   };
   return (
-    <div className="stack" style={{ gap: 8 }}>
+    <div className="stack gap-2">
       {value.length > 0 && (
         <div className="chips">
           {value.map((entry) => (
@@ -368,7 +443,7 @@ export function MessagePreview({ content, embed, sample }: {
   return (
     <div className="preview">
       <img className="avatar" src="/dashboard/nexo.svg" alt="" />
-      <div style={{ minWidth: 0, flex: 1 }}>
+      <div className="min-w-0 flex-1">
         <div className="author">Nexo <span className="bot-tag">App</span></div>
         {content && <div className="msg-content">{renderPlaceholders(content, sample)}</div>}
         {embed && (

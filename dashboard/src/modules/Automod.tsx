@@ -5,7 +5,7 @@ import {
 } from '../../../src/web/dto/automod';
 import { useSettings } from '../api';
 import {
-  Badge, Card, ChannelSelect, Field, MultiChannelSelect, MultiRoleSelect, Notice, NumberInput, PageHeader,
+  Badge, Card, ChannelSelect, Empty, Field, MultiChannelSelect, MultiRoleSelect, Notice, NumberInput, PageHeader,
   SettingsPage, Switch, TagInput,
 } from '../components/ui';
 import type { IconName } from '../icons';
@@ -55,10 +55,12 @@ export default function AutomodPage() {
           const { features } = value;
           return (
             <>
-              {!value.canManage && (
-                <Notice tone="danger">Nexo braucht die Berechtigung „Server verwalten“, um AutoMod-Regeln zu lesen und anzulegen.</Notice>
-              )}
-              <Notice>Nexo legt die Regeln in Discords eigenem AutoMod an. Discord blockiert passende Nachrichten selbst, auch wenn Nexo offline ist.</Notice>
+              <div className="stack mb-4">
+                {!value.canManage && (
+                  <Notice tone="danger">Nexo braucht die Berechtigung „Server verwalten“, um AutoMod-Regeln zu lesen und anzulegen.</Notice>
+                )}
+                <Notice>Nexo legt die Regeln in Discords eigenem AutoMod an. Discord blockiert passende Nachrichten selbst, auch wenn Nexo offline ist.</Notice>
+              </div>
 
               <FeatureCard id="spam" value={features.spam} onChange={setFeature('spam')} />
 
@@ -114,7 +116,7 @@ export default function AutomodPage() {
 
               <Card icon="check" title="Regeln in Discord" description="So stehen Nexos Regeln gerade in den Servereinstellungen unter „AutoMod“.">
                 {value.rules.length === 0 ? (
-                  <p className="muted">Noch keine AutoMod-Regeln von Nexo. Schalte oben einen Filter ein und speichere.</p>
+                  <Empty title="Noch keine Regeln">Schalte oben einen Filter ein und speichere.</Empty>
                 ) : (
                   <div className="list">
                     {value.rules.map((rule) => (

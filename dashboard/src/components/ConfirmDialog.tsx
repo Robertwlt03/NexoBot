@@ -33,7 +33,7 @@ export function useConfirm() {
       onClose={() => { if (!busy) setRequest(null); }}
       footer={(
         <>
-          <button type="button" className="btn btn-ghost" onClick={() => setRequest(null)} disabled={busy}>Abbrechen</button>
+          <button type="button" className="btn btn-secondary" onClick={() => setRequest(null)} disabled={busy}>Abbrechen</button>
           <button type="button" className={`btn ${request.danger === false ? 'btn-primary' : 'btn-danger'}`} onClick={run} disabled={busy}>
             {busy ? 'Einen Moment …' : request.confirmLabel}
           </button>

@@ -3,7 +3,7 @@ import type { JoinToCreateCreate, JoinToCreateState, JoinToCreateTrigger, JoinTo
 import { JTC_DEFAULTS, JTC_PLACEHOLDERS } from '../../../src/web/dto/jointocreate';
 import { api, useAction, useApi, useGuild, useToast } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
-import { Card, ChannelSelect, Field, Notice, NumberInput, PageHeader, Spinner, TextArea } from '../components/ui';
+import { Actions, Card, ChannelSelect, Field, Notice, NumberInput, PageHeader, Spinner, TextArea } from '../components/ui';
 import { Icon } from '../icons';
 
 function SettingsFields({ value, onChange }: { value: JoinToCreateTriggerSettings; onChange: (value: JoinToCreateTriggerSettings) => void }) {
@@ -54,7 +54,7 @@ function TriggerCard({ trigger, onChanged }: { trigger: JoinToCreateTrigger; onC
       title={channel ? `🔊 ${channel.name}` : 'Gelöschter Kanal'}
       description={`Wer diesem Kanal beitritt, bekommt einen eigenen Sprachkanal${category ? ` in ${category.name.toUpperCase()}` : ''}.`}
       right={(
-        <button type="button" className="btn btn-sm btn-danger" disabled={busy !== null}
+        <button type="button" className="btn btn-danger btn-sm" disabled={busy !== null}
           onClick={() => confirm({
             title: 'Join-to-Create entfernen?', confirmLabel: 'Entfernen',
             text: <>Der Kanal wird aus dem Join-to-Create-System entfernt{channel ? ' und gelöscht, wenn gerade niemand darin ist' : ''}. Das kann nicht rückgängig gemacht werden.</>,
@@ -70,13 +70,15 @@ function TriggerCard({ trigger, onChanged }: { trigger: JoinToCreateTrigger; onC
       {!trigger.exists ? (
         <Notice tone="warn">Der Auslöser-Kanal existiert nicht mehr. Entferne ihn und richte Join-to-Create neu ein.</Notice>
       ) : (
-        <div className="stack">
-          <SettingsFields value={draft} onChange={setDraft} />
-          <div className="row" style={{ justifyContent: 'flex-end' }}>
-            <button type="button" className="btn btn-ghost btn-sm" disabled={!dirty || saving} onClick={() => setDraft({ nameTemplate: trigger.nameTemplate, userLimit: trigger.userLimit, bitrateKbps: trigger.bitrateKbps })}>Zurücksetzen</button>
-            <button type="button" className="btn btn-success btn-sm" disabled={!dirty || saving} onClick={save}>{saving ? 'Speichern …' : 'Änderungen speichern'}</button>
+        <>
+          <div className="stack">
+            <SettingsFields value={draft} onChange={setDraft} />
           </div>
-        </div>
+          <Actions>
+            <button type="button" className="btn btn-secondary" disabled={!dirty || saving} onClick={() => setDraft({ nameTemplate: trigger.nameTemplate, userLimit: trigger.userLimit, bitrateKbps: trigger.bitrateKbps })}>Zurücksetzen</button>
+            <button type="button" className="btn btn-primary" disabled={!dirty || saving} onClick={save}>{saving ? 'Speichern …' : 'Änderungen speichern'}</button>
+          </Actions>
+        </>
       )}
       {dialog}
     </Card>
@@ -100,12 +102,12 @@ function CreateCard({ onCreated }: { onCreated: (state: JoinToCreateState) => vo
           <ChannelSelect kind="category" value={draft.categoryId} onChange={(categoryId) => setDraft({ ...draft, categoryId })} placeholder="Oberste Ebene" />
         </Field>
         <SettingsFields value={draft} onChange={(settings) => setDraft({ ...draft, ...settings })} />
-        <div className="row" style={{ justifyContent: 'flex-end' }}>
-          <button type="button" className="btn btn-primary" disabled={busy !== null || !draft.nameTemplate.trim()} onClick={create}>
-            {busy ? 'Wird erstellt …' : 'Kanal erstellen'}
-          </button>
-        </div>
       </div>
+      <Actions>
+        <button type="button" className="btn btn-primary" disabled={busy !== null || !draft.nameTemplate.trim()} onClick={create}>
+          {busy ? 'Wird erstellt …' : 'Kanal erstellen'}
+        </button>
+      </Actions>
     </Card>
   );
 }
@@ -120,7 +122,7 @@ export default function JoinToCreatePage() {
       {loading && !data && <Spinner />}
       {error && !data && <Notice tone="danger">{error}</Notice>}
       {data && (
-        <div className="stack">
+        <>
           {data.triggers.length === 0
             ? <CreateCard onCreated={(state) => { setData(state); reloadGuild(); }} />
             : data.triggers.map((trigger) => (
@@ -129,9 +131,9 @@ export default function JoinToCreatePage() {
                 onChanged={(state) => { setData(state); reloadGuild(); }} />
             ))}
           {data.triggers.length > 0 && (
-            <p className="faint">Pro Server ist ein Join-to-Create-Kanal möglich. Gerade offen: {data.activeChannels} temporäre{data.activeChannels === 1 ? 'r Kanal' : ' Kanäle'}.</p>
+            <p className="faint mt-4">Pro Server ist ein Join-to-Create-Kanal möglich. Gerade offen: {data.activeChannels} temporäre{data.activeChannels === 1 ? 'r Kanal' : ' Kanäle'}.</p>
           )}
-        </div>
+        </>
       )}
     </>
   );

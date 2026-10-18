@@ -6,7 +6,7 @@ import type { ApiGuildSummary } from '../../../src/web/apiTypes';
 import { useApi, UserContext } from '../api';
 import { GuildIcon, UserPanel } from '../components/Layout';
 import { NexoLogo } from '../components/NexoLogo';
-import { Empty, Notice, Spinner } from '../components/ui';
+import { Empty, Notice, PageHeader, Spinner } from '../components/ui';
 import { Icon } from '../icons';
 
 gsap.registerPlugin(useGSAP);
@@ -17,14 +17,6 @@ export function ServerPicker() {
   const guilds = data ?? [];
   const root = useRef<HTMLDivElement>(null);
   const refresh = async () => { await fetch('/dashboard/api/guilds?refresh=1', { credentials: 'same-origin' }); reload(); };
-
-  useGSAP(() => {
-    const mm = gsap.matchMedia();
-    mm.add('(prefers-reduced-motion: no-preference)', () => {
-      gsap.fromTo('.js-head', { y: 16, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.6, stagger: 0.08, ease: 'power3.out' });
-    });
-    return () => mm.revert();
-  }, { scope: root });
 
   // Server cards arrive with the data; fromTo + revertOnUpdate so a re-run never starts from a half-faded state.
   useGSAP(() => {
@@ -52,19 +44,16 @@ export function ServerPicker() {
 
       <main className="relative mx-auto max-w-6xl px-5 pb-24 pt-12 md:px-8">
         <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[700px] -translate-x-1/2 rounded-full bg-blurple/15 blur-[110px]" />
-        <div className="relative flex flex-wrap items-end gap-6">
-          <div className="min-w-0 flex-1">
-            <p className="js-head text-sm font-semibold uppercase tracking-[.14em] text-nexo-cyan">Serverauswahl</p>
-            <h1 className="js-head mt-2 text-3xl md:text-4xl">Hey {user?.globalName ?? user?.username ?? ''}, wo legen wir los?</h1>
-            <p className="js-head mt-3 max-w-2xl text-dc-muted">
-              Hier siehst du alle Server, auf denen du „Server verwalten“ darfst.
-              {data ? ` Nexo ist auf ${active} von ${guilds.length} aktiv.` : ''}
-            </p>
-          </div>
-          <button className="js-head btn btn-secondary" onClick={refresh}><Icon name="refresh" size={16} /> Aktualisieren</button>
+        <div className="relative">
+          <PageHeader
+            kicker="Serverauswahl"
+            title={`Hey ${user?.globalName ?? user?.username ?? ''}, wo legen wir los?`}
+            description={<>Hier siehst du alle Server, auf denen du „Server verwalten“ darfst.{data ? ` Nexo ist auf ${active} von ${guilds.length} aktiv.` : ''}</>}
+            actions={<button className="btn btn-secondary" onClick={refresh}><Icon name="refresh" size={16} /> Aktualisieren</button>}
+          />
         </div>
 
-        <div className="relative mt-10">
+        <div className="relative mt-4">
           {loading && !data && <div className="center"><Spinner /></div>}
           {error && <Notice tone="danger">{error}</Notice>}
           {data && guilds.length === 0 && <Empty title="Keine Server gefunden">Du brauchst auf einem Server die Berechtigung „Server verwalten“.</Empty>}

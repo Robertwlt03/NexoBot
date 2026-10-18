@@ -1,31 +1,20 @@
 import { useState } from 'react';
-import type { ReactNode } from 'react';
 import type { CountingStatus } from '../../../src/web/dto/counting';
 import { COUNTING_LEADERBOARD_LIMIT, COUNTING_MAX_START } from '../../../src/web/dto/counting';
 import { useAction, useApi, useGuild } from '../api';
-import { Badge, Card, ChannelSelect, Field, Modal, Notice, NumberInput, PageHeader, Select, Spinner } from '../components/ui';
+import { useConfirm } from '../components/ConfirmDialog';
+import { Actions, Badge, Card, ChannelSelect, Field, Notice, NumberInput, PageHeader, Select, Spinner, Stats } from '../components/ui';
 import { RankList } from './rankingKit';
-
-type Confirm = 'activate' | 'reset' | null;
-
-function Stat({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div>
-      <div className="field-label">{label}</div>
-      <div style={{ color: 'var(--text-strong)', fontWeight: 600, marginTop: 4 }}>{children}</div>
-    </div>
-  );
-}
 
 export default function CountingPage() {
   const { guild } = useGuild();
   const path = `/guilds/${guild.id}/counting`;
   const status = useApi<CountingStatus>(path);
   const { run, busy } = useAction();
+  const { confirm, dialog } = useConfirm();
   const [channelId, setChannelId] = useState<string | null>(null);
   const [system, setSystem] = useState<string | null>(null);
   const [start, setStart] = useState(1);
-  const [confirm, setConfirm] = useState<Confirm>(null);
 
   const header = <PageHeader icon="hash" title="Zählspiel" description="Mitglieder zählen gemeinsam hoch – wer sich verzählt oder zweimal hintereinander zählt, setzt alles auf 1 zurück." />;
   if (!status.data) return <>{header}{status.error ? <Notice tone="danger">{status.error}</Notice> : <Spinner />}</>;
@@ -35,7 +24,6 @@ export default function CountingPage() {
   const targetSystem = system ?? value.system;
 
   const act = async (action: 'activate' | 'disable' | 'reset', body: unknown, success: string) => {
-    setConfirm(null);
     const result = await run<CountingStatus>(`${path}/actions/${action}`, body, success);
     if (result) { status.setData(result); setChannelId(null); setSystem(null); }
   };
@@ -45,16 +33,14 @@ export default function CountingPage() {
   return (
     <>
       {header}
-      <Card icon="stats" title="Status" right={<Badge on={value.enabled}>{value.enabled ? 'Aktiv' : 'Aus'}</Badge>}>
-        <div className="grid">
-          <Stat label="Kanal">{channelName(value.channelId)}</Stat>
-          <Stat label="Zahlensystem">{value.systemLabel}</Stat>
-          <Stat label="Nächste Zahl">{value.expected}{value.expected !== String(value.nextNumber) && <span className="faint"> ({value.nextNumber})</span>}</Stat>
-          <Stat label="Aktuelle Serie">{value.currentStreak.toLocaleString('de-DE')}</Stat>
-          <Stat label="Beste Serie">{value.bestStreak.toLocaleString('de-DE')}</Stat>
-          <Stat label="Zuletzt gezählt von">{value.lastUserName ?? 'Niemand'}</Stat>
-        </div>
-      </Card>
+      <Stats items={[
+        { label: 'Kanal', value: channelName(value.channelId), hint: <Badge on={value.enabled}>{value.enabled ? 'Aktiv' : 'Aus'}</Badge> },
+        { label: 'Zahlensystem', value: value.systemLabel },
+        { label: 'Nächste Zahl', value: value.expected, hint: value.expected !== String(value.nextNumber) ? `Entspricht ${value.nextNumber}` : undefined },
+        { label: 'Aktuelle Serie', value: value.currentStreak.toLocaleString('de-DE') },
+        { label: 'Beste Serie', value: value.bestStreak.toLocaleString('de-DE') },
+        { label: 'Zuletzt gezählt von', value: value.lastUserName ?? 'Niemand' },
+      ]} />
 
       <Card icon="settings" title={value.enabled ? 'Kanal oder System ändern' : 'Zählspiel starten'}
         description="Startet das Spiel neu bei 1 – wie /count setup. Pro Server ist ein Zählkanal möglich.">
@@ -66,27 +52,38 @@ export default function CountingPage() {
             <Select value={targetSystem} onChange={setSystem} options={value.systems} />
           </Field>
         </div>
-        <div className="row" style={{ marginTop: 16 }}>
-          <button type="button" className="btn btn-primary" disabled={!targetChannel || busy !== null}
-            onClick={() => (value.enabled || value.players > 0 ? setConfirm('activate') : void activate())}>
-            {value.enabled ? 'Neu starten' : 'Starten'}
-          </button>
+        <Actions>
           {value.enabled && (
             <button type="button" className="btn btn-secondary" disabled={busy !== null}
               onClick={() => void act('disable', {}, 'Zählspiel deaktiviert.')}>Deaktivieren</button>
           )}
-        </div>
+          <button type="button" className="btn btn-primary" disabled={!targetChannel || busy !== null}
+            onClick={() => (value.enabled || value.players > 0
+              ? confirm({
+                title: 'Zählspiel neu starten?', confirmLabel: 'Neu starten',
+                text: `Das Spiel startet in ${channelName(targetChannel)} bei 1. Aktuelle Zahl, Serien und die komplette Bestenliste werden gelöscht.`,
+                onConfirm: activate,
+              })
+              : void activate())}>
+            {value.enabled ? 'Neu starten' : 'Starten'}
+          </button>
+        </Actions>
       </Card>
 
       <Card icon="refresh" title="Zählfolge zurücksetzen" description="Setzt die nächste Zahl und die aktuelle Serie zurück – wie /count reset. Bestenliste und beste Serie bleiben."
         disabled={!value.enabled}>
-        <div className="row" style={{ alignItems: 'flex-end' }}>
-          <div style={{ width: 200 }}>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="w-50">
             <Field label="Weiter bei" error={startValid ? null : `Zahl zwischen 1 und ${COUNTING_MAX_START.toLocaleString('de-DE')}.`}>
               <NumberInput value={start} min={1} max={COUNTING_MAX_START} onChange={setStart} />
             </Field>
           </div>
-          <button type="button" className="btn btn-danger" disabled={!startValid || busy !== null} onClick={() => setConfirm('reset')}>Zurücksetzen</button>
+          <button type="button" className="btn btn-danger" disabled={!startValid || busy !== null}
+            onClick={() => confirm({
+              title: 'Zählfolge zurücksetzen?', confirmLabel: 'Zurücksetzen',
+              text: `In ${channelName(value.channelId)} geht es wieder bei ${start} los.`,
+              onConfirm: () => act('reset', { start }, 'Zählfolge zurückgesetzt.'),
+            })}>Zurücksetzen</button>
         </div>
       </Card>
 
@@ -97,23 +94,7 @@ export default function CountingPage() {
           emptyTitle="Bisher wurde noch nicht gezählt" />
       </Card>
 
-      {confirm && (
-        <Modal title={confirm === 'reset' ? 'Zählfolge zurücksetzen?' : 'Zählspiel neu starten?'} onClose={() => setConfirm(null)} footer={(
-          <>
-            <button type="button" className="btn btn-ghost" onClick={() => setConfirm(null)}>Abbrechen</button>
-            <button type="button" className="btn btn-danger"
-              onClick={() => void (confirm === 'reset' ? act('reset', { start }, 'Zählfolge zurückgesetzt.') : activate())}>
-              {confirm === 'reset' ? 'Zurücksetzen' : 'Neu starten'}
-            </button>
-          </>
-        )}>
-          <p className="muted">
-            {confirm === 'reset'
-              ? `In ${channelName(value.channelId)} geht es wieder bei ${start} los.`
-              : `Das Spiel startet in ${channelName(targetChannel)} bei 1. Aktuelle Zahl, Serien und die komplette Bestenliste werden gelöscht.`}
-          </p>
-        </Modal>
-      )}
+      {dialog}
     </>
   );
 }

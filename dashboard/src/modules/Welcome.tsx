@@ -2,8 +2,8 @@ import type { WelcomeMessageSettings, WelcomeSettings } from '../../../src/web/d
 import { WELCOME_PLACEHOLDERS } from '../../../src/web/dto/welcome';
 import { useGuild, useSettings, useUser } from '../api';
 import {
-  Card, ChannelSelect, ColorInput, Field, MessagePreview, Notice, NumberInput, PageHeader, RoleSelect,
-  SettingsPage, SwitchRow, TextArea, TextInput,
+  Badge, Card, ChannelSelect, ColorInput, Field, MessagePreview, Notice, NumberInput, PageHeader, RoleSelect,
+  SettingsPage, Switch, SwitchRow, TextArea, TextInput,
 } from '../components/ui';
 
 function MessageEditor({ kind, value, onChange }: {
@@ -27,7 +27,12 @@ function MessageEditor({ kind, value, onChange }: {
       icon={isWelcome ? 'wave' : 'logout'}
       title={isWelcome ? 'Willkommensnachricht' : 'Abschiedsnachricht'}
       description={isWelcome ? 'Wird gesendet, wenn jemand dem Server beitritt.' : 'Wird gesendet, wenn jemand den Server verlässt.'}
-      right={<SwitchRowCompact checked={value.enabled} onChange={(enabled) => set({ enabled })} />}
+      right={(
+        <div className="row">
+          <Badge on={value.enabled}>{value.enabled ? 'Aktiv' : 'Aus'}</Badge>
+          <Switch checked={value.enabled} label="Aktiv" onChange={(enabled) => set({ enabled })} />
+        </div>
+      )}
     >
       <div className="grid-2">
         <div className="stack">
@@ -61,15 +66,6 @@ function MessageEditor({ kind, value, onChange }: {
   );
 }
 
-function SwitchRowCompact({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) {
-  return (
-    <div className="row">
-      <span className={`badge ${checked ? 'badge-on' : 'badge-off'}`}>{checked ? 'Aktiv' : 'Aus'}</span>
-      <button type="button" role="switch" aria-checked={checked} aria-label="Aktiv" className={`switch${checked ? ' on' : ''}`} onClick={() => onChange(!checked)} />
-    </div>
-  );
-}
-
 export default function WelcomePage() {
   const settings = useSettings<WelcomeSettings>('welcome');
   return (
@@ -82,9 +78,9 @@ export default function WelcomePage() {
             <MessageEditor kind="goodbye" value={value.goodbye} onChange={(goodbye) => settings.set({ goodbye })} />
             <Card icon="users" title="Auto-Rolle" description="Diese Rolle bekommt jedes neue Mitglied automatisch.">
               {value.verificationActive && (
-                <Notice tone="warn">Die Verifizierung ist aktiv. Sie vergibt die Rolle nach der Bestätigung, eine Auto-Rolle ist dann nicht möglich.</Notice>
+                <div className="mb-4"><Notice tone="warn">Die Verifizierung ist aktiv. Sie vergibt die Rolle nach der Bestätigung, eine Auto-Rolle ist dann nicht möglich.</Notice></div>
               )}
-              <div className="grid-2" style={{ marginTop: value.verificationActive ? 14 : 0 }}>
+              <div className="grid-2">
                 <Field label="Rolle" hint="Nexos eigene Rolle muss in der Rollenliste darüber stehen.">
                   <RoleSelect value={value.autoRole.roleId} assignableOnly placeholder="Keine Auto-Rolle"
                     onChange={(roleId) => settings.set({ autoRole: { ...value.autoRole, roleId } })} />
