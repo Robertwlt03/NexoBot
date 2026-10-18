@@ -30,10 +30,9 @@ const STEPS = [
   { title: 'Einrichten', text: 'Module anschalten, Kanäle wählen, speichern. Nexo legt sofort los.' },
 ];
 
-// Slash command counts (37 top-level commands, 157 subcommands; 5 commands have none, so 162 can be run).
-// Update when commands change.
-const STATS: { value: string; label: string; title?: string }[] = [
-  { value: '162', label: 'Befehle in 37 Commands', title: '37 Commands mit 157 Unterbefehlen' },
+// Slash command counts (37 top-level commands + 157 subcommands). Update when commands change.
+const STATS: { value: string; label: string }[] = [
+  { value: '194', label: '37 Commands + 157 Unterbefehle' },
   { value: '19', label: 'Module im Dashboard' },
   { value: '0 €', label: 'für immer kostenlos' },
 ];
@@ -160,9 +159,9 @@ export function Landing() {
                 <DiscordLogo /> Mit Discord anmelden
               </a>
             </div>
-            <dl className="js-hero-fade js-intro m-0 mt-10 flex flex-wrap gap-x-10 gap-y-4">
-              {STATS.map(({ value, label, title }) => (
-                <div key={label} title={title}>
+            <dl className="js-hero-fade js-intro m-0 mt-10 flex flex-wrap gap-x-8 gap-y-4">
+              {STATS.map(({ value, label }) => (
+                <div key={label}>
                   <dt className="font-display text-2xl font-semibold text-white">{value}</dt>
                   <dd className="m-0 text-sm text-dc-muted">{label}</dd>
                 </div>
