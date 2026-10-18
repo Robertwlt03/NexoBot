@@ -28,6 +28,7 @@
 ## <img src="assets/icons/features.svg" height="33" align="absmiddle" alt="">Funktionen
 
 - **Moderation** – Ban, Kick, Timeout, Verwarnungen, Fälle, Massenaktionen, Kanal-Sperren, Nutzernotizen
+- **AutoMod** – Spam, Links, Einladungen, Schimpfwörter und Massen-Erwähnungen über Discords eingebauten AutoMod (`/automod`), wirkt auch, wenn der Bot offline ist
 - **Economy** – Kontostand, Arbeit, Shop, Inventar, Glücksspiel, Überweisungen, Bestenliste
 - **Leveling** – XP für Nachrichten, Rangkarten, Level-Rollen, Bestenliste
 - **Tickets** – Panels, Claim, Priorität, Transkripte, Limits
@@ -138,6 +139,7 @@ Einladung mit den Scopes `bot` und `applications.commands` und diesen Berechtigu
 
 - Kanäle ansehen, Nachrichten senden, Links einbetten, Dateien anhängen, Nachrichtenverlauf lesen
 - Nachrichten verwalten, Kanäle verwalten, Rollen verwalten
+- Server verwalten (für `/automod`)
 - Mitglieder kicken, Mitglieder bannen, Mitglieder moderieren (Timeout)
 - Verbinden und Sprechen (Musik)
 

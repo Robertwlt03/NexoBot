@@ -38,6 +38,7 @@ export interface GuildConfigExtras {
   ticketTranscriptChannelId?: string | null;
   maxTicketsPerUser?: number;
   tickets?: { enablePriority?: boolean };
+  automod?: { alertChannelId?: string | null; exemptRoleIds?: string[]; exemptChannelIds?: string[] };
 }
 
 /** Stored per-guild configuration (passthrough: unknown keys are kept). */
