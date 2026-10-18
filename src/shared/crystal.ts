@@ -63,6 +63,8 @@ const RING = { cx: 12, cy: 14.6, rx: 11, ry: 3.1, tilt: (-12 * Math.PI) / 180 };
 /** Ring stroke runs from lavender (left) to cyan (right), like the logo's orbit. */
 export const RING_COLORS = ['#c9bdff', '#67e8f9'] as const;
 export const RING_WIDTH = 1.1;
+/** Small icons draw the ring bolder so it survives at text size. */
+export const RING_WIDTH_SMALL = 1.7;
 
 function ringPoint(angle: number): Point {
   const x = RING.rx * Math.cos(angle);
@@ -80,8 +82,8 @@ export function ringHalf(half: 'back' | 'front', samples = 24): Point[] {
 export const MOON = { at: ringPoint(0.3 * Math.PI), r: 1.05, fill: '#ffffff' } as const;
 
 /**
- * Detail by pixel size: tiny = crystal only; small = + face (visor and eyes, so the eyes read even in text);
- * full = + glint, rim light, eye glow, orbit ring and moon.
+ * Detail by pixel size: tiny = crystal only; small = crystal with face (visor, eyes) and orbit ring, as in text;
+ * full = + glint, rim light, eye glow and the moon.
  */
 export type CrystalDetail = 'tiny' | 'small' | 'full';
 export function crystalDetail(size: number): CrystalDetail {
@@ -137,13 +139,13 @@ function fillFacet(ctx: CrystalContext, facet: CrystalFacet, ox: number, oy: num
   ctx.globalAlpha = 1;
 }
 
-function strokeRing(ctx: CrystalContext, half: 'back' | 'front', ox: number, oy: number, k: number) {
+function strokeRing(ctx: CrystalContext, half: 'back' | 'front', ox: number, oy: number, k: number, width: number) {
   const gradient = ctx.createLinearGradient(ox + 1 * k, 0, ox + 23 * k, 0);
   gradient.addColorStop(0, RING_COLORS[0]);
   gradient.addColorStop(1, RING_COLORS[1]);
   trace(ctx, ringHalf(half), ox, oy, k, false);
   ctx.strokeStyle = gradient;
-  ctx.lineWidth = RING_WIDTH * k;
+  ctx.lineWidth = width * k;
   ctx.lineCap = 'round';
   ctx.globalAlpha = half === 'back' ? 0.55 : 1;
   ctx.stroke();
@@ -163,7 +165,8 @@ export function drawCrystal(ctx: CrystalContext, cx: number, cy: number, size: n
   const full = detail === 'full';
   ctx.save();
   ctx.lineJoin = 'round';
-  if (full) strokeRing(ctx, 'back', ox, oy, k);
+  const ringWidth = full ? RING_WIDTH : RING_WIDTH_SMALL;
+  if (detail !== 'tiny') strokeRing(ctx, 'back', ox, oy, k, ringWidth);
   for (const facet of CRYSTAL_FACETS) fillFacet(ctx, facet, ox, oy, k);
   if (full) fillFacet(ctx, CRYSTAL_GLINT, ox, oy, k);
   trace(ctx, CRYSTAL_OUTLINE, ox, oy, k, true);
@@ -210,8 +213,8 @@ export function drawCrystal(ctx: CrystalContext, cx: number, cy: number, size: n
     }
   }
 
+  if (detail !== 'tiny') strokeRing(ctx, 'front', ox, oy, k, ringWidth);
   if (full) {
-    strokeRing(ctx, 'front', ox, oy, k);
     circle(ctx, ox + MOON.at[0] * k, oy + MOON.at[1] * k, MOON.r * k);
     ctx.fillStyle = MOON.fill;
     ctx.fill();

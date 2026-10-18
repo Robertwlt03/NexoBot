@@ -1113,7 +1113,7 @@ function statValue(key: StatKey, subject: ProfileCardSubject): string {
 
 function valueRuns(key: StatKey, subject: ProfileCardSubject, size: number, accent: string): Run[] {
   const value = { text: statValue(key, subject), font: font('inter', 700, size), color: key === 'level' ? lighten(accent, 0.2) : TEXT };
-  return key === 'balance' ? [{ crystal: true, size: Math.round(size * 0.66), color: accent, font: '', gap: Math.round(size * 0.26) }, value] : [value];
+  return key === 'balance' ? [{ crystal: true, size: Math.round(size * 0.66), color: accent, font: '', gap: Math.round(size * 0.36) }, value] : [value];
 }
 
 function drawStats(ctx: Ctx, block: StatBlock, subject: ProfileCardSubject, accent: string) {
@@ -1503,7 +1503,7 @@ export function renderLevelUpCard<I extends ProfileImage>(
 
   if (reward > 0) {
     const runs: Run[] = [
-      { crystal: true, size: 16, color: highlight, font: '', gap: 8 },
+      { crystal: true, size: 16, color: highlight, font: '', gap: 11 },
       { text: `+${formatNumber(reward)}`, font: font('inter', 700, 16), color: TEXT, gap: 6 },
       { text: 'Kristalle', font: font('inter', 400, 16), color: SOFT },
     ];
