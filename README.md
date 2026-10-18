@@ -7,6 +7,7 @@
   <img src="https://img.shields.io/badge/-TypeScript-%233178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript">
   <img src="https://img.shields.io/badge/-PostgreSQL-%23336791?logo=postgresql&logoColor=white&style=flat-square&logoWidth=20" alt="PostgreSQL">
   <a href="LICENSE"><img src="https://img.shields.io/badge/Lizenz-MIT-7C5CFF?style=flat-square" alt="Lizenz: MIT"></a>
+  <a href="https://discord.gg/DuhdCbTaB"><img src="https://img.shields.io/badge/Discord-Support--Server-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord Support-Server"></a>
 </p>
 
 **NexoBot** (Anzeigename „Nexo“) ist ein modularer Discord-Community-Bot mit Moderation, Economy, Leveling, Tickets, Musik, Giveaways, Verifizierung und vielen Werkzeugen. Geschrieben in TypeScript mit discord.js v14, PostgreSQL als Datenspeicher.
@@ -147,5 +148,6 @@ Einladung mit den Scopes `bot` und `applications.commands` und diesen Berechtigu
 <p align="center">
   <b>Nexo · Ein Bot. Alle Funktionen.</b><br>
   <sub>© 2026 Robertwlt03 · Veröffentlicht unter der <a href="LICENSE">MIT-Lizenz</a></sub><br>
+  <sub>Hilfe, Bugs und Ideen: <a href="https://discord.gg/DuhdCbTaB">Discord-Server</a></sub><br>
   <sub>Basiert auf <a href="https://github.com/codebymitch/TitanBot">TitanBot</a> von codebymitch (MIT) und für NexoBot überarbeitet</sub>
 </p>

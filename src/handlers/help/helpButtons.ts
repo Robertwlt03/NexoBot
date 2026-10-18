@@ -3,6 +3,7 @@ import { createAllCommandsMenu } from './helpSelectMenus.js';
 import { createInitialHelpMenu } from '../../commands/Core/help.js';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
 import { logger } from '../../utils/logger.js';
+import { BotConfig } from '../../config/bot.js';
 import type { TopLevelComponent } from 'discord.js';
 import type { ButtonHandler } from '../../types/index.js';
 
@@ -43,21 +44,21 @@ export const helpBackButton = {
 export const helpBugReportButton = {
     name: BUG_REPORT_BUTTON_ID,
     async execute(interaction, client) {
-        const githubButton = new ButtonBuilder()
-            .setLabel('🐛 Bug auf GitHub melden')
+        const supportButton = new ButtonBuilder()
+            .setLabel('🐛 Bug im Support-Server melden')
             .setStyle(ButtonStyle.Link)
-            .setURL('https://github.com/Robertwlt03/NexoBot/issues');
+            .setURL(BotConfig.links.supportServer);
 
-        const bugRow = new ActionRowBuilder<ButtonBuilder>().addComponents(githubButton);
+        const bugRow = new ActionRowBuilder<ButtonBuilder>().addComponents(supportButton);
 
         const bugReportEmbed = createEmbed({
             title: '🐛 Bug melden',
-            description: 'Du hast einen Bug gefunden? Melde ihn bitte auf unserer GitHub-Issues-Seite!\n\n' +
+            description: 'Du hast einen Bug gefunden? Melde ihn bitte auf unserem Discord-Server!\n\n' +
                 '**Bitte gib beim Melden an:**\n' +
                 '• 📝 Genaue Beschreibung des Problems\n' +
                 '• 📋 Schritte, um das Problem nachzustellen\n' +
                 '• 📸 Screenshots, falls vorhanden\n' +
-                '• 💻 Deine Bot-Version und Umgebung\n\n' +
+                '• 💻 Server und Command, bei dem der Fehler auftritt\n\n' +
                 'So können wir Fehler schneller und gezielter beheben!',
             color: 'error'
         });

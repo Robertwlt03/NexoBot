@@ -4,24 +4,24 @@ import { createEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
-const SUPPORT_URL = "https://github.com/Robertwlt03/NexoBot/issues";
+import { BotConfig } from '../../../config/bot.js';
 export default {
     data: new SlashCommandBuilder()
     .setName("support")
-    .setDescription("Hilfe bekommen und Probleme auf GitHub melden"),
+    .setDescription("Link zum Support-Server auf Discord"),
 
   async execute(interaction) {
     try {
       const supportButton = new ButtonBuilder()
-        .setLabel("GitHub-Issues öffnen")
+        .setLabel("Support-Server beitreten")
         .setStyle(ButtonStyle.Link)
-        .setURL(SUPPORT_URL);
+        .setURL(BotConfig.links.supportServer);
 
       const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(supportButton);
 
       await InteractionHelper.safeReply(interaction, {
         embeds: [
-          createEmbed({ title: "Brauchst du Hilfe?", description: "Du brauchst Hilfe, hast einen Bug gefunden oder eine Idee für ein Feature? Eröffne ein Issue auf GitHub." }),
+          createEmbed({ title: "Brauchst du Hilfe?", description: "Du brauchst Hilfe, hast einen Bug gefunden oder eine Idee für ein Feature? Komm auf unseren Discord-Server." }),
         ],
         components: [actionRow],
         flags: MessageFlags.Ephemeral,

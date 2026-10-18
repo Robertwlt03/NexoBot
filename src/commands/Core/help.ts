@@ -6,6 +6,7 @@ import {
 } from "discord.js";
 import type { Command, NexoClient } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
+import { BotConfig } from '../../config/bot.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { createEmbed } from "../../utils/embeds.js";
 import { formatCategoryName, getCategoryIcon } from "../../config/commands/commandCategories.js";
@@ -77,7 +78,7 @@ export async function createInitialHelpMenu(client: NexoClient) {
             },
             {
                 name: '\u200B',
-                value: `-# ${botName} ist [Open Source](https://github.com/Robertwlt03/NexoBot)`,
+                value: `-# ${botName} ist [Open Source](${BotConfig.links.repository})`,
                 inline: false,
             },
         ],
@@ -93,6 +94,11 @@ export async function createInitialHelpMenu(client: NexoClient) {
         .setLabel("Bug melden")
         .setStyle(ButtonStyle.Danger);
 
+    const supportButton = new ButtonBuilder()
+        .setLabel("Support-Server")
+        .setURL(BotConfig.links.supportServer)
+        .setStyle(ButtonStyle.Link);
+
 
     const selectRow = createSelectMenu(
         CATEGORY_SELECT_ID,
@@ -102,6 +108,7 @@ export async function createInitialHelpMenu(client: NexoClient) {
 
     const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents([
         bugReportButton,
+        supportButton,
     ]);
 
     return {

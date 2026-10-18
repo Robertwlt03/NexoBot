@@ -91,6 +91,16 @@ export const botConfig = {
   },
 
   // =========================
+  // LINKS
+  // =========================
+  links: {
+    // Discord server for support, bug reports and feature ideas.
+    supportServer: "https://discord.gg/DuhdCbTaB",
+    // Public source code repository.
+    repository: "https://github.com/Robertwlt03/NexoBot",
+  },
+
+  // =========================
   // EMBED COLORS & BRANDING
   // =========================
   // IMPORTANT: This is the SINGLE SOURCE OF TRUTH for all bot colors
