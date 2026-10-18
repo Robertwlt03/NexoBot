@@ -5,6 +5,8 @@ import type { ApiChannel, ApiRole } from '../../../src/web/apiTypes';
 import { useGuild } from '../api';
 import { Icon, IconTile, type IconName } from '../icons';
 import { useEnter } from './motion';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 
 // ---------- Layout ----------
 
@@ -287,8 +289,17 @@ export function Empty({ title, children }: { title: string; children?: ReactNode
 }
 
 export function Modal({ title, children, footer, onClose }: { title: string; children: ReactNode; footer: ReactNode; onClose: () => void }) {
+  const backdrop = useRef<HTMLDivElement>(null);
+  useGSAP(() => {
+    const mm = gsap.matchMedia();
+    mm.add('(prefers-reduced-motion: no-preference)', () => {
+      gsap.from(backdrop.current, { autoAlpha: 0, duration: 0.2 });
+      gsap.from('.modal', { y: 16, scale: 0.95, autoAlpha: 0, duration: 0.35, ease: 'back.out(1.6)' });
+    });
+    return () => mm.revert();
+  }, { scope: backdrop });
   return (
-    <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div ref={backdrop} className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal" role="dialog" aria-label={title}>
         <div className="modal-body"><h2>{title}</h2>{children}</div>
         <div className="modal-foot">{footer}</div>
@@ -314,8 +325,20 @@ export function SettingsPage<T>({ settings, children }: {
 }
 
 export function SaveBar({ dirty, saving, onSave, onReset }: { dirty: boolean; saving: boolean; onSave: () => void; onReset: () => void }) {
+  const bar = useRef<HTMLDivElement>(null);
+  const shown = useRef(false);
+  useGSAP(() => {
+    const el = bar.current;
+    if (!el) return;
+    if (!shown.current && !dirty) { gsap.set(el, { xPercent: -50, y: 40, autoAlpha: 0 }); return; }
+    shown.current = true;
+    const instant = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    gsap.to(el, dirty
+      ? { xPercent: -50, y: 0, autoAlpha: 1, duration: instant ? 0 : 0.45, ease: 'back.out(1.7)' }
+      : { xPercent: -50, y: 40, autoAlpha: 0, duration: instant ? 0 : 0.25, ease: 'power2.in' });
+  }, { dependencies: [dirty] });
   return (
-    <div className={`save-bar${dirty ? ' visible' : ''}`} id="save-bar" aria-hidden={!dirty}>
+    <div ref={bar} className="save-bar" id="save-bar" aria-hidden={!dirty}>
       <span className="msg">Achtung – du hast ungespeicherte Änderungen!</span>
       <button className="btn btn-ghost btn-sm" type="button" onClick={onReset} disabled={saving}>Zurücksetzen</button>
       <button className="btn btn-success btn-sm" type="button" onClick={onSave} disabled={saving}>{saving ? 'Speichern …' : 'Änderungen speichern'}</button>

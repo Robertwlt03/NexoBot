@@ -1,4 +1,6 @@
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import type { ApiUser } from '../../src/web/apiTypes';
 import { api, ToastContext, UserContext, type Toast } from './api';
@@ -23,7 +25,7 @@ export function App() {
     setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), 4000);
   }, []);
 
-  if (user === undefined) return <Spinner />;
+  if (user === undefined) return <div className="grid h-full place-items-center bg-[#111214]"><Spinner /></div>;
 
   return (
     <UserContext.Provider value={user}>
@@ -41,8 +43,17 @@ export function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
-        <div className="toasts">{toasts.map((t) => <div key={t.id} className={`toast${t.error ? ' error' : ''}`}>{t.text}</div>)}</div>
+        <div className="toasts">{toasts.map((t) => <ToastItem key={t.id} toast={t} />)}</div>
       </ToastContext.Provider>
     </UserContext.Provider>
   );
+}
+
+function ToastItem({ toast }: { toast: Toast }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useGSAP(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    gsap.from(ref.current, { x: 40, autoAlpha: 0, duration: 0.4, ease: 'back.out(1.6)' });
+  });
+  return <div ref={ref} className={`toast${toast.error ? ' error' : ''}`}>{toast.text}</div>;
 }
