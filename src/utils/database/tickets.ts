@@ -129,7 +129,7 @@ export async function incrementTicketCounter(guildId: string): Promise<string> {
     return nextCounter.toString().padStart(3, '0');
 }
 
-async function listGuildTickets(guildId: string): Promise<TicketData[]> {
+export async function listGuildTickets(guildId: string): Promise<TicketData[]> {
     if (!db.initialized) {
         await db.initialize();
     }

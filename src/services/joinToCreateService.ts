@@ -12,7 +12,7 @@ import { NexoBotError, ErrorTypes } from '../utils/errorHandler.js';
 import { logEvent, EVENT_TYPES } from './loggingService.js';
 import { formatLogLine } from '../utils/logging/logEmbeds.js';
 import { ChannelType, PermissionFlagsBits } from 'discord.js';
-import type { Guild, GuildMember } from 'discord.js';
+import type { Guild, GuildBasedChannel, GuildMember, VoiceChannel } from 'discord.js';
 import type { NexoClient } from '../types/index.js';
 import type { ChannelNameVariables, JoinToCreateChannelOptions, JoinToCreateConfig } from '../utils/database.js';
 
@@ -591,6 +591,119 @@ export async function createTemporaryChannel(
     }
 }
 
+export interface CreateTriggerOptions {
+    categoryId?: string | null;
+    nameTemplate: string;
+    userLimit: number;
+    /** kbps, as entered by the user. */
+    bitrate: number;
+}
+
+/**
+ * Creates the "Join-to-Create" voice channel and stores it as the guild's trigger (same as /jointocreate setup).
+ * Stale triggers whose channel is gone are cleaned up first; only one active trigger per guild is allowed.
+ */
+export async function createJoinToCreateTrigger(
+    client: NexoClient,
+    guild: Guild,
+    userId: string,
+    { categoryId, nameTemplate, userLimit, bitrate }: CreateTriggerOptions,
+): Promise<{ channel: VoiceChannel; config: JoinToCreateConfig }> {
+    const guildId = guild.id;
+    const existingConfig = await getConfiguration(client, guildId);
+
+    if (Array.isArray(existingConfig.triggerChannels) && existingConfig.triggerChannels.length > 0) {
+        const activeTriggerChannels: GuildBasedChannel[] = [];
+        const staleTriggerChannelIds: string[] = [];
+
+        for (const existingChannelId of existingConfig.triggerChannels) {
+            const existingChannel = await guild.channels.fetch(existingChannelId).catch(() => null);
+            if (existingChannel) {
+                activeTriggerChannels.push(existingChannel);
+            } else {
+                staleTriggerChannelIds.push(existingChannelId);
+            }
+        }
+
+        for (const staleChannelId of staleTriggerChannelIds) {
+            logger.info(`Cleaning up stale JTC trigger ${staleChannelId} from guild ${guildId}`);
+            await removeTriggerChannel(client, guildId, staleChannelId);
+        }
+
+        if (activeTriggerChannels.length > 0) {
+            const primaryTrigger = activeTriggerChannels[0];
+            throw new NexoBotError(
+                'Guild already has a Join to Create channel',
+                ErrorTypes.VALIDATION,
+                `Dieser Server hat bereits einen Join-to-Create-Kanal: ${primaryTrigger}\n\nNutze \`/jointocreate dashboard\`, um ihn zu bearbeiten, oder entferne ihn zuerst, bevor du einen neuen erstellst.`,
+                {
+                    guildId,
+                    activeTriggerCount: activeTriggerChannels.length,
+                    expected: true,
+                    suppressErrorLog: true
+                }
+            );
+        }
+    }
+
+    logger.debug('Creating Join to Create trigger channel...');
+    const triggerChannel = await guild.channels.create({
+        name: 'Join-to-Create',
+        type: ChannelType.GuildVoice,
+        parent: categoryId ?? undefined,
+        userLimit: 0,
+        bitrate: 64000,
+        permissionOverwrites: [
+            {
+                id: guild.id,
+                allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.Connect],
+            },
+        ],
+    });
+
+    logger.debug(`Created trigger channel ${triggerChannel.id}, initializing config...`);
+
+    const config = await initializeJoinToCreate(client, guildId, triggerChannel.id, {
+        nameTemplate,
+        userLimit,
+        bitrate: bitrate * 1000,
+        categoryId: categoryId ?? undefined
+    });
+
+    await logConfigurationChange(client, guildId, userId, 'Join-to-Create eingerichtet', {
+        channelId: triggerChannel.id,
+        nameTemplate,
+        userLimit,
+        bitrate
+    });
+
+    logger.info(`Successfully created Join to Create system in guild ${guildId}`);
+    return { channel: triggerChannel, config };
+}
+
+/** Removes a trigger from the config, logs it and deletes the channel when nobody is in it (same as the in-Discord dashboard). */
+export async function removeJoinToCreateTrigger(client: NexoClient, guild: Guild, channelId: string, userId: string): Promise<{ channelDeleted: boolean }> {
+    const triggerChannel = guild.channels.cache.get(channelId);
+
+    await removeTriggerChannel(client, guild.id, channelId);
+
+    await logConfigurationChange(client, guild.id, userId, 'Join-to-Create-Trigger entfernt', {
+        channelId,
+        channelName: triggerChannel?.name
+    });
+
+    let channelDeleted = false;
+    try {
+        if (triggerChannel?.isVoiceBased() && triggerChannel.members.size === 0) {
+            await triggerChannel.delete('Join-to-Create-Trigger von einem Administrator entfernt');
+            channelDeleted = true;
+        }
+    } catch (deleteError) {
+        logger.warn(`Could not delete channel ${channelId}: ${(deleteError as Error).message}`);
+    }
+    return { channelDeleted };
+}
+
 export default {
     validateChannelNameTemplate,
     validateBitrate,
@@ -604,5 +717,7 @@ export default {
     getChannelConfiguration,
     hasManageGuildPermission,
     logConfigurationChange,
-    createTemporaryChannel
+    createTemporaryChannel,
+    createJoinToCreateTrigger,
+    removeJoinToCreateTrigger
 };

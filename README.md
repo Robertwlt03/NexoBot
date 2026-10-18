@@ -18,6 +18,7 @@
 
 - [Funktionen](#funktionen)
 - [Commands](#commands)
+- [Web-Dashboard](#web-dashboard)
 - [Einrichtung](#einrichtung)
   - [Lokal](#lokal)
   - [Docker](#docker)
@@ -38,11 +39,23 @@
 - **Verifizierung** – Button-Verifizierung und Auto-Verify
 - **Weitere Module** – Geburtstage, Reaktionsrollen, Join-to-Create, Server-Statistiken, Logging, Bewerbungen, Zählspiel, Todo-Listen, Suche und viele Werkzeuge
 
-Alle Funktionen lassen sich pro Server über `/configwizard` und `/commands` konfigurieren und einzeln sperren.
+Alle Funktionen lassen sich pro Server über `/configwizard` und `/commands` oder bequem im [Web-Dashboard](#web-dashboard) konfigurieren und einzeln sperren.
 
 ## <img src="assets/icons/commands.svg" height="33" align="absmiddle" alt="">Commands
 
 NexoBot bündelt die Funktionen in thematische Commands mit Subcommands, zum Beispiel `/eco balance`, `/mod warn` oder `/music play`. Die vollständige Zuordnung der früheren Einzel-Commands steht in [docs/COMMAND_MIGRATION.md](docs/COMMAND_MIGRATION.md). `/help` zeigt alle Commands im Bot an.
+
+## <img src="assets/icons/dashboard.svg" height="33" align="absmiddle" alt="">Web-Dashboard
+
+Nexo bringt ein Web-Dashboard mit, das im selben Dienst wie der Bot unter `/dashboard` läuft. Server-Admins melden sich mit Discord an und sehen alle Server, auf denen sie „Server verwalten“ haben. Dort lassen sich alle Module einstellen, die es auch als Commands gibt: Willkommen, Leveling, Tickets, Verifizierung, Reaktionsrollen, AutoMod, Logging, Giveaways und mehr. Das Dashboard ist für alle Server kostenlos.
+
+Einrichtung:
+
+1. Im [Discord Developer Portal](https://discord.com/developers/applications) unter **OAuth2** das Client Secret kopieren und als Redirect `<DASHBOARD_URL>/dashboard/auth/callback` eintragen, zum Beispiel `http://localhost:3000/dashboard/auth/callback` lokal oder `https://<dein-dienst>.up.railway.app/dashboard/auth/callback` auf Railway.
+2. `DISCORD_CLIENT_SECRET`, `SESSION_SECRET` (z. B. `openssl rand -hex 32`) und `DASHBOARD_URL` setzen.
+3. Auf Railway unter **Settings → Networking** eine öffentliche Domain erzeugen.
+
+Ohne `DISCORD_CLIENT_SECRET` oder `SESSION_SECRET` bleibt das Dashboard deaktiviert und der Bot läuft normal weiter. `npm run build` baut Bot und Dashboard; für die Entwicklung startet `npm run dev:dashboard` einen Vite-Server mit Proxy auf den laufenden Bot.
 
 ## <img src="assets/icons/setup.svg" height="33" align="absmiddle" alt="">Einrichtung
 
@@ -108,7 +121,10 @@ Alle Variablen mit Beispielwerten stehen in [.env.example](.env.example). Die wi
 | `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | alternativ | Einzelwerte statt URL |
 | `POSTGRES_SSL` | nein | SSL erzwingen (`true`/`false`) |
 | `AUTO_MIGRATE` | nein | Migrationen beim Start ausführen (Standard `true`) |
-| `PORT`, `WEB_HOST` | nein | Port und Host für `/health` und `/ready` (Standard `3000`, `0.0.0.0`) |
+| `PORT`, `WEB_HOST` | nein | Port und Host für `/health`, `/ready` und das Dashboard (Standard `3000`, `0.0.0.0`) |
+| `DISCORD_CLIENT_SECRET` | für Dashboard | OAuth2 Client Secret für die Discord-Anmeldung |
+| `SESSION_SECRET` | für Dashboard | Zufälliger Schlüssel zum Signieren der Sitzungs-Cookies |
+| `DASHBOARD_URL` | für Dashboard | Öffentliche Basis-URL ohne `/dashboard`, z. B. `https://nexo.up.railway.app` (Standard `http://localhost:<PORT>`) |
 | `LOG_LEVEL`, `LOG_TO_FILE` | nein | Log-Level und Datei-Logging |
 | `LAVALINK_NODES_FILE`, `LAVALINK_NODES` | nein | Lavalink-Knoten für Musik |
 | `TMDB_API_KEY` | nein | Für die Film- und Seriensuche |

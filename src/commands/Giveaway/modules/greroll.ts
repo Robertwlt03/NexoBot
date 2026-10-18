@@ -1,16 +1,10 @@
 import type { Command } from '../../../types/index.js';
-import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, type GuildMember, type SendableChannels } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, type GuildMember } from 'discord.js';
 import { errorEmbed, successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 import { NexoBotError, ErrorTypes } from '../../../utils/errorHandler.js';
-import { getGuildGiveaways, saveGiveaway } from '../../../utils/giveaways.js';
-import type { Giveaway } from '../../../utils/giveaways.js';
-import { 
-    selectWinners,
-    createGiveawayEmbed, 
-    createGiveawayButtons 
-} from '../../../services/giveawayService.js';
-import { logEvent, EVENT_TYPES } from '../../../services/loggingService.js';
+import { getGuildGiveaways } from '../../../utils/giveaways.js';
+import { rerollGiveaway } from '../../../services/giveawayActions.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 
 export default {
@@ -73,55 +67,14 @@ export default {
             );
         }
 
-        if (!giveaway.isEnded && !giveaway.ended) {
-            throw new NexoBotError(
-                `Giveaway still active: ${messageId}`,
-                ErrorTypes.VALIDATION,
-                "Dieses Giveaway läuft noch. Beende es zuerst mit `/giveaway end`.",
-                { messageId, status: 'active' }
-            );
-        }
-
-        const participants = giveaway.participants || [];
-
-        if (participants.length < giveaway.winnerCount!) {
-            throw new NexoBotError(
-                `Insufficient participants for reroll: ${participants.length} < ${giveaway.winnerCount}`,
-                ErrorTypes.VALIDATION,
-                "Nicht genug Teilnahmen, um die nötige Anzahl an Gewinnern zu ziehen.",
-                { participantsCount: participants.length, winnersNeeded: giveaway.winnerCount }
-            );
-        }
-
-        const newWinners = selectWinners(
-            participants,
-            giveaway.winnerCount!,
+        const { winners: newWinners, channel, messageFound } = await rerollGiveaway(
+            interaction.client,
+            interaction.guildId,
+            giveaway,
+            interaction.user.id
         );
 
-        const updatedGiveaway: Giveaway = {
-            ...giveaway,
-            winnerIds: newWinners,
-            rerolledAt: new Date().toISOString(),
-            rerolledBy: interaction.user.id
-        };
-
-        const channel = await interaction.client.channels.fetch(
-            giveaway.channelId!,
-        ).catch(err => {
-            logger.warn(`Could not fetch channel ${giveaway.channelId}:`, err.message);
-            return null;
-        });
-
-        if (!channel || !channel.isTextBased()) {
-
-            await saveGiveaway(
-                interaction.client,
-                interaction.guildId,
-                updatedGiveaway,
-            );
-
-            logger.warn(`Could not find channel for giveaway ${messageId}, but saved new winners to database`);
-
+        if (!channel) {
             return InteractionHelper.safeReply(interaction, {
                 embeds: [
                     successEmbed(
@@ -133,73 +86,7 @@ export default {
             });
         }
 
-        const message = await channel.messages
-            .fetch(messageId)
-            .catch(err => {
-                logger.warn(`Could not fetch message ${messageId}:`, err.message);
-                return null;
-            });
-
-        if (!message) {
-
-            await saveGiveaway(
-                interaction.client,
-                interaction.guildId,
-                updatedGiveaway,
-            );
-
-            const winnerMentions = newWinners
-                .map((id) => `<@${id}>`)
-                .join(",");
-
-            const existingPingMsg = giveaway.winnerPingMessageId
-                ? await channel.messages.fetch(giveaway.winnerPingMessageId as string).catch(() => null)
-                : null;
-            if (existingPingMsg) {
-                await existingPingMsg.edit({
-                    content: `🔄 **GIVEAWAY NEU GEZOGEN** 🔄 Neue Gewinner für **${giveaway.prize}**: ${winnerMentions}!`,
-                });
-            } else {
-                const newPingMsg = await (channel as SendableChannels).send({
-                    content: `🔄 **GIVEAWAY NEU GEZOGEN** 🔄 Neue Gewinner für **${giveaway.prize}**: ${winnerMentions}!`,
-                });
-                updatedGiveaway.winnerPingMessageId = newPingMsg.id;
-            }
-
-            logger.info(`Giveaway rerolled (message not found, but announced): ${messageId}`);
-
-            try {
-                await logEvent({
-                    client: interaction.client,
-                    guildId: interaction.guildId,
-                    eventType: EVENT_TYPES.GIVEAWAY_REROLL,
-                    data: {
-                        description: `Giveaway neu gezogen: ${giveaway.prize}`,
-                        channelId: giveaway.channelId,
-                        userId: interaction.user.id,
-                        fields: [
-                            {
-                                name: 'Preis',
-                                value: giveaway.prize || 'Überraschungspreis!',
-                                inline: true
-                            },
-                            {
-                                name: 'Neue Gewinner',
-                                value: winnerMentions,
-                                inline: false
-                            },
-                            {
-                                name: 'Teilnahmen gesamt',
-                                value: participants.length.toString(),
-                                inline: true
-                            }
-                        ]
-                    }
-                });
-            } catch (logError) {
-                logger.debug('Error logging giveaway reroll:', logError);
-            }
-
+        if (!messageFound) {
             return InteractionHelper.safeReply(interaction, {
                 embeds: [
                     successEmbed(
@@ -209,73 +96,6 @@ export default {
                 ],
                 flags: MessageFlags.Ephemeral,
             });
-        }
-
-        await saveGiveaway(
-            interaction.client,
-            interaction.guildId,
-            updatedGiveaway,
-        );
-
-        const newEmbed = createGiveawayEmbed(updatedGiveaway, "reroll", newWinners);
-        const newRow = createGiveawayButtons(true);
-
-        await message.edit({
-            content: "🔄 **GIVEAWAY NEU GEZOGEN** 🔄",
-            embeds: [newEmbed],
-            components: [newRow],
-        });
-
-        const winnerMentions = newWinners
-            .map((id) => `<@${id}>`)
-            .join(",");
-
-        const existingPingMsg = giveaway.winnerPingMessageId
-            ? await channel.messages.fetch(giveaway.winnerPingMessageId as string).catch(() => null)
-            : null;
-        if (existingPingMsg) {
-            await existingPingMsg.edit({
-                content: `🔄 **NEUE GEWINNER** 🔄 HERZLICHEN GLÜCKWUNSCH ${winnerMentions}! Du hast das Giveaway **${giveaway.prize}** gewonnen! Melde dich beim Host <@${giveaway.hostId}>, um deinen Preis abzuholen.`,
-            });
-        } else {
-            const newPingMsg = await (channel as SendableChannels).send({
-                content: `🔄 **NEUE GEWINNER** 🔄 HERZLICHEN GLÜCKWUNSCH ${winnerMentions}! Du hast das Giveaway **${giveaway.prize}** gewonnen! Melde dich beim Host <@${giveaway.hostId}>, um deinen Preis abzuholen.`,
-            });
-            updatedGiveaway.winnerPingMessageId = newPingMsg.id;
-        }
-
-        logger.info(`Giveaway successfully rerolled: ${messageId} with ${newWinners.length} new winners`);
-
-        try {
-            await logEvent({
-                client: interaction.client,
-                guildId: interaction.guildId,
-                eventType: EVENT_TYPES.GIVEAWAY_REROLL,
-                data: {
-                    description: `Giveaway neu gezogen: ${giveaway.prize}`,
-                    channelId: giveaway.channelId,
-                    userId: interaction.user.id,
-                    fields: [
-                        {
-                            name: 'Preis',
-                            value: giveaway.prize || 'Überraschungspreis!',
-                            inline: true
-                        },
-                        {
-                            name: 'Neue Gewinner',
-                            value: winnerMentions,
-                            inline: false
-                        },
-                        {
-                            name: 'Teilnahmen gesamt',
-                            value: participants.length.toString(),
-                            inline: true
-                        }
-                    ]
-                }
-            });
-        } catch (logError) {
-            logger.debug('Error logging giveaway reroll event:', logError);
         }
 
         return InteractionHelper.safeReply(interaction, {

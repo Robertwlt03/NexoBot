@@ -1,6 +1,6 @@
 // economy.js
 
-import { getColor, getEconomyKey as getEconomyStorageKey } from './database.js';
+import { getColor, getEconomyKey as getEconomyStorageKey, getEconomyPrefix } from './database.js';
 import { BotConfig } from '../config/bot.js';
 import { normalizeEconomyData } from './schemas.js';
 import { logger } from './logger.js';
@@ -134,6 +134,34 @@ export async function getEconomyData(client: NexoClient, guildId: string, userId
         logger.error(`Error getting economy data for user ${userId}`, error);
         return normalizeEconomyData({}, DEFAULT_ECONOMY_DATA) as EconomyData;
     }
+}
+
+export interface EconomyLeaderboardEntry {
+    userId: string;
+    wallet: number;
+    bank: number;
+    net_worth: number;
+}
+
+/** All stored accounts of a guild, richest (wallet + bank) first. Used by /eco eleaderboard and the web dashboard. */
+export async function getEconomyLeaderboard(client: NexoClient, guildId: string): Promise<EconomyLeaderboardEntry[]> {
+    const prefix = getEconomyPrefix(guildId);
+    let allKeys = await client.db.list(prefix);
+    if (!Array.isArray(allKeys)) {
+        allKeys = [];
+    }
+
+    const entries: EconomyLeaderboardEntry[] = [];
+    for (const key of allKeys) {
+        const userData = await client.db.get<EconomyData>(key);
+        if (userData) {
+            const wallet = userData.wallet || 0;
+            const bank = userData.bank || 0;
+            entries.push({ userId: key.replace(prefix, ''), wallet, bank, net_worth: wallet + bank });
+        }
+    }
+
+    return entries.sort((a, b) => b.net_worth - a.net_worth);
 }
 
 export async function setEconomyData(client: NexoClient, guildId: string, userId: string, data: EconomyData): Promise<boolean> {

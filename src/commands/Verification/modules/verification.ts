@@ -1,7 +1,7 @@
-import { botConfig, getColor } from '../../../config/bot.js';
-import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import { botConfig } from '../../../config/bot.js';
+import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } from 'discord.js';
 import type { ChatInputCommandInteraction, Guild, TextChannel } from 'discord.js';
-import { createEmbed, infoEmbed, successEmbed } from '../../../utils/embeds.js';
+import { infoEmbed, successEmbed } from '../../../utils/embeds.js';
 import { getGuildConfig, setGuildConfig } from '../../../services/config/guildConfig.js';
 import { withErrorHandling, createError, ErrorTypes, replyUserError } from '../../../utils/errorHandler.js';
 import { removeVerification, verifyUser } from '../../../services/verificationService.js';
@@ -9,6 +9,7 @@ import { logger } from '../../../utils/logger.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import { getWelcomeConfig } from '../../../utils/database.js';
 import verificationDashboard from './verification_dashboard.js';
+import { buildVerificationPanel } from '../../../services/verificationPanel.js';
 import type { Command, NexoClient } from '../../../types/index.js';
 
 export default {
@@ -183,24 +184,7 @@ async function handleSetup(interaction: ChatInputCommandInteraction, guild: Guil
 
     await InteractionHelper.safeDefer(interaction);
 
-    const verifyEmbed = createEmbed({
-        title: 'Server-Verifizierung',
-        description: message,
-        color: getColor('success')
-    });
-
-    const verifyButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-            .setCustomId("verify_user")
-            .setLabel(buttonText)
-            .setStyle(ButtonStyle.Success)
-            .setEmoji("✅")
-    );
-
-    const verifyMessage = await verificationChannel.send({
-        embeds: [verifyEmbed],
-        components: [verifyButton]
-    });
+    const verifyMessage = await verificationChannel.send(buildVerificationPanel({ message, buttonText }));
 
     guildConfig.verification = {
         enabled: true,

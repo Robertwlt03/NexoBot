@@ -30,34 +30,13 @@ import {
 import { startDashboardSession } from '../../../utils/dashboardSession.js';
 import type { PanelStatus } from '../../../utils/panelStatus.js';
 import type { VerificationConfig } from '../../../services/verificationService.js';
+import {
+    buildVerificationPanel,
+    deleteVerificationPanel,
+    repostVerificationPanel,
+    updateLiveVerificationPanel,
+} from '../../../services/verificationPanel.js';
 import type { NexoClient, SubcommandModule } from '../../../types/index.js';
-
-async function updateLivePanel(guild: Guild, cfg: VerificationConfig) {
-    if (!cfg.channelId || !cfg.messageId) return;
-    try {
-        const channel = guild.channels.cache.get(cfg.channelId) as TextChannel | undefined;
-        if (!channel) return;
-        const msg = await channel.messages.fetch(cfg.messageId).catch(() => null);
-        if (!msg) return;
-
-        const verifyEmbed = new EmbedBuilder()
-            .setTitle('Server-Verifizierung')
-            .setDescription(cfg.message || botConfig.verification.defaultMessage)
-            .setColor(getColor('success'));
-
-        const verifyButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder()
-                .setCustomId('verify_user')
-                .setLabel(cfg.buttonText || botConfig.verification.defaultButtonText)
-                .setStyle(ButtonStyle.Success)
-                .setEmoji('✅'),
-        );
-
-        await msg.edit({ embeds: [verifyEmbed], components: [verifyButton] });
-    } catch (error) {
-        logger.warn('Could not update live verification panel:', (error as Error).message);
-    }
-}
 
 function buildDashboardEmbed(cfg: VerificationConfig, guild: Guild, verifiedUserCount = 0, conflictSummary = '', panelStatus: PanelStatus | null = null) {
     const channel = cfg.channelId ? `<#${cfg.channelId}>` : '`Nicht gesetzt`';
@@ -147,32 +126,6 @@ function buildButtonRow(cfg: VerificationConfig, guildId: string, disabled = fal
     );
 
     return new ActionRowBuilder<ButtonBuilder>().addComponents(buttons);
-}
-
-async function repostVerificationPanel(guild: Guild, cfg: VerificationConfig) {
-    const channel = (await guild.channels.fetch(cfg.channelId!).catch(() => null)) as TextChannel | null;
-    if (!channel) {
-        throw new NexoBotError(
-            'Panel channel missing',
-            ErrorTypes.CONFIGURATION,
-            'Der eingerichtete Verifizierungskanal existiert nicht mehr. Lege im Dashboard einen neuen Kanal fest.',
-        );
-    }
-
-    const verifyEmbed = new EmbedBuilder()
-        .setTitle('Server-Verifizierung')
-        .setDescription(cfg.message || botConfig.verification.defaultMessage)
-        .setColor(getColor('success'));
-
-    const verifyButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-            .setCustomId('verify_user')
-            .setLabel(cfg.buttonText || botConfig.verification.defaultButtonText)
-            .setStyle(ButtonStyle.Success)
-            .setEmoji('✅'),
-    );
-
-    return channel.send({ embeds: [verifyEmbed], components: [verifyButton] });
 }
 
 async function refreshDashboard(rootInteraction: ChatInputCommandInteraction, cfg: VerificationConfig, guildId: string, client: NexoClient) {
@@ -341,12 +294,8 @@ export default {
 
                     cfg.enabled = !wasEnabled;
 
-                    if (!cfg.enabled && cfg.channelId && cfg.messageId) {
-                        const channel = interaction.guild!.channels.cache.get(cfg.channelId) as TextChannel | undefined;
-                        if (channel) {
-                            const msg = await channel.messages.fetch(cfg.messageId).catch(() => null);
-                            if (msg) await msg.delete().catch(() => {});
-                        }
+                    if (!cfg.enabled) {
+                        await deleteVerificationPanel(interaction.guild!, cfg);
                     }
 
                     if (cfg.enabled && cfg.channelId) {
@@ -455,20 +404,7 @@ async function handleChannel(selectInteraction: StringSelectMenuInteraction, roo
 
         if (cfg.enabled !== false) {
             try {
-                const verifyEmbed = new EmbedBuilder()
-                    .setTitle('Server-Verifizierung')
-                    .setDescription(cfg.message || botConfig.verification.defaultMessage)
-                    .setColor(getColor('success'));
-
-                const verifyButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
-                    new ButtonBuilder()
-                        .setCustomId('verify_user')
-                        .setLabel(cfg.buttonText || botConfig.verification.defaultButtonText)
-                        .setStyle(ButtonStyle.Success)
-                        .setEmoji('✅'),
-                );
-
-                const newMsg = await newChannel!.send({ embeds: [verifyEmbed], components: [verifyButton] });
+                const newMsg = await newChannel!.send(buildVerificationPanel(cfg));
                 cfg.messageId = newMsg.id;
             } catch (error) {
                 logger.warn('Could not post verification panel in new channel:', (error as Error).message);
@@ -608,7 +544,7 @@ async function handleMessage(selectInteraction: StringSelectMenuInteraction, roo
         latestConfig.verification = cfg;
         await setGuildConfig(client, guildId, latestConfig);
 
-        await updateLivePanel(rootInteraction.guild!, cfg);
+        await updateLiveVerificationPanel(rootInteraction.guild!, cfg);
 
         await submitted.reply({
             embeds: [successEmbed('Nachricht aktualisiert', 'Das Verifizierungs-Panel zeigt jetzt die neue Nachricht.')],
@@ -658,7 +594,7 @@ async function handleButtonText(selectInteraction: StringSelectMenuInteraction, 
         latestConfig.verification = cfg;
         await setGuildConfig(client, guildId, latestConfig);
 
-        await updateLivePanel(rootInteraction.guild!, cfg);
+        await updateLiveVerificationPanel(rootInteraction.guild!, cfg);
 
         await submitted.reply({
             embeds: [successEmbed('Button-Text aktualisiert', `Der Verifizierungs-Button zeigt jetzt **${cfg.buttonText}**.`)],

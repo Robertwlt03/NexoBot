@@ -2,20 +2,11 @@ import type { Command } from '../../../types/index.js';
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, type ChatInputCommandInteraction, type User } from 'discord.js';
 import { createEmbed, successEmbed, infoEmbed, warningEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
-import { getFromDb, setInDb, deleteFromDb, getUserNotesKey, getUserNotesListKey } from '../../../utils/database.js';
 import { sanitizeInput } from '../../../utils/validation.js';
+import { addUserNote, getUserNotes, saveUserNotes, type UserNote } from '../../../services/moderation/userNotesService.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import { replyUserError, ErrorTypes } from '../../../utils/errorHandler.js';
-
-export interface UserNote {
-    id: number;
-    content: string;
-    type: string;
-    author: string;
-    authorId: string;
-    timestamp: string;
-}
 
 export default {
     data: new SlashCommandBuilder()
@@ -104,8 +95,7 @@ export default {
 
         let notes: UserNote[] = [];
         if (targetUser) {
-            const notesKey = getUserNotesKey(guildId, targetUser.id);
-            notes = await getFromDb<UserNote[]>(notesKey, []);
+            notes = await getUserNotes(guildId, targetUser.id);
         }
 
         try {
@@ -142,19 +132,12 @@ async function handleAddNote(interaction: ChatInputCommandInteraction, targetUse
 
     note = sanitizeInput(note);
 
-    const noteData: UserNote = {
-        id: Date.now(),
+    notes = await addUserNote(guildId, targetUser.id, {
         content: note,
-        type: type,
+        type,
         author: interaction.user.tag,
         authorId: interaction.user.id,
-        timestamp: new Date().toISOString()
-    };
-
-    notes.push(noteData);
-
-    const notesKey = getUserNotesKey(guildId, targetUser.id);
-    await setInDb(notesKey, notes);
+    });
 
     const typeInfo = getNoteTypeInfo(type);
 
@@ -223,8 +206,7 @@ async function handleRemoveNote(interaction: ChatInputCommandInteraction, target
     const originalIndex = notes.indexOf(removedNote);
     notes.splice(originalIndex, 1);
 
-    const notesKey = getUserNotesKey(guildId, targetUser.id);
-    await setInDb(notesKey, notes);
+    await saveUserNotes(guildId, targetUser.id, notes);
 
     const typeInfo = getNoteTypeInfo(removedNote.type);
 
@@ -256,8 +238,7 @@ async function handleClearNotes(interaction: ChatInputCommandInteraction, target
 
     notes.length = 0;
 
-    const notesKey = getUserNotesKey(guildId, targetUser.id);
-    await setInDb(notesKey, notes);
+    await saveUserNotes(guildId, targetUser.id, notes);
 
     return InteractionHelper.safeReply(interaction, {
         embeds: [

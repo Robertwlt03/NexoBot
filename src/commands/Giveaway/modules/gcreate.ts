@@ -3,16 +3,7 @@ import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelT
 import { errorEmbed, successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 import { NexoBotError, ErrorTypes } from '../../../utils/errorHandler.js';
-import { saveGiveaway } from '../../../utils/giveaways.js';
-import type { Giveaway } from '../../../utils/giveaways.js';
-import { 
-    parseDuration, 
-    validatePrize, 
-    validateWinnerCount,
-    createGiveawayEmbed, 
-    createGiveawayButtons 
-} from '../../../services/giveawayService.js';
-import { logEvent, EVENT_TYPES } from '../../../services/loggingService.js';
+import { startGiveaway } from '../../../services/giveawayActions.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 
 import { botConfig } from '../../../config/bot.js';
@@ -84,94 +75,12 @@ export default {
         const prize = interaction.options.getString("prize");
         const targetChannel = (interaction.options.getChannel("channel") || interaction.channel) as GuildBasedChannel;
 
-        const durationMs = parseDuration(durationString);
-        validateWinnerCount(winnerCount);
-        const prizeName = validatePrize(prize);
-
-        if (!targetChannel.isTextBased()) {
-            throw new NexoBotError(
-                'Target channel is not text-based',
-                ErrorTypes.VALIDATION,
-                'Der Kanal muss ein Textkanal sein.',
-                { channelId: targetChannel.id, channelType: targetChannel.type }
-            );
-        }
-
-        const endTime = Date.now() + durationMs;
-
-        const initialGiveawayData: Giveaway = {
-            messageId: "placeholder",
-            channelId: targetChannel.id,
-            guildId: interaction.guildId,
-            prize: prizeName,
+        const { prize: prizeName } = await startGiveaway(interaction.client, interaction.guildId, targetChannel, {
+            duration: durationString,
+            winnerCount,
+            prize,
             hostId: interaction.user.id,
-            endTime: endTime,
-            endsAt: endTime,
-            winnerCount: winnerCount,
-            participants: [],
-            isEnded: false,
-            ended: false,
-            createdAt: new Date().toISOString()
-        };
-
-        const embed = createGiveawayEmbed(initialGiveawayData, "active");
-        const row = createGiveawayButtons(false);
-
-        const giveawayMessage = await targetChannel.send({
-            content: "🎉 **NEUES GIVEAWAY** 🎉",
-            embeds: [embed],
-            components: [row],
         });
-
-        initialGiveawayData.messageId = giveawayMessage.id;
-        const saved = await saveGiveaway(
-            interaction.client,
-            interaction.guildId,
-            initialGiveawayData,
-        );
-
-        if (!saved) {
-            logger.warn(`Failed to save giveaway to database: ${giveawayMessage.id}`);
-        }
-
-        try {
-            await logEvent({
-                client: interaction.client,
-                guildId: interaction.guildId,
-                eventType: EVENT_TYPES.GIVEAWAY_CREATE,
-                data: {
-                    description: `Giveaway erstellt: ${prizeName}`,
-                    channelId: targetChannel.id,
-                    userId: interaction.user.id,
-                    fields: [
-                        {
-                            name: 'Preis',
-                            value: prizeName,
-                            inline: true
-                        },
-                        {
-                            name: 'Gewinner',
-                            value: winnerCount.toString(),
-                            inline: true
-                        },
-                        {
-                            name: 'Dauer',
-                            value: durationString,
-                            inline: true
-                        },
-                        {
-                            name: 'Kanal',
-                            value: targetChannel.toString(),
-                            inline: true
-                        }
-                    ]
-                }
-            });
-        } catch (logError) {
-            logger.debug('Error logging giveaway creation event:', logError);
-        }
-
-        logger.info(`Giveaway created successfully: ${giveawayMessage.id} in ${targetChannel.name}`);
 
         await InteractionHelper.safeReply(interaction, {
             embeds: [

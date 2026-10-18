@@ -1,0 +1,8 @@
+.cmd-category > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+.cmd-category > summary::-webkit-details-marker { display: none; }
+.cmd-category > summary::before { content: "›"; color: var(--text-faint); font-size: 20px; line-height: 1; transition: transform .12s; }
+.cmd-category[open] > summary::before { transform: rotate(90deg); }
+.cmd-category > summary .grow { flex: 1; min-width: 0; }
+.cmd-category .list { margin-top: 16px; }
+.cmd-row .desc { color: var(--text-faint); font-size: 13px; }
+.cmd-row code { color: var(--text-strong); }

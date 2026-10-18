@@ -2,8 +2,10 @@
 
 import { logger } from '../utils/logger.js';
 import { createError, ErrorTypes } from '../utils/errorHandler.js';
-import { PermissionFlagsBits } from 'discord.js';
-import type { GuildMember } from 'discord.js';
+import { EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import type { Guild, GuildMember, TextChannel } from 'discord.js';
+import { createEmbed } from '../utils/embeds.js';
+import { getApplicationStatusColor } from '../config/bot.js';
 import { sanitizeInput, sanitizeMarkdown } from '../utils/validation.js';
 import {
     getApplicationSettings,
@@ -14,9 +16,12 @@ import {
     updateApplication,
     getUserApplications,
     getApplicationRoles,
-    saveApplicationRoles
+    saveApplicationRoles,
+    saveApplicationRoleSettings,
+    deleteApplicationRoleSettings,
+    deleteApplication
 } from '../utils/database.js';
-import type { ApplicationFilters, ApplicationInput, ApplicationSettings } from '../utils/database.js';
+import type { Application, ApplicationFilters, ApplicationInput, ApplicationRole, ApplicationSettings } from '../utils/database.js';
 import botConfig from '../config/bot.js';
 import type { NexoClient } from '../types/index.js';
 
@@ -469,3 +474,160 @@ class ApplicationService {
 }
 
 export default ApplicationService;
+
+export function getApplicationStatusPresentation(statusValue: unknown) {
+    const normalized = typeof statusValue === 'string' ? statusValue.trim().toLowerCase() : 'unknown';
+    const statusLabel =
+        normalized === 'pending' ? 'In Bearbeitung' :
+        normalized === 'approved' ? 'Angenommen' :
+        normalized === 'denied' ? 'Abgelehnt' :
+        'Unbekannt';
+    const statusEmoji =
+        normalized === 'pending' ? '🟡' :
+        normalized === 'approved' ? '🟢' :
+        normalized === 'denied' ? '🔴' :
+        '⚪';
+
+    return { normalized, statusLabel, statusEmoji };
+}
+
+/**
+ * Creates a new application for a role (the /app-admin setup flow): adds the role (enabled),
+ * turns the application system on and stores the role's questions.
+ */
+export async function createApplicationRole(
+    client: NexoClient,
+    guild: Guild,
+    { roleId, name, questions }: { roleId: string; name: string; questions: string[] },
+): Promise<{ error: 'role_missing' | 'duplicate' } | { error: null; role: ApplicationRole }> {
+    const role = await guild.roles.fetch(roleId).catch(() => null);
+    if (!role) return { error: 'role_missing' };
+
+    const existingRoles = await getApplicationRoles(client, guild.id);
+    if (existingRoles.some(r => r.roleId === roleId)) return { error: 'duplicate' };
+
+    const applicationRole: ApplicationRole = { roleId, name, enabled: true };
+    existingRoles.push(applicationRole);
+    await saveApplicationRoles(client, guild.id, existingRoles);
+
+    const settings = await getApplicationSettings(client, guild.id);
+    if (!settings.enabled) {
+        await ApplicationService.updateSettings(client, guild.id, { enabled: true });
+    }
+
+    await saveApplicationRoleSettings(client, guild.id, roleId, { questions });
+    return { error: null, role: applicationRole };
+}
+
+/** Deletes an application role, its settings and its stored applications. Returns null if the role is not configured. */
+export async function deleteApplicationRole(client: NexoClient, guildId: string, roleId: string) {
+    const roles = await getApplicationRoles(client, guildId);
+    const roleIndex = roles.findIndex(r => r.roleId === roleId);
+    if (roleIndex === -1) return null;
+
+    const [deletedRole] = roles.splice(roleIndex, 1);
+    await saveApplicationRoles(client, guildId, roles);
+    await deleteApplicationRoleSettings(client, guildId, roleId);
+
+    const allApplications = await getApplications(client, guildId);
+    const applicationsToDelete = allApplications.filter(app => app.roleId === roleId);
+    for (const app of applicationsToDelete) {
+        await deleteApplication(client, guildId, app.id, app.userId);
+    }
+
+    return { deletedRole, deletedApplications: applicationsToDelete.length };
+}
+
+/**
+ * Approves or denies a pending application with all side effects of /app-admin review:
+ * status update, DM to the applicant, log message update and (on approve) the role.
+ */
+export async function reviewApplicationWithEffects(
+    client: NexoClient,
+    guild: Guild,
+    application: Application,
+    { approve, reason, reviewerId }: { approve: boolean; reason: string; reviewerId: string },
+) {
+    const appId = application.id;
+    const status = approve ? 'approved' : 'denied';
+
+    const updatedApplication = await ApplicationService.reviewApplication(client, guild.id, appId, {
+        action: approve ? 'approve' : 'deny',
+        reason,
+        reviewerId,
+    });
+
+    let dmSent = false;
+    try {
+        const user = await client.users.fetch(application.userId);
+        const statusColor = getApplicationStatusColor(status);
+        const reviewStatus = getApplicationStatusPresentation(status);
+        const dmEmbed = createEmbed({
+            title: `${reviewStatus.statusEmoji} Bewerbung ${reviewStatus.statusLabel.toLowerCase()}`,
+            description: `Deine Bewerbung für **${application.roleName}** wurde **${reviewStatus.statusLabel.toLowerCase()}**.\n` +
+                `**Hinweis:** ${reason}\n\n` +
+                `Details siehst du mit \`/apply status id:${appId}\`.`
+        }).setColor(statusColor);
+
+        await user.send({ embeds: [dmEmbed] });
+        dmSent = true;
+    } catch (error) {
+        logger.warn('Failed to send DM to user for application review', {
+            error: (error as Error).message,
+            userId: application.userId,
+            applicationId: appId
+        });
+    }
+
+    if (application.logMessageId && application.logChannelId) {
+        try {
+            const statusColor = getApplicationStatusColor(status);
+            const logChannel = guild.channels.cache.get(application.logChannelId as string) as TextChannel | undefined;
+            if (logChannel) {
+                const logMessage = await logChannel.messages.fetch(application.logMessageId as string);
+                if (logMessage) {
+                    const embed = logMessage.embeds[0];
+                    if (embed) {
+                        const reviewStatus = getApplicationStatusPresentation(status);
+                        const newEmbed = EmbedBuilder.from(embed)
+                            .setColor(statusColor)
+                            .spliceFields(0, 1, {
+                                name: "Status",
+                                value: `${reviewStatus.statusEmoji} ${reviewStatus.statusLabel}`,
+                            });
+
+                        await logMessage.edit({
+                            embeds: [newEmbed],
+                            components: [],
+                        });
+                    }
+                }
+            }
+        } catch (error) {
+            logger.warn('Failed to update log message for application', {
+                error: (error as Error).message,
+                applicationId: appId,
+                logMessageId: application.logMessageId
+            });
+        }
+    }
+
+    let roleAssigned: boolean | null = null;
+    if (approve) {
+        try {
+            const member = await guild.members.fetch(application.userId);
+            await member.roles.add(application.roleId!);
+            roleAssigned = true;
+        } catch (error) {
+            roleAssigned = false;
+            logger.error('Failed to assign role to approved applicant', {
+                error: (error as Error).message,
+                userId: application.userId,
+                roleId: application.roleId,
+                applicationId: appId
+            });
+        }
+    }
+
+    return { application: updatedApplication, dmSent, roleAssigned };
+}

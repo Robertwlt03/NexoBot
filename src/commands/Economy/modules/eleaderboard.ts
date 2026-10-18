@@ -4,8 +4,7 @@ import { createEmbed } from '../../../utils/embeds.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { logger } from '../../../utils/logger.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
-import { getEconomyPrefix } from '../../../utils/database.js';
-import type { EconomyData } from '../../../utils/economy.js';
+import { getEconomyLeaderboard } from '../../../utils/economy.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -21,37 +20,15 @@ export default {
 
             logger.debug(`[ECONOMY] Leaderboard requested`, { guildId });
 
-            const prefix = getEconomyPrefix(guildId);
+            const allUserData = await getEconomyLeaderboard(client, guildId);
 
-            let allKeys = await client.db.list(prefix);
-
-            if (!Array.isArray(allKeys)) {
-                allKeys = [];
-            }
-
-            if (allKeys.length === 0) {
+            if (allUserData.length === 0) {
                 throw createError(
                     "No economy data found",
                     ErrorTypes.VALIDATION,
                     "Für diesen Server wurden keine Wirtschaftsdaten gefunden."
                 );
             }
-
-            let allUserData: { userId: string; net_worth: number }[] = [];
-
-            for (const key of allKeys) {
-                const userId = key.replace(prefix, "");
-                const userData = await client.db.get<EconomyData>(key);
-
-                if (userData) {
-                    allUserData.push({
-                        userId: userId,
-                        net_worth: (userData.wallet || 0) + (userData.bank || 0),
-                    });
-                }
-            }
-
-            allUserData.sort((a, b) => b.net_worth - a.net_worth);
 
             const topUsers = allUserData.slice(0, 10);
             const userRank =

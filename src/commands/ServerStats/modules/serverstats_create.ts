@@ -1,11 +1,10 @@
 import { PermissionFlagsBits, ChannelType } from 'discord.js';
-import type { ServerCounter } from '../../../services/serverstatsService.js';
 import { createEmbed, successEmbed } from '../../../utils/embeds.js';
-import { getServerCounters, saveServerCounters, updateCounter, getCounterBaseName, getCounterTypeLabel } from '../../../services/serverstatsService.js';
+import { createServerCounter, getCounterTypeLabel } from '../../../services/serverstatsService.js';
 import { logger } from '../../../utils/logger.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
-import { replyUserError, ErrorTypes } from '../../../utils/errorHandler.js';
+import { replyUserError, ErrorTypes, NexoBotError } from '../../../utils/errorHandler.js';
 import type { ChatInputCommandInteraction, GuildMember } from 'discord.js';
 import type { NexoClient } from '../../../types/index.js';
 export async function handleCreate(interaction: ChatInputCommandInteraction, client: NexoClient) {
@@ -32,52 +31,14 @@ export async function handleCreate(interaction: ChatInputCommandInteraction, cli
             return;
         }
 
-        const targetChannelType = channelType === 'voice' ? ChannelType.GuildVoice : ChannelType.GuildText;
-        const baseChannelName = getCounterBaseName(type);
-
-        const counters = await getServerCounters(client, guild.id);
-
-        const duplicateType = counters.find(counter => counter.type === type);
-
-        if (duplicateType) {
-            const duplicateChannel = guild.channels.cache.get(duplicateType.channelId);
-            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `Auf diesem Server gibt es bereits einen **${getCounterTypeLabel(type)}**-Zähler${duplicateChannel ? ` in ${duplicateChannel}` : ''}. Lösche ihn zuerst, bevor du einen neuen erstellst.` }).catch(logger.error);
-            return;
-        }
-
-        const targetChannel = await guild.channels.create({
-            name: baseChannelName,
-            type: targetChannelType,
-            parent: category.id,
-            reason: `Zählerkanal erstellt von ${interaction.user.tag}`
+        const { counter: newCounter, channel: targetChannel, nameUpdated } = await createServerCounter(client, guild, {
+            type,
+            channelType,
+            categoryId: category.id,
+            createdBy: interaction.user.tag,
         });
 
-        const existingCounter = counters.find(c => c.channelId === targetChannel.id);
-        if (existingCounter) {
-            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `Für den Kanal **${targetChannel.name}** gibt es bereits einen Zähler. Lösche ihn zuerst oder wähle einen anderen Typ.` }).catch(logger.error);
-            return;
-        }
-
-        const newCounter: ServerCounter = {
-            id: Date.now().toString(),
-            type: type,
-            channelId: targetChannel.id,
-            guildId: guild.id,
-            createdAt: new Date().toISOString(),
-            enabled: true
-        };
-
-        counters.push(newCounter);
-
-        const saved = await saveServerCounters(client, guild.id, counters);
-        if (!saved) {
-            await targetChannel.delete('Zählererstellung beim Speichern fehlgeschlagen').catch(() => null);
-            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Zählerdaten konnten nicht gespeichert werden. Bitte versuche es erneut.' }).catch(logger.error);
-            return;
-        }
-
-        const updated = await updateCounter(client, guild, newCounter);
-        if (!updated) {
+        if (!nameUpdated) {
             await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Zähler erstellt, aber der Kanalname konnte nicht aktualisiert werden. Er wird beim nächsten geplanten Durchlauf aktualisiert.' }).catch(logger.error);
             return;
         }
@@ -87,6 +48,10 @@ export async function handleCreate(interaction: ChatInputCommandInteraction, cli
         }).catch(logger.error);
 
     } catch (error) {
+        if (error instanceof NexoBotError && error.userMessage) {
+            await replyUserError(interaction, { type: error.type, message: error.userMessage }).catch(logger.error);
+            return;
+        }
         logger.error("Error creating counter:", error);
         await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Beim Erstellen des Zählers ist ein Fehler aufgetreten. Bitte versuche es erneut.' }).catch(logger.error);
     }
