@@ -47,7 +47,7 @@ NexoBot bündelt die Funktionen in thematische Commands mit Subcommands, zum Bei
 
 ## <img src="assets/icons/dashboard.svg" height="33" align="absmiddle" alt="">Web-Dashboard
 
-Nexo bringt ein Web-Dashboard mit, das im selben Dienst wie der Bot unter `/dashboard` läuft. Server-Admins melden sich mit Discord an und sehen alle Server, auf denen sie „Server verwalten“ haben. Dort lassen sich alle Module einstellen, die es auch als Commands gibt: Willkommen, Leveling, Tickets, Verifizierung, Reaktionsrollen, AutoMod, Logging, Giveaways und mehr. Das Dashboard ist für alle Server kostenlos.
+Nexo bringt ein Web-Dashboard mit, das im selben Dienst wie der Bot unter `/dashboard` läuft. Server-Admins melden sich mit Discord an und sehen alle Server, auf denen sie „Server verwalten“ haben. Dort lassen sich alle Module einstellen, die es auch als Commands gibt: Willkommen, Leveling, Tickets, Verifizierung, Reaktionsrollen, AutoMod, Logging, Giveaways und mehr. Dazu kommen ein Designer für Willkommens- und Abschiedskarten (Bild mit Avatar, Texten, Formen und eigenen Bildern) und eine Statistikseite mit Mitgliederentwicklung, Aktivität und Zahlen aus allen Modulen, die Nexo ab dem ersten Tag täglich aufzeichnet. Das Dashboard ist für alle Server kostenlos.
 
 Über **Nexo einladen** auf der Startseite (`<DASHBOARD_URL>/dashboard`) fügen Admins Nexo ihrem Server hinzu und landen danach direkt im Dashboard dieses Servers. Im Discord führt der Button **Dashboard** in `/help` dorthin.
 

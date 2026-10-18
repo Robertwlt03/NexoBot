@@ -2,6 +2,8 @@
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
+/* `.list-item` is our list row component; keep Tailwind from generating its display:list-item utility. */
+@source not inline("list-item");
 @import "@fontsource-variable/unbounded";
 
 @theme {

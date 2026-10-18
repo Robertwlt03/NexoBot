@@ -15,6 +15,7 @@ export interface ModuleDef {
 }
 
 export const MODULES: ModuleDef[] = [
+  { id: 'insights', label: 'Statistiken', description: 'Wachstum, Aktivität und Zahlen aus allen Modulen', icon: 'stats', group: 'Allgemein', component: lazy(() => import('./Insights')) },
   { id: 'general', label: 'Allgemein', description: 'Prefix, Moderator- und Admin-Rolle, Grundeinstellungen', icon: 'settings', group: 'Allgemein', component: lazy(() => import('./General')) },
   { id: 'commands', label: 'Commands', description: 'Commands und Kategorien für diesen Server an- und ausschalten', icon: 'commands', group: 'Allgemein', component: lazy(() => import('./Commands')) },
   { id: 'automod', label: 'AutoMod', description: 'Spam, Links, Einladungen, Schimpfwörter und Erwähnungen filtern', icon: 'shield', group: 'Moderation', component: lazy(() => import('./Automod')) },

@@ -24,6 +24,7 @@ import { EXPECTED_SCHEMA_VERSION, EXPECTED_SCHEMA_LABEL } from './config/databas
 import type { ServerCounter } from './services/serverstatsService.js';
 import type { NexoClient } from './types/index.js';
 import { createDashboardRouter } from './web/dashboard.js';
+import { startStatsTracker, stopStatsTracker } from './services/statsTracker.js';
 
 /** Shape read by /health and /ready, including their fallbacks when no status is available. */
 interface DbStatusView {
@@ -129,6 +130,7 @@ class NexoBot extends Client {
       );
       
       this.setupCronJobs();
+      startStatsTracker(this);
     } catch (error) {
       logger.error('Failed to start bot:', error);
       process.exit(1);
@@ -382,7 +384,8 @@ class NexoBot extends Client {
         logger.info('✅ Web server closed');
       }
 
-      // Close database connection
+      await stopStatsTracker(this).catch((error: unknown) => logger.warn('Statistik-Flush beim Beenden fehlgeschlagen:', error));
+
       // Close database connection
       if (this.db && this.db.db) {
         logger.info('Closing database connection...');

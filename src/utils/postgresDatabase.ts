@@ -21,7 +21,9 @@ import {
     indexStatements,
     UPDATE_TIMESTAMP_FUNCTION,
     triggerDefinitions,
+    migrationStatements,
 } from './database/schema.js';
+import { pendingSchemaVersions } from '../config/database/schemaVersion.js';
 
 type PgError = Error & { code?: string; detail?: string; hint?: string };
 
@@ -134,27 +136,19 @@ class PostgreSQLDatabase implements KeyValueStore {
                 if (pgConfig.migration.enabled) {
                     const migrationCheck = await this.verifySchemaVersion();
                     if (!migrationCheck.ok) {
-                        const shouldBootstrapSchema =
-                            migrationCheck.reason === 'MISSING_MIGRATION_VERSION'
-                            && pgConfig.features.autoMigrate;
+                        // A new database (no ledger yet) or one behind the code: apply the missing versions in order.
+                        const canMigrate = pgConfig.features.autoMigrate
+                            && (migrationCheck.currentVersion === null || migrationCheck.currentVersion < migrationCheck.expectedVersion);
 
-                        if (shouldBootstrapSchema) {
-                            await this.setSchemaVersion(
-                                pgConfig.migration.expectedVersion,
-                                pgConfig.migration.expectedLabel
+                        if (!canMigrate) {
+                            const error: PgError = new Error(
+                                `Schema version check failed: expected ${migrationCheck.expectedVersion} but found ${migrationCheck.currentVersion === null ? 'none' : migrationCheck.currentVersion}`
                             );
-                            logger.warn(
-                                `No schema version found. Bootstrapped schema ledger to version ${pgConfig.migration.expectedVersion} (${pgConfig.migration.expectedLabel}).`
-                            );
-                            await this.runStartupKeyMigration();
-                            return true;
+                            error.code = 'SCHEMA_VERSION_MISMATCH';
+                            throw error;
                         }
 
-                        const error: PgError = new Error(
-                            `Schema version check failed: expected ${migrationCheck.expectedVersion} but found ${migrationCheck.currentVersion === null ? 'none' : migrationCheck.currentVersion}`
-                        );
-                        error.code = 'SCHEMA_VERSION_MISMATCH';
-                        throw error;
+                        await this.applySchemaMigrations(migrationCheck.currentVersion ?? 0);
                     }
                 }
 
@@ -267,6 +261,17 @@ class PostgreSQLDatabase implements KeyValueStore {
              DO UPDATE SET label = EXCLUDED.label, applied_at = CURRENT_TIMESTAMP`,
             [version, label]
         );
+    }
+
+    /** Runs the SQL of every schema version after `currentVersion` and records each one in the ledger. */
+    async applySchemaMigrations(currentVersion: number): Promise<void> {
+        for (const { version, label } of pendingSchemaVersions(currentVersion)) {
+            for (const statement of migrationStatements[version] ?? []) {
+                await this.pool!.query(statement);
+            }
+            await this.setSchemaVersion(version, label);
+            logger.info(`Schema migration applied: v${version} (${label})`);
+        }
     }
 
     async verifySchemaVersion() {

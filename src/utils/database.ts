@@ -6,6 +6,7 @@ import { BotConfig, getDefaultApplicationQuestions } from '../config/bot.js';
 import type { NexoClient } from '../types/index.js';
 import type { VerificationAuditRecord } from './postgresDatabase.js';
 import type { Giveaway } from './giveaways.js';
+import { safeCard, type WelcomeCard } from '../shared/welcomeCard.js';
 
 export {
     db,
@@ -392,6 +393,9 @@ export interface WelcomeConfig {
     autoRoleDelay: number;
     joinLogs: WelcomeLogConfig;
     leaveLogs: WelcomeLogConfig;
+    /** Image card attached to the welcome embed (dashboard designer); unset = none. */
+    welcomeCard?: WelcomeCard;
+    goodbyeCard?: WelcomeCard;
     [key: string]: unknown;
 }
 
@@ -440,7 +444,9 @@ function normalizeWelcomeConfig(raw: unknown = {}): WelcomeConfig {
         roleIds,
         autoRoleDelay: base.autoRoleDelay ?? 0,
         joinLogs: base.joinLogs ?? { enabled: false, channelId: null },
-        leaveLogs: base.leaveLogs ?? { enabled: false, channelId: null }
+        leaveLogs: base.leaveLogs ?? { enabled: false, channelId: null },
+        welcomeCard: safeCard(base.welcomeCard) ?? undefined,
+        goodbyeCard: safeCard(base.goodbyeCard) ?? undefined
     };
 }
 

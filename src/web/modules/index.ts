@@ -4,6 +4,7 @@
 import type { Router } from 'express';
 import type { NexoClient } from '../../types/index.js';
 import { generalModule } from './general.js';
+import { insightsModule } from './insights.js';
 import { commandsModule } from './commands.js';
 import { automodModule } from './automod.js';
 import { moderationModule } from './moderation.js';
@@ -30,6 +31,7 @@ export interface DashboardModule {
 
 export const dashboardModules: DashboardModule[] = [
   generalModule,
+  insightsModule,
   commandsModule,
   automodModule,
   moderationModule,

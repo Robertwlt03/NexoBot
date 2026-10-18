@@ -196,6 +196,27 @@ export const indexStatements = [
     `CREATE INDEX IF NOT EXISTS idx_cache_data_expires_at ON ${t.cache_data}(expires_at)`,
 ];
 
+/**
+ * SQL for every schema version after the v1 baseline (labels in config/database/schemaVersion.ts).
+ * Statements must be idempotent: a crashed run is simply repeated.
+ */
+export const migrationStatements: Record<number, string[]> = {
+    // v2 guild-daily-stats: one row per guild and UTC day, written by services/statsTracker.ts.
+    2: [
+        `CREATE TABLE IF NOT EXISTS ${t.guild_daily_stats} (
+            guild_id TEXT NOT NULL,
+            day DATE NOT NULL,
+            joins INTEGER NOT NULL DEFAULT 0,
+            leaves INTEGER NOT NULL DEFAULT 0,
+            messages INTEGER NOT NULL DEFAULT 0,
+            active_members INTEGER NOT NULL DEFAULT 0,
+            voice_minutes INTEGER NOT NULL DEFAULT 0,
+            member_count INTEGER,
+            PRIMARY KEY (guild_id, day)
+        )`,
+    ],
+};
+
 export const UPDATE_TIMESTAMP_FUNCTION = `
     CREATE OR REPLACE FUNCTION update_updated_at_column()
     RETURNS TRIGGER AS $$

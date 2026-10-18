@@ -3,7 +3,8 @@ import { Link } from 'react-router';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { CHANNEL_TYPES } from '../../../src/web/apiTypes';
-import { useGuild } from '../api';
+import type { InsightsResponse } from '../../../src/web/dto/insights';
+import { useApi, useGuild } from '../api';
 import { GuildIcon } from '../components/Layout';
 import { PageHeader, Stats } from '../components/ui';
 import { Icon, IconTile } from '../icons';
@@ -14,6 +15,7 @@ gsap.registerPlugin(useGSAP);
 export function Overview() {
   const { guild } = useGuild();
   const root = useRef<HTMLDivElement>(null);
+  const week = useApi<InsightsResponse>(`/guilds/${guild.id}/insights?range=7`).data;
   const count = (...types: number[]) => guild.channels.filter((c) => types.includes(c.type)).length;
   const stats = [
     { label: 'Mitglieder', value: guild.memberCount },
@@ -45,6 +47,19 @@ export function Overview() {
         description="Wähle ein Modul, um es für diesen Server einzurichten."
       />
       <Stats items={stats.map((stat) => ({ label: stat.label, value: <span className="js-count" data-value={stat.value}>{stat.value.toLocaleString('de-DE')}</span> }))} />
+      {week && (
+        <section className="mt-6">
+          <div className="mb-3 flex items-baseline justify-between gap-3">
+            <h2 className="font-sans text-[11.5px] font-bold uppercase tracking-[.14em] text-dc-muted">Letzte 7 Tage</h2>
+            <Link to="insights" className="text-[13px]">Alle Statistiken</Link>
+          </div>
+          <Stats items={[
+            { label: 'Beitritte', value: week.history.totals.joins.toLocaleString('de-DE') },
+            { label: 'Nachrichten', value: week.history.totals.messages.toLocaleString('de-DE') },
+            { label: 'Aktive Mitglieder', value: week.history.totals.activeAvg.toLocaleString('de-DE'), hint: 'Ø pro Tag' },
+          ]} />
+        </section>
+      )}
       <div className="mb-8" />
 
       {GROUPS.map((group) => (
