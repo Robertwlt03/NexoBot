@@ -428,7 +428,7 @@ export function SaveBar({ dirty, saving, onSave, onReset }: { dirty: boolean; sa
     <div ref={bar} className="save-bar" id="save-bar" aria-hidden={!dirty}>
       <span className="msg">Achtung – du hast ungespeicherte Änderungen!</span>
       <button className="btn btn-ghost btn-sm" type="button" onClick={onReset} disabled={saving}>Zurücksetzen</button>
-      <button className="btn btn-success btn-sm" type="button" onClick={onSave} disabled={saving}>{saving ? 'Speichern …' : 'Änderungen speichern'}</button>
+      <button className="btn btn-primary btn-sm" type="button" onClick={onSave} disabled={saving}>{saving ? 'Speichern …' : 'Änderungen speichern'}</button>
     </div>
   );
 }

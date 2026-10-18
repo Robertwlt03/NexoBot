@@ -55,7 +55,7 @@ export function Overview({ data }: { data: InsightsResponse }) {
           series={[{ name: 'Beitritte', values: days.map((d) => d.joins) }, { name: 'Austritte', values: days.map((d) => d.leaves) }]} />
       </div>
 
-      <h2 className="mt-5! font-sans text-[11.5px] font-bold uppercase tracking-[.14em] text-dc-muted">Server &amp; Module</h2>
+      <h2 className="mt-5! font-sans text-[11.5px] font-bold uppercase tracking-[.14em] text-mute">Server &amp; Module</h2>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 [&>*]:mt-0">
         <Card title="Server" icon="stats" description={`Erstellt am ${fullDate(live.createdAt)}`}>
           <Facts items={[

@@ -31,10 +31,10 @@ export function ServerPicker() {
   const active = guilds.filter((g) => g.botPresent).length;
 
   return (
-    <div ref={root} className="min-h-full bg-[#111214] [background-image:var(--dots)] [background-size:24px_24px]">
-      <header className="sticky top-0 z-20 border-b border-white/5 bg-[#111214]/80 backdrop-blur-md">
+    <div ref={root} className="min-h-full bg-canvas">
+      <header className="sticky top-0 z-20 border-b border-white/[.05] bg-canvas/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-5 md:px-8">
-          <Link to="/servers" className="flex items-center gap-2.5 text-white hover:no-underline">
+          <Link to="/servers" className="flex items-center gap-2.5 text-ink hover:no-underline">
             <NexoLogo className="h-9 w-auto" animated={false} />
             <span className="font-display text-lg font-semibold tracking-tight">Nexo</span>
           </Link>
@@ -43,7 +43,7 @@ export function ServerPicker() {
       </header>
 
       <main className="relative mx-auto max-w-6xl px-5 pb-24 pt-12 md:px-8">
-        <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[700px] -translate-x-1/2 rounded-full bg-blurple/15 blur-[110px]" />
+        <div className="pointer-events-none absolute -top-32 left-1/2 h-64 w-[640px] -translate-x-1/2 rounded-full bg-accent/[.07] blur-[120px]" />
         <div className="relative">
           <PageHeader
             kicker="Serverauswahl"
@@ -57,19 +57,19 @@ export function ServerPicker() {
           {loading && !data && <div className="center"><Spinner /></div>}
           {error && <Notice tone="danger">{error}</Notice>}
           {data && guilds.length === 0 && <Empty title="Keine Server gefunden">Du brauchst auf einem Server die Berechtigung „Server verwalten“.</Empty>}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {guilds.map((guild) => (
-              <article key={guild.id} className="js-server group relative overflow-hidden rounded-2xl border border-white/[.07] bg-[#1a1b1f] transition duration-300 hover:-translate-y-1 hover:border-nexo-violet/50 hover:shadow-[0_24px_50px_-24px_rgba(124,92,255,.6)]">
+              <article key={guild.id} className="js-server group relative overflow-hidden rounded-[20px] border border-white/[.06] bg-surface transition duration-300 hover:-translate-y-0.5 hover:border-white/[.14]">
                 <div className="relative h-24 overflow-hidden">
                   {guild.iconUrl
-                    ? <img src={guild.iconUrl} alt="" className="absolute inset-0 h-full w-full scale-150 object-cover opacity-60 blur-2xl transition duration-500 group-hover:scale-[1.7]" />
-                    : <div className="absolute inset-0 bg-gradient-to-br from-nexo-violet/50 to-nexo-cyan/30" />}
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#1a1b1f]" />
+                    ? <img src={guild.iconUrl} alt="" className="absolute inset-0 h-full w-full scale-150 object-cover opacity-30 blur-2xl saturate-[.8] transition duration-500 group-hover:scale-[1.7] group-hover:opacity-40" />
+                    : <div className="absolute inset-0 bg-white/[.03]" />}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface" />
                 </div>
                 <div className="relative -mt-10 px-5 pb-5">
-                  <GuildIcon guild={guild} className="h-16 w-16 rounded-2xl text-lg ring-4 ring-[#1a1b1f]" />
+                  <GuildIcon guild={guild} className="h-14 w-14 rounded-2xl text-lg ring-4 ring-surface" />
                   <div className="mt-3 flex items-center gap-2">
-                    <h3 className="min-w-0 flex-1 truncate text-base">{guild.name}</h3>
+                    <h3 className="min-w-0 flex-1 truncate text-[15px] font-medium">{guild.name}</h3>
                     {guild.botPresent
                       ? <span className="badge badge-on">Aktiv</span>
                       : <span className="badge badge-off">Nicht eingeladen</span>}

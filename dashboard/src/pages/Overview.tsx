@@ -1,82 +1,119 @@
 import { useRef } from 'react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { CHANNEL_TYPES } from '../../../src/web/apiTypes';
 import type { InsightsResponse } from '../../../src/web/dto/insights';
 import { useApi, useGuild } from '../api';
+import { Sparkline } from '../components/charts';
 import { GuildIcon } from '../components/Layout';
-import { PageHeader, Stats } from '../components/ui';
+import { PageHeader } from '../components/ui';
 import { Icon, IconTile } from '../icons';
 import { GROUPS, MODULES } from '../modules/registry';
 
 gsap.registerPlugin(useGSAP);
+
+const num = (value: number) => value.toLocaleString('de-DE');
+
+/** Change vs. the previous period as a small status-coloured label (the only place green/red appears here). */
+function Delta({ now, before }: { now: number; before: number | undefined }) {
+  if (before === undefined || before === 0) return <span className="text-faint">Neu aufgezeichnet</span>;
+  const change = Math.round(((now - before) / before) * 100);
+  const tone = change > 0 ? 'text-pos' : change < 0 ? 'text-neg' : 'text-mute';
+  return <span className={tone}>{change > 0 ? '+' : ''}{change} % <span className="text-faint">zur Vorwoche</span></span>;
+}
+
+function KpiCard({ label, value, footer, spark, to }: { label: string; value: string; footer: ReactNode; spark: (number | null)[]; to: string }) {
+  return (
+    <Link to={to} className="js-tile card group flex flex-col !p-5 text-body hover:no-underline">
+      <div className="flex items-start justify-between gap-3">
+        <span className="text-[13px] text-mute">{label}</span>
+        <span className="arrow-btn"><span className="inline-block rotate-[135deg]"><Icon name="arrowLeft" size={14} /></span></span>
+      </div>
+      <div className="mt-3 text-[34px] font-light leading-none tracking-[-0.03em] text-ink tabular-nums">{value}</div>
+      <div className="mt-2 text-[12.5px]">{footer}</div>
+      <div className="mt-auto pt-3"><Sparkline values={spark} height={44} /></div>
+    </Link>
+  );
+}
 
 export function Overview() {
   const { guild } = useGuild();
   const root = useRef<HTMLDivElement>(null);
   const week = useApi<InsightsResponse>(`/guilds/${guild.id}/insights?range=7`).data;
   const count = (...types: number[]) => guild.channels.filter((c) => types.includes(c.type)).length;
-  const stats = [
-    { label: 'Mitglieder', value: guild.memberCount },
-    { label: 'Textkanäle', value: count(CHANNEL_TYPES.text, CHANNEL_TYPES.announcement, CHANNEL_TYPES.forum) },
-    { label: 'Sprachkanäle', value: count(CHANNEL_TYPES.voice, CHANNEL_TYPES.stage) },
-    { label: 'Rollen', value: guild.roles.length },
-  ];
+  const days = week?.history.days ?? [];
+  const totals = week?.history.totals;
+  const previous = week?.history.previous ?? undefined;
 
   useGSAP(() => {
     const mm = gsap.matchMedia();
     mm.add('(prefers-reduced-motion: no-preference)', () => {
-      gsap.fromTo('.js-tile', { y: 24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.5, stagger: 0.035, ease: 'power3.out', delay: 0.15, clearProps: 'transform' });
-      // Count the stats up from zero.
+      gsap.fromTo('.js-tile', { y: 18, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.55, stagger: 0.04, ease: 'power3.out', delay: 0.1, clearProps: 'transform' });
       gsap.utils.toArray<HTMLElement>('.js-count').forEach((el) => {
         const target = Number(el.dataset.value);
         const state = { n: 0 };
-        gsap.to(state, { n: target, duration: 1.1, ease: 'power2.out', delay: 0.2, onUpdate: () => { el.textContent = Math.round(state.n).toLocaleString('de-DE'); } });
+        gsap.to(state, { n: target, duration: 1.2, ease: 'power3.out', delay: 0.15, onUpdate: () => { el.textContent = num(Math.round(state.n)); } });
       });
     });
     return () => mm.revert();
-  }, { scope: root, dependencies: [guild.id], revertOnUpdate: true });
+  }, { scope: root, dependencies: [guild.id, Boolean(week)], revertOnUpdate: true });
 
   return (
     <div ref={root}>
       <PageHeader
         kicker="Übersicht"
-        media={<GuildIcon guild={guild} className="h-[52px] w-[52px] shrink-0 rounded-[14px] text-lg" />}
+        media={<GuildIcon guild={guild} className="h-12 w-12 shrink-0 rounded-[14px] text-lg ring-1 ring-white/10" />}
         title={guild.name}
-        description="Wähle ein Modul, um es für diesen Server einzurichten."
+        description="Der Stand deines Servers auf einen Blick. Wähle unten ein Modul, um es einzurichten."
       />
-      <Stats items={stats.map((stat) => ({ label: stat.label, value: <span className="js-count" data-value={stat.value}>{stat.value.toLocaleString('de-DE')}</span> }))} />
-      {week && (
-        <section className="mt-6">
-          <div className="mb-3 flex items-baseline justify-between gap-3">
-            <h2 className="font-sans text-[11.5px] font-bold uppercase tracking-[.14em] text-dc-muted">Letzte 7 Tage</h2>
-            <Link to="insights" className="text-[13px]">Alle Statistiken</Link>
+
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {/* The one accent surface on this page. */}
+        <div className="js-tile card card-hero relative flex flex-col overflow-hidden md:col-span-2">
+          <div className="flex items-center gap-2 text-[13px] text-[#cfc6ff]">
+            <span className="h-1.5 w-1.5 rounded-full bg-pos shadow-[0_0_8px_var(--pos)]" /> Nexo ist aktiv
           </div>
-          <Stats items={[
-            { label: 'Beitritte', value: week.history.totals.joins.toLocaleString('de-DE') },
-            { label: 'Nachrichten', value: week.history.totals.messages.toLocaleString('de-DE') },
-            { label: 'Aktive Mitglieder', value: week.history.totals.activeAvg.toLocaleString('de-DE'), hint: 'Ø pro Tag' },
-          ]} />
-        </section>
-      )}
-      <div className="mb-8" />
+          <div className="mt-5 flex flex-wrap items-end gap-x-4 gap-y-1">
+            <span className="js-count text-[56px] font-extralight leading-none tracking-[-0.04em] text-ink tabular-nums" data-value={guild.memberCount}>{num(guild.memberCount)}</span>
+            <span className="pb-1.5 text-[15px] text-body">Mitglieder</span>
+          </div>
+          <p className="mt-2 text-[13px] text-[#b7afe6]">
+            {totals ? <>+{num(totals.joins)} Beitritte · −{num(totals.leaves)} Austritte in den letzten 7 Tagen</> : 'Verlauf wird ab jetzt täglich aufgezeichnet.'}
+          </p>
+          <div className="mt-6 flex flex-wrap gap-2 text-[12.5px]">
+            {([['Textkanäle', count(CHANNEL_TYPES.text, CHANNEL_TYPES.announcement, CHANNEL_TYPES.forum)], ['Sprachkanäle', count(CHANNEL_TYPES.voice, CHANNEL_TYPES.stage)], ['Rollen', guild.roles.length]] as const).map(([label, value]) => (
+              <span key={label} className="rounded-full border border-white/10 bg-white/[.04] px-3 py-1 text-body"><b className="font-medium text-ink">{value}</b> {label}</span>
+            ))}
+          </div>
+          <div className="mt-auto flex flex-wrap gap-2 pt-6">
+            <Link to="insights" className="btn btn-primary hover:no-underline">Statistiken öffnen</Link>
+            <Link to="welcome" className="btn btn-secondary hover:no-underline">Willkommen einrichten</Link>
+          </div>
+        </div>
+
+        <KpiCard label="Nachrichten · 7 Tage" value={totals ? num(totals.messages) : '–'} to="insights?tab=activity"
+          footer={totals ? <Delta now={totals.messages} before={previous?.messages} /> : <span className="text-faint">Noch keine Daten</span>}
+          spark={days.map((d) => d.messages)} />
+        <KpiCard label="Aktive Mitglieder · Ø pro Tag" value={totals ? num(totals.activeAvg) : '–'} to="insights?tab=activity"
+          footer={totals ? <Delta now={totals.activeAvg} before={previous?.activeAvg} /> : <span className="text-faint">Noch keine Daten</span>}
+          spark={days.map((d) => d.activeMembers)} />
+      </section>
 
       {GROUPS.map((group) => (
-        <section key={group} className="mb-9">
-          <h2 className="mb-3 font-sans text-[11.5px] font-bold uppercase tracking-[.14em] text-dc-muted">{group}</h2>
+        <section key={group} className="mt-10">
+          <h2 className="mb-3 text-[13px] font-medium text-mute">{group}</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {MODULES.filter((m) => m.group === group).map((m) => (
               <Link key={m.id} to={m.id}
-                className="js-tile group relative flex items-start gap-3.5 overflow-hidden rounded-2xl border border-white/[.07] bg-[#1a1b1f] p-4 text-dc-text transition duration-300 hover:-translate-y-0.5 hover:border-nexo-violet/50 hover:bg-[#1f2025] hover:no-underline">
-                <span className="transition duration-300 group-hover:-rotate-6 group-hover:scale-105"><IconTile name={m.icon} /></span>
+                className="js-tile group relative flex items-center gap-3.5 rounded-2xl border border-white/[.06] bg-surface p-4 text-body transition duration-300 hover:border-white/[.12] hover:bg-raised hover:no-underline">
+                <IconTile name={m.icon} />
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-[15px]">{m.label}</h3>
-                  <p className="mt-0.5 text-[13px] leading-snug text-dc-muted">{m.description}</p>
+                  <h3 className="text-[14.5px] font-medium">{m.label}</h3>
+                  <p className="mt-0.5 truncate text-[12.5px] text-mute">{m.description}</p>
                 </div>
-                <span className="mt-1 -translate-x-1 text-dc-muted opacity-0 transition duration-300 group-hover:translate-x-0 group-hover:text-nexo-cyan group-hover:opacity-100">
-                  <span className="inline-block rotate-180"><Icon name="arrowLeft" size={16} /></span>
-                </span>
+                <span className="arrow-btn opacity-0 transition group-hover:opacity-100"><span className="inline-block rotate-[135deg]"><Icon name="arrowLeft" size={14} /></span></span>
               </Link>
             ))}
           </div>

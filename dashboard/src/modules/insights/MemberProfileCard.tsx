@@ -40,7 +40,7 @@ export function MemberProfileCard({ profile, onSelect }: { profile: MemberProfil
           ['Beigetreten', profile.joinedAt ? <span title={ago(profile.joinedAt)}>{shortDate(profile.joinedAt)}</span> : '–'],
           ['Konto erstellt', <span title={shortDate(profile.accountCreatedAt)}>{ago(profile.accountCreatedAt)}</span>],
           // Shown once invite tracking exists; the bot does not record who invited whom yet.
-          ...(invitedBy ? [['Eingeladen von', <button type="button" className="cursor-pointer border-0 bg-transparent p-0 text-[#00a8fc] [font:inherit] hover:underline" onClick={() => onSelect(invitedBy.userId)}>{invitedBy.name}</button>] as [string, ReactNode]] : []),
+          ...(invitedBy ? [['Eingeladen von', <button type="button" className="cursor-pointer border-0 bg-transparent p-0 text-accent [font:inherit] hover:underline" onClick={() => onSelect(invitedBy.userId)}>{invitedBy.name}</button>] as [string, ReactNode]] : []),
           ['Geburtstag', or(birthday, (b) => `${String(b.day).padStart(2, '0')}.${String(b.month).padStart(2, '0')}.`)],
         ]} />
         <Facts items={[
