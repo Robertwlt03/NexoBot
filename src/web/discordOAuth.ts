@@ -1,5 +1,6 @@
 // Discord OAuth2 (authorization code flow) for the dashboard login.
 
+import { OAuth2Scopes, PermissionFlagsBits, PermissionsBitField } from 'discord.js';
 import type { SessionGuild } from './session.js';
 
 const API = 'https://discord.com/api/v10';
@@ -25,15 +26,37 @@ export interface OAuthConfig {
   redirectUri: string;
 }
 
-export function authorizeUrl(config: OAuthConfig, state: string): string {
+/** Permissions Nexo asks for when it is invited. */
+const INVITE_PERMISSIONS = new PermissionsBitField([
+  PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks,
+  PermissionFlagsBits.AttachFiles, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.AddReactions,
+  PermissionFlagsBits.UseExternalEmojis, PermissionFlagsBits.ManageMessages, PermissionFlagsBits.ManageChannels,
+  PermissionFlagsBits.ManageRoles, PermissionFlagsBits.ManageGuild, PermissionFlagsBits.KickMembers,
+  PermissionFlagsBits.BanMembers, PermissionFlagsBits.ModerateMembers, PermissionFlagsBits.ViewAuditLog,
+  PermissionFlagsBits.Connect, PermissionFlagsBits.Speak, PermissionFlagsBits.MoveMembers,
+]).bitfield.toString();
+
+/**
+ * Login URL. With `invite`, the same flow also adds Nexo to a server (Discord's bot authorization flow):
+ * the user picks the server (or `guildId` preselects it) and comes back logged in, with `guild_id` on the callback.
+ */
+export function authorizeUrl(config: OAuthConfig, state: string, invite?: { guildId?: string }): string {
   const params = new URLSearchParams({
     client_id: config.clientId,
     redirect_uri: config.redirectUri,
     response_type: 'code',
-    scope: OAUTH_SCOPES.join(' '),
+    scope: [...OAUTH_SCOPES, ...(invite ? [OAuth2Scopes.Bot, OAuth2Scopes.ApplicationsCommands] : [])].join(' '),
     state,
-    prompt: 'none',
   });
+  if (invite) {
+    params.set('permissions', INVITE_PERMISSIONS);
+    if (invite.guildId) {
+      params.set('guild_id', invite.guildId);
+      params.set('disable_guild_select', 'true');
+    }
+  } else {
+    params.set('prompt', 'none');
+  }
   return `https://discord.com/oauth2/authorize?${params}`;
 }
 

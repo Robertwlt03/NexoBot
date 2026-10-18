@@ -37,7 +37,7 @@ export function ServerPicker() {
                     <div className="name">{guild.name}</div>
                     {guild.botPresent
                       ? <Link className="btn btn-primary" to={`/servers/${guild.id}`}>Einrichten</Link>
-                      : <a className="btn btn-secondary" href={guild.inviteUrl ?? '#'} target="_blank" rel="noreferrer"><Icon name="plus" size={16} /> Nexo einladen</a>}
+                      : <a className="btn btn-secondary" href={guild.inviteUrl ?? '#'}><Icon name="plus" size={16} /> Nexo einladen</a>}
                   </div>
                 </div>
               ))}

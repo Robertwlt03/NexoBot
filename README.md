@@ -49,6 +49,8 @@ NexoBot bündelt die Funktionen in thematische Commands mit Subcommands, zum Bei
 
 Nexo bringt ein Web-Dashboard mit, das im selben Dienst wie der Bot unter `/dashboard` läuft. Server-Admins melden sich mit Discord an und sehen alle Server, auf denen sie „Server verwalten“ haben. Dort lassen sich alle Module einstellen, die es auch als Commands gibt: Willkommen, Leveling, Tickets, Verifizierung, Reaktionsrollen, AutoMod, Logging, Giveaways und mehr. Das Dashboard ist für alle Server kostenlos.
 
+Über **Nexo einladen** auf der Startseite (`<DASHBOARD_URL>/dashboard`) fügen Admins Nexo ihrem Server hinzu und landen danach direkt im Dashboard dieses Servers. Im Discord führt der Button **Dashboard** in `/help` dorthin.
+
 Einrichtung:
 
 1. Im [Discord Developer Portal](https://discord.com/developers/applications) unter **OAuth2** das Client Secret kopieren und als Redirect `<DASHBOARD_URL>/dashboard/auth/callback` eintragen, zum Beispiel `http://localhost:3000/dashboard/auth/callback` lokal oder `https://<dein-dienst>.up.railway.app/dashboard/auth/callback` auf Railway.
