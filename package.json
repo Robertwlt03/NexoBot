@@ -51,15 +51,20 @@
     "undici": "^6.27.0"
   },
   "devDependencies": {
+    "@fontsource-variable/unbounded": "^5.3.0",
+    "@gsap/react": "^2.1.2",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/express": "^5.0.6",
     "@types/node": "^20.19.43",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^4.7.0",
+    "gsap": "^3.15.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router": "^7.18.4",
+    "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vite": "^6.4.4"

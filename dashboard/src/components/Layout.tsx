@@ -6,6 +6,7 @@ import { DirtyContext, GuildContext, useApi, UserContext } from '../api';
 import { Icon } from '../icons';
 import { GROUPS, MODULES } from '../modules/registry';
 import { Spinner, Notice } from './ui';
+import { NexoLogo } from './NexoLogo';
 
 function guildInitials(name: string) {
   return name.split(/\s+/).map((part) => part[0]).join('').slice(0, 3);
@@ -16,7 +17,7 @@ export function ServerRail({ guilds, activeId }: { guilds: ApiGuildSummary[]; ac
   return (
     <nav className="rail" aria-label="Server">
       <button className="rail-item" title="Alle Server" onClick={() => navigate('/servers')}>
-        <img src="/dashboard/nexo.svg" alt="Nexo" style={{ padding: 4, background: '#fff' }} />
+        <span className="rail-logo"><NexoLogo animated={false} /></span>
       </button>
       <div className="rail-sep" />
       {guilds.filter((g) => g.botPresent).map((guild) => (
