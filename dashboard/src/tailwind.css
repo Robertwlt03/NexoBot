@@ -17,3 +17,8 @@
   --color-dc-text: #dbdee1;
   --color-dc-muted: #949ba4;
 }
+
+/* Landing intro: hidden until GSAP reveals them, so nothing flashes before the animation starts. */
+@media (prefers-reduced-motion: no-preference) {
+  .js-intro { visibility: hidden; }
+}

@@ -44,21 +44,23 @@ export function Landing() {
       // Hero entrance
       const underline = root.current?.querySelector<SVGPathElement>('.js-underline') ?? undefined;
       const length = underline?.getTotalLength() ?? 0;
+      // `.js-intro` elements start hidden in CSS (no flash before the animation); autoAlpha reveals them.
       gsap.timeline({ defaults: { ease: 'power3.out' } })
-        .from(q('.js-nav'), { y: -24, opacity: 0, duration: 0.6 })
-        .from(q('.js-kicker'), { y: 12, opacity: 0, duration: 0.5 }, '-=0.3')
-        .from(q('.js-word'), { yPercent: 110, duration: 0.8, stagger: 0.08 }, '-=0.2')
-        .fromTo(underline ?? {}, { strokeDasharray: length, strokeDashoffset: length }, { strokeDashoffset: 0, duration: 0.9, ease: 'power2.inOut' }, '-=0.3')
-        .from(q('.js-hero-fade'), { y: 18, opacity: 0, duration: 0.6, stagger: 0.08 }, '-=0.7')
-        .from(q('.js-chat'), { x: 40, rotate: 3, opacity: 0, duration: 0.9 }, 0.35)
-        .from(q('.js-robot'), { scale: 0.4, opacity: 0, duration: 1, ease: 'back.out(1.6)' }, 0.6)
-        .from(q('.js-chip'), { scale: 0.6, opacity: 0, duration: 0.5, stagger: 0.12, ease: 'back.out(2)' }, 1);
+        .fromTo(q('.js-nav'), { y: -24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.6 })
+        .fromTo(q('.js-kicker'), { y: 12, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.5 }, '-=0.3')
+        .fromTo(q('.js-word'), { yPercent: 110, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.8, stagger: 0.08 }, '-=0.2')
+        .set(q('.js-underline-svg'), { autoAlpha: 1 }, '-=0.3')
+        .fromTo(underline ?? {}, { strokeDasharray: length, strokeDashoffset: length }, { strokeDashoffset: 0, duration: 0.9, ease: 'power2.inOut' }, '<')
+        .fromTo(q('.js-hero-fade'), { y: 18, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.6, stagger: 0.08 }, '-=0.7')
+        .fromTo(q('.js-chat'), { x: 40, rotate: 3, autoAlpha: 0 }, { x: 0, rotate: 0, autoAlpha: 1, duration: 0.9 }, 0.35)
+        .fromTo(q('.js-robot'), { scale: 0.4, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 1, ease: 'back.out(1.6)' }, 0.6)
+        .fromTo(q('.js-chip'), { scale: 0.6, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 0.5, stagger: 0.12, ease: 'back.out(2)' }, 1);
 
       // Chat window plays a little welcome → reply → level-up story on loop
       gsap.timeline({ repeat: -1, repeatDelay: 1.5, delay: 1.2 })
-        .from(q('.js-msg'), { y: 14, opacity: 0, duration: 0.45, stagger: 1.1, ease: 'power2.out' })
-        .from(q('.js-xp'), { width: '8%', duration: 1.1, ease: 'power2.inOut' }, '-=0.2')
-        .to(q('.js-msg'), { opacity: 0, y: -8, duration: 0.4, stagger: 0.05 }, '+=2.6');
+        .fromTo(q('.js-msg'), { y: 14, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.45, stagger: 1.1, ease: 'power2.out' })
+        .fromTo(q('.js-xp'), { width: '8%' }, { width: '72%', duration: 1.1, ease: 'power2.inOut' }, '-=0.2')
+        .to(q('.js-msg'), { autoAlpha: 0, y: -8, duration: 0.4, stagger: 0.05 }, '+=2.6');
 
       // Floating chips follow the pointer a little
       const chips = q('.js-chip');
@@ -98,7 +100,7 @@ export function Landing() {
   return (
     <div ref={root} className="min-h-full overflow-x-hidden bg-[#111214] text-dc-text [background-image:radial-gradient(rgba(255,255,255,.05)_1px,transparent_1px)] [background-size:24px_24px]">
       {/* Nav */}
-      <header className="js-nav sticky top-0 z-30 border-b border-white/5 bg-[#111214]/75 backdrop-blur-md">
+      <header className="js-nav js-intro sticky top-0 z-30 border-b border-white/5 bg-[#111214]/75 backdrop-blur-md">
         <div className={`${container} flex h-16 items-center gap-6`}>
           <a href="/dashboard/" className="flex items-center gap-2.5 text-white hover:no-underline">
             <NexoLogo className="h-9 w-auto" animated={false} />
@@ -121,28 +123,28 @@ export function Landing() {
         <div className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-blurple/20 blur-[120px]" />
         <div className={`${container} relative grid grid-cols-1 items-center gap-16 pb-20 pt-14 md:pt-24 lg:grid-cols-[1.05fr_1fr]`}>
           <div>
-            <p className="js-kicker mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.03] px-3 py-1 text-xs font-medium uppercase tracking-[.14em] text-dc-muted">
+            <p className="js-kicker js-intro mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.03] px-3 py-1 text-xs font-medium uppercase tracking-[.14em] text-dc-muted">
               <span className="h-1.5 w-1.5 rounded-full bg-[#23a55a]" /> Discord-Bot · kostenlos · auf Deutsch
             </p>
             <h1 className="font-display text-[clamp(2.6rem,6.5vw,4.6rem)] font-bold leading-[1.02] tracking-[-0.03em] text-white">
-              <span className="block overflow-hidden pb-1"><span className="js-word inline-block">Ein&nbsp;Bot.</span></span>
+              <span className="block overflow-hidden pb-1"><span className="js-word js-intro inline-block">Ein&nbsp;Bot.</span></span>
               <span className="relative inline-block overflow-hidden pb-4">
-                <span className="js-word inline-block">Alle</span>{' '}
-                <span className="js-word inline-block text-nexo-cyan">Funktionen.</span>
-                <svg className="absolute bottom-0 left-0 h-4 w-full" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true">
+                <span className="js-word js-intro inline-block">Alle</span>{' '}
+                <span className="js-word js-intro inline-block text-nexo-cyan">Funktionen.</span>
+                <svg className="js-underline-svg js-intro absolute bottom-0 left-0 h-4 w-full" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true">
                   <path className="js-underline" d="M3 15 C 70 5, 170 3, 297 11" fill="none" stroke="#7c5cff" strokeWidth="5" strokeLinecap="round" />
                 </svg>
               </span>
             </h1>
-            <p className="js-hero-fade mt-7 max-w-xl text-lg leading-relaxed text-dc-muted">
+            <p className="js-hero-fade js-intro mt-7 max-w-xl text-lg leading-relaxed text-dc-muted">
               Moderation, Willkommen, Leveling, Tickets und mehr. Lade Nexo ein, richte alles im Browser ein – fertig. Kein einziger Befehl nötig.
             </p>
             {loginFailed && (
-              <p className="js-hero-fade mt-6 max-w-xl rounded-lg border border-[#da373c]/40 bg-[#da373c]/10 px-4 py-3 text-sm text-[#ffb4b4]">
+              <p className="js-hero-fade js-intro mt-6 max-w-xl rounded-lg border border-[#da373c]/40 bg-[#da373c]/10 px-4 py-3 text-sm text-[#ffb4b4]">
                 Die Anmeldung hat nicht geklappt. Bitte versuch es noch einmal.
               </p>
             )}
-            <div className="js-hero-fade mt-9 flex flex-wrap gap-3">
+            <div className="js-hero-fade js-intro mt-9 flex flex-wrap gap-3">
               <a href="/dashboard/auth/invite" className="group inline-flex items-center gap-2.5 rounded-xl bg-blurple px-6 py-3.5 font-semibold text-white shadow-[0_10px_30px_-10px_rgba(88,101,242,.8)] transition hover:-translate-y-0.5 hover:bg-[#4752c4] hover:no-underline">
                 <span className="transition group-hover:rotate-90"><Icon name="plus" size={18} /></span> Nexo einladen
               </a>
@@ -150,7 +152,7 @@ export function Landing() {
                 <DiscordLogo /> Mit Discord anmelden
               </a>
             </div>
-            <dl className="js-hero-fade m-0 mt-10 flex flex-wrap gap-x-10 gap-y-4">
+            <dl className="js-hero-fade js-intro m-0 mt-10 flex flex-wrap gap-x-10 gap-y-4">
               {[['36', 'Commands'], ['19', 'Module im Dashboard'], ['0 €', 'für immer kostenlos']].map(([value, label]) => (
                 <div key={label}>
                   <dt className="font-display text-2xl font-semibold text-white">{value}</dt>
@@ -162,8 +164,8 @@ export function Landing() {
 
           {/* Discord preview */}
           <div className="relative mx-auto mt-20 w-full max-w-md lg:mr-0 lg:mt-0">
-            <NexoLogo className="js-robot absolute -right-4 -top-28 z-20 w-44 drop-shadow-[0_20px_40px_rgba(124,92,255,.45)] sm:w-52" followPointer />
-            <div className="js-chat relative z-10 overflow-hidden rounded-2xl border border-white/10 bg-dc-main shadow-[0_40px_80px_-30px_rgba(0,0,0,.8)]">
+            <NexoLogo className="js-robot js-intro absolute -right-4 -top-28 z-20 w-44 drop-shadow-[0_20px_40px_rgba(124,92,255,.45)] sm:w-52" followPointer />
+            <div className="js-chat js-intro relative z-10 overflow-hidden rounded-2xl border border-white/10 bg-dc-main shadow-[0_40px_80px_-30px_rgba(0,0,0,.8)]">
               <div className="flex items-center gap-2 border-b border-black/30 px-4 py-3 text-sm font-semibold text-white">
                 <span className="text-dc-muted"><Icon name="hash" size={18} /></span> willkommen
               </div>
@@ -187,7 +189,7 @@ export function Landing() {
                 </ChatMessage>
               </div>
             </div>
-            <Chip className="-left-8 bottom-4" icon="shield" tone="text-[#f23f43]">Einladungslink blockiert</Chip>
+            <Chip className="-left-8 bottom-4" icon="check" tone="text-[#23a55a]">Rolle „Mitglied“ vergeben</Chip>
             <Chip className="-bottom-6 -right-4" icon="ticket" tone="text-nexo-cyan">Ticket #0042 erstellt</Chip>
           </div>
         </div>
@@ -289,7 +291,7 @@ export function Landing() {
 
 function ChatMessage({ bot, name, initial, color, children }: { bot?: boolean; name: string; initial?: string; color?: string; children: ReactNode }) {
   return (
-    <div className="js-msg flex gap-3">
+    <div className="js-msg js-intro flex gap-3">
       {bot
         ? <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1a1540]"><NexoLogo className="w-8" animated={false} /></span>
         : <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-semibold text-white ${color}`}>{initial}</span>}
@@ -307,7 +309,7 @@ function ChatMessage({ bot, name, initial, color, children }: { bot?: boolean; n
 
 function Chip({ className, icon, tone, children }: { className: string; icon: IconName; tone: string; children: ReactNode }) {
   return (
-    <div className={`js-chip absolute z-20 hidden items-center gap-2 rounded-xl border border-white/10 bg-[#1e1f22]/95 px-3.5 py-2.5 text-sm font-medium text-white shadow-xl backdrop-blur sm:flex ${className}`}>
+    <div className={`js-chip js-intro absolute z-20 hidden items-center gap-2 rounded-xl border border-white/10 bg-[#1e1f22]/95 px-3.5 py-2.5 text-sm font-medium text-white shadow-xl backdrop-blur sm:flex ${className}`}>
       <span className={tone}><Icon name={icon} size={16} /></span>{children}
     </div>
   );
