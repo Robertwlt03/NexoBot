@@ -30,6 +30,14 @@ const STEPS = [
   { title: 'Einrichten', text: 'Module anschalten, Kanäle wählen, speichern. Nexo legt sofort los.' },
 ];
 
+// Slash command counts (37 top-level commands, 157 subcommands; 5 commands have none, so 162 can be run).
+// Update when commands change.
+const STATS: { value: string; label: string; detail?: string }[] = [
+  { value: '162', label: 'Befehle insgesamt', detail: '37 Commands · 157 Unterbefehle' },
+  { value: '19', label: 'Module im Dashboard' },
+  { value: '0 €', label: 'für immer kostenlos' },
+];
+
 const container = 'mx-auto w-full max-w-6xl px-5 md:px-8';
 
 export function Landing() {
@@ -153,10 +161,11 @@ export function Landing() {
               </a>
             </div>
             <dl className="js-hero-fade js-intro m-0 mt-10 flex flex-wrap gap-x-10 gap-y-4">
-              {[['36', 'Commands'], ['19', 'Module im Dashboard'], ['0 €', 'für immer kostenlos']].map(([value, label]) => (
+              {STATS.map(({ value, label, detail }) => (
                 <div key={label}>
                   <dt className="font-display text-2xl font-semibold text-white">{value}</dt>
                   <dd className="m-0 text-sm text-dc-muted">{label}</dd>
+                  {detail && <dd className="m-0 mt-0.5 text-xs text-dc-muted/70">{detail}</dd>}
                 </div>
               ))}
             </dl>
