@@ -6,6 +6,7 @@
 export const SCHEMA_VERSIONS: readonly { version: number; label: string }[] = [
     { version: 1, label: 'baseline-v1' },
     { version: 2, label: 'guild-daily-stats' },
+    { version: 3, label: 'insights-detail' },
 ];
 
 const LATEST_SCHEMA_VERSION = SCHEMA_VERSIONS[SCHEMA_VERSIONS.length - 1].version;

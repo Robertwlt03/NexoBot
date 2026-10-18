@@ -19,6 +19,10 @@ const configuredTables = {
     temp_data: 'temp_data',
     cache_data: 'cache_data',
     guild_daily_stats: 'guild_daily_stats',
+    member_daily_stats: 'member_daily_stats',
+    member_hourly_stats: 'member_hourly_stats',
+    channel_daily_stats: 'channel_daily_stats',
+    guild_hourly_stats: 'guild_hourly_stats',
 };
 
 const allowedTableIdentifiers = new Set([
@@ -39,6 +43,10 @@ const allowedTableIdentifiers = new Set([
     'temp_data',
     'cache_data',
     'guild_daily_stats',
+    'member_daily_stats',
+    'member_hourly_stats',
+    'channel_daily_stats',
+    'guild_hourly_stats',
 ]);
 
 const validatedTables = Object.fromEntries(

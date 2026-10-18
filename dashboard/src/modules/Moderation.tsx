@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import type { CasesPage, NoteType, NotesPage, Paged, WarningsPage } from '../../../src/web/dto/moderation';
 import { NOTE_MAX_LENGTH, NOTE_TYPE_LABELS } from '../../../src/web/dto/moderation';
 import { useAction, useApi, useGuild } from '../api';
@@ -45,7 +45,8 @@ function Table({ loading, error, empty, children }: { loading: boolean; error: s
 
 function CasesTab() {
   const { guild } = useGuild();
-  const [filter, setFilter] = useState({ action: '', userId: '', moderatorId: '', page: 1 });
+  const [params] = useSearchParams();
+  const [filter, setFilter] = useState({ action: '', userId: params.get('userId') ?? '', moderatorId: '', page: 1 });
   const { data, error, loading } = useApi<CasesPage>(`/guilds/${guild.id}/moderation/cases?${query({ ...filter, userId: validId(filter.userId), moderatorId: validId(filter.moderatorId) })}`);
   const update = (patch: Partial<typeof filter>) => setFilter((prev) => ({ ...prev, page: 1, ...patch }));
 
@@ -86,7 +87,8 @@ function CasesTab() {
 function WarningsTab() {
   const { guild } = useGuild();
   const { run } = useAction();
-  const [filter, setFilter] = useState({ userId: '', page: 1 });
+  const [params] = useSearchParams();
+  const [filter, setFilter] = useState({ userId: params.get('userId') ?? '', page: 1 });
   const { confirm, dialog } = useConfirm();
   const base = `/guilds/${guild.id}/moderation/warnings`;
   const { data, error, loading, reload } = useApi<WarningsPage>(`${base}?${query({ ...filter, userId: validId(filter.userId) })}`);
@@ -143,7 +145,8 @@ const NOTE_TYPES = Object.entries(NOTE_TYPE_LABELS).map(([value, label]) => ({ v
 function NotesTab() {
   const { guild } = useGuild();
   const { run, busy } = useAction();
-  const [filter, setFilter] = useState({ userId: '', page: 1 });
+  const [params] = useSearchParams();
+  const [filter, setFilter] = useState({ userId: params.get('userId') ?? '', page: 1 });
   const { confirm, dialog } = useConfirm();
   const [draft, setDraft] = useState<{ userId: string; type: NoteType; content: string }>({ userId: '', type: 'neutral', content: '' });
   const base = `/guilds/${guild.id}/moderation/notes`;

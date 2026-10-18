@@ -1,16 +1,23 @@
-// Hand-rolled SVG charts for the statistics page: line, grouped bars and stacked bars over days.
-// One y-axis, categorical colours in fixed order (validated for the #1a1b1f card surface), recessive grid,
+// Hand-rolled SVG charts for the statistics page: line, grouped bars and stacked bars over days, plus sparkline,
+// weekday × hour heatmap and horizontal bars. One y-axis, categorical colours in fixed order (validated for the #1a1b1f card surface), recessive grid,
 // crosshair/per-band tooltip on hover and keyboard focus, and an "Als Tabelle" view for every chart.
 import { useEffect, useRef, useState } from 'react';
-import type { KeyboardEvent, PointerEvent } from 'react';
+import type { KeyboardEvent, PointerEvent, ReactNode } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { Card, TableWrap } from './ui';
+import { Card, Empty, TableWrap } from './ui';
 
 gsap.registerPlugin(useGSAP);
 
 /** Fixed order, never cycled: a fifth series must be folded into "Andere" by the caller. */
 export const SERIES_COLORS = ['#0ea5c4', '#8b5cf6', '#d97706', '#ec4899'] as const;
+
+/**
+ * Sequential one-hue ramp (cyan, dark → light = less → more) for the dark card surface; validated with
+ * validate_palette.js --ordinal --mode dark --surface #1a1b1f (monotone L, steps ≥ 0.06, darkest step 2.24:1).
+ */
+export const HEAT_COLORS = ['#005a77', '#007b99', '#009dbb', '#3ec0df', '#69e4ff'] as const;
+const EMPTY_CELL = 'rgba(255,255,255,.05)';
 
 export interface ChartSeries { name: string; values: (number | null)[] }
 
@@ -36,17 +43,32 @@ function barPath(x: number, y: number, w: number, h: number): string {
   return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
 }
 
-function useWidth() {
+function useWidth(min = 240) {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(640);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const observer = new ResizeObserver(([entry]) => setWidth(Math.max(240, Math.floor(entry.contentRect.width))));
+    const observer = new ResizeObserver(([entry]) => setWidth(Math.max(min, Math.floor(entry.contentRect.width))));
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [min]);
   return { ref, width };
+}
+
+/** "Als Tabelle" / "Als Diagramm" switch shown in every chart card. */
+function TableToggle({ table, onToggle }: { table: boolean; onToggle: () => void }) {
+  return <button type="button" className="btn btn-ghost btn-sm" aria-pressed={table} onClick={onToggle}>{table ? 'Als Diagramm' : 'Als Tabelle'}</button>;
+}
+
+/** Shared tooltip box (values lead, labels follow). */
+function Tooltip({ left, top = 0, children }: { left: number; top?: number; children: ReactNode }) {
+  return (
+    <div role="status" className="pointer-events-none absolute z-10 min-w-[150px] -translate-x-1/2 rounded-lg border border-white/10 bg-[#0e0f11]/95 px-3 py-2 text-[13px] shadow-lg"
+      style={{ left, top }}>
+      {children}
+    </div>
+  );
 }
 
 export function Chart({ title, description, kind, labels, longLabels, series, format = (n) => number.format(n) }: {
@@ -117,7 +139,7 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
 
   return (
     <Card title={title} description={description}
-      right={<button type="button" className="btn btn-ghost btn-sm" aria-pressed={table} onClick={() => setTable(!table)}>{table ? 'Als Diagramm' : 'Als Tabelle'}</button>}>
+      right={<TableToggle table={table} onToggle={() => setTable(!table)} />}>
       {colored.length > 1 && (
         <ul className="mb-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-dc-muted">
           {colored.map((s, i) => (
@@ -210,8 +232,7 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
           </svg>
 
           {active !== null && (
-            <div role="status" className="pointer-events-none absolute top-0 z-10 min-w-[150px] -translate-x-1/2 rounded-lg border border-white/10 bg-[#0e0f11]/95 px-3 py-2 text-[13px] shadow-lg"
-              style={{ left: Math.min(width - 80, Math.max(80, xCenter(active))) }}>
+            <Tooltip left={Math.min(width - 80, Math.max(80, xCenter(active)))}>
               <div className="mb-1 text-dc-muted">{longLabels[active]}</div>
               {colored.map((s, si) => (
                 <div key={s.name} className="flex items-center gap-2">
@@ -220,9 +241,232 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
                   <span className="text-dc-muted">{s.name}</span>
                 </div>
               ))}
-            </div>
+            </Tooltip>
           )}
         </div>
+      )}
+    </Card>
+  );
+}
+
+// ---------- Sparkline ----------
+
+/** Trend line for a stat tile: de-emphasised line, the latest value as an accent dot. Decorative (the charts carry the values). */
+export function Sparkline({ values }: { values: (number | null)[] }) {
+  const { ref, width } = useWidth(40);
+  const H = 30;
+  const points = values.map((v, i) => (v === null ? null : [i, v] as const)).filter((p) => p !== null);
+  if (points.length < 2) return <div ref={ref} className="my-1.5 h-[30px]" aria-hidden="true" />;
+  const nums = points.map(([, v]) => v);
+  const lo = Math.min(...nums);
+  const hi = Math.max(...nums) === lo ? lo + 1 : Math.max(...nums);
+  const x = (i: number) => 5 + (i / Math.max(1, values.length - 1)) * (width - 10);
+  const y = (v: number) => 5 + (1 - (v - lo) / (hi - lo)) * (H - 10);
+  const d = points.map(([i, v], k) => `${k === 0 ? 'M' : 'L'}${x(i)},${y(v)}`).join('');
+  const [lastI, lastV] = points[points.length - 1];
+  return (
+    // The svg is taken out of the flow so it never widens its tile (the width is measured from the tile).
+    <div ref={ref} className="relative my-1.5 h-[30px] overflow-hidden" aria-hidden="true">
+      <svg width={width} height={H} className="absolute inset-0">
+        <path d={d} fill="none" stroke="var(--text-faint)" strokeOpacity=".7" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        <circle cx={x(lastI)} cy={y(lastV)} r="4" fill={SERIES_COLORS[0]} stroke="var(--bg-card)" strokeWidth="2" />
+      </svg>
+    </div>
+  );
+}
+
+// ---------- Heatmap ----------
+
+const HEAT_LABEL_W = 30;
+const HEAT_AXIS_H = 20;
+const HEAT_GAP = 2;
+
+/** Step of HEAT_COLORS for `value` (null = zero, drawn as an empty cell). */
+function heatStep(value: number, max: number): number | null {
+  if (value <= 0 || max <= 0) return null;
+  return Math.min(HEAT_COLORS.length - 1, Math.ceil((value / max) * HEAT_COLORS.length) - 1);
+}
+
+/**
+ * Grid of rows × columns (e.g. weekday × hour) on the sequential ramp. Each cell has a tooltip on hover and
+ * keyboard focus (arrow keys); scrolls horizontally inside its card on narrow screens.
+ */
+export function Heatmap({ title, description, rows, cols, values, cellLabel, unit, format = (n) => number.format(n) }: {
+  title: string;
+  description?: string;
+  /** Row labels (Mo … So). */
+  rows: string[];
+  /** Column labels (0 … 23); every third is drawn on the axis. */
+  cols: string[];
+  /** values[row][col]. */
+  values: number[][];
+  /** Tooltip / table label of a cell, e.g. "Di 20–21 Uhr". */
+  cellLabel: (row: number, col: number) => string;
+  /** Unit after the value, e.g. "Nachrichten". */
+  unit: string;
+  format?: (n: number) => string;
+}) {
+  const [table, setTable] = useState(false);
+  const [active, setActive] = useState<[number, number] | null>(null);
+  const { ref, width } = useWidth(200);
+  const svg = useRef<SVGSVGElement>(null);
+  const max = Math.max(0, ...values.flat());
+  const cellW = Math.max(16, Math.floor((width - HEAT_LABEL_W) / cols.length));
+  const cellH = Math.min(26, Math.max(18, Math.round(cellW * 0.75)));
+  const svgW = HEAT_LABEL_W + cellW * cols.length;
+  const svgH = rows.length * cellH + HEAT_AXIS_H;
+  const at = (r: number, c: number) => values[r]?.[c] ?? 0;
+
+  useGSAP(() => {
+    if (table || !svg.current) return;
+    const mm = gsap.matchMedia();
+    mm.add('(prefers-reduced-motion: no-preference)', () => {
+      gsap.from(svg.current!.querySelectorAll('.js-cell'), { opacity: 0, duration: 0.35, ease: 'power2.out', stagger: { amount: 0.4, grid: [rows.length, cols.length], from: 'start' } });
+    });
+    return () => mm.revert();
+  }, { dependencies: [table, values.flat().join()], revertOnUpdate: true });
+
+  const onKey = (event: KeyboardEvent<SVGSVGElement>) => {
+    const moves: Record<string, [number, number]> = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] };
+    const move = moves[event.key];
+    if (!move) return;
+    event.preventDefault();
+    setActive((current) => {
+      const [r, c] = current ?? [0, 0];
+      return [Math.min(rows.length - 1, Math.max(0, r + move[0])), Math.min(cols.length - 1, Math.max(0, c + move[1]))];
+    });
+  };
+
+  return (
+    <Card title={title} description={description} right={<TableToggle table={table} onToggle={() => setTable(!table)} />}>
+      {table ? (
+        <TableWrap>
+          <thead><tr><th />{cols.map((c) => <th key={c} className="text-right">{c}</th>)}</tr></thead>
+          <tbody>
+            {rows.map((row, r) => (
+              <tr key={row}><td>{row}</td>{cols.map((c, ci) => <td key={c} className="text-right tabular-nums">{format(at(r, ci))}</td>)}</tr>
+            ))}
+          </tbody>
+        </TableWrap>
+      ) : (
+        <>
+          <div ref={ref} className="relative overflow-x-auto pb-1">
+            <svg ref={svg} width={svgW} height={svgH} role="img" tabIndex={0} className="block rounded-md outline-none focus-visible:outline-2 focus-visible:outline-nexo-cyan"
+              aria-label={`${title}. Pfeiltasten zeigen die Werte einzelner Felder.`}
+              onKeyDown={onKey} onFocus={() => setActive((current) => current ?? [0, 0])} onBlur={() => setActive(null)}
+              onPointerLeave={() => setActive(null)}>
+              {rows.map((row, r) => (
+                <text key={row} x={HEAT_LABEL_W - 8} y={r * cellH + cellH / 2} dy="0.32em" textAnchor="end" fontSize="11" fill="var(--text-faint)">{row}</text>
+              ))}
+              {cols.map((c, ci) => ci % 3 === 0 && (
+                <text key={c} x={HEAT_LABEL_W + ci * cellW + cellW / 2} y={svgH - 6} textAnchor="middle" fontSize="11" fill="var(--text-faint)">{c}</text>
+              ))}
+              {rows.map((row, r) => cols.map((c, ci) => {
+                const step = heatStep(at(r, ci), max);
+                const isActive = active?.[0] === r && active[1] === ci;
+                return (
+                  <rect key={`${row}-${c}`} className="js-cell" x={HEAT_LABEL_W + ci * cellW + HEAT_GAP / 2} y={r * cellH + HEAT_GAP / 2}
+                    width={cellW - HEAT_GAP} height={cellH - HEAT_GAP} rx="3"
+                    fill={step === null ? EMPTY_CELL : HEAT_COLORS[step]}
+                    stroke={isActive ? 'var(--text-strong)' : 'none'} strokeWidth="1.5"
+                    onPointerEnter={() => setActive([r, ci])} onPointerDown={() => setActive([r, ci])} />
+                );
+              }))}
+            </svg>
+            {active !== null && (
+              <Tooltip left={Math.min(svgW - 80, Math.max(80, HEAT_LABEL_W + active[1] * cellW + cellW / 2))} top={(active[0] + 1) * cellH + 4}>
+                <b className="tabular-nums text-[#f2f3f5]">{format(at(active[0], active[1]))}</b> <span className="text-dc-muted">{unit}</span>
+                <div className="text-dc-muted">{cellLabel(active[0], active[1])}</div>
+              </Tooltip>
+            )}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[13px] text-dc-muted" aria-hidden="true">
+            <span className="mr-1">0</span>
+            {[EMPTY_CELL, ...HEAT_COLORS].map((color) => <span key={color} className="h-3 w-5 rounded-[3px]" style={{ background: color }} />)}
+            <span className="ml-1 tabular-nums">{format(max)} {unit}</span>
+          </div>
+        </>
+      )}
+    </Card>
+  );
+}
+
+// ---------- Horizontal bars ----------
+
+export interface BarItem {
+  key: string;
+  label: string;
+  value: number;
+  /** Secondary text after the value (e.g. "78 %"). */
+  detail?: string;
+  /** Makes the label a button (e.g. select this member). */
+  onSelect?: () => void;
+}
+
+/**
+ * Ranked horizontal bars with the value at the tip. One series, so one hue — unless `ordinal` (funnel stages,
+ * age buckets): then the bars step along the sequential ramp so the order reads in the colour.
+ */
+export function HorizontalBars({ title, description, items, unit, ordinal, format = (n) => number.format(n), emptyTitle = 'Noch keine Daten', emptyText }: {
+  title: string;
+  description?: string;
+  items: BarItem[];
+  /** Table column header, e.g. "Nachrichten". */
+  unit: string;
+  ordinal?: boolean;
+  format?: (n: number) => string;
+  emptyTitle?: string;
+  emptyText?: ReactNode;
+}) {
+  const [table, setTable] = useState(false);
+  const list = useRef<HTMLOListElement>(null);
+  const max = Math.max(1, ...items.map((item) => item.value));
+  const color = (i: number) => ordinal && items.length > 1
+    ? HEAT_COLORS[HEAT_COLORS.length - 1 - Math.round((i / (items.length - 1)) * (HEAT_COLORS.length - 1))]
+    : SERIES_COLORS[0];
+
+  useGSAP(() => {
+    if (table || !list.current) return;
+    const mm = gsap.matchMedia();
+    mm.add('(prefers-reduced-motion: no-preference)', () => {
+      gsap.from(list.current!.querySelectorAll('.js-hbar'), { scaleX: 0, transformOrigin: '0% 50%', duration: 0.6, ease: 'power3.out', stagger: 0.03, clearProps: 'transform' });
+    });
+    return () => mm.revert();
+  }, { dependencies: [table, items.map((item) => `${item.key}:${item.value}`).join()], revertOnUpdate: true });
+
+  return (
+    <Card title={title} description={description} right={items.length > 0 && <TableToggle table={table} onToggle={() => setTable(!table)} />}>
+      {items.length === 0 ? (
+        <Empty title={emptyTitle}>{emptyText}</Empty>
+      ) : table ? (
+        <TableWrap>
+          <thead><tr><th>Name</th><th className="text-right">{unit}</th></tr></thead>
+          <tbody>
+            {items.map((item) => (
+              <tr key={item.key}><td>{item.label}</td><td className="text-right tabular-nums">{format(item.value)}{item.detail && ` · ${item.detail}`}</td></tr>
+            ))}
+          </tbody>
+        </TableWrap>
+      ) : (
+        <ol ref={list} className="m-0 flex list-none flex-col gap-3 p-0">
+          {items.map((item, i) => (
+            <li key={item.key}>
+              <div className="flex items-baseline justify-between gap-3 text-[14px]">
+                {item.onSelect ? (
+                  <button type="button" className="min-w-0 cursor-pointer truncate border-0 bg-transparent p-0 text-left text-dc-text [font:inherit] hover:underline"
+                    onClick={item.onSelect}>{item.label}</button>
+                ) : <span className="min-w-0 truncate text-dc-text">{item.label}</span>}
+                <span className="shrink-0">
+                  <b className="tabular-nums text-[#f2f3f5]">{format(item.value)}</b>
+                  {item.detail && <span className="text-dc-muted"> · {item.detail}</span>}
+                </span>
+              </div>
+              <div className="mt-1.5 h-2.5">
+                <div className="js-hbar h-full rounded-r-[4px]" style={{ width: `${Math.max(1, (item.value / max) * 100)}%`, background: color(i) }} />
+              </div>
+            </li>
+          ))}
+        </ol>
       )}
     </Card>
   );

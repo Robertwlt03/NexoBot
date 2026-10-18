@@ -215,6 +215,48 @@ export const migrationStatements: Record<number, string[]> = {
             PRIMARY KEY (guild_id, day)
         )`,
     ],
+    // v3 insights-detail: per member, channel and UTC hour (services/statsTracker.ts), purged after DETAIL_RETENTION_DAYS.
+    3: [
+        `CREATE TABLE IF NOT EXISTS ${t.member_daily_stats} (
+            guild_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            day DATE NOT NULL,
+            messages INTEGER NOT NULL DEFAULT 0,
+            voice_minutes INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (guild_id, user_id, day)
+        )`,
+        `CREATE TABLE IF NOT EXISTS ${t.member_hourly_stats} (
+            guild_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            day DATE NOT NULL,
+            hour SMALLINT NOT NULL CHECK (hour BETWEEN 0 AND 23),
+            messages INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (guild_id, user_id, day, hour)
+        )`,
+        `CREATE TABLE IF NOT EXISTS ${t.channel_daily_stats} (
+            guild_id TEXT NOT NULL,
+            channel_id TEXT NOT NULL,
+            day DATE NOT NULL,
+            messages INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (guild_id, channel_id, day)
+        )`,
+        `CREATE TABLE IF NOT EXISTS ${t.guild_hourly_stats} (
+            guild_id TEXT NOT NULL,
+            day DATE NOT NULL,
+            hour SMALLINT NOT NULL CHECK (hour BETWEEN 0 AND 23),
+            messages INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (guild_id, day, hour)
+        )`,
+        // The primary keys cover per-member lookups and guild_hourly_stats; these serve (guild_id, day) range scans.
+        `CREATE INDEX IF NOT EXISTS idx_member_daily_stats_guild_day ON ${t.member_daily_stats}(guild_id, day)`,
+        `CREATE INDEX IF NOT EXISTS idx_member_hourly_stats_guild_day ON ${t.member_hourly_stats}(guild_id, day)`,
+        `CREATE INDEX IF NOT EXISTS idx_channel_daily_stats_guild_day ON ${t.channel_daily_stats}(guild_id, day)`,
+        // Retention purge scans by day across all guilds.
+        `CREATE INDEX IF NOT EXISTS idx_member_daily_stats_day ON ${t.member_daily_stats}(day)`,
+        `CREATE INDEX IF NOT EXISTS idx_member_hourly_stats_day ON ${t.member_hourly_stats}(day)`,
+        `CREATE INDEX IF NOT EXISTS idx_channel_daily_stats_day ON ${t.channel_daily_stats}(day)`,
+        `CREATE INDEX IF NOT EXISTS idx_guild_hourly_stats_day ON ${t.guild_hourly_stats}(day)`,
+    ],
 };
 
 export const UPDATE_TIMESTAMP_FUNCTION = `

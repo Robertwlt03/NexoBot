@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { CHANNEL_TYPES } from '../../../src/web/apiTypes';
 import type { ApiChannel, ApiRole } from '../../../src/web/apiTypes';
@@ -51,6 +51,18 @@ export function Tabs<T extends string>({ value, onChange, items }: {
     else gsap.to(pill.current, { ...target, duration: 0.35, ease: 'power3.out' });
     pill.current.dataset.placed = '1';
   }, { dependencies: [value, items.length] });
+  // Snap again when the tab widths change (web font arriving, resize).
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const snap = () => {
+      const active = el.querySelector<HTMLElement>('[aria-selected="true"]');
+      if (active && pill.current?.dataset.placed === '1') gsap.set(pill.current, { x: active.offsetLeft, width: active.offsetWidth });
+    };
+    const observer = new ResizeObserver(snap);
+    el.querySelectorAll('.tab').forEach((tab) => observer.observe(tab));
+    return () => observer.disconnect();
+  }, [items.length]);
   return (
     <div className="tabs" role="tablist" ref={root}>
       <span className="tabs-pill" ref={pill} />

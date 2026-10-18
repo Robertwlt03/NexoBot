@@ -9,6 +9,8 @@ export interface RankRow {
   avatarUrl: string | null;
   value: ReactNode;
   detail?: ReactNode;
+  /** Line under the name; the user id when left out. */
+  meta?: ReactNode;
 }
 
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -30,14 +32,18 @@ export function RankList({ rows, loading, error, emptyTitle, emptyText, page, pa
             <span className="w-8 text-center font-bold">{MEDALS[row.rank - 1] ?? `#${row.rank}`}</span>
             <img src={row.avatarUrl ?? DEFAULT_AVATAR} alt="" className="h-8 w-8 rounded-full" />
             <div className="grow">
-              <div className="title">{row.name}</div>
-              <div className="faint">{row.userId}</div>
+              {onSelect ? (
+                <button type="button" className="title block w-full cursor-pointer border-0 bg-transparent p-0 text-left [font:inherit] hover:underline"
+                  title={selectLabel} onClick={() => onSelect(row.userId)}>{row.name}</button>
+              ) : <div className="title">{row.name}</div>}
+              <div className="faint truncate">{row.meta ?? row.userId}</div>
             </div>
-            <div className="text-right">
+            <div className="shrink-0 whitespace-nowrap text-right">
               <div>{row.value}</div>
               {row.detail && <div className="faint">{row.detail}</div>}
             </div>
-            {onSelect && <button type="button" className="btn btn-ghost btn-sm" onClick={() => onSelect(row.userId)}>{selectLabel}</button>}
+            {/* On phones the name is the button, so the row keeps room for it. */}
+            {onSelect && <button type="button" className="btn btn-ghost btn-sm max-sm:hidden" onClick={() => onSelect(row.userId)}>{selectLabel}</button>}
           </div>
         ))}
       </div>
