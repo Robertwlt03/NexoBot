@@ -1,10 +1,10 @@
 import { PermissionFlagsBits } from 'discord.js';
 import { createEmbed, successEmbed } from '../../../utils/embeds.js';
-import { getServerCounters, saveServerCounters, updateCounter, getCounterEmoji, getCounterTypeLabel } from '../../../services/serverstatsService.js';
+import { changeServerCounterType, getCounterEmoji, getCounterTypeLabel } from '../../../services/serverstatsService.js';
 import { logger } from '../../../utils/logger.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
-import { replyUserError, ErrorTypes } from '../../../utils/errorHandler.js';
+import { replyUserError, ErrorTypes, NexoBotError } from '../../../utils/errorHandler.js';
 import type { ChatInputCommandInteraction, GuildMember } from 'discord.js';
 import type { NexoClient } from '../../../types/index.js';
 export async function handleUpdate(interaction: ChatInputCommandInteraction, client: NexoClient) {
@@ -30,45 +30,8 @@ export async function handleUpdate(interaction: ChatInputCommandInteraction, cli
     }
 
     try {
-        const counters = await getServerCounters(client, guild.id);
-
-        const counterIndex = counters.findIndex(c => c.id === counterId);
-        if (counterIndex === -1) {
-            await replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: `Zähler mit der ID \`${counterId}\` nicht gefunden. Nutze \`/serverstats list\`, um alle Zähler anzusehen.` }).catch(logger.error);
-            return;
-        }
-
-        const counter = counters[counterIndex];
-        const oldChannel = guild.channels.cache.get(counter.channelId);
-
-        if (!oldChannel) {
-            await replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: 'Der Kanal dieses Zählers existiert nicht mehr. Zähler gelöschter Kanäle können nicht aktualisiert werden.' }).catch(logger.error);
-            return;
-        }
-
-        if (newType !== counter.type) {
-            const existingTypeCounter = counters.find(c => c.type === newType && c.id !== counter.id);
-            if (existingTypeCounter) {
-                const existingChannel = guild.channels.cache.get(existingTypeCounter.channelId);
-                await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `Auf diesem Server gibt es bereits einen **${getCounterTypeLabel(newType)}**-Zähler${existingChannel ? ` in ${existingChannel}` : ''}. Lösche ihn zuerst, bevor du diesen Typ erneut verwendest.` }).catch(logger.error);
-                return;
-            }
-        }
-
-        const oldType = counter.type;
-
-        counter.type = newType;
-        counter.updatedAt = new Date().toISOString();
-
-        const saved = await saveServerCounters(client, guild.id, counters);
-        if (!saved) {
-            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Die aktualisierten Zählerdaten konnten nicht gespeichert werden. Bitte versuche es erneut.' }).catch(logger.error);
-            return;
-        }
-
-        const updatedCounter = counters[counterIndex];
-        const updated = await updateCounter(client, guild, updatedCounter);
-        if (!updated) {
+        const { counter: updatedCounter, oldType, nameUpdated } = await changeServerCounterType(client, guild, counterId, newType);
+        if (!nameUpdated) {
             await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Zähler aktualisiert, aber der Kanalname konnte nicht aktualisiert werden. Er wird beim nächsten geplanten Durchlauf aktualisiert.' }).catch(logger.error);
             return;
         }
@@ -80,6 +43,10 @@ export async function handleUpdate(interaction: ChatInputCommandInteraction, cli
         }).catch(logger.error);
 
     } catch (error) {
+        if (error instanceof NexoBotError && error.userMessage) {
+            await replyUserError(interaction, { type: error.type, message: error.userMessage }).catch(logger.error);
+            return;
+        }
         logger.error("Error updating counter:", error);
         await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Beim Aktualisieren des Zählers ist ein Fehler aufgetreten. Bitte versuche es erneut.' }).catch(logger.error);
     }

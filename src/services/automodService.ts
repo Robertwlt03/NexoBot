@@ -13,6 +13,8 @@ import type {
   AutoModerationRuleCreateOptions,
   Guild,
 } from 'discord.js';
+import type { GuildConfig, NexoClient } from '../types/index.js';
+import { updateGuildConfig } from './config/guildConfig.js';
 
 export type AutomodFeature = 'spam' | 'links' | 'invites' | 'badwords' | 'mentions';
 
@@ -63,7 +65,7 @@ export const DEFAULT_BAD_WORDS = [
   'schlampe', 'bastard', 'nutte', 'drecksau', 'vollidiot', 'fick dich', 'verpiss dich',
 ];
 
-const DEFAULT_MENTION_LIMIT = 5;
+export const DEFAULT_MENTION_LIMIT = 5;
 const MAX_TIMEOUT_MINUTES = 40320; // Discord limit: 28 days
 
 const LINK_PATTERNS = ['https?://\\S+', 'www\\.\\S+'];
@@ -275,6 +277,20 @@ export async function applySharedSettings(guild: Guild, settings: AutomodSetting
     updated += 1;
   }
   return updated;
+}
+
+export function automodSettingsOf(config: GuildConfig | null): AutomodSettings {
+  return {
+    alertChannelId: config?.automod?.alertChannelId ?? null,
+    exemptRoleIds: config?.automod?.exemptRoleIds ?? [],
+    exemptChannelIds: config?.automod?.exemptChannelIds ?? [],
+  };
+}
+
+/** Stores the shared settings and re-applies them to every Nexo rule (used by /automod and the web dashboard). */
+export async function saveAutomodSettings(client: NexoClient, guild: Guild, settings: AutomodSettings, userTag: string): Promise<number> {
+  await updateGuildConfig(client, guild.id, { automod: settings });
+  return applySharedSettings(guild, settings, `AutoMod-Einstellung von ${userTag}`);
 }
 
 export async function getNexoRules(guild: Guild): Promise<AutoModerationRule[]> {

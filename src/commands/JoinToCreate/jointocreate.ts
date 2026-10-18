@@ -5,15 +5,14 @@ import { logger } from '../../utils/logger.js';
 import { NexoBotError, ErrorTypes, replyUserError } from '../../utils/errorHandler.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import {
-    initializeJoinToCreate,
     getChannelConfiguration,
     updateChannelConfig,
-    removeTriggerChannel,
     hasManageGuildPermission,
     logConfigurationChange,
-    getConfiguration
+    createJoinToCreateTrigger,
+    removeJoinToCreateTrigger
 } from '../../services/joinToCreateService.js';
-import type { ButtonInteraction, CategoryChannel, GuildBasedChannel, ChatInputCommandInteraction, GuildMember, VoiceChannel } from 'discord.js';
+import type { ButtonInteraction, CategoryChannel, ChatInputCommandInteraction, GuildMember, VoiceChannel } from 'discord.js';
 import type { Command, NexoClient } from '../../types/index.js';
 import type { JoinToCreateChannelOptions } from '../../utils/database.js';
 
@@ -134,78 +133,12 @@ async function handleSetupSubcommand(interaction: ChatInputCommandInteraction, c
 
         logger.debug(`Setting up Join to Create in guild ${guildId} with template: ${nameTemplate}`);
 
-        const existingConfig = await getConfiguration(client, guildId);
-        
-        if (Array.isArray(existingConfig.triggerChannels) && existingConfig.triggerChannels.length > 0) {
-            const activeTriggerChannels: GuildBasedChannel[] = [];
-            const staleTriggerChannelIds: string[] = [];
-
-            for (const existingChannelId of existingConfig.triggerChannels) {
-                const existingChannel = await interaction.guild!.channels.fetch(existingChannelId).catch(() => null);
-                if (existingChannel) {
-                    activeTriggerChannels.push(existingChannel);
-                } else {
-                    staleTriggerChannelIds.push(existingChannelId);
-                }
-            }
-
-            if (staleTriggerChannelIds.length > 0) {
-                for (const staleChannelId of staleTriggerChannelIds) {
-                    logger.info(`Cleaning up stale JTC trigger ${staleChannelId} from guild ${guildId}`);
-                    await removeTriggerChannel(client, guildId, staleChannelId);
-                }
-            }
-
-            if (activeTriggerChannels.length > 0) {
-                const primaryTrigger = activeTriggerChannels[0];
-                const errorMessage = `Dieser Server hat bereits einen Join-to-Create-Kanal: ${primaryTrigger}\n\nNutze \`/jointocreate dashboard\`, um ihn zu bearbeiten, oder entferne ihn zuerst, bevor du einen neuen erstellst.`;
-
-                throw new NexoBotError(
-                    'Guild already has a Join to Create channel',
-                    ErrorTypes.VALIDATION,
-                    errorMessage,
-                    {
-                        guildId,
-                        activeTriggerCount: activeTriggerChannels.length,
-                        expected: true,
-                        suppressErrorLog: true
-                    }
-                );
-            }
-        }
-
-        logger.debug('Creating Join to Create trigger channel...');
-        let triggerChannel = await interaction.guild!.channels.create({
-            name: 'Join-to-Create',
-            type: ChannelType.GuildVoice,
-            parent: category?.id,
-            userLimit: 0,
-            bitrate: 64000,
-            permissionOverwrites: [
-                {
-                    id: interaction.guild!.id,
-                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.Connect],
-                },
-            ],
-        });
-
-        logger.debug(`Created trigger channel ${triggerChannel.id}, initializing config...`);
-
-        const config = await initializeJoinToCreate(client, guildId, triggerChannel.id, {
-            nameTemplate: nameTemplate,
-            userLimit: userLimit,
-            bitrate: bitrate * 1000,
-            categoryId: category?.id
-        });
-
-        await logConfigurationChange(client, guildId, interaction.user.id, 'Join-to-Create eingerichtet', {
-            channelId: triggerChannel.id,
+        const { channel: triggerChannel } = await createJoinToCreateTrigger(client, interaction.guild!, interaction.user.id, {
+            categoryId: category?.id,
             nameTemplate,
             userLimit,
             bitrate
         });
-
-        logger.info(`Successfully created Join to Create system in guild ${guildId}`);
 
         const responseEmbed = successEmbed(
             '✅ Einrichtung abgeschlossen',
@@ -641,21 +574,7 @@ async function handleChannelDeletion(interaction: ButtonInteraction, triggerChan
 
                 if (buttonInteraction.customId === `jtc_delete_confirm_${triggerChannel.id}`) {
                     
-                    await removeTriggerChannel(client, interaction.guild!.id, triggerChannel.id);
-
-                    await logConfigurationChange(client, interaction.guild!.id, interaction.user.id, 'Join-to-Create-Trigger entfernt', {
-                        channelId: triggerChannel.id,
-                        channelName: triggerChannel.name
-                    });
-
-                    try {
-                        if (triggerChannel.members.size === 0) {
-                            await triggerChannel.delete('Join-to-Create-Trigger von einem Administrator entfernt');
-                        }
-                    } catch (deleteError) {
-                        logger.warn(`Could not delete channel ${triggerChannel.id}: ${(deleteError as Error).message}`);
-                        
-                    }
+                    await removeJoinToCreateTrigger(client, interaction.guild!, triggerChannel.id, interaction.user.id);
 
                     await buttonInteraction.update({
                         embeds: [successEmbed('Entfernt', `**${triggerChannel.name}** wurde aus dem Join-to-Create-System entfernt.`)],

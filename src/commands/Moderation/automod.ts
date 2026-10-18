@@ -6,17 +6,17 @@ import {
   SlashCommandBuilder,
 } from 'discord.js';
 import type { ChatInputCommandInteraction, Guild, SlashCommandBooleanOption, SlashCommandIntegerOption } from 'discord.js';
-import type { Command, GuildConfig, NexoClient } from '../../types/index.js';
+import type { Command } from '../../types/index.js';
 import { createEmbed, successEmbed } from '../../utils/embeds.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { replyUserError, ErrorTypes } from '../../utils/errorHandler.js';
 import { logger } from '../../utils/logger.js';
-import { updateGuildConfig } from '../../services/config/guildConfig.js';
 import {
   applyFeature,
-  applySharedSettings,
+  automodSettingsOf,
   getNexoRules,
   parseList,
+  saveAutomodSettings,
   timeoutMinutesOf,
   type AutomodFeature,
   type AutomodSettings,
@@ -34,14 +34,6 @@ const addEnabled = (description: string) => (option: SlashCommandBooleanOption) 
   option.setName('enabled').setDescription(description).setRequired(true);
 const addTimeout = (option: SlashCommandIntegerOption) =>
   option.setName('timeout').setDescription('Timeout in Minuten für Verstöße (0 = kein Timeout)').setMinValue(0).setMaxValue(40320);
-
-function settingsOf(config: GuildConfig | null): AutomodSettings {
-  return {
-    alertChannelId: config?.automod?.alertChannelId ?? null,
-    exemptRoleIds: config?.automod?.exemptRoleIds ?? [],
-    exemptChannelIds: config?.automod?.exemptChannelIds ?? [],
-  };
-}
 
 function toggle(list: string[], id: string): { list: string[]; added: boolean } {
   return list.includes(id) ? { list: list.filter((entry) => entry !== id), added: false } : { list: [...list, id], added: true };
@@ -101,11 +93,6 @@ async function handleStatus(guild: Guild, settings: AutomodSettings) {
   });
 }
 
-async function saveSettings(client: NexoClient, guild: Guild, settings: AutomodSettings, userTag: string) {
-  await updateGuildConfig(client, guild.id, { automod: settings });
-  return applySharedSettings(guild, settings, `AutoMod-Einstellung von ${userTag}`);
-}
-
 export default {
   data: new SlashCommandBuilder()
     .setName('automod')
@@ -155,7 +142,7 @@ export default {
     }
 
     const subcommand = interaction.options.getSubcommand();
-    const settings = settingsOf(config);
+    const settings = automodSettingsOf(config);
 
     try {
       if (subcommand === 'status') {
@@ -164,7 +151,7 @@ export default {
 
       if (subcommand === 'alerts') {
         const channel = interaction.options.getChannel('channel');
-        const updated = await saveSettings(client, guild, { ...settings, alertChannelId: channel?.id ?? null }, interaction.user.tag);
+        const updated = await saveAutomodSettings(client, guild, { ...settings, alertChannelId: channel?.id ?? null }, interaction.user.tag);
         return InteractionHelper.safeEditReply(interaction, {
           embeds: [successEmbed('Meldekanal gespeichert', channel
             ? `Blockierte Nachrichten werden in ${channel} gemeldet (${updated} Regeln aktualisiert).`
@@ -190,7 +177,7 @@ export default {
           next.exemptChannelIds = result.list;
           changes.push(`${channel} ${result.added ? 'wird jetzt nicht mehr gefiltert' : 'wird wieder gefiltert'}.`);
         }
-        await saveSettings(client, guild, next, interaction.user.tag);
+        await saveAutomodSettings(client, guild, next, interaction.user.tag);
         return InteractionHelper.safeEditReply(interaction, { embeds: [successEmbed('Ausnahmen gespeichert', changes.join('\n'))] });
       }
 

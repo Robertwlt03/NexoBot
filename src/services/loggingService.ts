@@ -556,4 +556,4 @@ export function resolveApplicationLogChannel(
     || null;
 }
 
-export { EVENT_TYPES, EVENT_COLORS, EVENT_ICONS, LOG_DESTINATIONS };
+export { EVENT_TYPES, EVENT_COLORS, EVENT_ICONS, EVENT_TITLES, LOG_DESTINATIONS };

@@ -40,12 +40,10 @@ import {
     saveApplicationRoles,
     getApplicationRoleSettings,
     saveApplicationRoleSettings,
-    deleteApplicationRoleSettings,
-    getApplications,
-    deleteApplication,
 } from '../../../utils/database.js';
 import { getGuildConfig } from '../../../services/config/guildConfig.js';
 import { setLogChannel, resolveApplicationLogChannel, resolveLogChannel } from '../../../services/loggingService.js';
+import { deleteApplicationRole } from '../../../services/applicationService.js';
 
 /** The dashboard is opened from the /app-admin slash command or from the setup modal submit. */
 export type AppDashboardInteraction = ChatInputCommandInteraction | ModalSubmitInteraction;
@@ -1134,33 +1132,22 @@ async function handleRetention(selectInteraction: StringSelectMenuInteraction, r
 async function handleDeleteApplication(confirmSubmit: ModalSubmitInteraction, selectedRoleId: string, guildId: string, roles: ApplicationRole[], client: NexoClient) {
     try {
         
-        const roleIndex = roles.findIndex(r => r.roleId === selectedRoleId);
-        if (roleIndex === -1) {
+        const result = await deleteApplicationRole(client, guildId, selectedRoleId);
+        if (!result) {
             await replyUserError(confirmSubmit, { type: ErrorTypes.USER_INPUT, message: 'Bewerbungsrolle nicht gefunden.' });
             return;
         }
 
-        const deletedRole = roles[roleIndex];
-
-        roles.splice(roleIndex, 1);
-
-        await saveApplicationRoles(client, guildId, roles);
-
-        await deleteApplicationRoleSettings(client, guildId, selectedRoleId);
-
-        const allApplications = await getApplications(client, guildId);
-        const applicationsToDelete = allApplications.filter(app => app.roleId === selectedRoleId);
-
-        for (const app of applicationsToDelete) {
-            await deleteApplication(client, guildId, app.id, app.userId);
-        }
+        const { deletedRole, deletedApplications } = result;
+        const localIndex = roles.findIndex(r => r.roleId === selectedRoleId);
+        if (localIndex !== -1) roles.splice(localIndex, 1);
 
         await confirmSubmit.reply({
             embeds: [
                 successEmbed(
                     '🗑️ Bewerbung gelöscht',
                     `Die Bewerbung für <@&${selectedRoleId}> (**${deletedRole.name}**) wurde endgültig gelöscht.\n\n` +
-                    `Gelöscht: **${applicationsToDelete.length}** Bewerbung${applicationsToDelete.length !== 1 ? 'en' : ''}`,
+                    `Gelöscht: **${deletedApplications}** Bewerbung${deletedApplications !== 1 ? 'en' : ''}`,
                 ),
             ],
             flags: MessageFlags.Ephemeral,

@@ -23,6 +23,7 @@ import { readFileSync } from 'node:fs';
 import { EXPECTED_SCHEMA_VERSION, EXPECTED_SCHEMA_LABEL } from './config/database/schemaVersion.js';
 import type { ServerCounter } from './services/serverstatsService.js';
 import type { NexoClient } from './types/index.js';
+import { createDashboardRouter } from './web/dashboard.js';
 
 /** Shape read by /health and /ready, including their fallbacks when no status is available. */
 interface DbStatusView {
@@ -156,6 +157,9 @@ class NexoBot extends Client {
       }
       next();
     });
+
+    // Dashboard (own rate limit; mounted before the strict API limiter below).
+    app.use('/dashboard', createDashboardRouter(this.ready));
 
     const requestCounts = new Map<string | undefined, number[]>();
     const windowMs = this.config.api?.rateLimit?.windowMs || 60000;

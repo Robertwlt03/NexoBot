@@ -1,42 +1,20 @@
-import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ComponentType, LabelBuilder, RoleSelectMenuBuilder } from 'discord.js';
-import type { ChatInputCommandInteraction, GuildMember, TextChannel } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, ComponentType, LabelBuilder, RoleSelectMenuBuilder } from 'discord.js';
+import type { ChatInputCommandInteraction, GuildMember } from 'discord.js';
 import type { Command } from '../../types/index.js';
 import { createEmbed, successEmbed } from '../../utils/embeds.js';
-import { getColor, getApplicationStatusColor } from '../../config/bot.js';
+import { getColor } from '../../config/bot.js';
 import { logger } from '../../utils/logger.js';
 import { withErrorHandling, createError, ErrorTypes, replyUserError } from '../../utils/errorHandler.js';
-import ApplicationService from '../../services/applicationService.js';
-import { 
-    getApplicationSettings, 
-    saveApplicationSettings, 
-    getApplication, 
-    getApplications, 
-    updateApplication,
+import ApplicationService, { createApplicationRole, getApplicationStatusPresentation, reviewApplicationWithEffects } from '../../services/applicationService.js';
+import {
+    getApplication,
+    getApplications,
     getApplicationRoles,
-    saveApplicationRoles,
-    getApplicationRoleSettings,
-    saveApplicationRoleSettings,
     deleteApplication
 } from '../../utils/database.js';
 import type { Application, ApplicationFilters } from '../../utils/database.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import appDashboard from './modules/app_dashboard.js';
-
-function getApplicationStatusPresentation(statusValue: unknown) {
-    const normalized = typeof statusValue === 'string' ? statusValue.trim().toLowerCase() : 'unknown';
-    const statusLabel =
-        normalized === 'pending' ? 'In Bearbeitung' :
-        normalized === 'approved' ? 'Angenommen' :
-        normalized === 'denied' ? 'Abgelehnt' :
-        'Unbekannt';
-    const statusEmoji =
-        normalized === 'pending' ? '🟡' :
-        normalized === 'approved' ? '🟢' :
-        normalized === 'denied' ? '🔴' :
-        '⚪';
-
-    return { normalized, statusLabel, statusEmoji };
-}
 
 export default {
     data: new SlashCommandBuilder()
@@ -233,37 +211,20 @@ async function handleSetup(interaction: ChatInputCommandInteraction) {
         submitted.fields.getTextInputValue('app_question_3').trim(),
     ].filter(q => q.length > 0);
 
-    const role = await interaction.guild!.roles.fetch(roleId).catch(() => null);
-    if (!role) {
+    const created = await createApplicationRole(interaction.client, interaction.guild!, { roleId, name: appName, questions });
+    if (created.error === 'role_missing') {
         await replyUserError(submitted, { type: ErrorTypes.VALIDATION, message: 'Die ausgewählte Rolle wurde nicht gefunden.' });
         return;
     }
-
-    const existingRoles = await getApplicationRoles(interaction.client, interaction.guild!.id);
-    if (existingRoles.some(r => r.roleId === roleId)) {
-        await replyUserError(submitted, { type: ErrorTypes.CONFIGURATION, message: `Die Rolle ${role} ist bereits als Bewerbung eingerichtet.` });
+    if (created.error === 'duplicate') {
+        await replyUserError(submitted, { type: ErrorTypes.CONFIGURATION, message: `Die Rolle <@&${roleId}> ist bereits als Bewerbung eingerichtet.` });
         return;
     }
-
-    existingRoles.push({
-        roleId: roleId,
-        name: appName,
-        enabled: true,  
-    });
-
-    await saveApplicationRoles(interaction.client, interaction.guild!.id, existingRoles);
-
-    const settings = await getApplicationSettings(interaction.client, interaction.guild!.id);
-    if (!settings.enabled) {
-        await ApplicationService.updateSettings(interaction.client, interaction.guild!.id, { enabled: true });
-    }
-
-    await saveApplicationRoleSettings(interaction.client, interaction.guild!.id, roleId, { questions });
 
     await submitted.reply({
         embeds: [successEmbed(
             '✅ Bewerbung erstellt',
-            `Die Bewerbung **${appName}** wurde für ${role} erstellt.\n\nLog-Kanal, Manager-Rollen, Fragen und Aufbewahrungsdauer kannst du im Dashboard anpassen.`,
+            `Die Bewerbung **${appName}** wurde für <@&${roleId}> erstellt.\n\nLog-Kanal, Manager-Rollen, Fragen und Aufbewahrungsdauer kannst du im Dashboard anpassen.`,
         )],
         flags: ['Ephemeral'],
     });
@@ -364,92 +325,11 @@ async function handleReview(interaction: ChatInputCommandInteraction) {
             if (!reasonSubmit) return;
 
             const reason = reasonSubmit.fields.getTextInputValue('review_reason').trim() || "Kein Grund angegeben.";
-            const action = isApprove ? 'approve' : 'deny';
-            const status = isApprove ? 'approved' : 'denied';
-
-            const updatedApplication = await ApplicationService.reviewApplication(
-                reasonSubmit.client,
-                interaction.guild!.id,
-                appId,
-                {
-                    action,
-                    reason,
-                    reviewerId: reasonSubmit.user.id
-                }
-            );
-
-            try {
-                const user = await reasonSubmit.client.users.fetch(application.userId);
-                const statusColor = getApplicationStatusColor(status);
-                const reviewStatus = getApplicationStatusPresentation(status);
-                const dmEmbed = createEmbed({
-                    title: `${reviewStatus.statusEmoji} Bewerbung ${reviewStatus.statusLabel.toLowerCase()}`,
-                    description: `Deine Bewerbung für **${application.roleName}** wurde **${reviewStatus.statusLabel.toLowerCase()}**.\n` +
-                        `**Hinweis:** ${reason}\n\n` +
-                        `Details siehst du mit \`/apply status id:${appId}\`.`
-                }).setColor(statusColor);
-
-                await user.send({ embeds: [dmEmbed] });
-            } catch (error) {
-                logger.warn('Failed to send DM to user for application review', {
-                    error: (error as Error).message,
-                    userId: application.userId,
-                    applicationId: appId
-                });
-            }
-
-            if (application.logMessageId && application.logChannelId) {
-                try {
-                    const statusColor = getApplicationStatusColor(status);
-                    const logChannel = interaction.guild!.channels.cache.get(
-                        application.logChannelId as string,
-                    ) as TextChannel | undefined;
-                    if (logChannel) {
-                        const logMessage = await logChannel.messages.fetch(
-                            application.logMessageId as string,
-                        );
-                        if (logMessage) {
-                            const embed = logMessage.embeds[0];
-                            if (embed) {
-                                const reviewStatus = getApplicationStatusPresentation(status);
-                                const newEmbed = EmbedBuilder.from(embed)
-                                    .setColor(statusColor)
-                                    .spliceFields(0, 1, {
-                                        name: "Status",
-                                        value: `${reviewStatus.statusEmoji} ${reviewStatus.statusLabel}`,
-                                    });
-
-                                await logMessage.edit({
-                                    embeds: [newEmbed],
-                                    components: [],
-                                });
-                            }
-                        }
-                    }
-                } catch (error) {
-                    logger.warn('Failed to update log message for application', {
-                        error: (error as Error).message,
-                        applicationId: appId,
-                        logMessageId: application.logMessageId
-                    });
-                }
-            }
-
-            if (isApprove) {
-                try {
-                    const member = await interaction.guild!.members.fetch(
-                        application.userId,
-                    );
-                    await member.roles.add(application.roleId!);
-                } catch (error) {
-                    logger.error('Failed to assign role to approved applicant', {
-                        error: (error as Error).message,
-                        userId: application.userId,
-                        roleId: application.roleId,
-                        applicationId: appId
-                    });
-                }
-            }
+            await reviewApplicationWithEffects(reasonSubmit.client, interaction.guild!, application, {
+                approve: isApprove,
+                reason,
+                reviewerId: reasonSubmit.user.id,
+            });
 
             await reasonSubmit.reply({
                 embeds: [

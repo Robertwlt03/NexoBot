@@ -72,7 +72,7 @@ const ACTION_TO_EVENT_TYPE: Record<string, AuditEventType> = {
 };
 
 /** German log titles for the (English) action keys above; the keys stay English because they are matched and stored. */
-const ACTION_LABELS: Record<string, string> = {
+export const ACTION_LABELS: Record<string, string> = {
   'Member Banned': 'Mitglied gebannt',
   'Member Kicked': 'Mitglied gekickt',
   'Member Timed Out': 'Mitglied im Timeout',

@@ -1,6 +1,6 @@
 import type { Command } from '../../types/index.js';
 import { getColor } from '../../config/bot.js';
-import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, type GuildMember, type TextChannel } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, MessageFlags, type GuildMember, type TextChannel } from 'discord.js';
 import { createEmbed, successEmbed, infoEmbed, warningEmbed } from '../../utils/embeds.js';
 import { getGuildConfig, setGuildConfig } from '../../services/config/guildConfig.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
@@ -8,6 +8,7 @@ import { logger } from '../../utils/logger.js';
 import { handleInteractionError, replyUserError, ErrorTypes, type ErrorLike } from '../../utils/errorHandler.js';
 
 import ticketConfig from './modules/ticket_dashboard.js';
+import { sendTicketPanel } from '../../services/ticketPanel.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -137,24 +138,10 @@ const panelMessage = interaction.options.getString("panel_message") || "Klick au
             const maxTicketsPerUser = interaction.options.getInteger("max_tickets_per_user") || 3;
 const dmOnClose = interaction.options.getBoolean("dm_on_close") !== false;
 
-            const setupEmbed = createEmbed({ 
-                title: "Support-Tickets", 
-description: panelMessage,
-                color: getColor('info')
-            });
-
-            const ticketButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
-                new ButtonBuilder()
-                    .setCustomId("create_ticket")
-.setLabel(buttonLabel)
-                    .setStyle(ButtonStyle.Primary)
-                    .setEmoji("📩"),
-            );
-
             try {
-                const sentPanel = await panelChannel.send({
-                    embeds: [setupEmbed],
-                    components: [ticketButton],
+                const sentPanel = await sendTicketPanel(panelChannel, {
+                    ticketPanelMessage: panelMessage,
+                    ticketButtonLabel: buttonLabel,
                 });
 
                 if (client.db && interaction.guildId) {

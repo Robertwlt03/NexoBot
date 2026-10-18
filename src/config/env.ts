@@ -74,6 +74,11 @@ const envSchema = z.object({
   LAVALINK_SEARCH_PLATFORM: str,
   LAVALINK_REST_VERSION: str,
 
+  // Web dashboard (Discord OAuth2 login)
+  DISCORD_CLIENT_SECRET: str,
+  DASHBOARD_URL: str,
+  SESSION_SECRET: str,
+
   // Hosting
   RAILWAY_ENVIRONMENT: str,
   RAILWAY_PROJECT_ID: str,

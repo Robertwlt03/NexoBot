@@ -5,7 +5,9 @@ import { logEvent, EVENT_TYPES } from './loggingService.js';
 import { formatLogLine } from '../utils/logging/logEmbeds.js';
 import { getServerCountersKey } from '../utils/database/keys.js';
 import botConfig from '../config/bot.js';
-import type { Guild, GuildBasedChannel } from 'discord.js';
+import { ChannelType } from 'discord.js';
+import type { Guild, GuildBasedChannel, NonThreadGuildBasedChannel } from 'discord.js';
+import { createError, ErrorTypes, wrapServiceBoundary } from '../utils/errorHandler.js';
 import type { NexoClient } from '../types/index.js';
 
 export interface CounterTypeConfig {
@@ -312,3 +314,155 @@ export async function saveServerCounters(client: NexoClient, guildId: string, co
     return false;
   }
 }
+
+/**
+ * Creates a counter channel in a category and stores the counter (same as /serverstats create).
+ * Only one counter per type. `nameUpdated` is false when the channel name could not be set yet.
+ */
+export async function createServerCounter(
+  client: NexoClient,
+  guild: Guild,
+  { type, channelType, categoryId, createdBy }: { type: string; channelType: string | null; categoryId: string; createdBy: string },
+): Promise<{ counter: ServerCounter; channel: NonThreadGuildBasedChannel; nameUpdated: boolean }> {
+  const targetChannelType = channelType === 'voice' ? ChannelType.GuildVoice : ChannelType.GuildText;
+  const baseChannelName = getCounterBaseName(type);
+
+  const counters = await getServerCounters(client, guild.id);
+
+  const duplicateType = counters.find(counter => counter.type === type);
+  if (duplicateType) {
+    const duplicateChannel = guild.channels.cache.get(duplicateType.channelId);
+    throw createError('Counter type exists', ErrorTypes.UNKNOWN, `Auf diesem Server gibt es bereits einen **${getCounterTypeLabel(type)}**-Zähler${duplicateChannel ? ` in ${duplicateChannel}` : ''}. Lösche ihn zuerst, bevor du einen neuen erstellst.`, { expected: true });
+  }
+
+  const targetChannel = await guild.channels.create({
+    name: baseChannelName,
+    type: targetChannelType,
+    parent: categoryId,
+    reason: `Zählerkanal erstellt von ${createdBy}`
+  });
+
+  const existingCounter = counters.find(c => c.channelId === targetChannel.id);
+  if (existingCounter) {
+    throw createError('Counter channel exists', ErrorTypes.UNKNOWN, `Für den Kanal **${targetChannel.name}** gibt es bereits einen Zähler. Lösche ihn zuerst oder wähle einen anderen Typ.`, { expected: true });
+  }
+
+  const newCounter: ServerCounter = {
+    id: Date.now().toString(),
+    type: type,
+    channelId: targetChannel.id,
+    guildId: guild.id,
+    createdAt: new Date().toISOString(),
+    enabled: true
+  };
+
+  counters.push(newCounter);
+
+  const saved = await saveServerCounters(client, guild.id, counters);
+  if (!saved) {
+    await targetChannel.delete('Zählererstellung beim Speichern fehlgeschlagen').catch(() => null);
+    throw createError('Counter save failed', ErrorTypes.UNKNOWN, 'Zählerdaten konnten nicht gespeichert werden. Bitte versuche es erneut.');
+  }
+
+  const nameUpdated = await updateCounter(client, guild, newCounter);
+  return { counter: newCounter, channel: targetChannel, nameUpdated };
+}
+
+/** Changes a counter's type and renames its channel (same as /serverstats update). */
+export async function changeServerCounterType(
+  client: NexoClient,
+  guild: Guild,
+  counterId: string | null,
+  newType: string,
+): Promise<{ counter: ServerCounter; oldType: string; nameUpdated: boolean }> {
+  const counters = await getServerCounters(client, guild.id);
+
+  const counterIndex = counters.findIndex(c => c.id === counterId);
+  if (counterIndex === -1) {
+    throw createError('Counter not found', ErrorTypes.USER_INPUT, `Zähler mit der ID \`${counterId}\` nicht gefunden. Nutze \`/serverstats list\`, um alle Zähler anzusehen.`, { expected: true });
+  }
+
+  const counter = counters[counterIndex];
+  if (!guild.channels.cache.get(counter.channelId)) {
+    throw createError('Counter channel missing', ErrorTypes.USER_INPUT, 'Der Kanal dieses Zählers existiert nicht mehr. Zähler gelöschter Kanäle können nicht aktualisiert werden.', { expected: true });
+  }
+
+  if (newType !== counter.type) {
+    const existingTypeCounter = counters.find(c => c.type === newType && c.id !== counter.id);
+    if (existingTypeCounter) {
+      const existingChannel = guild.channels.cache.get(existingTypeCounter.channelId);
+      throw createError('Counter type exists', ErrorTypes.UNKNOWN, `Auf diesem Server gibt es bereits einen **${getCounterTypeLabel(newType)}**-Zähler${existingChannel ? ` in ${existingChannel}` : ''}. Lösche ihn zuerst, bevor du diesen Typ erneut verwendest.`, { expected: true });
+    }
+  }
+
+  const oldType = counter.type;
+  counter.type = newType;
+  counter.updatedAt = new Date().toISOString();
+
+  const saved = await saveServerCounters(client, guild.id, counters);
+  if (!saved) {
+    throw createError('Counter save failed', ErrorTypes.UNKNOWN, 'Die aktualisierten Zählerdaten konnten nicht gespeichert werden. Bitte versuche es erneut.');
+  }
+
+  const nameUpdated = await updateCounter(client, guild, counter);
+  return { counter, oldType, nameUpdated };
+}
+
+function getCounterTypeDisplay(type: string) {
+  return `${getCounterEmoji(type)} ${getCounterTypeLabel(type)}`;
+}
+
+/** Deletes a counter and its channel (confirm button of /serverstats delete). */
+export const performDeletionByCounterId = wrapServiceBoundary(async function performDeletionByCounterId(client: NexoClient, guild: Guild, counterId: string) {
+  const counters = await getServerCounters(client, guild.id);
+
+  const counter = counters.find(c => c.id === counterId);
+  if (!counter) {
+    throw createError(
+      'Counter not found',
+      ErrorTypes.USER_INPUT,
+      `Zähler mit der ID \`${counterId}\` wurde nicht gefunden.`,
+      { guildId: guild.id, counterId, operation: 'performDeletionByCounterId' }
+    );
+  }
+
+  const updatedCounters = counters.filter(c => c.id !== counter.id);
+
+  const saved = await saveServerCounters(client, guild.id, updatedCounters);
+  if (!saved) {
+    throw createError(
+      'Counter delete failed',
+      ErrorTypes.DATABASE,
+      'Zähler konnte nicht gelöscht werden. Bitte versuche es erneut.',
+      { guildId: guild.id, counterId, operation: 'performDeletionByCounterId' }
+    );
+  }
+
+  const channel = guild.channels.cache.get(counter.channelId);
+  let channelDeleted = false;
+
+  if (channel) {
+    try {
+      await channel.delete(`Zähler gelöscht – Kanal wird entfernt: ${counter.id}`);
+      channelDeleted = true;
+    } catch (error) {
+      logger.error("Error deleting channel:", error);
+    }
+  }
+
+  let message = `✅ **Zähler erfolgreich gelöscht!**\n\n**ID:** \`${counter.id}\`\n**Typ:** ${getCounterTypeDisplay(counter.type)}`;
+
+  if (channelDeleted) {
+    message += `\n**Kanal:** ${channel!.name} (gelöscht)`;
+  } else if (channel) {
+    message += `\n**Kanal:** ${channel.name} (Löschen fehlgeschlagen)`;
+  } else {
+    message += `\n**Kanal:** Bereits gelöscht`;
+  }
+
+  return { message, channelDeleted };
+}, {
+  service: 'serverstats',
+  operation: 'performDeletionByCounterId',
+  userMessage: 'Beim Löschen des Zählers ist ein Fehler aufgetreten. Bitte versuche es erneut.',
+});
