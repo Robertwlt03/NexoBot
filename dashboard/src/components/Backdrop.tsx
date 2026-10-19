@@ -22,8 +22,9 @@ export function photoFor(pathname: string): string {
   return PHOTOS[seg] ?? PHOTOS.servers;
 }
 
-// Wash toward the page colour (strong on the left, for the title) and fade out downwards; both follow the mode.
-const WASH = 'linear-gradient(90deg, color-mix(in srgb, var(--bg-main) 92%, transparent) 0%, color-mix(in srgb, var(--bg-main) 62%, transparent) 45%, color-mix(in srgb, var(--bg-main) 20%, transparent) 100%)';
+// Gentle wash toward the page colour and fade out downwards (both follow the mode). Text readability comes from
+// the scrim behind the page header (styles.css .page-head-text), so the photo itself can stay visible.
+const WASH = 'linear-gradient(90deg, color-mix(in srgb, var(--bg-main) 60%, transparent) 0%, color-mix(in srgb, var(--bg-main) 35%, transparent) 50%, color-mix(in srgb, var(--bg-main) 8%, transparent) 100%)';
 const FADE = { maskImage: 'linear-gradient(to bottom, #000 40%, transparent)' } as const;
 
 /** Absolute layer at the top of a scroll area; the photo eases in on page change. */

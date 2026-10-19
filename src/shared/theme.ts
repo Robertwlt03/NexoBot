@@ -117,7 +117,7 @@ export function themeVariables(theme: DashboardTheme): Record<string, string> {
     '--accent-line': rgba(primary, light ? 0.32 : 0.28),
     '--accent-glow': rgba(primary, light ? 0.4 : 0.6),
     '--accent-text': tint,
-    '--accent-text-muted': mix(tint, light ? '#7d6e62' : '#a6978a', 0.45),
+    '--accent-text-muted': mix(tint, light ? '#67594f' : '#ad9f92', 0.45),
     '--accent-2': secondary,
     '--ring': `0 0 0 3px ${rgba(primary, 0.22)}`,
     '--brand-gradient': `linear-gradient(135deg, ${mix(primary, canvas, light ? 0.8 : 0.74)} 0%, ${mix(primary, canvas, light ? 0.9 : 0.86)} 45%, ${surface} 100%)`,

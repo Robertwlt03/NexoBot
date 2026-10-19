@@ -65,10 +65,10 @@ export function Glyph({ name, size = 20, className }: { name: GlyphName; size?: 
 /** Subtle per-rarity tint (border + label); kept out of the accent so the lavender stays for actions. */
 export const RARITY_CLASS: Record<Rarity, { border: string; text: string }> = {
   common: { border: 'border-white/[.07]', text: 'text-mute' },
-  rare: { border: 'border-sky-400/25', text: 'text-sky-300/90' },
-  epic: { border: 'border-violet-400/30', text: 'text-violet-300' },
-  legendary: { border: 'border-amber-300/30', text: 'text-amber-200/90' },
-  mythic: { border: 'border-rose-500/25', text: 'text-rose-300' },
+  rare: { border: 'border-sky-400/25', text: 'text-(--rarity-rare)' },
+  epic: { border: 'border-violet-400/30', text: 'text-(--rarity-epic)' },
+  legendary: { border: 'border-amber-300/30', text: 'text-(--rarity-legendary)' },
+  mythic: { border: 'border-rose-500/25', text: 'text-(--rarity-mythic)' },
 };
 
 export function RarityLabel({ rarity }: { rarity: Rarity }) {
