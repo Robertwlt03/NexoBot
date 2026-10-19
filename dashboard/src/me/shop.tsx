@@ -15,6 +15,7 @@ import {
   cardSubject, countdown, equipItem, formatDate, isEquipped, reducedMotion, resolveCosmetics, useEquip, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
 import { Glyph, ItemVisual, Kristalle, Price, RarityLabel, backgroundStyle } from './visuals';
+import { Celebration } from './Celebration';
 import { Icon } from '../icons';
 
 export type ShopVariant = 'shop' | 'blackmarket';
@@ -166,26 +167,27 @@ export function Storefront({ listings, events, upcoming }: { listings: ShopListi
   return (
     <>
       {/* Showcase banner: dark in both modes, like a lit shop window. */}
-      <section data-mode="dark" className="relative overflow-hidden rounded-[24px] border border-white/[.07]">
+      <section data-mode="dark" className="@container relative overflow-hidden rounded-[24px] border border-white/[.07]">
         <div className="absolute inset-0" style={heroBackground?.slot === 'background' ? backgroundStyle(heroBackground.data) : { background: 'var(--hero-glow), var(--brand-gradient)' }} />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(9,9,12,.94)_0%,rgba(9,9,12,.7)_45%,rgba(9,9,12,.15)_100%)]" />
-        <div className="relative grid items-center gap-6 p-6 md:grid-cols-[1fr_minmax(0,420px)] md:p-9">
+        {/* Two columns only when the banner itself is wide enough (container query), so the text never gets squeezed. */}
+        <div className="relative grid items-center gap-6 p-6 @3xl:grid-cols-[minmax(0,1fr)_minmax(0,400px)] @3xl:p-9">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-2 text-[13px] text-body">
               {event
                 ? <><span className="h-1.5 w-1.5 rounded-full bg-pos shadow-[0_0_8px_var(--pos)]" /> Event läuft · endet in <span className="tabular-nums text-ink">{countdown(event.endsAt, now)}</span></>
                 : <><span className="h-1.5 w-1.5 rounded-full bg-accent" /> Empfohlen für dich</>}
             </div>
-            <h2 className="mt-3 text-[30px] font-semibold leading-[1.1] tracking-tight text-ink md:text-[40px]">{event ? event.name : 'Hol dir den Look'}</h2>
+            <h2 className="mt-3 text-[30px] font-semibold leading-[1.1] tracking-tight text-ink @3xl:text-[40px]">{event ? event.name : 'Hol dir den Look'}</h2>
             <p className="mt-3 max-w-[480px] text-[14.5px] text-body">{event ? event.description : 'Die besten Stücke, die dir noch fehlen – rechts schon auf deiner Karte angelegt.'}</p>
             {event && (
-              <div className="mt-5 inline-flex items-baseline gap-2 rounded-2xl border border-white/10 bg-black/30 px-4 py-2 backdrop-blur">
-                <span className="whitespace-nowrap text-[28px] font-light leading-none tracking-tight text-ink">−{event.discount} %</span>
-                <span className="text-[12.5px] text-mute">auf {event.slots ? event.slots.map((sl) => SLOT_LABELS[sl]).join(', ') : 'alles'} · bis {formatDate(event.endsAt)}</span>
+              <div className="mt-5 flex max-w-[480px] items-center gap-4 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 backdrop-blur">
+                <span className="shrink-0 whitespace-nowrap text-[30px] font-light leading-none tracking-tight text-ink">−{event.discount} %</span>
+                <span className="min-w-0 text-[12.5px] leading-snug text-mute">auf {event.slots ? event.slots.map((sl) => SLOT_LABELS[sl]).join(', ') : 'alles'}<br />bis {formatDate(event.endsAt)}</span>
               </div>
             )}
           </div>
-          <div className="hidden md:block">
+          <div className="hidden max-w-[440px] @xl:block">
             <ProfileCardPreview subject={cardSubject(user, me, null, me.profile.bio)} cosmetics={look} className="w-full rounded-2xl shadow-[0_30px_60px_-20px_rgba(0,0,0,.8)] ring-1 ring-white/10" />
           </div>
         </div>
@@ -315,6 +317,8 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
   const [giftMode, setGiftMode] = useState(false);
   const [toUserId, setToUserId] = useState('');
   const [message, setMessage] = useState('');
+  // Set after a successful purchase/gift: the detail turns into the "unlocked" moment.
+  const [done, setDone] = useState<{ kind: 'buy' } | { kind: 'gift'; to: string } | null>(null);
 
   const balance = me.wallet.balance;
   const after = balance - listing.finalPrice;
@@ -326,8 +330,8 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
     text: <>„{item.name}“ für <Kristalle amount={listing.finalPrice} /> kaufen? Danach hast du noch <Kristalle amount={after} />.</>,
     confirmLabel: 'Kaufen', danger: false,
     onConfirm: async () => {
-      const result = await run<PurchaseResult>('/me/shop/buy', 'POST', { itemId: item.id }, `„${item.name}“ gehört jetzt dir.`);
-      if (result) updateWallet(result.wallet, result.inventory);
+      const result = await run<PurchaseResult>('/me/shop/buy', 'POST', { itemId: item.id });
+      if (result) { updateWallet(result.wallet, result.inventory); setDone({ kind: 'buy' }); }
     },
   });
   const gift = () => confirm({
@@ -335,10 +339,25 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
     text: <>„{item.name}“ für <Kristalle amount={listing.finalPrice} /> an <code>{toUserId}</code> verschenken? Danach hast du noch <Kristalle amount={after} />.</>,
     confirmLabel: 'Verschenken', danger: false,
     onConfirm: async () => {
-      const result = await run<PurchaseResult>('/me/shop/gift', 'POST', { itemId: item.id, toUserId, ...(message.trim() ? { message: message.trim() } : {}) }, 'Geschenk ist unterwegs.');
-      if (result) { updateWallet(result.wallet, result.inventory); setGiftMode(false); setToUserId(''); setMessage(''); }
+      const result = await run<PurchaseResult>('/me/shop/gift', 'POST', { itemId: item.id, toUserId, ...(message.trim() ? { message: message.trim() } : {}) });
+      if (result) { updateWallet(result.wallet, result.inventory); setGiftMode(false); setDone({ kind: 'gift', to: toUserId }); setToUserId(''); setMessage(''); }
     },
   });
+
+  if (done) {
+    const tile = <StoreCard listing={listing} owned={done.kind === 'buy'} variant="shop" onOpen={() => undefined} className="pointer-events-none w-full" />;
+    return done.kind === 'buy' ? (
+      <Celebration tint={RARITY_TILE[item.rarity]} kicker="Neu freigeschaltet" title={item.name} text="gehört jetzt dir." tile={tile} onClose={onClose}
+        actions={<>
+          {!equipped && <button type="button" className="btn btn-primary" disabled={equip.busy}
+            onClick={async () => { await equip.apply(equipItem(me.profile.equipped, item), `„${item.name}“ angelegt.`); onClose(); }}>Jetzt anlegen</button>}
+          <button type="button" className="btn btn-secondary" onClick={onClose}>Weiter stöbern</button>
+        </>} />
+    ) : (
+      <Celebration tint={RARITY_TILE[item.rarity]} kicker="Geschenk verschickt" title={item.name} text={<>ist unterwegs zu <code>{done.to}</code>.</>} tile={tile} onClose={onClose}
+        actions={<button type="button" className="btn btn-primary" onClick={onClose}>Fertig</button>} />
+    );
+  }
 
   let footer: ReactNode;
   if (giftMode) {
