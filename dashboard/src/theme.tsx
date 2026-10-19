@@ -2,7 +2,7 @@
 // The last theme is cached in localStorage so the page starts in the right colours; the account copy wins on login.
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { DEFAULT_THEME, chartPrimary, heatRamp, normalizeTheme, themeVariables, type DashboardTheme } from '../../src/shared/theme';
+import { DEFAULT_THEME, chartPalette, chartPrimary, heatRamp, normalizeTheme, themeVariables, type DashboardTheme } from '../../src/shared/theme';
 import { api } from './api';
 
 const CACHE_KEY = 'nexo.dashboardTheme';
@@ -66,8 +66,8 @@ export function ThemeProvider({ loggedIn, children }: { loggedIn: boolean; child
 
 export const useTheme = () => useContext(ThemeContext);
 
-/** Colours for single-series charts, sparklines and heatmaps, following the member's primary colour. */
+/** Chart colours following the member's theme: single series, multi-series palette and heatmap ramp. */
 export function useChartTheme() {
   const { theme } = useTheme();
-  return useMemo(() => ({ primary: chartPrimary(theme.primary), heat: heatRamp(theme.primary) }), [theme.primary]);
+  return useMemo(() => ({ primary: chartPrimary(theme.primary), palette: chartPalette(theme), heat: heatRamp(theme.primary) }), [theme]);
 }

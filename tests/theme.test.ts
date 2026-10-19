@@ -21,3 +21,16 @@ test('normalizeTheme accepts presets and valid custom colours, rejects the rest'
 test('a dark custom primary triggers a contrast warning', () => {
   assert.ok(themeWarnings({ preset: 'custom', primary: '#1e1b4b', secondary: '#67e8f9' }).length > 0);
 });
+
+test('multi-series chart palette: four colours that stay distinguishable (also with red-green colour blindness)', async () => {
+  const { chartPalette, distances } = await import('../src/shared/theme.js');
+  for (const preset of THEME_PRESETS) {
+    const palette = chartPalette({ preset: preset.id, primary: preset.primary, secondary: preset.secondary });
+    assert.equal(palette.length, 4, preset.name);
+    for (let i = 0; i < palette.length - 1; i += 1) {
+      // Same floors as the data-viz palette validator: normal vision ΔE ≥ 15, colour-blind ΔE ≥ 6 (legends/tooltips add a second cue).
+      const d = distances(palette[i], palette[i + 1]);
+      assert.ok(d.normal >= 15 && d.protan >= 6 && d.deutan >= 6, `${preset.name}: ${palette[i]} vs ${palette[i + 1]} ${JSON.stringify(d)}`);
+    }
+  }
+});

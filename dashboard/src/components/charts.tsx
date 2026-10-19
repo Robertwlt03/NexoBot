@@ -90,9 +90,9 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
   const { ref, width } = useWidth();
   const svg = useRef<SVGSVGElement>(null);
   const colored = series.slice(0, SERIES_COLORS.length);
-  // One series follows the member's primary colour; several use the fixed, validated categorical palette.
+  // Colours follow the member's theme: one series in the primary colour, several in the themed categorical palette.
   const themed = useChartTheme();
-  const palette: readonly string[] = colored.length === 1 ? [themed.primary] : SERIES_COLORS;
+  const palette: readonly string[] = colored.length === 1 ? [themed.primary] : themed.palette;
 
   const n = labels.length;
   const plotW = width - PAD.left - PAD.right;
