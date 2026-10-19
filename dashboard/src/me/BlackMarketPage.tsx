@@ -1,5 +1,5 @@
-// Black Market in the style of a game "night market" (Valorant): every week's mythic items lie face down as cards in
-// their rarity colour; the member flips them one by one (or all at once) to see what is on offer.
+// Black Market in the style of a game "night market" (Valorant): every week a mix of discounted shop items and mythic
+// exclusives lies face down as cards in their rarity colour; the member flips them one by one (or all at once).
 import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { ShopListing } from '../../../src/web/dto/profile';
@@ -67,13 +67,14 @@ export default function BlackMarketPage() {
     return next;
   });
   const hidden = listings.filter((l) => !isRevealed(l.item.id));
+  const exclusives = listings.filter((l) => l.item.availability === 'blackmarket').length;
   // Turn the rest over one after another, like dealing cards.
   const revealAll = () => hidden.forEach((l, i) => window.setTimeout(() => reveal(l.item.id), i * 140));
   const open = listings.find((l) => l.item.id === openId);
 
   return (
     <>
-      <PageHeader kicker="Mein Profil" title="Black Market" description="Jede Woche eine Handvoll mythischer Artikel, die es sonst nirgends gibt. Montags um Mitternacht ist alles wieder weg." />
+      <PageHeader kicker="Mein Profil" title="Black Market" description="Jede Woche neue Karten: Artikel aus dem Shop zum Sonderpreis und mythische Exklusive, die es nur hier gibt. Montags um Mitternacht wird neu gemischt." />
       {/* The black market stays dark in both modes. */}
       <div data-mode="dark">
         <section className="relative mb-6 overflow-hidden rounded-[20px] border border-rose-500/20 bg-[#070608] p-6 md:p-8">
@@ -85,8 +86,8 @@ export default function BlackMarketPage() {
               <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[.24em] text-rose-300">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-400 shadow-[0_0_10px_#fb7185]" /> Nur diese Woche
               </p>
-              <h2 className="mt-2 text-[28px] font-bold uppercase tracking-[.02em] text-white">{listings.length} mythische Artikel</h2>
-              <p className="mt-2 max-w-[520px] text-[14px] text-mute">Seit {formatDate(blackMarket.weekStart)} im Angebot. Deck die Karten auf – keine Rabatte, keine zweite Chance.</p>
+              <h2 className="mt-2 text-[28px] font-bold uppercase tracking-[.02em] text-white">{listings.length} Angebote der Woche</h2>
+              <p className="mt-2 max-w-[520px] text-[14px] text-mute">Seit {formatDate(blackMarket.weekStart)} im Angebot. Deck die Karten auf: bis zu 40 % Rabatt{exclusives > 0 ? `, dazu ${exclusives} mythische${exclusives === 1 ? 'r' : ''} Exklusiv-Artikel` : ''}.</p>
             </div>
             <div className="sm:text-right">
               <p className="text-[11px] font-bold uppercase tracking-[.2em] text-faint">Neue Ware in</p>
