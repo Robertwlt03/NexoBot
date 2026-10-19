@@ -1,6 +1,6 @@
 // Shop building blocks shared by the shop and the black market: filters, item grid, detail modal with buy/gift.
 import { useMemo, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Link } from 'react-router';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -14,7 +14,7 @@ import { Empty, Field, Modal, Notice, Select, Switch, Tabs, TextInput } from '..
 import {
   cardSubject, countdown, equipItem, formatDate, isEquipped, reducedMotion, resolveCosmetics, useEquip, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
-import { ItemVisual, Kristalle, Price, RARITY_CLASS, RarityLabel, backgroundStyle } from './visuals';
+import { Glyph, ItemVisual, Kristalle, Price, RarityLabel, backgroundStyle } from './visuals';
 import { Icon } from '../icons';
 
 export type ShopVariant = 'shop' | 'blackmarket';
@@ -50,35 +50,43 @@ export function UpcomingEvents({ events }: { events: ShopEvent[] }) {
 
 // ---------- Store card, shelves & storefront ----------
 
-/** Soft light behind the item art, per rarity (same tints as RARITY_CLASS). */
-const RARITY_GLOW: Record<Rarity, string> = {
-  common: 'rgba(255,255,255,.08)', rare: 'rgba(56,189,248,.22)', epic: 'rgba(167,139,250,.26)', legendary: 'rgba(252,211,77,.22)', mythic: 'rgba(244,63,94,.24)',
+/** Rarity identity of a tile (game-shop convention: grey, blue, purple, gold, red). Only used inside item tiles. */
+export const RARITY_TILE: Record<Rarity, string> = {
+  common: '#8a8f99', rare: '#3b8cf6', epic: '#a35cf5', legendary: '#f2a516', mythic: '#f2415f',
 };
 
-/** Big product tile: large artwork, name, slot and the price front and centre. */
-function StoreCard({ listing, owned, variant, onOpen, className = '' }: { listing: ShopListing; owned: boolean; variant: ShopVariant; onOpen: () => void; className?: string }) {
+/**
+ * Game-shop tile: the item art on a glowing field in its rarity colour, light rays behind it, name in caps,
+ * the price front and centre and a rarity bar along the bottom (as in Fortnite, Apex, Rocket League).
+ * Always dark, in both modes. `large` = the 2×2 feature tile of the bento grid.
+ */
+export function StoreCard({ listing, owned, variant, onOpen, className = '', large = false }: {
+  listing: ShopListing; owned: boolean; variant: ShopVariant; onOpen: () => void; className?: string; large?: boolean;
+}) {
   const { item } = listing;
-  const dark = variant === 'blackmarket';
+  const tint = RARITY_TILE[item.rarity];
+  const style = { '--tile': tint } as CSSProperties;
   return (
-    <button type="button" onClick={onOpen}
-      className={`js-item group flex cursor-pointer flex-col overflow-hidden rounded-[20px] border p-0 text-left font-[inherit] text-body transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_-18px_rgba(0,0,0,.8)] ${RARITY_CLASS[item.rarity].border} ${dark ? 'bg-[#0c0c10] hover:bg-[#121217]' : 'bg-surface hover:bg-raised'} ${className}`}>
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#0d0d12]">
-        <ItemVisual item={item} className="h-full w-full scale-[1.3] rounded-none bg-transparent transition-transform duration-500 group-hover:scale-[1.42]" />
-        <div className="pointer-events-none absolute inset-0" style={{ background: `radial-gradient(70% 60% at 50% 110%, ${RARITY_GLOW[item.rarity]}, transparent 70%)` }} />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/50 to-transparent" />
-        {listing.discount > 0 && <span className="absolute left-3 top-3 rounded-full bg-pos/90 px-2 py-0.5 text-[12px] font-semibold text-[#06140d]">−{listing.discount} %</span>}
-        {dark && <span className="absolute right-3 top-3 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-medium text-rose-200/90 backdrop-blur">Nur diese Woche</span>}
-        {owned && <span className="absolute right-3 top-3 rounded-full bg-black/60 px-2 py-0.5 text-[11.5px] font-medium text-pos backdrop-blur">Im Besitz</span>}
+    <button type="button" onClick={onOpen} data-mode="dark" style={style}
+      className={`js-item game-tile group relative flex cursor-pointer flex-col overflow-hidden rounded-[18px] border-0 bg-[#0d0b0a] p-0 text-left font-[inherit] ring-1 ring-white/[.08] transition duration-300 hover:-translate-y-1 hover:ring-[color-mix(in_srgb,var(--tile)_70%,transparent)] hover:shadow-[0_22px_44px_-18px_color-mix(in_srgb,var(--tile)_55%,transparent)] ${large ? '' : 'aspect-[3/4]'} ${className}`}>
+      <div className="game-tile-field relative min-h-0 w-full flex-1 overflow-hidden">
+        <ItemVisual item={item} className={`h-full w-full rounded-none !bg-transparent transition-transform duration-500 ${large ? 'scale-[1.25] group-hover:scale-[1.32]' : 'scale-[1.3] group-hover:scale-[1.42]'}`} />
+        <div className="absolute left-2.5 top-2.5 flex flex-wrap gap-1.5">
+          {listing.discount > 0 && <span className="rounded-md bg-[#facc15] px-1.5 py-0.5 text-[11.5px] font-bold text-[#1a1405]">−{listing.discount} %</span>}
+          {listing.availableUntil && variant === 'shop' && <span className="rounded-md bg-black/55 px-1.5 py-0.5 text-[11px] font-semibold text-white/90 backdrop-blur">Begrenzt</span>}
+        </div>
+        {owned && <span className="absolute right-2.5 top-2.5 flex h-6 items-center gap-1 rounded-md bg-black/55 px-1.5 text-[11px] font-semibold text-[#86efac] backdrop-blur"><Glyph name="check" size={13} /> Im Besitz</span>}
       </div>
-      <div className="flex w-full flex-1 flex-col px-4 pb-4 pt-3">
-        <h3 className="truncate text-[15px] font-semibold tracking-tight text-ink">{item.name}</h3>
-        <div className="mt-0.5 flex items-center gap-1.5 text-[12px] text-faint">{SLOT_LABELS[item.slot]} · <RarityLabel rarity={item.rarity} /></div>
-        <div className="mt-auto flex min-h-7 items-center justify-between gap-2 pt-3 text-[16px] font-semibold text-ink">
+      <div className="relative w-full px-3.5 pb-4 pt-2.5">
+        <div className="text-[10.5px] font-bold uppercase tracking-[.14em]" style={{ color: tint }}>{RARITY_LABELS[item.rarity]} · {SLOT_LABELS[item.slot]}</div>
+        <h3 className={`mt-1 truncate font-bold uppercase leading-tight tracking-[.02em] text-white ${large ? 'text-[22px]' : 'text-[14.5px]'}`}>{item.name}</h3>
+        <div className="mt-2 flex min-h-6 items-center gap-2 text-[15px] font-bold text-white">
           {owned
-            ? <span className="text-[13px] font-medium text-mute">Anlegen →</span>
-            : forSale(item) ? <Price price={item.price} finalPrice={listing.finalPrice} /> : <span className="text-[12.5px] font-normal text-faint">Nicht käuflich</span>}
+            ? <span className="text-[12.5px] font-semibold text-white/60">Anlegen →</span>
+            : forSale(item) ? <Price price={item.price} finalPrice={listing.finalPrice} /> : <span className="text-[12px] font-medium text-white/55">{NOT_FOR_SALE[item.availability] ?? 'Nicht käuflich'}</span>}
         </div>
       </div>
+      <span className="absolute inset-x-0 bottom-0 h-[3px]" style={{ background: tint }} />
     </button>
   );
 }
@@ -105,7 +113,7 @@ function Shelf({ title, hint, listings, owned, onOpen, onAll }: {
       </div>
       <div ref={track} className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-3 [scrollbar-width:none] md:-mx-2 md:scroll-px-2 md:px-2">
         {listings.map((l) => (
-          <StoreCard key={l.item.id} listing={l} owned={owned.has(l.item.id)} variant="shop" onOpen={() => onOpen(l.item.id)} className="w-[220px] shrink-0 snap-start md:w-[236px]" />
+          <StoreCard key={l.item.id} listing={l} owned={owned.has(l.item.id)} variant="shop" onOpen={() => onOpen(l.item.id)} className="w-[200px] shrink-0 snap-start md:w-[220px]" />
         ))}
       </div>
     </section>
@@ -161,7 +169,7 @@ export function Storefront({ listings, events, upcoming }: { listings: ShopListi
       <section data-mode="dark" className="relative overflow-hidden rounded-[24px] border border-white/[.07]">
         <div className="absolute inset-0" style={heroBackground?.slot === 'background' ? backgroundStyle(heroBackground.data) : { background: 'var(--hero-glow), var(--brand-gradient)' }} />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(9,9,12,.94)_0%,rgba(9,9,12,.7)_45%,rgba(9,9,12,.15)_100%)]" />
-        <div className="relative grid items-center gap-6 p-6 pb-24 md:grid-cols-[1fr_minmax(0,420px)] md:p-9 md:pb-28">
+        <div className="relative grid items-center gap-6 p-6 md:grid-cols-[1fr_minmax(0,420px)] md:p-9">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-2 text-[13px] text-body">
               {event
@@ -182,14 +190,18 @@ export function Storefront({ listings, events, upcoming }: { listings: ShopListi
           </div>
         </div>
       </section>
-      <div className="relative z-10 -mt-20 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-3 [scrollbar-width:none] md:px-6">
-        {featured.slice(0, 4).map((l) => (
-          <StoreCard key={l.item.id} listing={l} owned={owned.has(l.item.id)} variant="shop" onOpen={() => setOpenId(l.item.id)}
-            className="w-[220px] shrink-0 snap-start md:w-auto md:min-w-0 md:flex-1" />
-        ))}
-      </div>
+      <section className="mt-8">
+        <h2 className="mb-3.5 text-[19px] font-semibold tracking-tight">{event ? `Highlights aus „${event.name}“` : 'Empfohlen'}</h2>
+        {/* Bento: one 2×2 feature tile, four regular ones. */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+          {featured.slice(0, 5).map((l, i) => (
+            <StoreCard key={l.item.id} listing={l} owned={owned.has(l.item.id)} variant="shop" onOpen={() => setOpenId(l.item.id)}
+              large={i === 0} className={i === 0 ? 'col-span-2 row-span-2 aspect-[4/3] md:aspect-auto' : ''} />
+          ))}
+        </div>
+      </section>
 
-      <Shelf title={event ? `Mehr aus „${event.name}“` : 'Weitere Empfehlungen'} listings={featured.slice(4)} owned={owned} onOpen={setOpenId} />
+      <Shelf title={event ? `Mehr aus „${event.name}“` : 'Weitere Empfehlungen'} listings={featured.slice(5)} owned={owned} onOpen={setOpenId} />
       <Shelf title="Im Angebot" hint="Reduziert, solange das Event läuft." listings={deals} owned={owned} onOpen={setOpenId} />
       <Shelf title="Neu im Shop" listings={fresh} owned={owned} onOpen={setOpenId} />
       {bySlot.map((g) => (
@@ -293,7 +305,7 @@ export function TryOnPreview({ item }: { item: CosmeticItem }) {
 
 const SNOWFLAKE = /^\d{17,20}$/;
 
-function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; owned: boolean; onClose: () => void }) {
+export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; owned: boolean; onClose: () => void }) {
   const { item } = listing;
   const { me } = useMe();
   const updateWallet = useWalletUpdate();
