@@ -4,7 +4,7 @@
 
 import { drawCrystal } from './crystal.js';
 import type {
-  BackgroundData, BadgeData, BadgeGlyph, EffectData, FrameData, LayoutData, LevelupData, NameStyleData, PatternKind,
+  BackgroundData, BadgeData, BadgeGlyph, CosmeticItem, EffectData, FrameData, LayoutData, LevelupData, NameStyleData, PatternKind,
   ProfileCardSubject, ResolvedCosmetics, StickerData, XpBarData,
 } from './cosmetics.js';
 
@@ -1247,6 +1247,54 @@ function drawSticker(ctx: Ctx, sticker: StickerData, w: number, h: number) {
   ctx.stroke();
   drawGlyph(ctx, sticker.glyph, 0, 0, 24, brightness(sticker.color) > 0.62 ? '#17151F' : '#FFFFFF');
   ctx.restore();
+}
+
+// ---------- Item preview ----------
+
+export const ITEM_PREVIEW_WIDTH = 320;
+export const ITEM_PREVIEW_HEIGHT = 240;
+
+/**
+ * Shop/inventory tile of one item, painted with the same functions as the card, so a badge, sticker, frame or effect
+ * looks exactly like it will on the card (frames around the member's own avatar). Transparent except for
+ * backgrounds, so the tile's own backdrop shows through. Returns false for slots without a painted preview
+ * (level-up style, layout); the dashboard draws those itself.
+ */
+export function renderItemPreview<I extends ProfileImage>(
+  context: ProfileContext<NoInfer<I>>, item: CosmeticItem, subject: { name: string; username: string }, assets: ProfileAssets<I>,
+  w = ITEM_PREVIEW_WIDTH, h = ITEM_PREVIEW_HEIGHT,
+): boolean {
+  const ctx: Ctx = context;
+  const seed = seedFrom(subject.username || subject.name);
+  const accent = item.slot === 'accent' ? item.data.color : DEFAULT_ACCENT;
+  const avatar = (r: number, cy = h / 2) => ({ cx: w / 2, cy, r });
+  // Small items are drawn larger than on the card so they read on a tile.
+  const zoomAt = (zoom: number) => { ctx.translate(w / 2, h / 2); ctx.scale(zoom, zoom); };
+  ctx.save();
+  switch (item.slot) {
+    case 'background': drawBackground(ctx, item.data, accent, w, h, seed); break;
+    case 'effect': drawEffect(ctx, item.data.effect, accent, w, h, seed); break;
+    case 'frame': drawAvatar(ctx, assets.avatar, avatar(h * 0.27), item.data, accent, subject.name); break;
+    case 'accent':
+      drawAvatar(ctx, assets.avatar, avatar(h * 0.2, h * 0.4), null, accent, subject.name);
+      drawXpBar(ctx, { x: w * 0.2, y: h * 0.74, w: w * 0.6, h: 12 }, 0.62, null, accent);
+      break;
+    case 'badge': zoomAt(2.2); drawBadges(ctx, [item.data], BADGE_SIZE / 2, -BADGE_SIZE / 2); break;
+    case 'sticker': {
+      const at = stickerCenter(item.data.corner, w, h);
+      zoomAt(1.9);
+      ctx.translate(-at.x, -at.y);
+      drawSticker(ctx, item.data, w, h);
+      break;
+    }
+    case 'xpBar': drawXpBar(ctx, { x: w * 0.12, y: h / 2 - 10, w: w * 0.76, h: 20 }, 0.66, item.data, accent); break;
+    case 'nameStyle': drawName(ctx, subject.name, w / 2, h / 2 + 14, 'center', 44, 'inter', item.data, w * 0.86); break;
+    case 'font': drawName(ctx, subject.name, w / 2, h / 2 + 14, 'center', 44, item.data.font, null, w * 0.86); break;
+    case 'title': drawRuns(ctx, [{ text: item.data.text, font: font('inter', 700, 26), color: item.data.color }], w / 2, h / 2 + 9, 'center'); break;
+    default: ctx.restore(); return false;
+  }
+  ctx.restore();
+  return true;
 }
 
 // ---------- Profile card ----------

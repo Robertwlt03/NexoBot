@@ -8,13 +8,13 @@ import type {
 import type { ShopEvent } from '../../../src/web/dto/profile';
 import { useApi, useUser } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
-import { LevelUpPreview, ProfileCardPreview } from '../components/ProfileCardPreview';
+import { CardGlyph, LevelUpPreview, ProfileCardPreview } from '../components/ProfileCardPreview';
 import {
   ColorInput, Empty, Field, Modal, Notice, NumberInput, PageHeader, Select, Spinner, Switch, SwitchRow, TableWrap, TextArea, TextInput,
 } from '../components/ui';
 import { Icon } from '../icons';
 import { equipItem, num, resolveCosmetics, useMutation } from '../me/api';
-import { Glyph, ItemVisual, Kristalle, RarityLabel } from '../me/visuals';
+import { ItemVisual, Kristalle, RarityLabel } from '../me/visuals';
 
 // ---------- Labels ----------
 
@@ -75,7 +75,7 @@ function GlyphPicker({ value, onChange }: { value: StickerData['glyph']; onChang
       {BADGE_GLYPHS.map((glyph) => (
         <button key={glyph} type="button" title={glyph} aria-pressed={glyph === value} onClick={() => onChange(glyph)}
           className={`flex aspect-square cursor-pointer items-center justify-center rounded-lg border bg-transparent ${glyph === value ? 'border-accent text-ink ring-2 ring-accent/30' : 'border-white/[.06] text-mute hover:border-white/20 hover:text-ink'}`}>
-          <Glyph name={glyph} size={18} />
+          <CardGlyph glyph={glyph} size={20} />
         </button>
       ))}
     </div>

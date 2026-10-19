@@ -4,11 +4,13 @@ import { createCanvas } from '@napi-rs/canvas';
 import { BADGE_GLYPHS, type ProfileCardSubject, type ResolvedCosmetics } from '../src/shared/cosmetics.js';
 import {
   FRAME_MAX_OUTSET, GLYPH_DRAWERS, LEVELUP_CARD_HEIGHT, LEVELUP_CARD_WIDTH, LEVELUP_STYLES, PROFILE_CARD_HEIGHT, PROFILE_CARD_WIDTH,
-  PROFILE_FONTS, PROFILE_LAYOUTS, STICKER_RADIUS, createRng, drawGlyph, fitText, profileGeometry, renderLevelUpCard, renderProfileCard,
+  ITEM_PREVIEW_HEIGHT, ITEM_PREVIEW_WIDTH, PROFILE_FONTS, PROFILE_LAYOUTS, STICKER_RADIUS, createRng, drawGlyph, fitText, profileGeometry,
+  renderItemPreview, renderLevelUpCard, renderProfileCard,
   seedFrom, stickerCenter, xpFraction,
 } from '../src/shared/profileCard.js';
 import { CARD_FONTS, defaultCard } from '../src/shared/welcomeCard.js';
 import { applyMemberStyle } from '../src/services/welcomeCardRenderer.js';
+import { SEED_ITEMS } from '../src/services/cosmetics/catalog.js';
 
 const W = PROFILE_CARD_WIDTH;
 const H = PROFILE_CARD_HEIGHT;
@@ -105,3 +107,17 @@ test('member style maps frame/accent onto the welcome card avatar border', () =>
   const accented = avatar(applyMemberStyle(card, null, { color: '#FF0000' }));
   assert.ok(accented?.type === 'avatar' && accented.borderColor === '#FF0000' && accented.borderWidth === 8);
 });
+
+test('shop tiles are painted by the card renderer for every item that shows on the card', () => {
+  for (const item of SEED_ITEMS) {
+    const canvas = createCanvas(ITEM_PREVIEW_WIDTH, ITEM_PREVIEW_HEIGHT);
+    const ctx = canvas.getContext('2d');
+    const painted = renderItemPreview(ctx, item, subject, { avatar: null });
+    // Level-up styles and layouts are not part of one spot on the card; the dashboard sketches those itself.
+    assert.equal(painted, item.slot !== 'levelup' && item.slot !== 'layout', item.id);
+    if (!painted) continue;
+    const alpha = ctx.getImageData(0, 0, ITEM_PREVIEW_WIDTH, ITEM_PREVIEW_HEIGHT).data.filter((_, index) => index % 4 === 3);
+    assert.ok(alpha.some((value) => value > 0), `${item.id} paints nothing`);
+  }
+});
+

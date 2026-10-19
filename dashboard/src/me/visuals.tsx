@@ -1,9 +1,10 @@
-// Small CSS/SVG previews of cosmetic items (shop tiles, slot editor), the badge glyphs and member-area icons.
+// Item tiles (painted by the card renderer, see ItemPreviewCanvas), the member-area icons and currency helpers.
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { CURRENCY, RARITY_LABELS, SLOT_LABELS } from '../../../src/shared/cosmetics';
 import { CrystalIcon } from '../components/CrystalIcon';
+import { ItemPreviewCanvas } from '../components/ProfileCardPreview';
 import type {
-  BackgroundData, BadgeGlyph, CosmeticItem, EffectData, FontData, FrameData, LevelupData, NameStyleData, Rarity, XpBarData,
+  BackgroundData, BadgeGlyph, CosmeticItem, LevelupData, Rarity,
 } from '../../../src/shared/cosmetics';
 import { num } from './api';
 
@@ -124,69 +125,6 @@ export function backgroundStyle(data: BackgroundData): CSSProperties {
   }
 }
 
-export function nameStyle(data: NameStyleData): CSSProperties {
-  const [first = '#f4f4f6'] = data.colors;
-  const glow = data.glow ? { filter: `drop-shadow(0 0 8px ${withAlpha(first, 'aa')})` } : {};
-  return data.colors.length > 1
-    ? { backgroundImage: `linear-gradient(90deg, ${data.colors.join(', ')})`, WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', ...glow }
-    : { color: first, ...glow };
-}
-
-export function xpBarStyle(data: XpBarData): CSSProperties {
-  const [a = '#a99bff', b = a] = data.colors;
-  switch (data.style) {
-    case 'solid': return { background: a };
-    case 'gradient': return { background: `linear-gradient(90deg, ${data.colors.join(', ')})` };
-    case 'striped': return { background: `repeating-linear-gradient(45deg, ${a} 0 6px, ${b} 6px 12px)` };
-    case 'segmented': return { background: `repeating-linear-gradient(90deg, ${a} 0 10px, transparent 10px 13px)` };
-    case 'glow': return { background: a, boxShadow: `0 0 12px ${a}` };
-  }
-}
-
-export const FONT_FAMILY: Record<FontData['font'], string> = {
-  inter: '"Inter Variable", Inter, sans-serif',
-  unbounded: '"Unbounded Variable", sans-serif',
-  caveat: 'Caveat, "Segoe Print", "Bradley Hand", cursive',
-};
-
-function FramedAvatar({ data }: { data: FrameData }) {
-  const [a = '#d4d4d8', b = a] = data.colors;
-  const ring: CSSProperties = data.style === 'gradient' || data.style === 'crown'
-    ? { padding: data.width, background: `linear-gradient(135deg, ${a}, ${b})` }
-    : {
-      border: `${Math.max(data.width, data.style === 'double' ? 6 : 2)}px ${data.style === 'dashed' ? 'dashed' : data.style === 'double' ? 'double' : 'solid'} ${a}`,
-      boxShadow: data.style === 'glow' ? `0 0 16px ${withAlpha(a, 'aa')}` : data.style === 'neon' ? `0 0 6px ${a}, 0 0 20px ${a}` : data.style === 'double' ? `0 0 0 2px ${b}` : undefined,
-    };
-  return (
-    <span className="relative">
-      {data.style === 'crown' && <span className="absolute -top-4 left-1/2 -translate-x-1/2" style={{ color: a }}><Glyph name="crown" size={18} /></span>}
-      <span className="block rounded-full" style={ring}>
-        <span className="block h-12 w-12 rounded-full bg-gradient-to-br from-[#3a3a46] to-[#1d1d24]" />
-      </span>
-    </span>
-  );
-}
-
-const EFFECT_DOTS: [number, number][] = [[12, 14], [30, 40], [52, 10], [70, 32], [86, 12], [20, 58], [44, 64], [64, 54], [90, 62], [6, 36]];
-
-function EffectPreview({ effect }: { effect: EffectData['effect'] }) {
-  if (effect === 'scanlines') return <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,rgba(255,255,255,.09)_0_1px,transparent_1px_4px)]" />;
-  if (effect === 'aurora') return <div className="absolute inset-0 bg-[radial-gradient(60%_50%_at_30%_30%,rgba(45,226,166,.35),transparent),radial-gradient(60%_50%_at_75%_60%,rgba(124,92,255,.35),transparent)]" />;
-  const colors = { sparkles: ['#fde68a', '#fff'], snow: ['#fff', '#e0f2fe'], confetti: ['#f472b6', '#facc15', '#38bdf8', '#4ade80'], stardust: ['#c4b5fd', '#fff'], embers: ['#fb923c', '#f87171'], hearts: ['#fb7185', '#f9a8d4'] }[effect];
-  return (
-    <svg viewBox="0 0 100 75" className="absolute inset-0 h-full w-full" aria-hidden="true">
-      {EFFECT_DOTS.map(([x, y], i) => {
-        const fill = colors[i % colors.length];
-        if (effect === 'sparkles') return <path key={i} d={`M${x} ${y - 4}l1 3 3 1-3 1-1 3-1-3-3-1 3-1z`} fill={fill} />;
-        if (effect === 'confetti') return <rect key={i} x={x} y={y} width="3" height="5" rx=".5" fill={fill} transform={`rotate(${i * 37} ${x} ${y})`} />;
-        if (effect === 'hearts') return <path key={i} d={`M${x} ${y + 3}l-3-3a1.8 1.8 0 0 1 3-2 1.8 1.8 0 0 1 3 2z`} fill={fill} />;
-        const r = effect === 'stardust' ? 0.7 + (i % 3) * 0.3 : effect === 'embers' ? 1.2 + (i % 2) : 1.6 + (i % 3) * 0.5;
-        return <circle key={i} cx={x} cy={y} r={r} fill={fill} opacity={effect === 'embers' ? 0.85 : 0.9} />;
-      })}
-    </svg>
-  );
-}
-
 function LevelupBanner({ data }: { data: LevelupData }) {
   const c = data.color;
   const styles: Record<LevelupData['style'], CSSProperties> = {
@@ -213,29 +151,13 @@ function LayoutSketch({ layout }: { layout: 'classic' | 'compact' | 'centered' |
 }
 
 function previewOf(item: CosmeticItem): ReactNode {
-  switch (item.slot) {
-    case 'background': return <div className="absolute inset-0" style={backgroundStyle(item.data)} />;
-    case 'accent': return (
-      <div className="flex w-3/4 flex-col gap-2">
-        <span className="h-1.5 w-10 rounded-full" style={{ background: item.data.color }} />
-        <span className="h-2 w-full rounded-full bg-white/10"><span className="block h-full w-3/5 rounded-full" style={{ background: item.data.color }} /></span>
-        <span className="h-6 w-6 rounded-full" style={{ background: item.data.color, boxShadow: `0 0 14px ${withAlpha(item.data.color, '66')}` }} />
-      </div>
-    );
-    case 'nameStyle': return <span className="text-[22px] font-semibold tracking-tight" style={nameStyle(item.data)}>Name</span>;
-    case 'frame': return <FramedAvatar data={item.data} />;
-    case 'badge': return <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/[.05] ring-1 ring-white/10" style={{ color: item.data.color }}><Glyph name={item.data.glyph} size={26} /></span>;
-    case 'sticker': return <span className="-rotate-12 rounded-xl bg-white/[.06] p-2 shadow-lg ring-1 ring-white/15" style={{ color: item.data.color }}><Glyph name={item.data.glyph} size={30} /></span>;
-    case 'title': return <span className="rounded-full px-3 py-1 text-[13px] font-medium" style={{ color: item.data.color, border: `1px solid ${withAlpha(item.data.color, '55')}`, background: withAlpha(item.data.color, '14') }}>{item.data.text}</span>;
-    case 'xpBar': return <span className="block h-3 w-3/4 overflow-hidden rounded-full bg-white/[.07]"><span className="block h-full w-2/3 rounded-full" style={xpBarStyle(item.data)} /></span>;
-    case 'font': return <span className="text-[34px] leading-none text-ink" style={{ fontFamily: FONT_FAMILY[item.data.font] }}>Aa</span>;
-    case 'effect': return <EffectPreview effect={item.data.effect} />;
-    case 'levelup': return <LevelupBanner data={item.data} />;
-    case 'layout': return <LayoutSketch layout={item.data.layout} />;
-  }
+  // Everything the card shows is painted by the card renderer, so tile and card always match.
+  if (item.slot === 'levelup') return <LevelupBanner data={item.data} />;
+  if (item.slot === 'layout') return <LayoutSketch layout={item.data.layout} />;
+  return <ItemPreviewCanvas item={item} />;
 }
 
-/** Mini preview tile of what an item changes (drawn with CSS/SVG). */
+/** Preview tile of what an item changes, exactly as the card renderer paints it. */
 export function ItemVisual({ item, className = '' }: { item: CosmeticItem; className?: string }) {
   return (
     <div data-mode="dark" className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-[#101015] ${className}`}>
