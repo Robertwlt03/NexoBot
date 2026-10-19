@@ -12,9 +12,9 @@ import { ServerRail, SideMenu, UserPanel } from '../components/Layout';
 import { PageBackdrop, motifFor } from '../components/Backdrop';
 import { Notice, Spinner } from '../components/ui';
 import { Icon } from '../icons';
-import { MeContext, reducedMotion, useCountUp } from './api';
+import { MeContext, reducedMotion, resolveCosmetics, useCountUp } from './api';
 import type { MeContextValue } from './api';
-import { Glyph, Kristalle } from './visuals';
+import { GLYPHS, Glyph, Kristalle, backgroundStyle } from './visuals';
 import type { GlyphName } from './visuals';
 
 interface NavEntry { to: string; label: string; icon: GlyphName }
@@ -97,6 +97,10 @@ export function MeLayout() {
   }, [profile.data, setProfile, shop.data, blackMarket.data, items, reloadShopData, reloadBlackMarket, reloadCatalog]);
 
   const isOwnerArea = location.pathname.startsWith('/owner');
+  // The profile page wears the member's own card background.
+  const equippedBackground = profile.data && location.pathname.replace(/\/$/, '') === '/me'
+    ? resolveCosmetics(profile.data.profile.equipped, items).background : null;
+  const cardBackground = equippedBackground ? backgroundStyle(equippedBackground) : undefined;
   const isOwner = profile.data?.isOwner ?? false;
   const current = [...MEMBER_NAV, ...OWNER_NAV].find((entry) => entry.to === location.pathname.replace(/\/$/, ''));
   const navLink = 'relative flex items-center gap-3 rounded-xl border px-3 py-2 text-[14px] font-medium transition-colors hover:no-underline';
@@ -138,7 +142,7 @@ export function MeLayout() {
           {profile.data && <span className="ml-auto lg:hidden"><WalletPill balance={profile.data.wallet.balance} /></span>}
         </header>
         <div className="relative flex-1 overflow-y-auto px-4 pb-32 pt-9 md:px-10">
-          <PageBackdrop motif={motifFor(location.pathname)} />
+          <PageBackdrop motif={motifFor(location.pathname)} art={current && GLYPHS[current.icon]} surface={cardBackground} />
           <div ref={pageRef} className="relative mx-auto max-w-[1100px]">
             {profile.loading && !profile.data && <Spinner />}
             {profile.error && !profile.data && <Notice tone="danger">{profile.error}</Notice>}

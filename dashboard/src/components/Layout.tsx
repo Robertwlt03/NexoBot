@@ -5,7 +5,7 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import type { ApiGuildDetail, ApiGuildSummary } from '../../../src/web/apiTypes';
 import { DirtyContext, GuildContext, useApi, UserContext } from '../api';
-import { Icon } from '../icons';
+import { Icon, ICON_PATHS } from '../icons';
 import { GROUPS, MODULES } from '../modules/registry';
 import { Spinner, Notice } from './ui';
 import { NexoLogo } from './NexoLogo';
@@ -192,7 +192,7 @@ export function GuildLayout() {
           <span className="truncate text-sm font-medium text-ink">{current?.label ?? 'Übersicht'}</span>
         </header>
         <div className="relative flex-1 overflow-y-auto px-4 pb-32 pt-9 md:px-10">
-          <PageBackdrop motif={motifFor(location.pathname)} />
+          <PageBackdrop motif={motifFor(location.pathname)} art={current && ICON_PATHS[current.icon]} image={detail.data?.iconUrl} />
           <div ref={pageRef} className="relative mx-auto max-w-[1040px]">
             {detail.loading && !detail.data && <div className="center"><Spinner /></div>}
             {detail.error && (

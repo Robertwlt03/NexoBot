@@ -2,7 +2,7 @@
 // Drawn as SVG in the member's theme colours (var(--accent), var(--accent-2)), weighted to the right so the page
 // title on the left stays readable. Deterministic (seeded), so a page always looks the same.
 import { useRef } from 'react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { CRYSTAL_OUTLINE } from '../../../src/shared/crystal';
@@ -246,19 +246,46 @@ const FADE = {
   maskComposite: 'intersect',
 } as const;
 
-/** Absolute layer at the top of a scroll area; fades out downwards and re-appears softly on page change. */
-export function PageBackdrop({ motif }: { motif: Motif }) {
+/**
+ * Absolute layer at the top of a scroll area; fades out downwards and re-appears softly on page change.
+ * `art` = the page's own nav icon (24px grid paths), drawn large in the theme gradient so every page is recognisable;
+ * `image` = a picture washed in as colour (the server icon); `surface` = a CSS background (the member's card background).
+ */
+export function PageBackdrop({ motif, art, image, surface }: { motif: Motif; art?: ReactNode; image?: string | null; surface?: CSSProperties }) {
   const ref = useRef<HTMLDivElement>(null);
   useGSAP(() => {
     if (!ref.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     gsap.fromTo(ref.current, { autoAlpha: 0, y: -10 }, { autoAlpha: 1, y: 0, duration: 0.7, ease: 'power2.out' });
-  }, { dependencies: [motif] });
+    gsap.fromTo(ref.current.querySelectorAll('.js-art'), { rotate: -14, scale: 0.92 }, { rotate: -6, scale: 1, duration: 1.1, ease: 'power3.out' });
+  }, { dependencies: [motif, art] });
+  const artSvg = (className: string) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="url(#backdrop-ink)" strokeWidth={0.7} strokeLinecap="round" strokeLinejoin="round"
+      className={`js-art absolute right-[5%] top-5 h-[140px] w-[140px] -rotate-6 md:h-[230px] md:w-[230px] ${className}`}>
+      {art}
+    </svg>
+  );
   return (
     <div ref={ref} aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[300px] overflow-hidden" style={FADE}>
+      {surface && <div className="absolute inset-0 opacity-45" style={surface} />}
+      {image && <img src={image} alt="" className="absolute -top-24 right-0 h-[440px] w-[75%] object-cover opacity-35 blur-3xl saturate-150" />}
       <div className="absolute inset-0" style={{ background: 'radial-gradient(60% 120% at 85% 0%, var(--accent-soft), transparent 70%)' }} />
-      <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMaxYMin slice">
+      <svg className="absolute inset-0 h-full w-full opacity-60" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMaxYMin slice">
         {motifShapes(motif)}
       </svg>
+      {art && (
+        <>
+          <svg width="0" height="0" className="absolute">
+            <defs>
+              <linearGradient id="backdrop-ink" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="24">
+                <stop offset="0" style={{ stopColor: 'var(--accent)' }} />
+                <stop offset="1" style={{ stopColor: 'var(--accent-2)' }} />
+              </linearGradient>
+            </defs>
+          </svg>
+          {artSvg('opacity-40 blur-xl')}
+          {artSvg('opacity-45')}
+        </>
+      )}
     </div>
   );
 }

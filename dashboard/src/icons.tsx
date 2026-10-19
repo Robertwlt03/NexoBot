@@ -1,7 +1,7 @@
 // Line icons on a 24px grid (same style as the README section icons).
 import type { ReactElement } from 'react';
 
-const PATHS = {
+export const ICON_PATHS = {
   home: <><path d="M3 11l9-7 9 7" /><path d="M5 10v10h14V10" /><path d="M10 20v-6h4v6" /></>,
   settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></>,
   commands: <><rect x="2" y="4" width="20" height="16" rx="3" /><path d="M6.5 10l3 2.5-3 2.5M12.5 15.5h5" /></>,
@@ -34,14 +34,15 @@ const PATHS = {
   x: <><path d="M6 6l12 12M18 6L6 18" /></>,
   send: <><path d="M21 3L10 14" /><path d="M21 3l-7 18-4-7-7-4z" /></>,
   arrowLeft: <><path d="M19 12H5M11 18l-6-6 6-6" /></>,
+  arrowRight: <><path d="M5 12h14M13 6l6 6-6 6" /></>,
 } satisfies Record<string, ReactElement>;
 
-export type IconName = keyof typeof PATHS;
+export type IconName = keyof typeof ICON_PATHS;
 
 export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {PATHS[name]}
+      {ICON_PATHS[name]}
     </svg>
   );
 }
