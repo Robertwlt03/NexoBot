@@ -8,8 +8,9 @@ import { api } from './api';
 const CACHE_KEY = 'nexo.dashboardTheme';
 
 export function applyTheme(theme: DashboardTheme) {
-  const root = document.documentElement.style;
-  for (const [name, value] of Object.entries(themeVariables(theme))) root.setProperty(name, value);
+  const root = document.documentElement;
+  root.dataset.mode = theme.mode;
+  for (const [name, value] of Object.entries(themeVariables(theme))) root.style.setProperty(name, value);
 }
 
 export function cachedTheme(): DashboardTheme {
@@ -66,8 +67,8 @@ export function ThemeProvider({ loggedIn, children }: { loggedIn: boolean; child
 
 export const useTheme = () => useContext(ThemeContext);
 
-/** Chart colours following the member's theme: single series, multi-series palette and heatmap ramp. */
+/** Chart colours following the member's theme: single series, multi-series palette and heatmap ramp (light mode: low = light). */
 export function useChartTheme() {
   const { theme } = useTheme();
-  return useMemo(() => ({ primary: chartPrimary(theme.primary), palette: chartPalette(theme), heat: heatRamp(theme.primary) }), [theme]);
+  return useMemo(() => ({ primary: chartPrimary(theme.primary), palette: chartPalette(theme), heat: theme.mode === 'light' ? heatRamp(theme.primary).reverse() : heatRamp(theme.primary) }), [theme]);
 }

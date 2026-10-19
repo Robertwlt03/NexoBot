@@ -19,7 +19,7 @@ export const SERIES_COLORS = ['#8676f5', '#2f9fbe', '#bb8a2c', '#cf5f7c'] as con
  * validate_palette.js --ordinal --mode dark --surface #15151b (monotone L, steps ≥ 0.06, darkest step 2.11:1).
  */
 export const HEAT_COLORS = ['#4a3f96', '#5d50bd', '#7565df', '#937ff5', '#b9adff'] as const;
-const EMPTY_CELL = 'rgba(255,255,255,.05)';
+const EMPTY_CELL = 'rgb(var(--ov) / .06)';
 
 export interface ChartSeries { name: string; values: (number | null)[] }
 
@@ -176,7 +176,7 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
             onKeyDown={onKey} onFocus={() => setActive((current) => current ?? n - 1)} onBlur={() => setActive(null)}>
             {ticks.map((tick) => (
               <g key={tick}>
-                <line x1={PAD.left} x2={width - PAD.right} y1={y(tick)} y2={y(tick)} stroke="rgba(255,255,255,.06)" />
+                <line x1={PAD.left} x2={width - PAD.right} y1={y(tick)} y2={y(tick)} style={{ stroke: 'rgb(var(--ov) / .07)' }} />
                 <text x={PAD.left - 8} y={y(tick)} dy="0.32em" textAnchor="end" fontSize="11" fill="var(--text-faint)">{compact.format(tick)}</text>
               </g>
             ))}
@@ -185,7 +185,7 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
             ))}
 
             {kind === 'line' && active !== null && (
-              <line x1={xCenter(active)} x2={xCenter(active)} y1={PAD.top} y2={PAD.top + plotH} stroke="rgba(255,255,255,.28)" />
+              <line x1={xCenter(active)} x2={xCenter(active)} y1={PAD.top} y2={PAD.top + plotH} style={{ stroke: 'rgb(var(--ov) / .3)' }} />
             )}
 
             {kind === 'line' && colored.map((s, si) => {
@@ -230,7 +230,7 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
               </g>
             )}
 
-            <line x1={PAD.left} x2={width - PAD.right} y1={y(lo)} y2={y(lo)} stroke="rgba(255,255,255,.16)" />
+            <line x1={PAD.left} x2={width - PAD.right} y1={y(lo)} y2={y(lo)} style={{ stroke: 'rgb(var(--ov) / .18)' }} />
             {/* Hit layer: the whole plot height of a day, wider than any mark. */}
             <rect x={PAD.left} y={PAD.top} width={plotW} height={plotH} fill="transparent"
               onPointerMove={pick} onPointerDown={pick} onPointerLeave={() => setActive(null)} />
@@ -242,7 +242,7 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
               {colored.map((s, si) => (
                 <div key={s.name} className="flex items-center gap-2">
                   <svg width="12" height="4" aria-hidden="true"><line x1="0" x2="12" y1="2" y2="2" stroke={palette[si]} strokeWidth="2" strokeLinecap="round" /></svg>
-                  <b className="tabular-nums text-[#f2f3f5]">{s.values[active] === null ? '–' : format(s.values[active] ?? 0)}</b>
+                  <b className="tabular-nums text-ink">{s.values[active] === null ? '–' : format(s.values[active] ?? 0)}</b>
                   <span className="text-mute">{s.name}</span>
                 </div>
               ))}
@@ -390,7 +390,7 @@ export function Heatmap({ title, description, rows, cols, values, cellLabel, uni
             </svg>
             {active !== null && (
               <Tooltip left={Math.min(svgW - 80, Math.max(80, HEAT_LABEL_W + active[1] * cellW + cellW / 2))} top={(active[0] + 1) * cellH + 4}>
-                <b className="tabular-nums text-[#f2f3f5]">{format(at(active[0], active[1]))}</b> <span className="text-mute">{unit}</span>
+                <b className="tabular-nums text-ink">{format(at(active[0], active[1]))}</b> <span className="text-mute">{unit}</span>
                 <div className="text-mute">{cellLabel(active[0], active[1])}</div>
               </Tooltip>
             )}
@@ -473,7 +473,7 @@ export function HorizontalBars({ title, description, items, unit, ordinal, forma
                     onClick={item.onSelect}>{item.label}</button>
                 ) : <span className="min-w-0 truncate text-body">{item.label}</span>}
                 <span className="shrink-0">
-                  <b className="tabular-nums text-[#f2f3f5]">{format(item.value)}</b>
+                  <b className="tabular-nums text-ink">{format(item.value)}</b>
                   {item.detail && <span className="text-mute"> · {item.detail}</span>}
                 </span>
               </div>

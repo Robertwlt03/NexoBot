@@ -96,11 +96,12 @@ export async function readDashboardTheme(userId: string): Promise<DashboardTheme
   return normalizeTheme(result.rows[0]?.theme);
 }
 
-/** Validates (preset id or two #RRGGBB colours) and saves; returns the stored theme. */
+/** Validates (preset id or two #RRGGBB colours, optional mode) and saves; returns the stored theme. */
 export async function writeDashboardTheme(userId: string, input: unknown): Promise<DashboardTheme> {
   const raw = body(input);
   if (raw.preset !== 'custom' && !THEME_PRESETS.some((preset) => preset.id === raw.preset)) throw badRequest('Unbekannte Farbvorlage.');
   if (raw.preset === 'custom' && !(isHexColor(raw.primary) && isHexColor(raw.secondary))) throw badRequest('Farben im Format #RRGGBB erwartet.');
+  if (raw.mode !== undefined && raw.mode !== 'dark' && raw.mode !== 'light') throw badRequest('Modus muss „dark“ oder „light“ sein.');
   const theme = normalizeTheme(raw);
   await requirePool().query(
     `INSERT INTO ${T.user_profiles} (user_id, settings, updated_at) VALUES ($1, jsonb_build_object('dashboardTheme', $2::jsonb), NOW())

@@ -6,7 +6,7 @@ import type { ApiGuildSummary } from '../../../src/web/apiTypes';
 import { useApi, UserContext } from '../api';
 import { GuildIcon, UserPanel } from '../components/Layout';
 import { NexoLogo } from '../components/NexoLogo';
-import { PageBackdrop } from '../components/Backdrop';
+import { PageBackdrop, photoFor } from '../components/Backdrop';
 import { Empty, Notice, PageHeader, Spinner } from '../components/ui';
 import { Icon } from '../icons';
 
@@ -43,7 +43,7 @@ export function ServerPicker() {
         </div>
       </header>
 
-      <PageBackdrop motif="orbits" />
+      <PageBackdrop photo={photoFor('/servers')} />
       <main className="relative mx-auto max-w-6xl px-5 pb-24 pt-12 md:px-8">
         <div className="relative">
           <PageHeader

@@ -20,18 +20,19 @@
   --color-dc-text: #dbdee1;
   --color-dc-muted: #949ba4;
 
-  /* Dashboard (premium dark). One accent; status colours only for state. Mirrors :root in styles.css. */
+  /* Dashboard (warm dark default). One accent; status colours only for state. styles.css redefines the
+     neutrals and status colours per mode ([data-mode="light"]), so these are only the dark defaults. */
   --font-sans: "Inter Variable", "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --color-rail: #08080b;
-  --color-canvas: #0b0b0f;
-  --color-panel: #0f0f14;
-  --color-surface: #15151b;
-  --color-raised: #1c1c24;
-  --color-field: #0e0e13;
-  --color-ink: #f4f4f6;
-  --color-body: #c4c4cc;
-  --color-mute: #8b8b97;
-  --color-faint: #63636e;
+  --color-rail: #0f0c0a;
+  --color-canvas: #15110e;
+  --color-panel: #1a1512;
+  --color-surface: #211b17;
+  --color-raised: #2a231e;
+  --color-field: #18130f;
+  --color-ink: #f7efe6;
+  --color-body: #d9cec2;
+  --color-mute: #a6978a;
+  --color-faint: #786b60;
   --color-accent: #a99bff;
   --color-accent-strong: #8b7bff;
   --color-accent-ink: #15112b;

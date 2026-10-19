@@ -9,7 +9,8 @@ export default function BlackMarketPage() {
     <>
       <PageHeader kicker="Mein Profil" title="Black Market" description="Jede Woche eine Handvoll mythischer Artikel, die es sonst nirgends gibt. Montags um Mitternacht ist alles wieder weg." />
       {!blackMarket ? <Spinner /> : (
-        <>
+        // The black market stays dark in both modes.
+        <div data-mode="dark">
           <section className="relative mb-8 overflow-hidden rounded-[20px] border border-rose-500/15 bg-[#060608] p-6 md:p-8">
             <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,rgba(255,255,255,.028)_0_1px,transparent_1px_3px)]" />
             <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-[.09] mix-blend-overlay" aria-hidden="true">
@@ -30,7 +31,7 @@ export default function BlackMarketPage() {
             </div>
           </section>
           <ItemBrowser listings={blackMarket.listings} variant="blackmarket" filters={false} />
-        </>
+        </div>
       )}
     </>
   );

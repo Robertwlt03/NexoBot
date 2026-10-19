@@ -9,7 +9,7 @@ import { num } from './api';
 
 // ---------- Glyphs (24px line icons; the badge glyphs double as member-area icons) ----------
 
-export const GLYPHS = {
+const GLYPHS = {
   star: <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" />,
   crown: <path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" />,
   flame: <path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.4 1.2-3.8 2.5-5 .3 1.8 1 2.8 2 3.2C11 9 11 6 12 3z" />,
@@ -238,7 +238,7 @@ function previewOf(item: CosmeticItem): ReactNode {
 /** Mini preview tile of what an item changes (drawn with CSS/SVG). */
 export function ItemVisual({ item, className = '' }: { item: CosmeticItem; className?: string }) {
   return (
-    <div className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-[#101015] ${className}`}>
+    <div data-mode="dark" className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-[#101015] ${className}`}>
       {previewOf(item)}
     </div>
   );

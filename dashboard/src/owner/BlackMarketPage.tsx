@@ -12,7 +12,7 @@ import { Glyph, ItemVisual, Kristalle, RARITY_CLASS, RarityLabel } from '../me/v
 function Tile({ item, selected, onClick }: { item: CosmeticItem; selected?: boolean; onClick?: () => void }) {
   const Tag = onClick ? 'button' : 'div';
   return (
-    <Tag type={onClick ? 'button' : undefined} onClick={onClick} aria-pressed={onClick ? selected : undefined}
+    <Tag type={onClick ? 'button' : undefined} onClick={onClick} aria-pressed={onClick ? selected : undefined} data-mode="dark"
       className={`relative flex flex-col rounded-2xl border bg-[#0c0c10] p-2.5 text-left font-[inherit] text-body ${onClick ? 'cursor-pointer' : ''} ${selected ? 'border-accent ring-2 ring-accent/30' : RARITY_CLASS[item.rarity].border}`}>
       <ItemVisual item={item} />
       <div className="px-1 pt-2.5">

@@ -157,7 +157,8 @@ export function Storefront({ listings, events, upcoming }: { listings: ShopListi
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-[24px] border border-white/[.07]">
+      {/* Showcase banner: dark in both modes, like a lit shop window. */}
+      <section data-mode="dark" className="relative overflow-hidden rounded-[24px] border border-white/[.07]">
         <div className="absolute inset-0" style={heroBackground?.slot === 'background' ? backgroundStyle(heroBackground.data) : { background: 'var(--hero-glow), var(--brand-gradient)' }} />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(9,9,12,.94)_0%,rgba(9,9,12,.7)_45%,rgba(9,9,12,.15)_100%)]" />
         <div className="relative grid items-center gap-6 p-6 pb-24 md:grid-cols-[1fr_minmax(0,420px)] md:p-9 md:pb-28">

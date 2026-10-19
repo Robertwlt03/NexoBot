@@ -2,11 +2,15 @@
 // colour (or a preset); every other tone the design system needs is derived here so contrast and the calm premium
 // look survive any choice. Import-free: shared by the API (validation) and the dashboard (applying the theme).
 
+export type ThemeMode = 'dark' | 'light';
+
 export interface DashboardTheme {
   /** Preset id, or 'custom' for freely chosen colours. */
   preset: string;
   primary: string;
   secondary: string;
+  /** Warm dark (default) or warm light surfaces. */
+  mode: ThemeMode;
 }
 
 export interface ThemePreset { id: string; name: string; primary: string; secondary: string }
@@ -25,7 +29,7 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
   { id: 'graphit', name: 'Graphit', primary: '#e4e4e7', secondary: '#a1a1aa' },
 ];
 
-export const DEFAULT_THEME: DashboardTheme = { preset: 'nexo', primary: THEME_PRESETS[0].primary, secondary: THEME_PRESETS[0].secondary };
+export const DEFAULT_THEME: DashboardTheme = { preset: 'nexo', primary: THEME_PRESETS[0].primary, secondary: THEME_PRESETS[0].secondary, mode: 'dark' };
 
 const HEX = /^#[0-9a-f]{6}$/i;
 export const isHexColor = (value: unknown): value is string => typeof value === 'string' && HEX.test(value);
@@ -34,19 +38,23 @@ export const isHexColor = (value: unknown): value is string => typeof value === 
 export function normalizeTheme(raw: unknown): DashboardTheme {
   if (!raw || typeof raw !== 'object') return { ...DEFAULT_THEME };
   const value = raw as Record<string, unknown>;
+  const mode: ThemeMode = value.mode === 'light' ? 'light' : 'dark';
   const preset = THEME_PRESETS.find((p) => p.id === value.preset);
-  if (preset && value.preset !== 'custom') return { preset: preset.id, primary: preset.primary, secondary: preset.secondary };
+  if (preset && value.preset !== 'custom') return { preset: preset.id, primary: preset.primary, secondary: preset.secondary, mode };
   if (isHexColor(value.primary) && isHexColor(value.secondary)) {
-    return { preset: 'custom', primary: value.primary.toLowerCase(), secondary: value.secondary.toLowerCase() };
+    return { preset: 'custom', primary: value.primary.toLowerCase(), secondary: value.secondary.toLowerCase(), mode };
   }
-  return { ...DEFAULT_THEME };
+  return { ...DEFAULT_THEME, mode };
 }
 
 // ---------- Colour math ----------
 
 type Rgb = [number, number, number];
-const SURFACE = '#15151b';
-const CANVAS = '#0b0b0f';
+// Surfaces of both modes (mirror styles.css).
+const SURFACE = '#211b17';
+const CANVAS = '#15110e';
+const LIGHT_SURFACE = '#fffaf3';
+const LIGHT_CANVAS = '#f7f1e8';
 
 function rgb(hex: string): Rgb {
   const n = Number.parseInt(hex.slice(1), 16);
@@ -80,27 +88,41 @@ export function contrast(a: string, b: string): number {
 
 // ---------- Derived tokens ----------
 
+/** Darkens `color` (toward warm black) until it reaches `ratio` contrast on `bg`. */
+function darkenUntil(color: string, bg: string, ratio: number): string {
+  for (let t = 0; t <= 1; t += 0.04) {
+    const next = mix(color, '#1a120c', t);
+    if (contrast(next, bg) >= ratio) return next;
+  }
+  return '#1a120c';
+}
+
 /** Everything the dashboard needs, as CSS custom properties. */
 export function themeVariables(theme: DashboardTheme): Record<string, string> {
-  const { primary, secondary } = theme;
+  const light = theme.mode === 'light';
+  // On the light surfaces the chosen colours are darkened just enough to stay readable (UI parts 3:1, text 4.8:1).
+  const primary = light ? darkenUntil(theme.primary, LIGHT_SURFACE, 3) : theme.primary;
+  const secondary = light ? darkenUntil(theme.secondary, LIGHT_SURFACE, 2.2) : theme.secondary;
+  const surface = light ? LIGHT_SURFACE : SURFACE;
+  const canvas = light ? LIGHT_CANVAS : CANVAS;
   const ink = contrast(primary, '#ffffff') >= 4.5 ? '#ffffff' : mix(primary, '#000000', 0.86);
   const strong = mix(primary, '#000000', 0.18);
-  const tint = mix(primary, '#ffffff', 0.45);
+  const tint = light ? darkenUntil(theme.primary, LIGHT_SURFACE, 4.8) : mix(primary, '#ffffff', 0.45);
   const values: Record<string, string> = {
     '--accent': primary,
     '--accent-strong': strong,
-    '--accent-hover': mix(primary, '#ffffff', 0.18),
+    '--accent-hover': mix(primary, '#ffffff', light ? 0.12 : 0.18),
     '--accent-ink': ink,
-    '--accent-soft': rgba(primary, 0.12),
-    '--accent-line': rgba(primary, 0.28),
-    '--accent-glow': rgba(primary, 0.6),
+    '--accent-soft': rgba(primary, light ? 0.1 : 0.12),
+    '--accent-line': rgba(primary, light ? 0.32 : 0.28),
+    '--accent-glow': rgba(primary, light ? 0.4 : 0.6),
     '--accent-text': tint,
-    '--accent-text-muted': mix(primary, '#9a9aa6', 0.45),
+    '--accent-text-muted': mix(tint, light ? '#7d6e62' : '#a6978a', 0.45),
     '--accent-2': secondary,
     '--ring': `0 0 0 3px ${rgba(primary, 0.22)}`,
-    '--brand-gradient': `linear-gradient(135deg, ${mix(primary, CANVAS, 0.74)} 0%, ${mix(primary, CANVAS, 0.86)} 45%, ${SURFACE} 100%)`,
-    '--hero-glow': `radial-gradient(120% 140% at 100% 0%, ${rgba(strong, 0.32)}, transparent 55%), radial-gradient(90% 120% at 0% 100%, ${rgba(secondary, 0.1)}, transparent 60%)`,
-    '--chart-primary': chartPrimary(primary),
+    '--brand-gradient': `linear-gradient(135deg, ${mix(primary, canvas, light ? 0.8 : 0.74)} 0%, ${mix(primary, canvas, light ? 0.9 : 0.86)} 45%, ${surface} 100%)`,
+    '--hero-glow': `radial-gradient(120% 140% at 100% 0%, ${rgba(strong, light ? 0.16 : 0.32)}, transparent 55%), radial-gradient(90% 120% at 0% 100%, ${rgba(secondary, light ? 0.08 : 0.1)}, transparent 60%)`,
+    '--chart-primary': chartPrimary(theme.primary),
   };
   // Tailwind tokens (tailwind.css) mirror the same values.
   values['--color-accent'] = primary;
@@ -236,9 +258,9 @@ export function heatRamp(primary: string): string[] {
 /** Contrast notes for the editor (German). Empty when everything reads well. */
 export function themeWarnings(theme: DashboardTheme): string[] {
   const notes: string[] = [];
-  if (contrast(theme.primary, SURFACE) < 3) notes.push('Die Primärfarbe ist auf dunklem Grund schwer zu erkennen – nimm einen helleren Ton.');
+  if (theme.mode === 'dark' && contrast(theme.primary, SURFACE) < 3) notes.push('Die Primärfarbe ist auf dunklem Grund schwer zu erkennen – nimm einen helleren Ton.');
   const vars = themeVariables(theme);
   if (contrast(theme.primary, vars['--accent-ink']) < 4.5) notes.push('Text auf Buttons in der Primärfarbe ist schwer lesbar – nimm einen helleren oder dunkleren Ton.');
-  if (contrast(theme.secondary, SURFACE) < 2) notes.push('Die Sekundärfarbe verschwindet fast im Hintergrund.');
+  if (theme.mode === 'dark' && contrast(theme.secondary, SURFACE) < 2) notes.push('Die Sekundärfarbe verschwindet fast im Hintergrund.');
   return notes;
 }

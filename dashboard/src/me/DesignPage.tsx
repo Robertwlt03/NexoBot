@@ -1,7 +1,7 @@
 // "Dashboard-Design": the member's own primary and secondary colour (preset or custom), previewed live across the
 // whole dashboard while editing and saved on the Discord account (applies on every device).
 import { useEffect, useState } from 'react';
-import { DEFAULT_THEME, THEME_PRESETS, themeWarnings, type DashboardTheme } from '../../../src/shared/theme';
+import { DEFAULT_THEME, THEME_PRESETS, themeWarnings, type DashboardTheme, type ThemeMode } from '../../../src/shared/theme';
 import { Badge, Card, ColorInput, Field, Notice, PageHeader, SaveBar, Switch, Tabs } from '../components/ui';
 import { Sparkline } from '../components/charts';
 import { useTheme } from '../theme';
@@ -25,6 +25,31 @@ function PresetTile({ preset, selected, onSelect }: { preset: (typeof THEME_PRES
   );
 }
 
+const MODES: { id: ThemeMode; label: string; hint: string; canvas: string; card: string; line: string; ink: string }[] = [
+  { id: 'dark', label: 'Dunkel', hint: 'Warmes Braun-Schwarz, ruhig am Abend', canvas: '#15110e', card: '#211b17', line: '#3a312a', ink: '#f7efe6' },
+  { id: 'light', label: 'Hell', hint: 'Creme und Papier, angenehm am Tag', canvas: '#f7f1e8', card: '#fffaf3', line: '#e6dacb', ink: '#2c221b' },
+];
+
+function ModeTile({ mode, selected, onSelect }: { mode: (typeof MODES)[number]; selected: boolean; onSelect: () => void }) {
+  return (
+    <button type="button" onClick={onSelect} aria-pressed={selected}
+      className={`flex cursor-pointer items-center gap-4 rounded-2xl border bg-surface p-3 text-left transition hover:border-white/20 ${selected ? 'border-accent ring-1 ring-accent' : 'border-white/[.06]'}`}>
+      {/* Mini page in the mode's own colours. */}
+      <span className="relative h-16 w-24 shrink-0 overflow-hidden rounded-xl" style={{ background: mode.canvas, border: `1px solid ${mode.line}` }}>
+        <span className="absolute inset-x-0 top-0 h-6" style={{ background: `linear-gradient(90deg, ${mode.canvas}, transparent), linear-gradient(135deg, #c98b4a, #7a4a2a)` }} />
+        <span className="absolute bottom-2 left-2 right-2 h-6 rounded-md" style={{ background: mode.card, border: `1px solid ${mode.line}` }} />
+        <span className="absolute left-2 top-2 h-1.5 w-8 rounded-full" style={{ background: mode.ink }} />
+        <span className="absolute bottom-4 left-4 h-1.5 w-6 rounded-full bg-accent" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[14.5px] font-medium text-ink">{mode.label}</span>
+        <span className="block text-[12.5px] text-mute">{mode.hint}</span>
+      </span>
+      {selected && <span className="text-accent"><Glyph name="check" size={18} /></span>}
+    </button>
+  );
+}
+
 export default function DesignPage() {
   const { saved, preview, save } = useTheme();
   const form = useDraft<DashboardTheme>(saved, save);
@@ -42,13 +67,21 @@ export default function DesignPage() {
   return (
     <>
       <PageHeader kicker="Mein Profil" title="Dashboard-Design"
-        description="Wähle deine eigenen Farben. Sie gelten nur für dich – auf allen Geräten, auf denen du dich mit Discord anmeldest." />
+        description="Hell oder dunkel und deine eigenen Farben. Gilt nur für dich – auf allen Geräten, auf denen du dich mit Discord anmeldest." />
 
-      <Card title="Vorlagen" description="Abgestimmte Farbpaare, die auf dem dunklen Design immer gut aussehen.">
+      <Card title="Erscheinungsbild" description="Gemütlich dunkel für den Abend oder warm und hell wie Papier.">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {MODES.map((mode) => (
+            <ModeTile key={mode.id} mode={mode} selected={value.mode === mode.id} onSelect={() => pick({ ...value, mode: mode.id })} />
+          ))}
+        </div>
+      </Card>
+
+      <Card title="Vorlagen" description="Abgestimmte Farbpaare, die in beiden Erscheinungsbildern gut aussehen.">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
           {THEME_PRESETS.map((preset) => (
             <PresetTile key={preset.id} preset={preset} selected={value.preset === preset.id}
-              onSelect={() => pick({ preset: preset.id, primary: preset.primary, secondary: preset.secondary })} />
+              onSelect={() => pick({ ...value, preset: preset.id, primary: preset.primary, secondary: preset.secondary })} />
           ))}
         </div>
       </Card>
@@ -61,10 +94,10 @@ export default function DesignPage() {
               <Field label="Sekundärfarbe"><ColorInput value={value.secondary} onChange={(secondary) => pick({ ...value, preset: 'custom', secondary })} /></Field>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => pick({ preset: 'custom', primary: value.secondary, secondary: value.primary })}>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => pick({ ...value, preset: 'custom', primary: value.secondary, secondary: value.primary })}>
                 <Glyph name="shuffle" size={14} /> Tauschen
               </button>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => pick({ ...DEFAULT_THEME })} disabled={value.preset === DEFAULT_THEME.preset}>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => pick({ ...DEFAULT_THEME, mode: value.mode })} disabled={value.preset === DEFAULT_THEME.preset}>
                 Auf Nexo-Standard zurücksetzen
               </button>
             </div>
