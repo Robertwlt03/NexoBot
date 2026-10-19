@@ -3,20 +3,18 @@ import { Link } from 'react-router';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import type { ApiGuildSummary } from '../../../src/web/apiTypes';
-import type { MeProfileResponse } from '../../../src/web/dto/profile';
 import { useApi, UserContext } from '../api';
 import { GuildIcon, UserPanel } from '../components/Layout';
 import { NexoLogo } from '../components/NexoLogo';
+import { PageBackdrop } from '../components/Backdrop';
 import { Empty, Notice, PageHeader, Spinner } from '../components/ui';
 import { Icon } from '../icons';
-import { Kristalle } from '../me/visuals';
 
 gsap.registerPlugin(useGSAP);
 
 export function ServerPicker() {
   const user = useContext(UserContext);
   const { data, error, loading, reload } = useApi<ApiGuildSummary[]>('/guilds');
-  const profile = useApi<MeProfileResponse>('/me/profile').data;
   const guilds = data ?? [];
   const root = useRef<HTMLDivElement>(null);
   const refresh = async () => { await fetch('/dashboard/api/guilds?refresh=1', { credentials: 'same-origin' }); reload(); };
@@ -34,7 +32,7 @@ export function ServerPicker() {
   const active = guilds.filter((g) => g.botPresent).length;
 
   return (
-    <div ref={root} className="min-h-full bg-canvas">
+    <div ref={root} className="relative min-h-full bg-canvas">
       <header className="sticky top-0 z-20 border-b border-white/[.05] bg-canvas/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-5 md:px-8">
           <Link to="/servers" className="flex items-center gap-2.5 text-ink hover:no-underline">
@@ -45,39 +43,23 @@ export function ServerPicker() {
         </div>
       </header>
 
+      <PageBackdrop motif="orbits" />
       <main className="relative mx-auto max-w-6xl px-5 pb-24 pt-12 md:px-8">
-        <div className="pointer-events-none absolute -top-32 left-1/2 h-64 w-[640px] -translate-x-1/2 rounded-full bg-accent/[.07] blur-[120px]" />
         <div className="relative">
           <PageHeader
             kicker="Serverauswahl"
             title={`Hey ${user?.globalName ?? user?.username ?? ''}, wo legen wir los?`}
             description={data && guilds.length === 0
-              ? 'Dein Profil, den Shop und die Ranglisten kannst du immer nutzen – ganz ohne eigenen Server.'
+              ? 'Dein Profil, den Shop und die Ranglisten öffnest du oben rechts über deinen Namen – ganz ohne eigenen Server.'
               : <>Hier siehst du alle Server, auf denen du „Server verwalten“ darfst.{data ? ` Nexo ist auf ${active} von ${guilds.length} aktiv.` : ''}</>}
             actions={<button className="btn btn-secondary" onClick={refresh}><Icon name="refresh" size={16} /> Aktualisieren</button>}
           />
         </div>
 
-        {/* Member area: open to everyone, also without a manageable server. The page's one hero card. */}
-        <Link to="/me" className="card card-hero group relative mb-8 flex flex-wrap items-center gap-5 text-body hover:no-underline">
-          {user && <img src={user.avatarUrl} alt="" className="h-16 w-16 rounded-2xl ring-1 ring-white/15" />}
-          <div className="min-w-0 flex-1">
-            <h2 className="text-[20px]">Mein Profil</h2>
-            <p className="mt-1 text-[14px] text-[#cbc4f0]">Profilkarte gestalten, Kristalle verdienen und im Shop ausgeben, Ranglisten und Erfolge.</p>
-            {profile && (
-              <div className="mt-3 flex flex-wrap gap-2 text-[12.5px]">
-                <span className="rounded-full border border-white/10 bg-white/[.05] px-3 py-1 text-ink"><Kristalle amount={profile.wallet.balance} /></span>
-                {profile.daily.available && <span className="rounded-full border border-white/10 bg-white/[.05] px-3 py-1 text-body"><span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-pos align-middle" />Tagesbonus bereit</span>}
-              </div>
-            )}
-          </div>
-          <span className="btn btn-primary">Profil öffnen</span>
-        </Link>
-
         <div className="relative mt-4">
           {loading && !data && <div className="center"><Spinner /></div>}
           {error && <Notice tone="danger">{error}</Notice>}
-          {data && guilds.length === 0 && <Empty title="Keine Server zum Verwalten">Server erscheinen hier, sobald du auf einem die Berechtigung „Server verwalten“ hast. Bis dahin: ab in dein Profil!</Empty>}
+          {data && guilds.length === 0 && <Empty title="Keine Server zum Verwalten">Server erscheinen hier, sobald du auf einem die Berechtigung „Server verwalten“ hast. Dein Profil erreichst du jederzeit oben rechts über deinen Namen.</Empty>}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {guilds.map((guild) => (
               <article key={guild.id} className="js-server group relative overflow-hidden rounded-[20px] border border-white/[.06] bg-surface transition duration-300 hover:-translate-y-0.5 hover:border-white/[.14]">
