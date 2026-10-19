@@ -67,8 +67,8 @@ function DailyCard() {
   return (
     <section ref={root} className="card card-hero relative !p-5">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[13px] text-[#cfc6ff]">Tagesbonus</span>
-        <span className="text-[12.5px] text-[#b7afe6]">Serie: <b className="font-medium text-ink">{daily.streak} {daily.streak === 1 ? 'Tag' : 'Tage'}</b></span>
+        <span className="text-[13px] text-accent-text">Tagesbonus</span>
+        <span className="text-[12.5px] text-[var(--accent-text-muted)]">Serie: <b className="font-medium text-ink">{daily.streak} {daily.streak === 1 ? 'Tag' : 'Tage'}</b></span>
       </div>
       <div className="relative mt-3 flex items-end gap-3">
         <span className="text-[36px] font-light leading-none tracking-[-0.03em] text-ink"><Kristalle amount={daily.nextAmount} large /></span>
@@ -79,7 +79,7 @@ function DailyCard() {
           <span key={i} className={`h-2 flex-1 origin-bottom rounded-full ${i < Math.min(daily.streak, STREAK_DAYS) ? 'bg-accent' : 'bg-white/[.08]'}`} />
         ))}
       </div>
-      <p className="mt-2 text-[12px] text-[#b7afe6]">+{DAILY_BONUS.perStreakDay} pro Tag in Folge, bis +{DAILY_BONUS.maxStreakBonus}</p>
+      <p className="mt-2 text-[12px] text-[var(--accent-text-muted)]">+{DAILY_BONUS.perStreakDay} pro Tag in Folge, bis +{DAILY_BONUS.maxStreakBonus}</p>
       <div className="mt-4">
         {daily.available
           ? <button type="button" className="btn btn-primary w-full" disabled={busy} onClick={claim}>{busy ? 'Einen Moment …' : 'Bonus abholen'}</button>

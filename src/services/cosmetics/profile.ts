@@ -7,6 +7,7 @@ import {
 } from '../../shared/cosmetics.js';
 import { HttpError, badRequest, body, bool } from '../../web/http.js';
 import { T, cosmeticsPool, requirePool } from './db.js';
+import { DEFAULT_THEME, THEME_PRESETS, isHexColor, normalizeTheme, type DashboardTheme } from '../../shared/theme.js';
 
 /** Equipped key per single-item slot (badges are a list). */
 type SingleSlot = Exclude<CosmeticSlot, 'badge'>;
@@ -77,10 +78,34 @@ export async function readProfileSettings(userId: string): Promise<UserProfileSe
   return normalizeSettings(result.rows[0]?.settings);
 }
 
+/** Replaces the cosmetics keys; other keys in the same JSON (the dashboard theme) are kept. */
 export async function writeProfileSettings(userId: string, settings: UserProfileSettings): Promise<void> {
   await requirePool().query(
     `INSERT INTO ${T.user_profiles} (user_id, settings, updated_at) VALUES ($1, $2::jsonb, NOW())
-     ON CONFLICT (user_id) DO UPDATE SET settings = EXCLUDED.settings, updated_at = NOW()`,
+     ON CONFLICT (user_id) DO UPDATE SET settings = ${T.user_profiles}.settings || EXCLUDED.settings, updated_at = NOW()`,
     [userId, JSON.stringify(settings)],
   );
+}
+
+// ---------- Personal dashboard colours (stored next to the cosmetics as settings.dashboardTheme) ----------
+
+export async function readDashboardTheme(userId: string): Promise<DashboardTheme> {
+  const pool = cosmeticsPool();
+  if (!pool) return { ...DEFAULT_THEME };
+  const result = await pool.query<{ theme: unknown }>(`SELECT settings->'dashboardTheme' AS theme FROM ${T.user_profiles} WHERE user_id = $1`, [userId]);
+  return normalizeTheme(result.rows[0]?.theme);
+}
+
+/** Validates (preset id or two #RRGGBB colours) and saves; returns the stored theme. */
+export async function writeDashboardTheme(userId: string, input: unknown): Promise<DashboardTheme> {
+  const raw = body(input);
+  if (raw.preset !== 'custom' && !THEME_PRESETS.some((preset) => preset.id === raw.preset)) throw badRequest('Unbekannte Farbvorlage.');
+  if (raw.preset === 'custom' && !(isHexColor(raw.primary) && isHexColor(raw.secondary))) throw badRequest('Farben im Format #RRGGBB erwartet.');
+  const theme = normalizeTheme(raw);
+  await requirePool().query(
+    `INSERT INTO ${T.user_profiles} (user_id, settings, updated_at) VALUES ($1, jsonb_build_object('dashboardTheme', $2::jsonb), NOW())
+     ON CONFLICT (user_id) DO UPDATE SET settings = ${T.user_profiles}.settings || jsonb_build_object('dashboardTheme', $2::jsonb), updated_at = NOW()`,
+    [userId, JSON.stringify(theme)],
+  );
+  return theme;
 }

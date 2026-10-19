@@ -6,6 +6,7 @@ import type { KeyboardEvent, PointerEvent, ReactNode } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Card, Empty, TableWrap } from './ui';
+import { useChartTheme } from '../theme';
 
 gsap.registerPlugin(useGSAP);
 
@@ -89,6 +90,9 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
   const { ref, width } = useWidth();
   const svg = useRef<SVGSVGElement>(null);
   const colored = series.slice(0, SERIES_COLORS.length);
+  // One series follows the member's primary colour; several use the fixed, validated categorical palette.
+  const themed = useChartTheme();
+  const palette: readonly string[] = colored.length === 1 ? [themed.primary] : SERIES_COLORS;
 
   const n = labels.length;
   const plotW = width - PAD.left - PAD.right;
@@ -146,7 +150,7 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
           {colored.map((s, i) => (
             <li key={s.name} className="flex items-center gap-1.5">
               <svg width="14" height="10" aria-hidden="true">
-                {kind === 'line' ? <line x1="0" x2="14" y1="5" y2="5" stroke={SERIES_COLORS[i]} strokeWidth="2" /> : <rect width="10" height="10" rx="2" fill={SERIES_COLORS[i]} />}
+                {kind === 'line' ? <line x1="0" x2="14" y1="5" y2="5" stroke={palette[i]} strokeWidth="2" /> : <rect width="10" height="10" rx="2" fill={palette[i]} />}
               </svg>
               {s.name}
             </li>
@@ -189,9 +193,9 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
                 .reduce<string>((path, point, i, all) => point === null ? path : `${path}${i === 0 || all[i - 1] === null ? 'M' : 'L'}${point}`, '');
               return (
                 <g key={s.name}>
-                  <path className="js-line" d={d} fill="none" stroke={SERIES_COLORS[si]} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+                  <path className="js-line" d={d} fill="none" stroke={palette[si]} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
                   {active !== null && s.values[active] !== null && (
-                    <circle cx={xCenter(active)} cy={y(s.values[active] ?? 0)} r="4" fill={SERIES_COLORS[si]} stroke="var(--bg-card)" strokeWidth="2" />
+                    <circle cx={xCenter(active)} cy={y(s.values[active] ?? 0)} r="4" fill={palette[si]} stroke="var(--bg-card)" strokeWidth="2" />
                   )}
                 </g>
               );
@@ -210,15 +214,15 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
                         if (v <= 0) return null;
                         if (kind === 'bars') {
                           const yTop = y(v);
-                          return <path key={si} d={barPath(left + si * (barW + GAP), yTop, barW, y(0) - yTop)} fill={SERIES_COLORS[si]} />;
+                          return <path key={si} d={barPath(left + si * (barW + GAP), yTop, barW, y(0) - yTop)} fill={palette[si]} />;
                         }
                         const yTop = y(base + v);
                         const yBottom = y(base) - (base > 0 ? GAP : 0);
                         base += v;
                         if (yBottom - yTop <= 0) return null;
                         return si === top
-                          ? <path key={si} d={barPath(left, yTop, barW, yBottom - yTop)} fill={SERIES_COLORS[si]} />
-                          : <rect key={si} x={left} y={yTop} width={barW} height={yBottom - yTop} fill={SERIES_COLORS[si]} />;
+                          ? <path key={si} d={barPath(left, yTop, barW, yBottom - yTop)} fill={palette[si]} />
+                          : <rect key={si} x={left} y={yTop} width={barW} height={yBottom - yTop} fill={palette[si]} />;
                       })}
                     </g>
                   );
@@ -237,7 +241,7 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
               <div className="mb-1 text-mute">{longLabels[active]}</div>
               {colored.map((s, si) => (
                 <div key={s.name} className="flex items-center gap-2">
-                  <svg width="12" height="4" aria-hidden="true"><line x1="0" x2="12" y1="2" y2="2" stroke={SERIES_COLORS[si]} strokeWidth="2" strokeLinecap="round" /></svg>
+                  <svg width="12" height="4" aria-hidden="true"><line x1="0" x2="12" y1="2" y2="2" stroke={palette[si]} strokeWidth="2" strokeLinecap="round" /></svg>
                   <b className="tabular-nums text-[#f2f3f5]">{s.values[active] === null ? '–' : format(s.values[active] ?? 0)}</b>
                   <span className="text-mute">{s.name}</span>
                 </div>
@@ -254,6 +258,7 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
 
 /** Trend line for a stat tile: de-emphasised line, the latest value as an accent dot. Decorative (the charts carry the values). */
 export function Sparkline({ values, height = 30 }: { values: (number | null)[]; height?: number }) {
+  const themed = useChartTheme();
   const { ref, width } = useWidth(40);
   const H = height;
   const gradientId = useId();
@@ -272,13 +277,13 @@ export function Sparkline({ values, height = 30 }: { values: (number | null)[]; 
       <svg width={width} height={H} className="absolute inset-0">
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor={SERIES_COLORS[0]} stopOpacity=".22" />
-            <stop offset="1" stopColor={SERIES_COLORS[0]} stopOpacity="0" />
+            <stop offset="0" stopColor={themed.primary} stopOpacity=".22" />
+            <stop offset="1" stopColor={themed.primary} stopOpacity="0" />
           </linearGradient>
         </defs>
         <path d={`${d}L${x(lastI)},${H}L${x(points[0][0])},${H}Z`} fill={`url(#${gradientId})`} />
-        <path d={d} fill="none" stroke={SERIES_COLORS[0]} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 6px ${SERIES_COLORS[0]}66)` }} />
-        <circle cx={x(lastI)} cy={y(lastV)} r="4" fill={SERIES_COLORS[0]} stroke="var(--bg-card)" strokeWidth="2" />
+        <path d={d} fill="none" stroke={themed.primary} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 6px ${themed.primary}66)` }} />
+        <circle cx={x(lastI)} cy={y(lastV)} r="4" fill={themed.primary} stroke="var(--bg-card)" strokeWidth="2" />
       </svg>
     </div>
   );
@@ -315,6 +320,7 @@ export function Heatmap({ title, description, rows, cols, values, cellLabel, uni
   unit: string;
   format?: (n: number) => string;
 }) {
+  const themed = useChartTheme();
   const [table, setTable] = useState(false);
   const [active, setActive] = useState<[number, number] | null>(null);
   const { ref, width } = useWidth(200);
@@ -376,7 +382,7 @@ export function Heatmap({ title, description, rows, cols, values, cellLabel, uni
                 return (
                   <rect key={`${row}-${c}`} className="js-cell" x={HEAT_LABEL_W + ci * cellW + HEAT_GAP / 2} y={r * cellH + HEAT_GAP / 2}
                     width={cellW - HEAT_GAP} height={cellH - HEAT_GAP} rx="3"
-                    fill={step === null ? EMPTY_CELL : HEAT_COLORS[step]}
+                    fill={step === null ? EMPTY_CELL : themed.heat[step]}
                     stroke={isActive ? 'var(--text-strong)' : 'none'} strokeWidth="1.5"
                     onPointerEnter={() => setActive([r, ci])} onPointerDown={() => setActive([r, ci])} />
                 );
@@ -391,7 +397,7 @@ export function Heatmap({ title, description, rows, cols, values, cellLabel, uni
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[13px] text-mute" aria-hidden="true">
             <span className="mr-1">0</span>
-            {[EMPTY_CELL, ...HEAT_COLORS].map((color) => <span key={color} className="h-3 w-5 rounded-[3px]" style={{ background: color }} />)}
+            {[EMPTY_CELL, ...themed.heat].map((color) => <span key={color} className="h-3 w-5 rounded-[3px]" style={{ background: color }} />)}
             <span className="ml-1 tabular-nums">{format(max)} {unit}</span>
           </div>
         </>
@@ -427,12 +433,13 @@ export function HorizontalBars({ title, description, items, unit, ordinal, forma
   emptyTitle?: string;
   emptyText?: ReactNode;
 }) {
+  const themed = useChartTheme();
   const [table, setTable] = useState(false);
   const list = useRef<HTMLOListElement>(null);
   const max = Math.max(1, ...items.map((item) => item.value));
   const color = (i: number) => ordinal && items.length > 1
-    ? HEAT_COLORS[HEAT_COLORS.length - 1 - Math.round((i / (items.length - 1)) * (HEAT_COLORS.length - 1))]
-    : SERIES_COLORS[0];
+    ? themed.heat[themed.heat.length - 1 - Math.round((i / (items.length - 1)) * (themed.heat.length - 1))]
+    : themed.primary;
 
   useGSAP(() => {
     if (table || !list.current) return;

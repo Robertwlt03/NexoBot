@@ -4,6 +4,7 @@ import { useGSAP } from '@gsap/react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import type { ApiUser } from '../../src/web/apiTypes';
 import { api, ToastContext, UserContext, type Toast } from './api';
+import { ThemeProvider } from './theme';
 import { GuildLayout } from './components/Layout';
 import { Spinner } from './components/ui';
 import { MeLayout } from './me/MeLayout';
@@ -21,6 +22,7 @@ const MEMBER_PAGES = [
   ['/me/verlauf', lazy(() => import('./me/HistoryPage'))],
   ['/me/ranglisten', lazy(() => import('./me/RankingsPage'))],
   ['/me/erfolge', lazy(() => import('./me/AchievementsPage'))],
+  ['/me/design', lazy(() => import('./me/DesignPage'))],
   ['/owner', lazy(() => import('./owner/OverviewPage'))],
   ['/owner/artikel', lazy(() => import('./owner/ItemsPage'))],
   ['/owner/events', lazy(() => import('./owner/EventsPage'))],
@@ -47,6 +49,7 @@ export function App() {
 
   return (
     <UserContext.Provider value={user}>
+      <ThemeProvider loggedIn={Boolean(user)}>
       <ToastContext.Provider value={toast}>
         <BrowserRouter basename="/dashboard">
           <Routes>
@@ -66,6 +69,7 @@ export function App() {
         </BrowserRouter>
         <div className="toasts">{toasts.map((t) => <ToastItem key={t.id} toast={t} />)}</div>
       </ToastContext.Provider>
+      </ThemeProvider>
     </UserContext.Provider>
   );
 }

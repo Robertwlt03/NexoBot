@@ -32,7 +32,7 @@ export function EventHero({ event }: { event: ShopEvent }) {
     <section className="card card-hero relative overflow-hidden">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 text-[13px] text-[#cfc6ff]">
+          <div className="flex flex-wrap items-center gap-x-2 text-[13px] text-accent-text">
             <span className="h-1.5 w-1.5 rounded-full bg-pos shadow-[0_0_8px_var(--pos)]" /> Event läuft · endet in <span className="tabular-nums text-ink">{countdown(event.endsAt, now)}</span>
           </div>
           <h2 className="mt-3 text-[26px] font-semibold tracking-tight">{event.name}</h2>
@@ -45,7 +45,7 @@ export function EventHero({ event }: { event: ShopEvent }) {
         </div>
         <div className="sm:text-right">
           <div className="text-[56px] font-extralight leading-none tracking-[-0.04em] text-ink">−{event.discount} %</div>
-          <div className="mt-1 text-[12.5px] text-[#b7afe6]">bis {formatDate(event.endsAt)}</div>
+          <div className="mt-1 text-[12.5px] text-[var(--accent-text-muted)]">bis {formatDate(event.endsAt)}</div>
         </div>
       </div>
     </section>

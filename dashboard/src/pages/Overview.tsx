@@ -72,14 +72,14 @@ export function Overview() {
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {/* The one accent surface on this page. */}
         <div className="js-tile card card-hero relative flex flex-col overflow-hidden md:col-span-2">
-          <div className="flex items-center gap-2 text-[13px] text-[#cfc6ff]">
+          <div className="flex items-center gap-2 text-[13px] text-accent-text">
             <span className="h-1.5 w-1.5 rounded-full bg-pos shadow-[0_0_8px_var(--pos)]" /> Nexo ist aktiv
           </div>
           <div className="mt-5 flex flex-wrap items-end gap-x-4 gap-y-1">
             <span className="js-count text-[56px] font-extralight leading-none tracking-[-0.04em] text-ink tabular-nums" data-value={guild.memberCount}>{num(guild.memberCount)}</span>
             <span className="pb-1.5 text-[15px] text-body">Mitglieder</span>
           </div>
-          <p className="mt-2 text-[13px] text-[#b7afe6]">
+          <p className="mt-2 text-[13px] text-[var(--accent-text-muted)]">
             {totals ? <>+{num(totals.joins)} Beitritte · −{num(totals.leaves)} Austritte in den letzten 7 Tagen</> : 'Verlauf wird ab jetzt täglich aufgezeichnet.'}
           </p>
           <div className="mt-6 flex flex-wrap gap-2 text-[12.5px]">
