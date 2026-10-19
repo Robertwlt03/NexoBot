@@ -23,20 +23,20 @@
   /* Dashboard (warm dark default). One accent; status colours only for state. styles.css redefines the
      neutrals and status colours per mode ([data-mode="light"]), so these are only the dark defaults. */
   --font-sans: "Inter Variable", "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --color-rail: #0f0c0a;
-  --color-canvas: #15110e;
-  --color-panel: #1a1512;
-  --color-surface: #211b17;
-  --color-raised: #2a231e;
-  --color-field: #18130f;
-  --color-ink: #f7efe6;
-  --color-body: #d9cec2;
-  --color-mute: #ad9f92;
-  --color-faint: #95897f;
-  --color-accent: #a99bff;
+  --color-rail: #110e0b;
+  --color-canvas: #17130f;
+  --color-panel: #1c1712;
+  --color-surface: #241e18;
+  --color-raised: #2d261f;
+  --color-field: #1a1511;
+  --color-ink: #f5ede2;
+  --color-body: #dccfbf;
+  --color-mute: #b3a28f;
+  --color-faint: #9a8b7d;
+  --color-accent: #d39b5c;
   --color-accent-strong: #8b7bff;
   --color-accent-ink: #15112b;
-  --color-accent-2: #67e8f9;
+  --color-accent-2: #8fa7b3;
   --color-accent-text: #cfc6ff;
   --color-pos: #4ade80;
   --color-neg: #f87171;

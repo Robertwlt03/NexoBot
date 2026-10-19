@@ -138,7 +138,7 @@ export function MeLayout() {
           {profile.data && <span className="ml-auto lg:hidden"><WalletPill balance={profile.data.wallet.balance} /></span>}
         </header>
         <div className="relative flex-1 overflow-y-auto px-4 pb-32 pt-9 md:px-10">
-          <PageBackdrop photo={photoFor(location.pathname)} />
+          <PageBackdrop photo={photoFor(location.pathname)} column={1100} />
           <div ref={pageRef} className="relative mx-auto max-w-[1100px]">
             {profile.loading && !profile.data && <Spinner />}
             {profile.error && !profile.data && <Notice tone="danger">{profile.error}</Notice>}

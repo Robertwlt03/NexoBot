@@ -1,11 +1,6 @@
 /// <reference types="vite/client" />
 // Page header backdrops: a warm photo per page (Unsplash, see assets/backdrops/CREDITS.md) behind the top of the
 // page, washed toward the page colour on the left so the title stays readable, and faded out downwards.
-import { useRef } from 'react';
-import gsap from 'gsap';
-import { useGSAP } from '@gsap/react';
-
-gsap.registerPlugin(useGSAP);
 
 // Only the URLs are bundled; each photo is fetched when its page is opened.
 const PHOTOS: Record<string, string> = Object.fromEntries(
@@ -22,23 +17,20 @@ export function photoFor(pathname: string): string {
   return PHOTOS[seg] ?? PHOTOS.servers;
 }
 
-// Gentle wash toward the page colour and fade out downwards (both follow the mode). Text readability comes from
-// the scrim behind the page header (styles.css .page-head-text), so the photo itself can stay visible.
-const WASH = 'linear-gradient(90deg, color-mix(in srgb, var(--bg-main) 60%, transparent) 0%, color-mix(in srgb, var(--bg-main) 35%, transparent) 50%, color-mix(in srgb, var(--bg-main) 8%, transparent) 100%)';
-const FADE = { maskImage: 'linear-gradient(to bottom, #000 40%, transparent)' } as const;
-
-/** Absolute layer at the top of a scroll area; the photo eases in on page change. */
-export function PageBackdrop({ photo }: { photo: string }) {
-  const ref = useRef<HTMLImageElement>(null);
-  useGSAP(() => {
-    if (!ref.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    gsap.fromTo(ref.current, { autoAlpha: 0, scale: 1.06 }, { autoAlpha: 1, scale: 1, duration: 1.2, ease: 'power2.out' });
-  }, { dependencies: [photo] });
+/**
+ * Absolute layer at the top of a scroll area, visible right away (no fade-in). Over the text column the photo is
+ * covered by the page colour (--scrim, enough for 4.5:1 on every photo); right of it the photo opens up. `column` is
+ * the max width of the page content, so the clear part starts where the header text ends at any screen width.
+ */
+export function PageBackdrop({ photo, column = 1040 }: { photo: string; column?: number }) {
+  const textEnd = `calc(max(40px, 50% - ${column / 2}px) + 780px)`;
+  const wash = `linear-gradient(90deg, color-mix(in srgb, var(--bg-main) var(--scrim), transparent) ${textEnd}, color-mix(in srgb, var(--bg-main) 25%, transparent) calc(${textEnd} + 360px))`;
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[340px] overflow-hidden" style={FADE}>
-      <img ref={ref} key={photo} src={photo} alt="" decoding="async" className="absolute inset-0 h-full w-full object-cover object-center" />
-      <div className="absolute inset-0" style={{ background: WASH }} />
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(70% 90% at 90% 0%, var(--accent-soft), transparent 70%)' }} />
+    <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[320px] overflow-hidden"
+      style={{ maskImage: 'linear-gradient(to bottom, #000 45%, transparent)' }}>
+      {/* No key: on page change the old photo stays until the new one is decoded, so there is never an empty band. */}
+      <img src={photo} alt="" fetchPriority="high" className="absolute inset-0 h-full w-full object-cover" />
+      <div className="absolute inset-0" style={{ background: wash }} />
     </div>
   );
 }

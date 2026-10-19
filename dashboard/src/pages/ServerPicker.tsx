@@ -43,7 +43,7 @@ export function ServerPicker() {
         </div>
       </header>
 
-      <PageBackdrop photo={photoFor('/servers')} />
+      <PageBackdrop photo={photoFor('/servers')} column={1152} />
       <main className="relative mx-auto max-w-6xl px-5 pb-24 pt-12 md:px-8">
         <div className="relative">
           <PageHeader

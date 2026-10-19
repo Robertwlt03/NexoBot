@@ -27,11 +27,9 @@ export function PageHeader({ icon, title, description, actions, kicker, media }:
     <header className="page-head" ref={ref}>
       {media ?? (icon && <IconTile name={icon} size={52} />)}
       <div className="min-w-0 flex-1">
-        <div className="page-head-text">
-          {label && <p className="page-kicker">{label}</p>}
-          <h1>{title}</h1>
-          <p className="page-desc">{description}</p>
-        </div>
+        {label && <p className="page-kicker">{label}</p>}
+        <h1>{title}</h1>
+        <p className="page-desc">{description}</p>
       </div>
       {actions && <div className="actions">{actions}</div>}
     </header>

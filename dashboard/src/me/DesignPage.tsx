@@ -26,8 +26,8 @@ function PresetTile({ preset, selected, onSelect }: { preset: (typeof THEME_PRES
 }
 
 const MODES: { id: ThemeMode; label: string; hint: string; canvas: string; card: string; line: string; ink: string }[] = [
-  { id: 'dark', label: 'Dunkel', hint: 'Warmes Braun-Schwarz, ruhig am Abend', canvas: '#15110e', card: '#211b17', line: '#3a312a', ink: '#f7efe6' },
-  { id: 'light', label: 'Hell', hint: 'Creme und Papier, angenehm am Tag', canvas: '#f7f1e8', card: '#fffaf3', line: '#e6dacb', ink: '#2c221b' },
+  { id: 'dark', label: 'Dunkel', hint: 'Nussbaum und Graphit, ruhig am Abend', canvas: '#17130f', card: '#241e18', line: '#3d342b', ink: '#f5ede2' },
+  { id: 'light', label: 'Hell', hint: 'Putz, Birke und Eiche, angenehm am Tag', canvas: '#efe8dd', card: '#faf6ef', line: '#ddd0bd', ink: '#2e241b' },
 ];
 
 function ModeTile({ mode, selected, onSelect }: { mode: (typeof MODES)[number]; selected: boolean; onSelect: () => void }) {
@@ -69,7 +69,7 @@ export default function DesignPage() {
       <PageHeader kicker="Mein Profil" title="Dashboard-Design"
         description="Hell oder dunkel und deine eigenen Farben. Gilt nur für dich – auf allen Geräten, auf denen du dich mit Discord anmeldest." />
 
-      <Card title="Erscheinungsbild" description="Gemütlich dunkel für den Abend oder warm und hell wie Papier.">
+      <Card title="Erscheinungsbild" description="Werkbank am Abend oder hell wie Birkenholz – beides ruhig und warm.">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {MODES.map((mode) => (
             <ModeTile key={mode.id} mode={mode} selected={value.mode === mode.id} onSelect={() => pick({ ...value, mode: mode.id })} />
@@ -98,7 +98,7 @@ export default function DesignPage() {
                 <Glyph name="shuffle" size={14} /> Tauschen
               </button>
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => pick({ ...DEFAULT_THEME, mode: value.mode })} disabled={value.preset === DEFAULT_THEME.preset}>
-                Auf Nexo-Standard zurücksetzen
+                Auf Standard zurücksetzen
               </button>
             </div>
             {warnings.length > 0 && <Notice tone="warn">{warnings.join(' ')}</Notice>}
