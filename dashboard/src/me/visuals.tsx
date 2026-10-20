@@ -113,6 +113,8 @@ export function backgroundStyle(data: BackgroundData): CSSProperties {
   const [a = '#15151b', b = a, c = b, d = c] = data.colors;
   switch (data.kind) {
     case 'solid': return { background: a };
+    // Scenes are drawn by the card renderer; CSS only needs their mood (backdrops, banners).
+    case 'scene': return { background: `linear-gradient(160deg, ${a}, ${b} 60%, ${c})` };
     case 'gradient': return { background: `linear-gradient(${data.angle}deg, ${data.colors.join(', ')})` };
     case 'aurora': return { background: `radial-gradient(60% 80% at 20% 20%, ${withAlpha(b, 'aa')}, transparent 70%), radial-gradient(70% 70% at 85% 70%, ${withAlpha(c, '99')}, transparent 70%), ${a}` };
     case 'mesh': return { background: `radial-gradient(at 0% 0%, ${a}, transparent 60%), radial-gradient(at 100% 0%, ${b}, transparent 60%), radial-gradient(at 0% 100%, ${c}, transparent 60%), radial-gradient(at 100% 100%, ${d}, transparent 60%), #1a1a22` };

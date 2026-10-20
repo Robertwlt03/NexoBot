@@ -10,7 +10,7 @@ import type { PurchaseResult, ShopBundle, ShopEvent, ShopListing } from '../../.
 import { useUser } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
 import { ProfileCardPreview } from '../components/ProfileCardPreview';
-import { ProductStage } from './ProductStage';
+import { ProductStage, TryOnPreview } from './ProductStage';
 import { Empty, Field, Notice, Select, Switch, Tabs, TextInput } from '../components/ui';
 import {
   cardSubject, countdown, equipItem, formatDate, isEquipped, reducedMotion, resolveCosmetics, useEquip, useMe, useMutation, useNow, useWalletUpdate,
@@ -70,7 +70,14 @@ export function StoreCard({ listing, owned, variant, onOpen, className = '', lar
     <button type="button" onClick={onOpen} data-mode="dark" style={style}
       className={`js-item game-tile group relative flex cursor-pointer flex-col overflow-hidden rounded-[18px] border-0 bg-[#0d0b0a] p-0 text-left font-[inherit] ring-1 ring-white/[.08] transition duration-300 hover:-translate-y-1 hover:ring-[color-mix(in_srgb,var(--tile)_70%,transparent)] hover:shadow-[0_22px_44px_-18px_color-mix(in_srgb,var(--tile)_55%,transparent)] ${large ? '' : 'aspect-[3/4]'} ${className}`}>
       <div className="game-tile-field relative min-h-0 w-full flex-1 overflow-hidden">
-        <ItemVisual item={item} className={`h-full w-full rounded-none !bg-transparent transition-transform duration-500 ${large ? 'scale-[1.25] group-hover:scale-[1.32]' : 'scale-[1.3] group-hover:scale-[1.42]'}`} />
+        {item.slot === 'background' ? (
+          // Backgrounds: your own card as it is now, only with this background, tilted like a store preview.
+          <div className={`absolute origin-top-left overflow-hidden rounded-lg shadow-[0_20px_44px_-14px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 ${large ? 'left-[8%] top-[24%] w-[118%] -rotate-[7deg] group-hover:-rotate-[5deg] group-hover:scale-[1.03]' : 'left-[5%] top-[30%] w-[122%] -rotate-[9deg] group-hover:-rotate-[7deg] group-hover:scale-[1.04]'}`}>
+            <TryOnPreview items={[item]} resolution={0.5} />
+          </div>
+        ) : (
+          <ItemVisual item={item} className={`h-full w-full rounded-none !bg-transparent transition-transform duration-500 ${large ? 'scale-[1.25] group-hover:scale-[1.32]' : 'scale-[1.3] group-hover:scale-[1.42]'}`} />
+        )}
         <div className="absolute left-2.5 top-2.5 flex flex-wrap gap-1.5">
           {listing.discount > 0 && <span className="rounded-md bg-[#facc15] px-1.5 py-0.5 text-[11.5px] font-bold text-[#1a1405]">−{listing.discount} %</span>}
           {listing.availableUntil && variant === 'shop' && <span className="rounded-md bg-black/55 px-1.5 py-0.5 text-[11px] font-semibold text-white/90 backdrop-blur">Begrenzt</span>}

@@ -21,7 +21,11 @@ export type ItemAvailability = 'shop' | 'blackmarket' | 'event' | 'achievement' 
 // ---------- Item data per slot ----------
 
 export type PatternKind = 'none' | 'dots' | 'grid' | 'waves' | 'stars' | 'hex' | 'diagonal' | 'circuit';
-export interface BackgroundData { kind: 'solid' | 'gradient' | 'pattern' | 'aurora' | 'mesh'; colors: string[]; angle: number; pattern: PatternKind }
+/** Illustrated backgrounds drawn by the card renderer: game and character genres as original motifs (no franchise art or names). */
+export const BACKGROUND_SCENES = ['pixel', 'neon-city', 'moon-ninja', 'dungeon', 'orbital', 'pirate-cove'] as const;
+export type BackgroundScene = (typeof BACKGROUND_SCENES)[number];
+/** `scene` only with kind 'scene'; `colors` then recolour the scene (sky, landscape, light, details). */
+export interface BackgroundData { kind: 'solid' | 'gradient' | 'pattern' | 'aurora' | 'mesh' | 'scene'; colors: string[]; angle: number; pattern: PatternKind; scene?: BackgroundScene }
 export interface AccentData { color: string }
 export interface NameStyleData { colors: string[]; glow: boolean }
 export interface FrameData { style: 'solid' | 'gradient' | 'glow' | 'double' | 'dashed' | 'neon' | 'crown'; colors: string[]; width: number }

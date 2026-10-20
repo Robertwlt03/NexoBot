@@ -14,7 +14,7 @@ import { backgroundStyle } from './visuals';
 type Surface = 'card' | 'levelup';
 
 /** The member's card (or level-up message) with `items` put on, temporarily. */
-export function TryOnPreview({ items: wearing, surface = 'card', className = 'w-full' }: { items: CosmeticItem[]; surface?: Surface; className?: string }) {
+export function TryOnPreview({ items: wearing, surface = 'card', className = 'w-full', resolution = 1 }: { items: CosmeticItem[]; surface?: Surface; className?: string; resolution?: number }) {
   const { me, items } = useMe();
   const user = useUser();
   const catalog = useMemo(() => {
@@ -26,7 +26,7 @@ export function TryOnPreview({ items: wearing, surface = 'card', className = 'w-
   const cosmetics = resolveCosmetics(wearing.reduce((equipped, item) => equipItem(equipped, item), me.profile.equipped), catalog);
   return surface === 'levelup'
     ? <LevelUpPreview subject={subject} cosmetics={cosmetics} level={subject.level + 1} reward={levelUpReward(subject.level + 1)} className={className} />
-    : <ProfileCardPreview subject={subject} cosmetics={cosmetics} className={className} />;
+    : <ProfileCardPreview subject={subject} cosmetics={cosmetics} className={className} resolution={resolution} />;
 }
 
 /** Discord look-alike message by Nexo carrying the card, so you see it where your friends will see it. */

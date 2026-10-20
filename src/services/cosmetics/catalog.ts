@@ -2,8 +2,8 @@
 // shop_items storage with a short in-memory cache for the card renderer.
 
 import {
-  BADGE_GLYPHS, COSMETIC_SLOTS, RARITIES,
-  type BadgeGlyph, type CosmeticItem, type CosmeticSlot, type ItemAvailability, type Rarity, type SlotData,
+  BACKGROUND_SCENES, BADGE_GLYPHS, COSMETIC_SLOTS, RARITIES,
+  type BackgroundScene, type BadgeGlyph, type CosmeticItem, type CosmeticSlot, type ItemAvailability, type Rarity, type SlotData,
 } from '../../shared/cosmetics.js';
 import { HttpError, badRequest, body, bool, hexColor, int, str } from '../../web/http.js';
 import { T, cosmeticsPool, requirePool } from './db.js';
@@ -23,6 +23,7 @@ const ev = (eventId: string): Extra => ({ availability: 'event', eventId });
 
 const bg = (kind: SlotData['background']['kind'], colors: string[], angle = 135, pattern: SlotData['background']['pattern'] = 'none') => ({ kind, colors, angle, pattern });
 const badge = (glyph: BadgeGlyph, color: string) => ({ glyph, color });
+const scene = (name: BackgroundScene, colors: string[]) => ({ kind: 'scene' as const, colors, angle: 0, pattern: 'none' as const, scene: name });
 
 /** Achievement badges (ids `ach-<achievement id>`); the achievements themselves live in achievements.ts. */
 export const ACHIEVEMENT_BADGES: { achievementId: string; name: string; description: string; rarity: Rarity; glyph: BadgeGlyph; color: string }[] = [
@@ -212,6 +213,26 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('levelup', 'lvl-forest-clearing', 'epic', 2400, 'Waldlichtung', 'Ein Aufstieg im grünen Licht.', { style: 'classic', color: '#8FB36B' }),
   item('sticker', 'sticker-acorn', 'rare', 900, 'Eichel-Sticker', 'Eine Eichel für die Ecke.', { glyph: 'acorn', color: '#C98A4B', corner: 'br' }),
   item('sticker', 'sticker-toadstool', 'rare', 1000, 'Pilz-Sticker', 'Ein Fliegenpilz für die Ecke.', { glyph: 'mushroom', color: '#E2574C', corner: 'tr' }),
+
+  // ---------- Spielwelten: Genre-Hommagen als eigene Motive (keine Marken, Figuren oder Namen echter Spiele) ----------
+  item('background', 'bg-pixel-quest', 'epic', 2800, 'Pixelabenteuer', 'Retro-Jump-and-Run: Pixelsonne über gestuften Bergen.', scene('pixel', ['#3B2A6B', '#E86F5B', '#FFD166', '#2E7D4F'])),
+  item('background', 'bg-neon-city', 'legendary', 6000, 'Neonstadt', 'Skyline bei Nacht mit Synthwave-Sonne und leuchtendem Raster.', scene('neon-city', ['#0B0820', '#FF3DCB', '#33E1FF', '#1A1235'])),
+  item('background', 'bg-moon-ninja', 'legendary', 6500, 'Mondschein-Ninja', 'Vollmond, Bambus und Blütenblätter im Wind.', scene('moon-ninja', ['#0D1530', '#24314F', '#F4E7C5', '#F7A8C4'])),
+  item('background', 'bg-dungeon-torches', 'epic', 2600, 'Kerkerfackeln', 'Steinmauer im Fackelschein – bereit für den nächsten Raid.', scene('dungeon', ['#1B1714', '#3A322C', '#FF9A3C', '#7A4A2A'])),
+  item('background', 'bg-orbital', 'epic', 3200, 'Orbitalstation', 'Ein Ringplanet, Sternenstaub und ein kleiner Mond.', scene('orbital', ['#05060F', '#7C5CFF', '#F2A531', '#22D3EE'])),
+  item('background', 'bg-pirate-cove', 'epic', 3000, 'Piratenbucht', 'Ein Schiff unter Segeln im Mondlicht.', scene('pirate-cove', ['#0B1A2E', '#123A5A', '#F4E7C5', '#0A0F18'])),
+  item('frame', 'frame-sakura', 'rare', 1200, 'Kirschblütenring', 'Zarter Neonring in Blütenrosa.', { style: 'neon', colors: ['#F7A8C4'], width: 5 }),
+  item('frame', 'frame-neon-pink', 'epic', 2400, 'Neonpink', 'Leuchtröhre in kräftigem Pink.', { style: 'neon', colors: ['#FF3DCB'], width: 5 }),
+  item('frame', 'frame-torchlight', 'epic', 2300, 'Fackelschein', 'Warm flackernder Schein.', { style: 'glow', colors: ['#FF9A3C', '#FFD166'], width: 6 }),
+  item('nameStyle', 'name-synthwave', 'epic', 2700, 'Synthwave', 'Verlauf von Pink zu Cyan mit Schein.', { colors: ['#FF3DCB', '#33E1FF'], glow: true }),
+  item('title', 'title-shadow-runner', 'epic', 2200, 'Schattenläufer', 'Lautlos und schnell.', { text: 'Schattenläufer', color: '#F7A8C4' }),
+  item('title', 'title-pixel-hero', 'rare', 900, 'Pixelheld', 'Acht Bit, volles Herz.', { text: 'Pixelheld', color: '#FFD166' }),
+  item('title', 'title-bounty-hunter', 'epic', 2400, 'Kopfgeldjäger', 'Von Station zu Station unterwegs.', { text: 'Kopfgeldjäger', color: '#22D3EE' }),
+  item('title', 'title-buccaneer', 'rare', 1000, 'Freibeuter', 'Segel gesetzt, Kurs auf Abenteuer.', { text: 'Freibeuter', color: '#F4E7C5' }),
+  item('title', 'title-dungeon-master', 'epic', 2500, 'Dungeonmeister', 'Kennt jede Falle beim Namen.', { text: 'Dungeonmeister', color: '#FF9A3C' }),
+  item('xpBar', 'xp-pixel', 'rare', 1000, 'Pixelbalken', 'Segmentiert wie eine alte Lebensanzeige.', { style: 'segmented', colors: ['#FFD166', '#E86F5B'] }),
+  item('badge', 'badge-jolly-roger', 'rare', 1000, 'Totenkopfflagge', 'Für alle, die gern in See stechen.', badge('skull', '#F4E7C5')),
+  item('badge', 'badge-guardian', 'rare', 900, 'Schildwache', 'Hält die Stellung.', badge('shield', '#CBD5E1')),
 ];
 
 // ---------- Bundles ----------
@@ -234,6 +255,18 @@ export const BUNDLES: BundleDef[] = [
     itemIds: ['bg-aurora', 'name-aurora', 'effect-aurora', 'xp-mint-striped', 'frame-mint-double'] },
   { id: 'bundle-neon', name: 'Neon-Paket', description: 'Röhrenlicht, Scanlines und ein leuchtendes Level-up.',
     itemIds: ['bg-circuit', 'frame-neon-violet', 'effect-scanlines', 'xp-ice-segments', 'lvl-neon'] },
+  { id: 'bundle-moon-ninja', name: 'Mondschein-Ninja-Paket', description: 'Vollmond, Bambus und ein Name wie ein Schatten.',
+    itemIds: ['bg-moon-ninja', 'frame-sakura', 'title-shadow-runner', 'sticker-moon'] },
+  { id: 'bundle-pixel-quest', name: 'Pixelabenteuer-Paket', description: 'Acht Bit von Hintergrund bis Level-up.',
+    itemIds: ['bg-pixel-quest', 'title-pixel-hero', 'xp-pixel', 'lvl-retro', 'sticker-dice'] },
+  { id: 'bundle-neon-city', name: 'Neonstadt-Paket', description: 'Synthwave-Nacht mit Pink, Cyan und Scanlines.',
+    itemIds: ['bg-neon-city', 'frame-neon-pink', 'name-synthwave', 'effect-scanlines'] },
+  { id: 'bundle-orbital', name: 'Weltraum-Paket', description: 'Ringplanet, Sternenstaub und eine Rakete im Gepäck.',
+    itemIds: ['bg-orbital', 'title-bounty-hunter', 'badge-rocket', 'effect-stardust'] },
+  { id: 'bundle-pirate-cove', name: 'Piraten-Paket', description: 'Mondlicht, Segel und die Flagge am Mast.',
+    itemIds: ['bg-pirate-cove', 'title-buccaneer', 'badge-jolly-roger', 'sticker-goldfish'] },
+  { id: 'bundle-dungeon', name: 'Dungeon-Paket', description: 'Fackeln an, Schild hoch – der Raid kann beginnen.',
+    itemIds: ['bg-dungeon-torches', 'frame-torchlight', 'title-dungeon-master', 'badge-guardian'] },
 ];
 
 // ---------- Owner input validation ----------
@@ -254,12 +287,16 @@ function colors(value: unknown, field: string, max: number): string[] {
 export function parseSlotData(slot: CosmeticSlot, input: unknown): SlotData[CosmeticSlot] {
   const d = body(input);
   switch (slot) {
-    case 'background': return {
-      kind: oneOf(d.kind, ['solid', 'gradient', 'pattern', 'aurora', 'mesh'] as const, 'Art'),
-      colors: colors(d.colors, 'Farben', 4),
-      angle: int(d.angle, 'Winkel', 0, 360),
-      pattern: oneOf(d.pattern, ['none', 'dots', 'grid', 'waves', 'stars', 'hex', 'diagonal', 'circuit'] as const, 'Muster'),
-    };
+    case 'background': {
+      const kind = oneOf(d.kind, ['solid', 'gradient', 'pattern', 'aurora', 'mesh', 'scene'] as const, 'Art');
+      return {
+        kind,
+        colors: colors(d.colors, 'Farben', 4),
+        angle: int(d.angle, 'Winkel', 0, 360),
+        pattern: oneOf(d.pattern, ['none', 'dots', 'grid', 'waves', 'stars', 'hex', 'diagonal', 'circuit'] as const, 'Muster'),
+        ...(kind === 'scene' ? { scene: oneOf(d.scene, BACKGROUND_SCENES, 'Motiv') } : {}),
+      };
+    }
     case 'accent': return { color: hexColor(d.color, 'Farbe') };
     case 'nameStyle': return { colors: colors(d.colors, 'Farben', 3), glow: bool(d.glow, 'Leuchten') };
     case 'frame': return {

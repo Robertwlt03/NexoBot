@@ -33,8 +33,11 @@ function loadAvatar(url: string): Promise<HTMLImageElement | null> {
 
 type Draw = (ctx: CanvasRenderingContext2D, avatar: HTMLImageElement | null) => void;
 
-/** Canvas at the card's native size (×device pixel ratio), scaled by CSS; redraws when `key`, fonts or avatar change. */
-function useCardCanvas(width: number, height: number, avatarUrl: string | null, key: string, draw: Draw) {
+/**
+ * Canvas at the card's native size (×device pixel ratio × `resolution`), scaled by CSS; redraws when `key`, fonts or
+ * avatar change. Thumbnails use resolution 0.5, so a shop full of card previews stays light.
+ */
+function useCardCanvas(width: number, height: number, avatarUrl: string | null, key: string, draw: Draw, resolution = 1) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [avatar, setAvatar] = useState<HTMLImageElement | null>(null);
   const [fontsReady, setFontsReady] = useState(false);
@@ -56,20 +59,20 @@ function useCardCanvas(width: number, height: number, avatarUrl: string | null, 
     const canvas = ref.current;
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
-    const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
-    canvas.width = width * scale;
-    canvas.height = height * scale;
+    const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1)) * resolution;
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
     ctx.clearRect(0, 0, width, height);
     draw(ctx, avatar);
-  }, [key, avatar, fontsReady]); // `key` stands for the drawn props (draw is a fresh closure every render).
+  }, [key, avatar, fontsReady, resolution]); // `key` stands for the drawn props (draw is a fresh closure every render).
 
   return ref;
 }
 
-export function ProfileCardPreview({ subject, cosmetics, className = '' }: { subject: ProfileCardSubject; cosmetics: ResolvedCosmetics; className?: string }) {
+export function ProfileCardPreview({ subject, cosmetics, className = '', resolution = 1 }: { subject: ProfileCardSubject; cosmetics: ResolvedCosmetics; className?: string; resolution?: number }) {
   const ref = useCardCanvas(PROFILE_CARD_WIDTH, PROFILE_CARD_HEIGHT, subject.avatarUrl, JSON.stringify([subject, cosmetics]),
-    (ctx, avatar) => renderProfileCard(ctx, subject, cosmetics, { avatar }));
+    (ctx, avatar) => renderProfileCard(ctx, subject, cosmetics, { avatar }), resolution);
   return (
     <canvas ref={ref} width={PROFILE_CARD_WIDTH} height={PROFILE_CARD_HEIGHT} role="img"
       aria-label={`Profilkarte von ${subject.name}, Level ${subject.level}`}

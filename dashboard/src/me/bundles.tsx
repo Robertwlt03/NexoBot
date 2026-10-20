@@ -56,7 +56,7 @@ function BundleTile({ bundle, items, onOpen }: { bundle: ShopBundle; items: Cosm
         {/* Your own card already wearing the whole bundle, tilted and running off the edge like a store preview. */}
         {items.some((item) => item.slot !== 'levelup') ? (
           <div className="absolute left-[9%] top-[22%] w-[112%] origin-top-left -rotate-[7deg] overflow-hidden rounded-xl shadow-[0_24px_50px_-16px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[5deg] group-hover:scale-[1.03]">
-            <TryOnPreview items={items.filter((item) => item.slot !== 'levelup')} />
+            <TryOnPreview items={items.filter((item) => item.slot !== 'levelup')} resolution={0.5} />
           </div>
         ) : <BundleArt items={items} />}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-[#0d0b0a] to-transparent" />

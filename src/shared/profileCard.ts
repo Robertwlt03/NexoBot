@@ -4,7 +4,7 @@
 
 import { drawAmber } from './amber.js';
 import type {
-  BackgroundData, BadgeData, BadgeGlyph, CosmeticItem, EffectData, FrameData, LayoutData, LevelupData, NameStyleData, PatternKind,
+  BackgroundData, BackgroundScene, BadgeData, BadgeGlyph, CosmeticItem, EffectData, FrameData, LayoutData, LevelupData, NameStyleData, PatternKind,
   ProfileCardSubject, ResolvedCosmetics, StickerData, XpBarData,
 } from './cosmetics.js';
 
@@ -842,12 +842,269 @@ function drawBackground(ctx: Ctx, bg: BackgroundData | null, accent: string, w: 
       spots.forEach(([x, y], i) => glow(ctx, x, y, w * 0.62, colors[i % colors.length], i === 0 ? 0.9 : 0.75));
       break;
     }
+    case 'scene':
+      drawScene(ctx, bg.scene ?? 'pixel', colors, w, h);
+      break;
   }
   if (bg.pattern !== 'none') drawPattern(ctx, bg.pattern, bg.kind === 'pattern' && colors[1] ? colors[1] : '#FFFFFF', w, h, rng);
   // Readability scrim: keeps white text legible on bright or busy backgrounds.
   const bright = colors.reduce((sum, color) => sum + brightness(color), 0) / colors.length;
   ctx.fillStyle = linearGradient(ctx, 0, 0, 0, w, h, [`rgba(6, 6, 10, ${0.3 + bright * 0.35})`, `rgba(6, 6, 10, ${0.12 + bright * 0.3})`]);
   ctx.fillRect(0, 0, w, h);
+}
+
+// ---------- Scene backgrounds ----------
+
+/**
+ * Original, genre-inspired illustrations (retro platformer, neon city, moonlit ninja, dungeon, space station, pirate
+ * cove) made of plain shapes: no franchise art, logos or names. Detail sits on the right; the left keeps room for the
+ * name. Same look for everyone (fixed seed per scene); `colors` = [sky, landscape, light, details].
+ */
+function drawScene(ctx: Ctx, scene: BackgroundScene, colors: string[], w: number, h: number) {
+  const [c0 = '#1B1A2E', c1 = mix(c0, '#FFFFFF', 0.3), c2 = '#FFD166', c3 = darken(c1, 0.4)] = colors;
+  const rng = createRng(seedFrom(`scene:${scene}`));
+  const sky = (top: string, bottom: string) => { ctx.fillStyle = linearGradient(ctx, 90, 0, 0, w, h, [top, bottom]); ctx.fillRect(0, 0, w, h); };
+  const disc = (x: number, y: number, r: number, color: string) => { ctx.beginPath(); circle(ctx, x, y, r); ctx.fillStyle = color; ctx.fill(); };
+  ctx.save();
+  switch (scene) {
+    case 'pixel': {
+      const px = Math.max(4, Math.round(h / 40));
+      sky(c0, c1);
+      // Blocky sun.
+      const sx = w * 0.8;
+      const sy = h * 0.36;
+      const sr = h * 0.2;
+      ctx.fillStyle = c2;
+      for (let y = sy - sr; y <= sy + sr; y += px) {
+        for (let x = sx - sr; x <= sx + sr; x += px) if ((x - sx) ** 2 + (y - sy) ** 2 <= sr * sr) ctx.fillRect(Math.round(x / px) * px, Math.round(y / px) * px, px, px);
+      }
+      // Clouds as stacks of blocks.
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+      for (let i = 0; i < 4; i++) {
+        const cx = w * (0.45 + rng() * 0.5);
+        const cy = h * (0.12 + rng() * 0.22);
+        for (let k = 0; k < 5; k++) ctx.fillRect(Math.round((cx + (k - 2) * px * 2) / px) * px, Math.round((cy - (k % 2) * px) / px) * px, px * 3, px * 2);
+      }
+      // Two stepped mountain ranges and a grass strip.
+      const ridge = (base: number, amp: number, freq: number, color: string) => {
+        ctx.fillStyle = color;
+        for (let x = 0; x < w; x += px) {
+          const top = Math.round((h * base - amp * h * (0.5 + 0.5 * Math.sin(x * freq + 1.3)) * (0.6 + 0.4 * Math.sin(x * freq * 0.37))) / px) * px;
+          ctx.fillRect(x, top, px, h - top);
+        }
+      };
+      ridge(0.78, 0.36, 0.006, mix(c3, c1, 0.5));
+      ridge(0.9, 0.24, 0.011, c3);
+      ctx.fillStyle = lighten(c3, 0.25);
+      ctx.fillRect(0, h - px * 3, w, px);
+      ctx.fillStyle = darken(c3, 0.35);
+      ctx.fillRect(0, h - px * 2, w, px * 2);
+      break;
+    }
+    case 'neon-city': {
+      sky(c0, mix(c1, c0, 0.7));
+      glow(ctx, w * 0.72, h * 0.74, w * 0.45, c1, 0.5);
+      // Striped retro sun on the horizon.
+      const sx = w * 0.72;
+      const sy = h * 0.6;
+      const sr = h * 0.3;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(sx - sr, sy - sr, sr * 2, sr);
+      ctx.clip();
+      ctx.beginPath();
+      circle(ctx, sx, sy, sr);
+      ctx.fillStyle = linearGradient(ctx, 90, sx - sr, sy - sr, sr * 2, sr, [c2, c1]);
+      ctx.fill();
+      ctx.fillStyle = mix(c1, c0, 0.6);
+      for (let i = 0; i < 5; i++) ctx.fillRect(sx - sr, sy - sr * (0.08 + i * 0.16), sr * 2, 2 + i * 1.6);
+      ctx.restore();
+      // Skyline with lit windows.
+      let x = w * 0.5;
+      while (x < w) {
+        const bw = h * (0.08 + rng() * 0.14);
+        // Lower right under the sun, so it shows above the roofs.
+        const nearSun = Math.abs(x + bw / 2 - w * 0.72) < h * 0.34;
+        const bh = h * (nearSun ? 0.1 + rng() * 0.12 : 0.22 + rng() * 0.38);
+        const top = h * 0.78 - bh;
+        ctx.fillStyle = darken(c3, 0.2);
+        ctx.fillRect(x, top, bw - 3, bh);
+        for (let wy = top + 8; wy < h * 0.76; wy += 11) {
+          for (let wx = x + 5; wx < x + bw - 9; wx += 9) {
+            if (rng() < 0.45) { ctx.fillStyle = withAlpha(rng() < 0.7 ? c2 : c1, 0.55 + rng() * 0.4); ctx.fillRect(wx, wy, 4, 5); }
+          }
+        }
+        x += bw;
+      }
+      // Glowing perspective grid.
+      const vy = h * 0.78;
+      ctx.fillStyle = darken(c0, 0.3);
+      ctx.fillRect(0, vy, w, h - vy);
+      ctx.strokeStyle = withAlpha(c1, 0.55);
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (let i = 0; i < 7; i++) { const y = vy + (h - vy) * (i / 6) ** 1.8; ctx.moveTo(0, y); ctx.lineTo(w, y); }
+      for (let i = -12; i <= 12; i++) { ctx.moveTo(w * 0.72, vy); ctx.lineTo(w * 0.72 + i * w * 0.09, h); }
+      ctx.stroke();
+      break;
+    }
+    case 'moon-ninja': {
+      sky(c0, darken(c0, 0.55));
+      glow(ctx, w * 0.78, h * 0.32, h * 0.6, c2, 0.28);
+      disc(w * 0.78, h * 0.32, h * 0.21, c2);
+      disc(w * 0.74, h * 0.27, h * 0.04, withAlpha(darken(c2, 0.2), 0.5));
+      disc(w * 0.82, h * 0.38, h * 0.03, withAlpha(darken(c2, 0.2), 0.45));
+      // Mountain ridge.
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      ctx.lineTo(0, h * 0.78);
+      ctx.bezierCurveTo(w * 0.2, h * 0.62, w * 0.35, h * 0.82, w * 0.5, h * 0.66);
+      ctx.bezierCurveTo(w * 0.62, h * 0.54, w * 0.78, h * 0.74, w, h * 0.6);
+      ctx.lineTo(w, h);
+      ctx.closePath();
+      ctx.fillStyle = c1;
+      ctx.fill();
+      // Bamboo on the right.
+      const stalk = darken(c1, 0.55);
+      for (let i = 0; i < 6; i++) {
+        const bx = w * (0.58 + i * 0.075 + rng() * 0.02);
+        const bw = h * (0.028 + rng() * 0.012);
+        ctx.fillStyle = stalk;
+        ctx.fillRect(bx, -10, bw, h + 20);
+        ctx.fillStyle = darken(stalk, 0.35);
+        for (let ny = h * (0.1 + rng() * 0.15); ny < h; ny += h * 0.22) ctx.fillRect(bx - 1, ny, bw + 2, 3);
+        ctx.fillStyle = stalk;
+        for (let k = 0; k < 3; k++) {
+          const ly = h * (0.12 + rng() * 0.6);
+          const dir = rng() < 0.5 ? -1 : 1;
+          ctx.beginPath();
+          ctx.moveTo(bx + bw / 2, ly);
+          ctx.quadraticCurveTo(bx + dir * h * 0.09, ly - h * 0.05, bx + dir * h * 0.16, ly + h * 0.02);
+          ctx.quadraticCurveTo(bx + dir * h * 0.08, ly + h * 0.01, bx + bw / 2, ly);
+          ctx.fill();
+        }
+      }
+      // Drifting blossom petals.
+      for (let i = 0; i < 26; i++) {
+        ctx.globalAlpha = 0.5 + rng() * 0.4;
+        ctx.save();
+        ctx.translate(w * (0.4 + rng() * 0.6), h * rng());
+        ctx.rotate(rng() * TAU);
+        ctx.scale(1, 0.55);
+        disc(0, 0, 2.5 + rng() * 3, c3);
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case 'dungeon': {
+      ctx.fillStyle = darken(c0, 0.2);
+      ctx.fillRect(0, 0, w, h);
+      // Stone wall: offset rows of rounded bricks.
+      const rowH = h / 8;
+      const brickW = rowH * 2.1;
+      for (let row = 0; row < 9; row++) {
+        for (let bx = -(row % 2) * brickW * 0.5; bx < w; bx += brickW) {
+          ctx.beginPath();
+          box(ctx, bx + 3, row * rowH + 3, brickW - 6, rowH - 6, 5);
+          ctx.fillStyle = mix(c1, c0, 0.25 + rng() * 0.45);
+          ctx.fill();
+        }
+      }
+      // Two torches throwing warm light.
+      for (const tx of [w * 0.62, w * 0.9]) {
+        const ty = h * 0.42;
+        glow(ctx, tx, ty, h * 0.75, c2, 0.4);
+        ctx.fillStyle = darken(c3, 0.3);
+        ctx.fillRect(tx - 5, ty, 10, h * 0.18);
+        ctx.fillRect(tx - 11, ty, 22, 6);
+        drawGlyph(ctx, 'flame', tx, ty - h * 0.07, h * 0.16, c2);
+        drawGlyph(ctx, 'flame', tx, ty - h * 0.05, h * 0.08, lighten(c2, 0.5));
+      }
+      ctx.fillStyle = linearGradient(ctx, 90, 0, h * 0.75, w, h * 0.25, ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.55)']);
+      ctx.fillRect(0, h * 0.75, w, h * 0.25);
+      break;
+    }
+    case 'orbital': {
+      ctx.fillStyle = c0;
+      ctx.fillRect(0, 0, w, h);
+      glow(ctx, w * 0.7, h * 0.3, w * 0.4, c1, 0.35);
+      glow(ctx, w * 0.95, h * 0.85, w * 0.3, c3, 0.3);
+      for (let i = 0; i < 160; i++) {
+        ctx.globalAlpha = 0.2 + rng() * 0.7;
+        disc(rng() * w, rng() * h, 0.4 + rng() * 1.2, '#FFFFFF');
+      }
+      ctx.globalAlpha = 1;
+      // Ringed planet, low on the right.
+      const px = w * 0.84;
+      const py = h * 0.78;
+      const pr = h * 0.36;
+      const ring = (front: boolean) => {
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(-0.25);
+        ctx.scale(1, 0.24);
+        ctx.beginPath();
+        ctx.arc(0, 0, pr * 1.55, front ? 0 : Math.PI, front ? Math.PI : TAU);
+        ctx.restore();
+        ctx.strokeStyle = withAlpha(c2, front ? 0.85 : 0.45);
+        ctx.lineWidth = h * 0.035;
+        ctx.stroke();
+      };
+      ring(false);
+      ctx.beginPath();
+      circle(ctx, px, py, pr);
+      const shade = ctx.createRadialGradient(px - pr * 0.4, py - pr * 0.5, pr * 0.1, px, py, pr);
+      shade.addColorStop(0, lighten(c1, 0.3));
+      shade.addColorStop(1, darken(c1, 0.6));
+      ctx.fillStyle = shade;
+      ctx.fill();
+      ring(true);
+      disc(w * 0.6, h * 0.24, h * 0.055, c2);
+      disc(w * 0.605, h * 0.235, h * 0.045, lighten(c2, 0.35));
+      break;
+    }
+    case 'pirate-cove': {
+      sky(c0, mix(c1, c0, 0.4));
+      for (let i = 0; i < 50; i++) {
+        ctx.globalAlpha = 0.3 + rng() * 0.6;
+        disc(rng() * w, rng() * h * 0.55, 0.5 + rng(), '#FFFFFF');
+      }
+      ctx.globalAlpha = 1;
+      glow(ctx, w * 0.8, h * 0.24, h * 0.5, c2, 0.3);
+      disc(w * 0.8, h * 0.24, h * 0.12, c2);
+      // Sea with a moon path.
+      const sea = h * 0.7;
+      ctx.fillStyle = c1;
+      ctx.fillRect(0, sea, w, h - sea);
+      ctx.strokeStyle = withAlpha(lighten(c1, 0.35), 0.5);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let k = 0; k < 5; k++) {
+        const y = sea + 10 + k * ((h - sea) / 5);
+        for (let x = 0; x <= w; x += 16) ctx.lineTo(x, y + Math.sin(x * 0.04 + k) * 2.5);
+        ctx.moveTo(0, y + 18);
+      }
+      ctx.stroke();
+      ctx.fillStyle = withAlpha(c2, 0.55);
+      for (let k = 0; k < 7; k++) ctx.fillRect(w * 0.8 - 24 + rng() * 48 - k * 2, sea + 6 + k * ((h - sea) / 8), 18 + rng() * 22, 2);
+      // Ship silhouette.
+      const sx = w * 0.62;
+      ctx.fillStyle = c3;
+      ctx.beginPath();
+      poly(ctx, [[sx, sea - 6], [sx + h * 0.62, sea - 6], [sx + h * 0.54, sea + 12], [sx + h * 0.08, sea + 12]]);
+      ctx.fill();
+      ctx.fillRect(sx + h * 0.2, sea - h * 0.5, 4, h * 0.45);
+      ctx.fillRect(sx + h * 0.42, sea - h * 0.4, 4, h * 0.35);
+      ctx.beginPath();
+      poly(ctx, [[sx + h * 0.06, sea - h * 0.14], [sx + h * 0.2, sea - h * 0.46], [sx + h * 0.32, sea - h * 0.14]]);
+      poly(ctx, [[sx + h * 0.3, sea - h * 0.12], [sx + h * 0.42, sea - h * 0.37], [sx + h * 0.55, sea - h * 0.12]]);
+      ctx.fill();
+      ctx.fillRect(sx + h * 0.2, sea - h * 0.54, 16, 9);
+      break;
+    }
+  }
+  ctx.restore();
 }
 
 // ---------- Effects ----------
