@@ -54,8 +54,8 @@ function BundleTile({ bundle, items, onOpen }: { bundle: ShopBundle; items: Cosm
       className="js-item game-tile group relative flex cursor-pointer flex-col overflow-hidden rounded-[18px] border-0 bg-[#0d0b0a] p-0 text-left font-[inherit] ring-1 ring-white/[.08] transition duration-300 hover:-translate-y-1 hover:ring-[color-mix(in_srgb,var(--tile)_70%,transparent)] hover:shadow-[0_22px_44px_-18px_color-mix(in_srgb,var(--tile)_55%,transparent)]">
       <div className="game-tile-field relative aspect-[16/10] w-full overflow-hidden">
         <BundleArt items={items} />
-        <span className="absolute left-2.5 top-2.5 rounded-md bg-black/55 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-[.08em] text-white backdrop-blur">Paket · {items.length} St.</span>
-        {bundle.owned > 0 && <span className="absolute right-2.5 top-2.5 rounded-md bg-black/55 px-1.5 py-0.5 text-[11px] font-semibold text-[#86efac] backdrop-blur">{bundle.owned} im Besitz</span>}
+        <span className="absolute left-2.5 top-2.5 z-10 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-[.08em] text-white backdrop-blur">Paket · {items.length} St.</span>
+        {bundle.owned > 0 && <span className="absolute right-2.5 top-2.5 z-10 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] font-semibold text-[#86efac] backdrop-blur">{bundle.owned} im Besitz</span>}
       </div>
       <div className="relative w-full px-4 pb-4 pt-3">
         <h3 className="truncate text-[16px] font-bold uppercase tracking-[.02em] text-white">{bundle.name}</h3>
