@@ -1,5 +1,5 @@
 // Member area "Mein Profil" (/dashboard/api/me/...): any logged-in Discord user, no guild permission needed.
-// Kristalle and cosmetics are global per user. Contract: web/dto/profile.ts.
+// Bernis and cosmetics are global per user. Contract: web/dto/profile.ts.
 
 import express from 'express';
 import type { Router } from 'express';
@@ -14,7 +14,7 @@ import { isBotOwner } from '../../config/bot.js';
 import { getXpForLevel } from '../../services/leveling/leveling.js';
 import { NO_DB_MESSAGE, T, cosmeticsPool, isSnowflake, requirePool } from '../../services/cosmetics/db.js';
 import { loadCatalog } from '../../services/cosmetics/catalog.js';
-import { parseProfileSettings, readProfileSettings, writeProfileSettings } from '../../services/cosmetics/profile.js';
+import { parseProfileSettings, readDashboardTheme, readProfileSettings, writeDashboardTheme, writeProfileSettings } from '../../services/cosmetics/profile.js';
 import { claimDaily, getDailyState, listTransactions, walletSummary } from '../../services/cosmetics/wallet.js';
 import { blackMarketResponse, gift, ownedItems, purchase, shopResponse } from '../../services/cosmetics/shop.js';
 import { listAchievements, syncAchievements } from '../../services/cosmetics/achievements.js';
@@ -56,6 +56,14 @@ export function meRouter(client: NexoClient): Router {
     const settings = parseProfileSettings(req.body, catalog, new Set(owned.map((entry) => entry.itemId)));
     await writeProfileSettings(userId, settings);
     res.json(await profileResponse(client, userId));
+  });
+
+  // Personal dashboard colours (body: DashboardTheme from shared/theme.ts).
+  router.get('/theme', async (_req, res) => {
+    res.json(await readDashboardTheme(locals(res).session.userId));
+  });
+  router.put('/theme', async (req, res) => {
+    res.json(await writeDashboardTheme(locals(res).session.userId, req.body));
   });
 
   router.post('/daily', async (_req, res) => {

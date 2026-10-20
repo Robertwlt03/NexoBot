@@ -7,7 +7,7 @@ import { HttpError } from '../src/web/http.js';
 import { dailyBonusAmount, defaultEconomyConfig, levelReward, parseEconomyConfig } from '../src/services/cosmetics/config.js';
 import { AUTO_EVENT_IDS, blackFridayDay, calendarEvents, eventFor, priceFor, runningEvents, upcomingEvents } from '../src/services/cosmetics/events.js';
 import { SEED_ITEMS, parseSlotData } from '../src/services/cosmetics/catalog.js';
-import { rotationFor } from '../src/services/cosmetics/shop.js';
+import { BLACK_MARKET_EXCLUSIVES, blackMarketDiscount, blackMarketPrice, rotationFor } from '../src/services/cosmetics/shop.js';
 import { cappedGrant, dailyState } from '../src/services/cosmetics/wallet.js';
 import { selectPayouts, type Placement } from '../src/services/cosmetics/rankings.js';
 import { parseProfileSettings, sanitizeBio } from '../src/services/cosmetics/profile.js';
@@ -85,15 +85,34 @@ test('discount resolution picks the best running event for the slot', () => {
   assert.equal(priceFor(seed('frame-sapphire'), []).finalPrice, 1000);
 });
 
-test('weekly black-market rotation is deterministic per week', () => {
-  const pool = SEED_ITEMS.filter((entry) => entry.availability === 'blackmarket').map((entry) => entry.id);
-  const a = rotationFor('2026-10-12', pool, 6);
-  assert.deepEqual(rotationFor('2026-10-12', [...pool].reverse(), 6), a);
+test('weekly black-market rotation: deterministic night-market mix of exclusives and shop items', () => {
+  const exclusives = SEED_ITEMS.filter((entry) => entry.availability === 'blackmarket').map((entry) => entry.id);
+  const shop = SEED_ITEMS.filter((entry) => entry.availability === 'shop' && entry.price > 0).map((entry) => entry.id);
+  const a = rotationFor('2026-10-12', exclusives, shop, 6);
+  assert.deepEqual(rotationFor('2026-10-12', [...exclusives].reverse(), [...shop].reverse(), 6), a);
   assert.equal(a.length, 6);
   assert.equal(new Set(a).size, 6);
-  const weeks = ['2026-10-19', '2026-10-26', '2026-11-02'].map((week) => rotationFor(week, pool, 6).join());
+  assert.equal(a.filter((id) => exclusives.includes(id)).length, BLACK_MARKET_EXCLUSIVES);
+  // Regular items of more than one rarity, so the cards are not all the same colour.
+  assert.ok(new Set(a.map((id) => seed(id).rarity)).size >= 2);
+  const weeks = ['2026-10-19', '2026-10-26', '2026-11-02'].map((week) => rotationFor(week, exclusives, shop, 6).join());
   assert.ok(weeks.some((week) => week !== a.join()));
-  assert.equal(rotationFor('2026-10-12', pool.slice(0, 3), 6).length, 3);
+  // Too few shop items: filled up with exclusives; too few of both: as many as there are.
+  assert.equal(rotationFor('2026-10-12', exclusives, shop.slice(0, 1), 6).length, 6);
+  assert.equal(rotationFor('2026-10-12', exclusives.slice(0, 2), shop.slice(0, 1), 6).length, 3);
+});
+
+test('black-market discounts: 10–40 % per item and week, and never worse than a running event', () => {
+  const item = seed(SEED_ITEMS.find((entry) => entry.availability === 'shop' && entry.price > 0)!.id);
+  const weeks = Array.from({ length: 40 }, (_, i) => new Date(Date.UTC(2026, 0, 5 + i * 7)).toISOString().slice(0, 10));
+  const discounts = weeks.map((week) => blackMarketDiscount(week, item.id));
+  assert.ok(discounts.every((d) => d >= 10 && d <= 40 && d % 5 === 0));
+  assert.ok(new Set(discounts).size > 2);
+  assert.equal(blackMarketDiscount('2026-10-12', item.id), blackMarketDiscount('2026-10-12', item.id));
+  const price = blackMarketPrice(item, '2026-10-12', []);
+  assert.equal(price.finalPrice, Math.round((item.price * (100 - price.discount)) / 100));
+  const bigSale: ShopEvent = { id: 'sale', name: 'Sale', description: '', startsAt: '2026-10-01T00:00:00Z', endsAt: '2026-11-01T00:00:00Z', discount: 90, slots: null, kind: 'custom', active: true };
+  assert.equal(blackMarketPrice(item, '2026-10-12', [bigSale]).discount, 90);
 });
 
 test('weeks start Monday 00:00 Berlin, months follow Berlin time', () => {

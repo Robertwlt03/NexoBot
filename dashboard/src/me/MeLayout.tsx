@@ -7,13 +7,14 @@ import { useGSAP } from '@gsap/react';
 import type { ApiGuildSummary } from '../../../src/web/apiTypes';
 import type { CosmeticItem } from '../../../src/shared/cosmetics';
 import type { BlackMarketResponse, MeProfileResponse, ShopResponse } from '../../../src/web/dto/profile';
-import { DirtyContext, useApi, useUser } from '../api';
-import { ServerRail, UserPanel } from '../components/Layout';
+import { DirtyContext, useApi } from '../api';
+import { ServerRail, SideMenu, UserPanel } from '../components/Layout';
+import { PageBackdrop } from '../components/Backdrop';
 import { Notice, Spinner } from '../components/ui';
 import { Icon } from '../icons';
 import { MeContext, reducedMotion, useCountUp } from './api';
 import type { MeContextValue } from './api';
-import { Glyph, Kristalle } from './visuals';
+import { Bernis, GLYPHS, Glyph } from './visuals';
 import type { GlyphName } from './visuals';
 
 interface NavEntry { to: string; label: string; icon: GlyphName }
@@ -26,27 +27,27 @@ const MEMBER_NAV: NavEntry[] = [
   { to: '/me/verlauf', label: 'Verlauf', icon: 'clock' },
   { to: '/me/ranglisten', label: 'Ranglisten', icon: 'trophy' },
   { to: '/me/erfolge', label: 'Erfolge', icon: 'medal' },
+  { to: '/me/design', label: 'Dashboard-Design', icon: 'palette' },
 ];
 const OWNER_NAV: NavEntry[] = [
   { to: '/owner', label: 'Übersicht', icon: 'chart' },
   { to: '/owner/artikel', label: 'Artikel', icon: 'tag' },
   { to: '/owner/events', label: 'Events', icon: 'calendar' },
   { to: '/owner/blackmarket', label: 'Black Market', icon: 'shuffle' },
-  { to: '/owner/kristalle', label: 'Kristalle vergeben', icon: 'diamond' },
+  { to: '/owner/bernis', label: 'Bernis vergeben', icon: 'gift' },
   { to: '/owner/einstellungen', label: 'Einstellungen', icon: 'sliders' },
 ];
 
 function WalletPill({ balance }: { balance: number }) {
   const shown = useCountUp(balance);
   return (
-    <Link to="/me/verlauf" title="Dein Kontostand" className="inline-flex items-center gap-1.5 rounded-full border border-white/[.08] bg-white/[.04] px-3 py-1 text-[13px] font-medium text-ink hover:border-white/20 hover:no-underline">
-      <Kristalle amount={shown} />
-    </Link>
+    <span title="Dein Kontostand" className="inline-flex items-center gap-1.5 rounded-full border border-white/[.08] bg-white/[.04] px-3 py-1 text-[13px] font-medium text-ink">
+      <Bernis amount={shown} />
+    </span>
   );
 }
 
 export function MeLayout() {
-  const user = useUser();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -104,47 +105,41 @@ export function MeLayout() {
 
   return (
     <div className="flex h-full bg-canvas">
-      <ServerRail guilds={guilds.data ?? []} />
-
-      {menuOpen && <button aria-label="Menü schließen" className="fixed inset-0 z-30 border-0 bg-black/60 lg:hidden" onClick={() => setMenuOpen(false)} />}
-      <aside className={`fixed inset-y-0 left-0 z-40 flex w-[264px] flex-col border-r border-white/[.05] bg-panel transition-transform duration-300 lg:static lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/[.05] px-4">
-          {user && <img src={user.avatarUrl} alt="" className="h-9 w-9 shrink-0 rounded-full ring-1 ring-white/10" />}
-          <div className="min-w-0 flex-1 leading-tight">
-            <div className="truncate text-[14px] font-semibold text-ink">Mein Profil</div>
-            <div className="truncate text-xs text-mute">{user?.globalName ?? user?.username}</div>
+      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)}>
+        <ServerRail guilds={guilds.data ?? []} />
+        <aside className="flex w-[264px] flex-col border-r border-white/[.05] bg-panel">
+          <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/[.05] px-4">
+            <div className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">Mein Profil</div>
+            {profile.data && <WalletPill balance={profile.data.wallet.balance} />}
           </div>
-          {profile.data && <WalletPill balance={profile.data.wallet.balance} />}
-        </div>
-        <nav className="flex-1 overflow-y-auto px-3 py-3" onClickCapture={guardClick}>
-          {MEMBER_NAV.map((entry) => (
-            <NavLink key={entry.to} end to={entry.to} className={navClass}><Glyph name={entry.icon} size={18} /> {entry.label}</NavLink>
-          ))}
-          {isOwner && (
-            <div className="mt-5">
-              <div className="mb-1 px-3 text-[11.5px] font-medium text-faint">Owner</div>
-              {OWNER_NAV.map((entry) => (
-                <NavLink key={entry.to} end to={entry.to} className={navClass}><Glyph name={entry.icon} size={18} /> {entry.label}</NavLink>
-              ))}
-            </div>
-          )}
-          <div className="mt-5 border-t border-white/[.05] pt-3">
-            <Link to="/servers" className={`${navLink} border-transparent text-mute hover:bg-white/[.03] hover:text-ink`}><Icon name="arrowLeft" size={18} /> Server verwalten</Link>
-          </div>
-        </nav>
-        <UserPanel />
-      </aside>
+          <nav className="flex-1 overflow-y-auto px-3 py-3" onClickCapture={guardClick}>
+            {MEMBER_NAV.map((entry) => (
+              <NavLink key={entry.to} end to={entry.to} className={navClass}><Glyph name={entry.icon} size={18} /> {entry.label}</NavLink>
+            ))}
+            {isOwner && (
+              <div className="mt-5">
+                <div className="mb-1 px-3 text-[11.5px] font-medium text-faint">Owner</div>
+                {OWNER_NAV.map((entry) => (
+                  <NavLink key={entry.to} end to={entry.to} className={navClass}><Glyph name={entry.icon} size={18} /> {entry.label}</NavLink>
+                ))}
+              </div>
+            )}
+          </nav>
+          <UserPanel />
+        </aside>
+      </SideMenu>
 
       <main className="relative flex min-w-0 flex-1 flex-col bg-canvas">
         <header className="flex h-16 shrink-0 items-center gap-3 border-b border-white/[.05] bg-canvas/80 px-4 backdrop-blur-md md:px-8">
           <button className="icon-btn lg:hidden" onClick={() => setMenuOpen((open) => !open)} aria-label="Menü"><Icon name="menu" /></button>
-          <Link to={isOwnerArea ? '/owner' : '/me'} className="text-sm text-mute hover:text-ink hover:no-underline">{isOwnerArea ? 'Owner' : 'Mein Profil'}</Link>
+          <span className="text-sm text-mute">{isOwnerArea ? 'Owner' : 'Mein Profil'}</span>
           <span className="text-faint">/</span>
           <span className="truncate text-sm font-medium text-ink">{current?.label ?? 'Übersicht'}</span>
           {profile.data && <span className="ml-auto lg:hidden"><WalletPill balance={profile.data.wallet.balance} /></span>}
         </header>
-        <div className="flex-1 overflow-y-auto px-4 pb-32 pt-9 md:px-10">
-          <div ref={pageRef} className="mx-auto max-w-[1100px]">
+        <div className="relative flex-1 overflow-y-auto px-4 pb-32 pt-9 md:px-10">
+          <PageBackdrop art={current && GLYPHS[current.icon]} column={1100} />
+          <div ref={pageRef} className="relative mx-auto max-w-[1100px]">
             {profile.loading && !profile.data && <Spinner />}
             {profile.error && !profile.data && <Notice tone="danger">{profile.error}</Notice>}
             {context && (isOwnerArea && !isOwner

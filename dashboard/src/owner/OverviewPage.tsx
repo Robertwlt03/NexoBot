@@ -4,7 +4,7 @@ import { useApi } from '../api';
 import { HorizontalBars } from '../components/charts';
 import { Card, Notice, PageHeader, Spinner, Stats } from '../components/ui';
 import { countdown, formatDate, num, useNow } from '../me/api';
-import { Kristalle } from '../me/visuals';
+import { Bernis } from '../me/visuals';
 
 export default function OwnerOverviewPage() {
   const { data, error, loading } = useApi<OwnerOverview>('/owner/overview');
@@ -17,12 +17,12 @@ export default function OwnerOverviewPage() {
 
   return (
     <>
-      <PageHeader kicker="Owner" title="Kristall-Wirtschaft" description="Wie viele Kristalle im Umlauf sind, was sich verkauft und wer am meisten hat." />
+      <PageHeader kicker="Owner" title="Berni-Wirtschaft" description="Wie viele Bernis im Umlauf sind, was sich verkauft und wer am meisten hat." />
       <Stats items={[
-        { label: 'Im Umlauf', value: <Kristalle amount={stats.supply} /> },
+        { label: 'Im Umlauf', value: <Bernis amount={stats.supply} /> },
         { label: 'Wallets', value: num(stats.wallets) },
-        { label: 'Heute verdient', value: <Kristalle amount={stats.earnedToday} /> },
-        { label: 'Heute ausgegeben', value: <Kristalle amount={stats.spentToday} />, hint: stats.earnedToday ? `${Math.round((stats.spentToday / stats.earnedToday) * 100)} % der Einnahmen` : undefined },
+        { label: 'Heute verdient', value: <Bernis amount={stats.earnedToday} /> },
+        { label: 'Heute ausgegeben', value: <Bernis amount={stats.spentToday} />, hint: stats.earnedToday ? `${Math.round((stats.spentToday / stats.earnedToday) * 100)} % der Einnahmen` : undefined },
       ]} />
       <div className="grid-2 [&>*]:mt-0 [&>*]:min-w-0">
         <HorizontalBars title="Bestseller" description="Meistverkaufte Artikel" unit="Verkäufe"
@@ -33,7 +33,7 @@ export default function OwnerOverviewPage() {
               <li key={h.userId} className="list-item !py-2">
                 <span className="w-5 text-center text-[13px] text-faint tabular-nums">{i + 1}</span>
                 <span className="grow title text-[14px]">{h.name}</span>
-                <Kristalle amount={h.balance} className="text-[13px] text-mute" />
+                <Bernis amount={h.balance} className="text-[13px] text-mute" />
               </li>
             ))}
           </ol>

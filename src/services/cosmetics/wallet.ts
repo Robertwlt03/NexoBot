@@ -1,4 +1,4 @@
-// Global Kristalle wallet: atomic earn/spend with a row lock per user, the daily cap for level-up and mini-game income,
+// Global Bernis wallet: atomic earn/spend with a row lock per user, the daily cap for level-up and mini-game income,
 // the daily bonus with streak and the transaction log. Balances never go negative (CHECK constraint + spend check).
 
 import type pg from 'pg';
@@ -65,7 +65,7 @@ export async function earn(userId: string, amount: number, reason: string, label
 export async function spendTx(client: pg.PoolClient, userId: string, amount: number, reason: string, label: string, meta: TxMeta | null = null): Promise<void> {
   const wallet = await lockWallet(client, userId);
   if (Number(wallet.balance) < amount) {
-    throw new HttpError(400, `Dafür reichen deine Kristalle nicht (${Number(wallet.balance).toLocaleString('de-DE')} von ${amount.toLocaleString('de-DE')}).`);
+    throw new HttpError(400, `Dafür reichen deine Bernis nicht (${Number(wallet.balance).toLocaleString('de-DE')} von ${amount.toLocaleString('de-DE')}).`);
   }
   await client.query(`UPDATE ${T.user_wallets} SET balance = balance - $2, updated_at = NOW() WHERE user_id = $1`, [userId, amount]);
   await logTransaction(client, userId, -amount, reason, label, null, meta);

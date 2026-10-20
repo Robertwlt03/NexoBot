@@ -1,4 +1,4 @@
-// Bot-side entry points of the Kristall economy: mini-game rewards, XP/level-up income, counting points and the
+// Bot-side entry points of the Bernis economy: mini-game rewards, XP/level-up income, counting points and the
 // start-up work (catalog seed, monthly payout job). Every hook is best effort and never breaks the command it runs in.
 
 import { randomInt } from 'node:crypto';
@@ -32,8 +32,8 @@ function appendLine(embed: EmbedBuilder, line: string): void {
 }
 
 /**
- * Successful mini game: a small random Kristall reward (daily cap applies) plus one monthly ranking point, and
- * "+N 💎 Kristalle" appended to the reply embed when the reward arrives in time.
+ * Successful mini game: a small random Berni reward (daily cap applies) plus one monthly ranking point, and
+ * "+N 🟠 Bernis" appended to the reply embed when the reward arrives in time.
  */
 export async function rewardMinigame(embed: EmbedBuilder, user: { id: string; bot: boolean }, guildId: string | null, game: MinigameId): Promise<void> {
   if (user.bot || !cosmeticsPool()) return;
@@ -53,15 +53,15 @@ export async function rewardMinigame(embed: EmbedBuilder, user: { id: string; bo
     void syncAchievements(user.id);
     return granted;
   })().catch((error: unknown) => {
-    logger.warn('Minispiel-Kristalle konnten nicht vergeben werden:', (error as Error).message);
+    logger.warn('Minispiel-Bernis konnten nicht vergeben werden:', (error as Error).message);
     return 0;
   });
   const granted = await Promise.race([work, new Promise<number>((resolve) => { setTimeout(() => resolve(0), REPLY_WAIT_MS).unref(); })]);
   if (granted > 0) appendLine(embed, `+${granted} ${CURRENCY.symbol} ${CURRENCY.name}`);
 }
 
-/** XP from messages: monthly activity score and, on level-ups, Kristalle (daily cap applies). Callers skip bots. */
-/** Records monthly XP and pays the level-up reward; returns the Kristalle actually credited (after the daily cap). */
+/** XP from messages: monthly activity score and, on level-ups, Bernis (daily cap applies). Callers skip bots. */
+/** Records monthly XP and pays the level-up reward; returns the Bernis actually credited (after the daily cap). */
 export async function onXpGained(guild: { id: string; name: string }, userId: string, xp: number, fromLevel: number, toLevel: number): Promise<number> {
   if (!cosmeticsPool()) return 0;
   try {
@@ -74,12 +74,12 @@ export async function onXpGained(guild: { id: string; name: string }, userId: st
     await syncAchievements(userId);
     return credited;
   } catch (error) {
-    logger.warn('Level-Kristalle konnten nicht vergeben werden:', (error as Error).message);
+    logger.warn('Level-Bernis konnten nicht vergeben werden:', (error as Error).message);
     return 0;
   }
 }
 
-/** Counting game: a correct number is one monthly mini-game point (no Kristalle, to avoid spam). */
+/** Counting game: a correct number is one monthly mini-game point (no Bernis, to avoid spam). */
 export async function onCountingCorrect(guildId: string, userId: string): Promise<void> {
   try {
     await recordMinigamePoints(guildId, userId);
@@ -92,14 +92,14 @@ export async function onCountingCorrect(guildId: string, userId: string): Promis
  * idempotent catch-up in case the bot was offline). */
 export async function startCosmetics(client: Client): Promise<void> {
   if (!cosmeticsPool()) {
-    logger.info('Kristall-Wirtschaft aus: keine PostgreSQL-Datenbank.');
+    logger.info('Berni-Wirtschaft aus: keine PostgreSQL-Datenbank.');
     return;
   }
   try {
     const inserted = await seedCatalog();
-    if (inserted > 0) logger.info(`Kristall-Shop: ${inserted} neue Katalog-Items angelegt.`);
+    if (inserted > 0) logger.info(`Berni-Shop: ${inserted} neue Katalog-Items angelegt.`);
   } catch (error) {
-    logger.error('Kristall-Katalog konnte nicht angelegt werden:', error);
+    logger.error('Berni-Katalog konnte nicht angelegt werden:', error);
   }
   cron.schedule('5 0 1-3 * *', async () => {
     try {

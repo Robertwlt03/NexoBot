@@ -23,7 +23,7 @@ export function defaultEconomyConfig(): EconomyConfig {
   };
 }
 
-/** Kristalle for reaching `level` (same formula as levelUpReward() in shared/cosmetics.ts, with tunable numbers). */
+/** Bernis for reaching `level` (same formula as levelUpReward() in shared/cosmetics.ts, with tunable numbers). */
 export function levelReward(config: EconomyConfig, level: number): number {
   const base = Math.round(config.levelUpBase + level * config.levelUpPerLevel);
   return level % 10 === 0 ? Math.round(base * config.milestoneMultiplier) : base;

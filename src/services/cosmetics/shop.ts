@@ -50,13 +50,47 @@ function shuffle(ids: string[], random: () => number): string[] {
   return list;
 }
 
-/** Deterministic weekly rotation: same week + same pool = same items. */
-export function rotationFor(weekStart: string, poolIds: string[], size: number): string[] {
-  return shuffle([...poolIds].sort(), seededRandom(`nexo-black-market:${weekStart}`)).slice(0, size);
+/** Exclusives (the mythic black-market-only items) per week; the rest of the market comes from the regular shop. */
+export const BLACK_MARKET_EXCLUSIVES = 2;
+
+/**
+ * Night-market mix: up to BLACK_MARKET_EXCLUSIVES exclusives plus regular shop items of every rarity, in random
+ * order. Falls back to more exclusives when the shop pool is too small.
+ */
+function mixRotation(exclusiveIds: string[], shopIds: string[], size: number, random: () => number): string[] {
+  const exclusives = shuffle([...exclusiveIds].sort(), random);
+  const regular = shuffle([...shopIds].sort(), random);
+  const take = Math.min(exclusives.length, size >= 4 ? BLACK_MARKET_EXCLUSIVES : 1);
+  const ids = [...exclusives.slice(0, take), ...regular.slice(0, size - take)];
+  if (ids.length < size) ids.push(...exclusives.slice(take, take + size - ids.length));
+  return shuffle(ids, random);
 }
 
-const blackMarketPool = (catalog: Map<string, CosmeticItem>) =>
-  [...catalog.values()].filter((entry) => entry.active && entry.availability === 'blackmarket').map((entry) => entry.id);
+/** Deterministic weekly rotation: same week + same pools = same items. */
+export function rotationFor(weekStart: string, exclusiveIds: string[], shopIds: string[], size: number): string[] {
+  return mixRotation(exclusiveIds, shopIds, size, seededRandom(`nexo-black-market:${weekStart}`));
+}
+
+/** Black-market discount of one item for one week: 10–40 % in steps of 5, the same all week (no storage needed). */
+export function blackMarketDiscount(weekStart: string, itemId: string): number {
+  return 10 + Math.floor(seededRandom(`nexo-black-market-discount:${weekStart}:${itemId}`)() * 7) * 5;
+}
+
+/** Price on the black market: its weekly discount, or a running event's if that is better. */
+export function blackMarketPrice(entry: CosmeticItem, weekStart: string, running: ShopEvent[]): { finalPrice: number; discount: number; eventId: string | null } {
+  const discount = blackMarketDiscount(weekStart, entry.id);
+  const own = { finalPrice: Math.round((entry.price * (100 - discount)) / 100), discount, eventId: null };
+  const event = priceFor(entry, running);
+  return event.finalPrice < own.finalPrice ? event : own;
+}
+
+const blackMarketPools = (catalog: Map<string, CosmeticItem>) => {
+  const active = [...catalog.values()].filter((entry) => entry.active && entry.price > 0);
+  return {
+    exclusives: active.filter((entry) => entry.availability === 'blackmarket').map((entry) => entry.id),
+    shop: active.filter((entry) => entry.availability === 'shop').map((entry) => entry.id),
+  };
+};
 
 /** This week's rotation. Persisted on first read so later catalog edits do not reshuffle a running week. */
 export async function currentRotation(catalog?: Map<string, CosmeticItem>): Promise<{ weekStart: string; itemIds: string[] }> {
@@ -66,7 +100,8 @@ export async function currentRotation(catalog?: Map<string, CosmeticItem>): Prom
   const read = () => pool.query<{ item_ids: string[] }>(`SELECT item_ids FROM ${T.black_market_weeks} WHERE week_start = $1::date`, [weekStart]);
   let row = (await read()).rows[0];
   if (!row) {
-    const ids = rotationFor(weekStart, blackMarketPool(items), (await getEconomyConfig()).blackMarketSize);
+    const pools = blackMarketPools(items);
+    const ids = rotationFor(weekStart, pools.exclusives, pools.shop, (await getEconomyConfig()).blackMarketSize);
     await pool.query(
       `INSERT INTO ${T.black_market_weeks} (week_start, item_ids, pinned) VALUES ($1::date, $2::jsonb, FALSE) ON CONFLICT (week_start) DO NOTHING`,
       [weekStart, JSON.stringify(ids)],
@@ -86,9 +121,9 @@ async function writeRotation(itemIds: string[], pinned: boolean): Promise<void> 
 
 /** Owner: a fresh random rotation for the running week. */
 export async function rerollBlackMarket(): Promise<void> {
-  const catalog = await loadCatalog();
-  const ids = shuffle(blackMarketPool(catalog), () => randomInt(0, 2 ** 32) / 2 ** 32);
-  await writeRotation(ids.slice(0, (await getEconomyConfig()).blackMarketSize), false);
+  const pools = blackMarketPools(await loadCatalog());
+  const ids = mixRotation(pools.exclusives, pools.shop, (await getEconomyConfig()).blackMarketSize, () => randomInt(0, 2 ** 32) / 2 ** 32);
+  await writeRotation(ids, false);
 }
 
 /** Owner: pin exactly these items for the running week. */
@@ -121,10 +156,15 @@ function listing(entry: CosmeticItem, ctx: Context, availableUntil: string | nul
 
 export async function shopResponse(userId: string): Promise<ShopResponse> {
   const ctx = await context(userId);
+  // Items on this week's black market cost the same here as there (that is also what a purchase charges).
+  const { weekStart, itemIds } = await currentRotation(ctx.catalog);
   const listings = [...ctx.catalog.values()]
     .filter((entry) => entry.active && (entry.availability === 'shop' || (entry.availability === 'event' && eventFor(entry, ctx.running))))
     .sort(sortItems)
-    .map((entry) => listing(entry, ctx, eventFor(entry, ctx.running)?.endsAt ?? null));
+    .map((entry) => {
+      const base = listing(entry, ctx, eventFor(entry, ctx.running)?.endsAt ?? null);
+      return itemIds.includes(entry.id) ? { ...base, ...blackMarketPrice(entry, weekStart, ctx.running) } : base;
+    });
   return { listings, events: ctx.running, upcoming: upcomingEvents(new Date(), ctx.stored), wallet: await walletSummary(userId) };
 }
 
@@ -132,7 +172,10 @@ export async function blackMarketResponse(userId: string | null): Promise<BlackM
   const ctx = await context(userId);
   const { weekStart, itemIds } = await currentRotation(ctx.catalog);
   const endsAt = weekEnd(weekStart).toISOString();
-  const listings = itemIds.map((id) => listing(ctx.catalog.get(id)!, ctx, endsAt));
+  const listings = itemIds.map((id) => {
+    const entry = ctx.catalog.get(id)!;
+    return { ...listing(entry, ctx, endsAt), ...blackMarketPrice(entry, weekStart, ctx.running) };
+  });
   const wallet = userId ? await walletSummary(userId) : { balance: 0, lifetimeEarned: 0, todayEarned: 0, dailyCap: (await getEconomyConfig()).dailyEarnCap };
   return { weekStart, endsAt, listings, wallet };
 }
@@ -146,14 +189,15 @@ async function offerFor(itemId: unknown): Promise<Offer> {
   const ctx = await context(null);
   const entry = ctx.catalog.get(itemId);
   if (!entry || !entry.active) throw new HttpError(404, 'Dieses Item gibt es nicht (mehr).');
+  // This week's black market first: its items (exclusives and regular ones) sell at the black-market price.
+  // Pinned weeks may contain any priced item, so check the rotation rather than the availability.
+  const { weekStart, itemIds } = await currentRotation(ctx.catalog);
+  if (itemIds.includes(entry.id)) return { entry, price: blackMarketPrice(entry, weekStart, ctx.running).finalPrice, source: 'purchase', blackMarket: true };
   if (entry.availability === 'shop') return { entry, price: priceFor(entry, ctx.running).finalPrice, source: 'purchase', blackMarket: false };
   if (entry.availability === 'event') {
     if (!eventFor(entry, ctx.running)) throw badRequest('Dieses Event-Item gibt es nur während seines Events.');
     return { entry, price: priceFor(entry, ctx.running).finalPrice, source: 'event', blackMarket: false };
   }
-  // Pinned black-market weeks may contain any priced item, so check the rotation rather than the availability.
-  const { itemIds } = await currentRotation(ctx.catalog);
-  if (itemIds.includes(entry.id)) return { entry, price: entry.price, source: 'purchase', blackMarket: true };
   if (entry.availability === 'blackmarket') throw badRequest('Dieses Item ist diese Woche nicht auf dem Schwarzmarkt.');
   throw badRequest('Dieses Item kann man nicht kaufen.');
 }

@@ -1,5 +1,5 @@
 // Achievements: derived from stored data (levels, wallet, inventory, transactions, monthly scores), so a sync can
-// always catch up. Each unlock pays Kristalle once (not capped) and grants its badge item `ach-<id>`.
+// always catch up. Each unlock pays Bernis once (not capped) and grants its badge item `ach-<id>`.
 
 import type { Achievement } from '../../web/dto/profile.js';
 import { logger } from '../../utils/logger.js';

@@ -1,4 +1,4 @@
-// Database access for the Kristall economy. Everything lives in PostgreSQL; in degraded (in-memory) mode the economy
+// Database access for the Bernis economy. Everything lives in PostgreSQL; in degraded (in-memory) mode the economy
 // is off: bot hooks silently skip and the dashboard answers 503.
 
 import type pg from 'pg';
@@ -7,7 +7,7 @@ import { pgConfig } from '../../config/database/postgres.js';
 import { HttpError } from '../../web/http.js';
 
 export const T = pgConfig.tables;
-export const NO_DB_MESSAGE = 'Die Kristall-Wirtschaft braucht die Datenbank.';
+export const NO_DB_MESSAGE = 'Die Berni-Wirtschaft braucht die Datenbank.';
 
 export type Queryable = pg.Pool | pg.PoolClient;
 

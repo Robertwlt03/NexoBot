@@ -1,0 +1,37 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { THEME_PRESETS, contrast, themeVariables } from '../src/shared/theme.js';
+
+// Reads the mode tokens straight from the dashboard stylesheet, so a colour tweak there cannot silently drop below WCAG AA.
+const css = readFileSync(new URL('../dashboard/src/styles.css', import.meta.url), 'utf8');
+function tokens(selector: string): Record<string, string> {
+  const block = css.slice(css.indexOf(`${selector} {`)).split('}')[0];
+  return Object.fromEntries([...block.matchAll(/(--[\w-]+):\s*(#[0-9a-f]{6});/gi)].map((m) => [m[1], m[2]]));
+}
+const MODES = { dark: tokens(':root, [data-mode="dark"]'), light: tokens('[data-mode="light"]') };
+const BACKGROUNDS = ['--bg-main', '--bg-sidebar', '--bg-card', '--bg-card-hover', '--bg-input'];
+
+for (const [mode, t] of Object.entries(MODES)) {
+  test(`${mode} mode: every text and status colour reads at 4.5:1 on every surface`, () => {
+    for (const text of ['--text-strong', '--text', '--text-muted', '--text-faint', '--pos', '--neg', '--warning', '--rarity-rare', '--rarity-epic', '--rarity-legendary', '--rarity-mythic']) {
+      for (const bg of BACKGROUNDS) {
+        assert.ok(t[text] && t[bg], `${mode}: ${text} / ${bg} missing`);
+        assert.ok(contrast(t[text], t[bg]) >= 4.5, `${mode}: ${text} on ${bg} = ${contrast(t[text], t[bg]).toFixed(2)}`);
+      }
+    }
+  });
+  test(`${mode} mode: form control borders reach 3:1`, () => {
+    for (const bg of ['--bg-card', '--bg-input']) assert.ok(contrast(t['--border-input'], t[bg]) >= 3, `${mode}: border on ${bg}`);
+  });
+}
+
+test('accent text of every preset reads at 4.5:1 on the cards of both modes', () => {
+  for (const preset of THEME_PRESETS) {
+    for (const [mode, t] of Object.entries(MODES)) {
+      const vars = themeVariables({ preset: preset.id, primary: preset.primary, secondary: preset.secondary, mode: mode as 'dark' | 'light' });
+      assert.ok(contrast(vars['--accent-text'], t['--bg-card']) >= 4.5, `${preset.name} ${mode}: accent text`);
+      assert.ok(contrast(vars['--accent-text-muted'], t['--bg-card']) >= 4.5, `${preset.name} ${mode}: muted accent text`);
+    }
+  }
+});

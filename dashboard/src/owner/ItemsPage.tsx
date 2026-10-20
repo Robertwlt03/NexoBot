@@ -8,13 +8,13 @@ import type {
 import type { ShopEvent } from '../../../src/web/dto/profile';
 import { useApi, useUser } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
-import { LevelUpPreview, ProfileCardPreview } from '../components/ProfileCardPreview';
+import { CardGlyph, LevelUpPreview, ProfileCardPreview } from '../components/ProfileCardPreview';
 import {
   ColorInput, Empty, Field, Modal, Notice, NumberInput, PageHeader, Select, Spinner, Switch, SwitchRow, TableWrap, TextArea, TextInput,
 } from '../components/ui';
 import { Icon } from '../icons';
 import { equipItem, num, resolveCosmetics, useMutation } from '../me/api';
-import { Glyph, ItemVisual, Kristalle, RarityLabel } from '../me/visuals';
+import { ItemVisual, Bernis, RarityLabel } from '../me/visuals';
 
 // ---------- Labels ----------
 
@@ -75,7 +75,7 @@ function GlyphPicker({ value, onChange }: { value: StickerData['glyph']; onChang
       {BADGE_GLYPHS.map((glyph) => (
         <button key={glyph} type="button" title={glyph} aria-pressed={glyph === value} onClick={() => onChange(glyph)}
           className={`flex aspect-square cursor-pointer items-center justify-center rounded-lg border bg-transparent ${glyph === value ? 'border-accent text-ink ring-2 ring-accent/30' : 'border-white/[.06] text-mute hover:border-white/20 hover:text-ink'}`}>
-          <Glyph name={glyph} size={18} />
+          <CardGlyph glyph={glyph} size={20} />
         </button>
       ))}
     </div>
@@ -225,7 +225,7 @@ function ItemEditor({ initial, isNew, events, onClose, onSaved }: { initial: Cos
           <Field label="Beschreibung"><TextArea value={item.description} onChange={(description) => set({ description })} maxLength={140} rows={2} /></Field>
           <div className="grid-2">
             <Field label="Seltenheit"><Select value={item.rarity} onChange={(rarity) => set({ rarity })} options={RARITIES.map((r) => ({ value: r, label: RARITY_LABELS[r] }))} /></Field>
-            <Field label="Preis (Kristalle)" hint={`Üblich: ${num(band[0])}–${num(band[1])}`}><NumberInput value={item.price} onChange={(price) => set({ price })} min={0} step={50} /></Field>
+            <Field label="Preis (Bernis)" hint={`Üblich: ${num(band[0])}–${num(band[1])}`}><NumberInput value={item.price} onChange={(price) => set({ price })} min={0} step={50} /></Field>
             <Field label="Erhältlich über">
               <Select value={item.availability} onChange={(availability) => set({ availability, eventId: availability === 'event' ? item.eventId ?? events[0]?.id ?? null : null })} options={opts(AVAILABILITY_LABELS)} />
             </Field>
@@ -306,7 +306,7 @@ export default function ItemsPage() {
                 </td>
                 <td className="whitespace-nowrap">{SLOT_LABELS[item.slot]}</td>
                 <td><RarityLabel rarity={item.rarity} /></td>
-                <td className="text-right">{item.price ? <Kristalle amount={item.price} /> : <span className="text-faint">–</span>}</td>
+                <td className="text-right">{item.price ? <Bernis amount={item.price} /> : <span className="text-faint">–</span>}</td>
                 <td className="whitespace-nowrap">{AVAILABILITY_LABELS[item.availability]}{item.eventId && <div className="faint">{events.find((e) => e.id === item.eventId)?.name ?? item.eventId}</div>}</td>
                 <td>{item.active ? <span className="badge badge-on">Aktiv</span> : <span className="badge badge-off">Inaktiv</span>}</td>
                 <td className="whitespace-nowrap text-right">

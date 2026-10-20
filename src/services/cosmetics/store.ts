@@ -58,7 +58,7 @@ export async function getResolvedCosmetics(userId: string): Promise<ResolvedCosm
   }
 }
 
-/** Current Kristalle balance (0 when the user has no wallet yet). */
+/** Current Bernis balance (0 when the user has no wallet yet). */
 export async function getBalance(userId: string): Promise<number> {
   const pool = cosmeticsPool();
   if (!pool) return 0;
@@ -66,7 +66,7 @@ export async function getBalance(userId: string): Promise<number> {
     const result = await pool.query<{ balance: string }>(`SELECT balance FROM ${T.user_wallets} WHERE user_id = $1`, [userId]);
     return Number(result.rows[0]?.balance ?? 0);
   } catch (error) {
-    logger.warn('Kristall-Kontostand konnte nicht gelesen werden:', (error as Error).message);
+    logger.warn('Berni-Kontostand konnte nicht gelesen werden:', (error as Error).message);
     return 0;
   }
 }

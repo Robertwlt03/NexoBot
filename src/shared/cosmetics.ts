@@ -1,9 +1,9 @@
-// Nexo profile cosmetics: global (per user, not per server), bought with Kristalle — the bot's own currency that
+// Nexo profile cosmetics: global (per user, not per server), bought with Bernis — the bot's own currency that
 // only Nexo hands out (level-ups, mini games, monthly rankings, achievements, daily bonus). Import-free: shared by
 // the bot, the card renderer and the dashboard.
 
-/** `symbol` is for Discord text (no custom graphics there); the dashboard and the cards draw the crystal from shared/crystal.ts. */
-export const CURRENCY = { name: 'Kristalle', singular: 'Kristall', short: 'K', symbol: '💎' } as const;
+/** `symbol` is for Discord text (no custom graphics there); the dashboard and the cards draw the amber drop from shared/amber.ts. */
+export const CURRENCY = { name: 'Bernis', singular: 'Berni', short: 'B', symbol: '🟠' } as const;
 
 export const RARITIES = ['common', 'rare', 'epic', 'legendary', 'mythic'] as const;
 export type Rarity = (typeof RARITIES)[number];
@@ -74,7 +74,7 @@ export type CosmeticItem = {
     name: string;
     description: string;
     rarity: Rarity;
-    /** Base price in Kristalle (before event discounts). 0 for items that cannot be bought. */
+    /** Base price in Bernis (before event discounts). 0 for items that cannot be bought. */
     price: number;
     availability: ItemAvailability;
     /** Event id for event-only items (only buyable while that event runs). */
@@ -150,7 +150,7 @@ export interface ProfileCardSubject {
 
 // ---------- Earning (defaults; the economy service may read overrides from the owner config) ----------
 
-/** Kristalle for reaching `level` (milestones every 10 levels pay 1.5×). */
+/** Bernis for reaching `level` (milestones every 10 levels pay 1.5×). */
 export function levelUpReward(level: number): number {
   const base = Math.round(20 + level * 6);
   return level % 10 === 0 ? Math.round(base * 1.5) : base;

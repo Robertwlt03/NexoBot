@@ -105,7 +105,7 @@ export function Landing() {
   if (user) return <Navigate to="/servers" replace />;
 
   return (
-    <div ref={root} className="min-h-full overflow-x-hidden bg-[#111214] text-dc-text [background-image:radial-gradient(rgba(255,255,255,.05)_1px,transparent_1px)] [background-size:24px_24px]">
+    <div ref={root} data-mode="dark" className="min-h-full overflow-x-hidden bg-[#111214] text-dc-text [background-image:radial-gradient(rgba(255,255,255,.05)_1px,transparent_1px)] [background-size:24px_24px]">
       {/* Nav */}
       <header className="js-nav js-intro sticky top-0 z-30 border-b border-white/5 bg-[#111214]/75 backdrop-blur-md">
         <div className={`${container} flex h-16 items-center gap-6`}>

@@ -1,6 +1,6 @@
 // API contract for the member area ("Mein Profil", any logged-in Discord user) and the owner area (OWNER_IDS only).
 // Member routes: /dashboard/api/me/...   Owner routes: /dashboard/api/owner/...
-// All amounts are Kristalle (global, per user).
+// All amounts are Bernis (global, per user).
 
 import type {
   CosmeticItem, CosmeticSlot, Rarity, RankingKind, UserProfileSettings,

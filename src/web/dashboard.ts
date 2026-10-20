@@ -303,7 +303,7 @@ export function createDashboardRouter(client: NexoClient): Router {
     guildRouter.use(`/${module.id}`, module.router(client));
   }
 
-  // Kristalle and cosmetics are global per user: no guild permission, owner routes check OWNER_IDS.
+  // Bernis and cosmetics are global per user: no guild permission, owner routes check OWNER_IDS.
   api.use('/me', meRouter(client));
   api.use('/owner', ownerRouter(client));
   api.use('/guilds/:guildId', guildRouter);

@@ -1,4 +1,4 @@
-// Owner area (/dashboard/api/owner/...): only OWNER_IDS. Controls the Kristall economy: items, prices, events,
+// Owner area (/dashboard/api/owner/...): only OWNER_IDS. Controls the Bernis economy: items, prices, events,
 // black market, tunables and support grants. Contract: web/dto/profile.ts.
 
 import express from 'express';
