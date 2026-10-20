@@ -37,37 +37,34 @@ const startsIn = (start: string, now: number) => {
   return days >= 1 ? `in ${days} ${days === 1 ? 'Tag' : 'Tagen'}` : `in ${countdown(start, now)}`;
 };
 
-/** Event calendar: what comes next, each in its own season's colours and figure. */
-export function UpcomingEvents({ events }: { events: ShopEvent[] }) {
+/**
+ * Event calendar, folded away at the very bottom: there for the curious, but the shop does not make you wait for the
+ * next event — it should arrive as a surprise.
+ */
+export function EventCalendar({ events }: { events: ShopEvent[] }) {
   const now = useNow(60_000);
   if (!events.length) return null;
   return (
-    <section className="@container mt-8">
-      <h2 className="text-[19px] font-semibold tracking-tight">Kommende Events</h2>
-      <p className="mb-3.5 mt-0.5 text-[13px] text-mute">Wann im Shop was ansteht – mit Rabatten und Event-Artikeln.</p>
-      <div className="grid grid-cols-1 gap-3 @xl:grid-cols-2 @4xl:grid-cols-3">
+    <details className="group mt-12 rounded-2xl border border-white/[.06] bg-surface">
+      <summary className="flex cursor-pointer list-none items-center gap-2.5 px-4 py-3 text-[13.5px] text-mute hover:text-ink [&::-webkit-details-marker]:hidden">
+        <Glyph name="calendar" size={16} /> Event-Kalender
+        <span className="ml-auto flex transition-transform group-open:rotate-90"><Icon name="arrowRight" size={15} /></span>
+      </summary>
+      <ul className="m-0 list-none divide-y divide-white/[.05] border-t border-white/[.06] p-0">
         {events.map((event) => {
-          const theme = eventTheme(event);
-          const { tint, glyph } = EVENT_THEMES[theme];
+          const { tint, glyph } = EVENT_THEMES[eventTheme(event)];
           return (
-            <div key={event.id} className="flex items-center gap-3.5 rounded-2xl border border-white/[.06] bg-surface p-4">
+            <li key={event.id} className="flex items-center gap-3 px-4 py-2.5 text-[13px]">
               {/* The season's tint, mixed with the text colour so the icon keeps its contrast in both modes. */}
-              <span className="icon-tile" style={{ color: `color-mix(in srgb, ${tint} 70%, var(--text-strong))`, background: `color-mix(in srgb, ${tint} 12%, transparent)` }}>
-                <Glyph name={glyph} size={19} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <h3 className="truncate text-[14.5px] font-medium">{event.name}</h3>
-                <p className="truncate text-[12.5px] text-mute">{formatDate(event.startsAt)} – {formatDate(event.endsAt)}</p>
-              </div>
-              <div className="shrink-0 text-right">
-                {event.discount > 0 && <div className="text-[13px] font-semibold tabular-nums text-ink">−{event.discount} %</div>}
-                <div className="text-[12px] text-mute">{startsIn(event.startsAt, now)}</div>
-              </div>
-            </div>
+              <span className="shrink-0" style={{ color: `color-mix(in srgb, ${tint} 70%, var(--text-strong))` }}><Glyph name={glyph} size={16} /></span>
+              <span className="min-w-0 flex-1 truncate"><span className="text-ink">{event.name}</span> <span className="text-mute">· {formatDate(event.startsAt)} – {formatDate(event.endsAt)}</span></span>
+              {event.discount > 0 && <span className="shrink-0 tabular-nums text-ink">−{event.discount} %</span>}
+              <span className="w-[92px] shrink-0 text-right text-[12px] text-mute">{startsIn(event.startsAt, now)}</span>
+            </li>
           );
         })}
-      </div>
-    </section>
+      </ul>
+    </details>
   );
 }
 
@@ -221,7 +218,6 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
           </div>
         </div>
       </section>
-      <UpcomingEvents events={upcoming} />
       <section className="mt-8">
         <h2 className="mb-3.5 text-[19px] font-semibold tracking-tight">{event ? `Highlights aus „${event.name}“` : 'Empfohlen'}</h2>
         {/* Bento: one 2×2 feature tile, four regular ones. */}
@@ -245,6 +241,7 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
         <h2 className="mb-3 text-[19px] font-semibold tracking-tight">Alle Artikel</h2>
         <ItemBrowser listings={listings} variant="shop" slot={slot} onSlotChange={setSlot} />
       </section>
+      <EventCalendar events={upcoming} />
       {open && <ItemDetail listing={open} owned={owned.has(open.item.id)} onClose={() => setOpenId(null)} />}
     </>
   );

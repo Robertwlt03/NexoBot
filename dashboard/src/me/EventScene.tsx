@@ -40,7 +40,7 @@ export const EVENT_THEMES: Record<EventTheme, { tint: string; glyph: GlyphName; 
   carnival: { tint: '#c084fc', glyph: 'mask', emit: { area: 'scene', kinds: ['confetti', 'confetti', 'streamer'], motion: 'fall', x: [0, 100], y: [4, 16], wind: [-60, 30], count: 18 } },
   easter: { tint: '#86efac', glyph: 'egg', emit: { area: 'scene', kinds: ['petal'], motion: 'fall', x: [45, 92], y: [6, 30], wind: [-200, -60], count: 12 } },
   summer: { tint: '#fbbf24', glyph: 'sun', emit: { area: 'sky', kinds: ['mote'], motion: 'rise', x: [0, 100], y: [86, 100], wind: [-20, 20], count: 14 } },
-  autumn: { tint: '#e0913a', glyph: 'leaf', emit: { area: 'scene', kinds: ['leaf'], motion: 'fall', x: [36, 96], y: [10, 42], wind: [-260, -70], count: 14 } },
+  autumn: { tint: '#e0913a', glyph: 'leaf', emit: { area: 'scene', kinds: ['leaf'], motion: 'fall', x: [38, 96], y: [14, 52], wind: [-260, -70], count: 14 } },
   halloween: { tint: '#f97316', glyph: 'pumpkin', emit: { area: 'scene', kinds: ['ember'], motion: 'rise', x: [52, 74], y: [80, 88], wind: [-50, 10], count: 12 } },
   sale: { tint: '#facc15', glyph: 'tag', emit: sky(['confetti'], 10) },
   winter: { tint: '#8fd3ff', glyph: 'snowflake', emit: sky(['snow', 'snow', 'flake'], 26) },
@@ -149,17 +149,26 @@ const swing = (x: number, delay: number): CSSProperties => ({ transformOrigin: `
 
 function scene(theme: EventTheme, discount: number): ReactNode {
   switch (theme) {
-    case 'autumn':
+    case 'autumn': {
+      // Crown of foliage clumps in three tiers, drawn back to front and lit from above: each clump is its shadow tone
+      // with the lit tone shifted up-left on top. Branches run into the crown and show again over the lowest tier.
+      const tiers: [string, string, number[][]][] = [
+        ['#5e250d', '#7c3314', [[118, 150, 28], [166, 160, 32], [214, 156, 30], [250, 140, 24]]],
+        ['#7c3314', '#a8501c', [[100, 112, 30], [146, 118, 38], [196, 116, 40], [242, 104, 30]]],
+        ['#a8501c', '#c97a2a', [[128, 74, 34], [176, 58, 40], [224, 72, 34]]],
+      ];
       return (
         <>
-          <path d="M70 320c20-10 120-14 170-8v8Z" fill="#8a3414" opacity=".6" />
-          <path d="M196 320c-2-56-4-104-12-140-4-18-12-32-24-44l6-5c11 10 19 22 24 36 3-24 12-44 28-58l6 5c-15 15-22 36-24 62 2 50 6 98 10 144Z" fill="#3a2617" />
-          <path d="M186 150c-22-16-46-24-74-26M170 128c-6-20-14-36-26-50M214 116c8-14 16-24 24-30" stroke="#3a2617" strokeWidth="5" strokeLinecap="round" fill="none" />
-          {[[112, 112, 30, 0], [146, 76, 38, 1], [194, 62, 44, 0], [232, 98, 34, 2], [172, 110, 34, 2], [214, 142, 26, 1], [124, 142, 20, 2], [98, 94, 18, 1]].map(([x, y, r, c]) => (
-            <circle key={`${x}-${y}`} cx={x} cy={y} r={r} fill={LEAF_COLOURS[c]} />
-          ))}
+          <path d="M118 320c16-8 102-10 122-4v4Z" fill="#7c3314" opacity=".55" />
+          <path d="M174 320c10-4 15-16 15-34 0-30-2-58-6-90h17c-2 32-2 60 0 90 0 18 4 30 14 34Z" fill="#3a2617" />
+          <path d="M192 206 150 150M196 200l4-84M200 206l38-58" stroke="#3a2617" strokeWidth="8" strokeLinecap="round" />
+          {tiers.map(([shade, lit, clumps]) => clumps.map(([x, y, r]) => (
+            <g key={`${x}-${y}`}><circle cx={x} cy={y} r={r} fill={shade} /><circle cx={x - r * 0.12} cy={y - r * 0.16} r={r * 0.84} fill={lit} /></g>
+          )))}
+          <path d="M193 206l-20-26M199 206l22-24" stroke="#3a2617" strokeWidth="6" strokeLinecap="round" />
         </>
       );
+    }
     case 'winter':
       return (
         <>
