@@ -67,6 +67,10 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('background', 'bg-summer-sunset', 'rare', 1300, 'Sommerabend', 'Sommer-Edition: warmer Abendhimmel.', bg('gradient', ['#7C2D12', '#F97316', '#FDE68A'], 110), ev('summer-sale')),
   item('background', 'bg-black-edition', 'legendary', 6000, 'Black Edition', 'Black-Friday-Edition: Schwarz mit goldenen Linien.', bg('pattern', ['#09090B', '#F5C451'], 0, 'diagonal'), ev('black-friday')),
   item('background', 'bg-new-year', 'epic', 3000, 'Mitternachtsfeuerwerk', 'Neujahrs-Edition: Gold und Violett um Mitternacht.', bg('mesh', ['#0B1020', '#F5C451', '#A78BFA']), ev('new-year')),
+  item('background', 'bg-valentine', 'epic', 2400, 'Rosenrot', 'Valentins-Edition: tiefes Rot, das in Rosé verläuft.', bg('mesh', ['#2A0610', '#E11D48', '#FDA4AF']), ev('valentine')),
+  item('background', 'bg-carnival', 'epic', 2400, 'Narrenzeit', 'Faschings-Edition: Konfettifarben auf Mitternachtsblau.', bg('pattern', ['#1E1B4B', '#FACC15'], 0, 'dots'), ev('carnival')),
+  item('background', 'bg-easter', 'epic', 2400, 'Frühlingswiese', 'Oster-Edition: frisches Grün mit Pastell.', bg('mesh', ['#0F2A17', '#4ADE80', '#F9A8D4']), ev('easter')),
+  item('background', 'bg-golden-october', 'epic', 2600, 'Goldener Oktober', 'Herbst-Edition: Laub in Rost und Gold.', bg('gradient', ['#2A0E04', '#C2410C', '#FBBF24'], 120), ev('autumn')),
 
   // ---------- Akzentfarben ----------
   item('accent', 'acc-ice', 'common', 300, 'Eisblau', 'Klares, kühles Blau.', { color: '#38BDF8' }),
@@ -87,6 +91,8 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('nameStyle', 'name-gold', 'legendary', 6000, 'Goldglanz', 'Glänzender Goldverlauf mit Schein.', { colors: ['#FDE68A', '#F59E0B'], glow: true }),
   item('nameStyle', 'name-prism', 'mythic', 7000, 'Prisma', 'Nur auf dem Schwarzmarkt: schillerndes Prisma.', { colors: ['#A78BFA', '#22D3EE', '#F0ABFC'], glow: true }, BM),
   item('nameStyle', 'name-frost', 'rare', 1200, 'Frostschimmer', 'Winter-Edition: eisig schimmernder Name.', { colors: ['#E0F2FE', '#7DD3FC'], glow: true }, ev('christmas')),
+  item('nameStyle', 'name-valentine', 'rare', 1200, 'Herzklopfen', 'Valentins-Edition: Rosé mit warmem Schein.', { colors: ['#FDA4AF', '#E11D48'], glow: true }, ev('valentine')),
+  item('nameStyle', 'name-autumn-glow', 'rare', 1200, 'Herbstglut', 'Herbst-Edition: Gold, das in Rost übergeht.', { colors: ['#FBBF24', '#EA580C'], glow: true }, ev('autumn')),
 
   // ---------- Avatar-Rahmen ----------
   item('frame', 'frame-silver', 'common', 350, 'Silberring', 'Schlichter Ring in Silber.', { style: 'solid', colors: ['#CBD5E1'], width: 4 }),
@@ -100,6 +106,8 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('frame', 'frame-pumpkin', 'epic', 2200, 'Kürbisglut', 'Halloween-Edition: glimmender Kürbisrahmen.', { style: 'gradient', colors: ['#F97316', '#7C2D12'], width: 5 }, ev('halloween')),
   item('frame', 'frame-frost', 'epic', 2400, 'Eiskristall', 'Winter-Edition: frostig leuchtender Rahmen.', { style: 'glow', colors: ['#BAE6FD', '#E0F2FE'], width: 5 }, ev('christmas')),
   item('frame', 'frame-black-gold', 'legendary', 5000, 'Black Gold', 'Black-Friday-Edition: goldene Neonlinie.', { style: 'neon', colors: ['#F5C451'], width: 6 }, ev('black-friday')),
+  item('frame', 'frame-valentine', 'epic', 2200, 'Rosenranke', 'Valentins-Edition: glühender Rahmen in Rosé.', { style: 'glow', colors: ['#FB7185', '#FECDD3'], width: 5 }, ev('valentine')),
+  item('frame', 'frame-carnival', 'epic', 2200, 'Narrenkappe', 'Faschings-Edition: bunter Doppelrahmen.', { style: 'double', colors: ['#A855F7', '#FACC15'], width: 5 }, ev('carnival')),
 
   // ---------- Abzeichen ----------
   item('badge', 'badge-star', 'common', 300, 'Stern', 'Ein goldener Stern.', badge('star', '#F5C451')),
@@ -121,6 +129,10 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('badge', 'badge-sun', 'rare', 900, 'Sonne', 'Sommer-Edition.', badge('sun', '#FBBF24'), ev('summer-sale')),
   item('badge', 'badge-deal-bolt', 'epic', 2000, 'Deal-Blitz', 'Black-Friday-Edition.', badge('bolt', '#F5C451'), ev('black-friday')),
   item('badge', 'badge-ny-rocket', 'epic', 2200, 'Silvesterrakete', 'Neujahrs-Edition.', badge('rocket', '#FDE68A'), ev('new-year')),
+  item('badge', 'badge-sweetheart', 'rare', 900, 'Herzblatt', 'Valentins-Edition.', badge('heart', '#FB7185'), ev('valentine')),
+  item('badge', 'badge-carnival-mask', 'rare', 1000, 'Maskenball', 'Faschings-Edition.', badge('mask', '#C084FC'), ev('carnival')),
+  item('badge', 'badge-easter-egg', 'rare', 900, 'Osterei', 'Oster-Edition.', badge('egg', '#86EFAC'), ev('easter')),
+  item('badge', 'badge-autumn-leaf', 'rare', 900, 'Herbstblatt', 'Herbst-Edition.', badge('leaf', '#EA580C'), ev('autumn')),
   item('badge', RANKING_ITEMS.winnerBadge, 'legendary', 0, 'Monatssieger', 'Platz 1 in einem Monatsranking.', badge('trophy', '#F5C451'), RANKING),
   item('badge', RANKING_ITEMS.podiumBadge, 'epic', 0, 'Podium', 'Top 3 in einem Monatsranking.', badge('trophy', '#CBD5E1'), RANKING),
   ...ACHIEVEMENT_BADGES.map((entry) => item('badge', `ach-${entry.achievementId}`, entry.rarity, 0, entry.name, entry.description,
@@ -138,6 +150,10 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('title', 'title-ghost-hunter', 'epic', 2000, 'Geisterjäger', 'Halloween-Edition.', { text: 'Geisterjäger', color: '#F97316' }, ev('halloween')),
   item('title', 'title-bargain-hunter', 'rare', 800, 'Schnäppchenjäger', 'Black-Friday-Edition.', { text: 'Schnäppchenjäger', color: '#F5C451' }, ev('black-friday')),
   item('title', 'title-snow-angel', 'rare', 900, 'Schneeengel', 'Winter-Edition.', { text: 'Schneeengel', color: '#BAE6FD' }, ev('christmas')),
+  item('title', 'title-heartbreaker', 'rare', 900, 'Herzensbrecher', 'Valentins-Edition.', { text: 'Herzensbrecher', color: '#FB7185' }, ev('valentine')),
+  item('title', 'title-jeck', 'rare', 800, 'Jeck', 'Faschings-Edition.', { text: 'Jeck', color: '#FACC15' }, ev('carnival')),
+  item('title', 'title-egg-hunter', 'rare', 800, 'Eiersucher', 'Oster-Edition.', { text: 'Eiersucher', color: '#86EFAC' }, ev('easter')),
+  item('title', 'title-leaf-collector', 'rare', 800, 'Laubsammler', 'Herbst-Edition.', { text: 'Laubsammler', color: '#F59E0B' }, ev('autumn')),
   item('title', RANKING_ITEMS.winnerTitle, 'legendary', 0, 'Monatssieger', 'Platz 1 in einem Monatsranking.', { text: 'Monatssieger', color: '#F5C451' }, RANKING),
 
   // ---------- XP-Balken ----------
@@ -148,6 +164,7 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('xpBar', 'xp-gold-flow', 'legendary', 5500, 'Goldfluss', 'Leuchtender Goldbalken.', { style: 'glow', colors: ['#F59E0B', '#FDE68A'] }),
   item('xpBar', 'xp-void-stream', 'mythic', 5000, 'Leerenstrom', 'Nur auf dem Schwarzmarkt: schillernder Energiestrom.', { style: 'glow', colors: ['#A78BFA', '#22D3EE', '#F0ABFC'] }, BM),
   item('xpBar', 'xp-candy-cane', 'rare', 1000, 'Zuckerstange', 'Weihnachts-Edition.', { style: 'striped', colors: ['#F43F5E', '#F8FAFC'] }, ev('christmas')),
+  item('xpBar', 'xp-easter-pastel', 'rare', 1000, 'Pastellstreifen', 'Oster-Edition.', { style: 'striped', colors: ['#F9A8D4', '#A7F3D0'] }, ev('easter')),
 
   // ---------- Schriften ----------
   item('font', 'font-unbounded', 'rare', 1200, 'Unbounded', 'Breite, moderne Displayschrift.', { font: 'unbounded' }),
@@ -162,6 +179,8 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('effect', 'effect-embers', 'mythic', 7500, 'Glutregen', 'Nur auf dem Schwarzmarkt: aufsteigende Glut.', { effect: 'embers' }, BM),
   item('effect', 'effect-snow', 'epic', 2800, 'Schneefall', 'Winter-Edition: leiser Schneefall.', { effect: 'snow' }, ev('christmas')),
   item('effect', 'effect-confetti', 'epic', 2500, 'Konfetti', 'Neujahrs-Edition: Konfetti zum Anstoßen.', { effect: 'confetti' }, ev('new-year')),
+  item('effect', 'effect-carnival-confetti', 'epic', 2500, 'Kamelle', 'Faschings-Edition: Konfetti beim Umzug.', { effect: 'confetti' }, ev('carnival')),
+  item('effect', 'effect-valentine-hearts', 'epic', 2600, 'Herzregen', 'Valentins-Edition: Herzen schweben über deine Karte.', { effect: 'hearts' }, ev('valentine')),
 
   // ---------- Level-up-Stile ----------
   item('levelup', 'lvl-minimal', 'common', 400, 'Minimal', 'Reduziert und klar.', { style: 'minimal', color: '#CBD5E1' }),
@@ -186,6 +205,8 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('sticker', 'sticker-chrome-skull', 'mythic', 3000, 'Chromschädel-Sticker', 'Nur auf dem Schwarzmarkt.', { glyph: 'skull', color: '#E5E7EB', corner: 'br' }, BM),
   item('sticker', 'sticker-boo', 'rare', 900, 'Buh!', 'Halloween-Edition.', { glyph: 'ghost', color: '#E2E8F0', corner: 'tr' }, ev('halloween')),
   item('sticker', 'sticker-sunshine', 'rare', 800, 'Sonnenschein', 'Sommer-Edition.', { glyph: 'sun', color: '#FBBF24', corner: 'tr' }, ev('summer-sale')),
+  item('sticker', 'sticker-easter-egg', 'rare', 800, 'Gefunden!', 'Oster-Edition.', { glyph: 'egg', color: '#F9A8D4', corner: 'br' }, ev('easter')),
+  item('sticker', 'sticker-carnival-mask', 'rare', 800, 'Helau!', 'Faschings-Edition.', { glyph: 'mask', color: '#FACC15', corner: 'tr' }, ev('carnival')),
 
   // ---------- Wald-Kollektion (Walnuss, Moos, Bernstein) ----------
   item('background', 'bg-moss-cushion', 'common', 450, 'Moospolster', 'Weiches, dunkles Moosgrün.', bg('gradient', ['#1F2A16', '#3C5A2A'], 140)),

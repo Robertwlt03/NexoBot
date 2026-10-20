@@ -544,6 +544,46 @@ export const GLYPH_DRAWERS: Record<BadgeGlyph, GlyphDrawer> = {
     ctx.closePath();
     ctx.fill();
   },
+  egg: (ctx) => {
+    ctx.beginPath();
+    ctx.moveTo(0, -12);
+    ctx.bezierCurveTo(6.5, -12, 9.5, -2.5, 9.5, 3);
+    ctx.bezierCurveTo(9.5, 8.6, 5.2, 12, 0, 12);
+    ctx.bezierCurveTo(-5.2, 12, -9.5, 8.6, -9.5, 3);
+    ctx.bezierCurveTo(-9.5, -2.5, -6.5, -12, 0, -12);
+    ctx.closePath();
+    // Painted zigzag band and dots are holes.
+    poly(ctx, [[-9.4, 0], [-6.2, -2.8], [-3.1, 0], [0, -2.8], [3.1, 0], [6.2, -2.8], [9.4, 0], [9.5, 2.6], [6.2, -0.2], [3.1, 2.6], [0, -0.2], [-3.1, 2.6], [-6.2, -0.2], [-9.5, 2.6]]);
+    circle(ctx, -3.5, 6.5, 1.3);
+    circle(ctx, 3.5, 6.5, 1.3);
+    circle(ctx, 0, -6.5, 1.3);
+    ctx.fill('evenodd');
+  },
+  mask: (ctx) => {
+    ctx.beginPath();
+    ctx.moveTo(-12, -3);
+    ctx.bezierCurveTo(-11, -8.5, -5, -8, 0, -5);
+    ctx.bezierCurveTo(5, -8, 11, -8.5, 12, -3);
+    ctx.bezierCurveTo(12.4, 3, 8.5, 6.4, 4.4, 5.4);
+    ctx.bezierCurveTo(2.2, 4.8, 1.2, 3.2, 0, 3.2);
+    ctx.bezierCurveTo(-1.2, 3.2, -2.2, 4.8, -4.4, 5.4);
+    ctx.bezierCurveTo(-8.5, 6.4, -12.4, 3, -12, -3);
+    ctx.closePath();
+    // Eye holes.
+    ctx.moveTo(-2.4, -1.4);
+    ctx.bezierCurveTo(-3.4, -3.8, -8, -3.8, -8.6, -1);
+    ctx.bezierCurveTo(-7, 1.2, -3.6, 1, -2.4, -1.4);
+    ctx.closePath();
+    ctx.moveTo(2.4, -1.4);
+    ctx.bezierCurveTo(3.4, -3.8, 8, -3.8, 8.6, -1);
+    ctx.bezierCurveTo(7, 1.2, 3.6, 1, 2.4, -1.4);
+    ctx.closePath();
+    ctx.fill('evenodd');
+    // Handle stick.
+    ctx.beginPath();
+    poly(ctx, [[9.6, 4], [11.4, 3.2], [6.2, 12.4], [4.6, 11.8]]);
+    ctx.fill();
+  },
   mushroom: (ctx) => {
     ctx.beginPath();
     ctx.moveTo(-11.5, 0.5);

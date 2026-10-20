@@ -42,7 +42,7 @@ export interface StickerData { glyph: BadgeGlyph; color: string; corner: 'tl' | 
 export const BADGE_GLYPHS = [
   'star', 'crown', 'flame', 'bolt', 'heart', 'diamond', 'shield', 'leaf', 'moon', 'sun', 'snowflake', 'skull',
   'music', 'controller', 'fish', 'pickaxe', 'dice', 'trophy', 'rocket', 'ghost', 'pumpkin', 'gift', 'paw', 'code',
-  'acorn', 'mushroom', 'tree',
+  'acorn', 'mushroom', 'tree', 'egg', 'mask',
 ] as const;
 export type BadgeGlyph = (typeof BADGE_GLYPHS)[number];
 
