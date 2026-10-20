@@ -655,7 +655,7 @@ export interface ProfileGeometry {
 
 export const PROFILE_LAYOUTS: ProfileLayout[] = ['classic', 'compact', 'centered', 'split'];
 /** Space a frame may take outside the avatar circle (widest style incl. gap). */
-export const FRAME_MAX_OUTSET = 18;
+export const FRAME_MAX_OUTSET = 22;
 export const BADGE_SIZE = 40;
 export const BADGE_GAP = 8;
 export const STICKER_RADIUS = 22;
@@ -1273,6 +1273,284 @@ function ring(ctx: Ctx, cx: number, cy: number, r: number) {
   ctx.arc(cx, cy, r, 0, TAU);
 }
 
+/** Stable 0–1 per index, for the hand-drawn irregularity of illustrated frames. */
+const jitter = (i: number, k: number) => {
+  const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+};
+const polar = (cx: number, cy: number, radius: number, angle: number): [number, number] => [cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius];
+
+/** Leaf from (x, y) pointing at `angle`: length l, half-width w, with a lighter midrib. */
+function drawLeaf(ctx: Ctx, x: number, y: number, angle: number, l: number, w: number, fill: string, vein?: string) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.quadraticCurveTo(l * 0.45, -w, l, 0);
+  ctx.quadraticCurveTo(l * 0.45, w, 0, 0);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (vein) {
+    ctx.beginPath();
+    ctx.moveTo(l * 0.12, 0);
+    ctx.lineTo(l * 0.82, 0);
+    ctx.strokeStyle = vein;
+    ctx.lineWidth = Math.max(0.6, w * 0.16);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/** A ring that wanders a little around radius R (vines, blossom twigs). */
+function wobblyRing(ctx: Ctx, cx: number, cy: number, R: number, amp: number) {
+  ctx.beginPath();
+  for (let i = 0; i <= 120; i++) {
+    const a = (i / 120) * TAU;
+    const [x, y] = polar(cx, cy, R + Math.sin(a * 7) * amp, a);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
+
+/**
+ * Illustrated frames: vines, flames, laurel, blossoms, ice, lightning (colours [main, second]). Sizes follow the avatar radius (k = 1 at
+ * r 68) and stay within FRAME_MAX_OUTSET (the tallest flames on top just reach it).
+ */
+function drawIllustratedFrame(ctx: Ctx, style: FrameData['style'], cx: number, cy: number, r: number, colors: string[]) {
+  const k = r / 68;
+  const c0 = colors[0];
+  switch (style) {
+    case 'vine': {
+      // Two stems winding around each other, leaves on both, curls in between.
+      const R = r + 5 * k;
+      const stem = colors[1] ?? darken(c0, 0.45);
+      const at = (a: number, phase: number) => polar(cx, cy, R + Math.sin(a * 6 + phase) * 3 * k, a);
+      ctx.lineWidth = 2 * k;
+      for (const phase of [0, Math.PI]) {
+        ctx.beginPath();
+        for (let i = 0; i <= 120; i++) {
+          const [x, y] = at((i / 120) * TAU, phase);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = phase ? darken(stem, 0.2) : stem;
+        ctx.stroke();
+      }
+      ctx.strokeStyle = stem;
+      ctx.lineWidth = 1.3 * k;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * TAU + 0.5;
+        const [sx, sy] = at(a, 0);
+        const [x, y] = polar(cx, cy, R + 9 * k, a + 0.06);
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.quadraticCurveTo(...polar(cx, cy, R + 7 * k, a - 0.05), x, y);
+        ctx.arc(x - Math.cos(a) * 2.4 * k, y - Math.sin(a) * 2.4 * k, 2.4 * k, a, a + TAU * 0.8);
+        ctx.stroke();
+      }
+      const tones = [c0, darken(c0, 0.25), lighten(c0, 0.14)];
+      const n = 30;
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * TAU + jitter(i, 1) * 0.1;
+        const [x, y] = at(a, i % 2 ? Math.PI : 0);
+        const out = i % 3 !== 1;
+        const l = (out ? 12 + jitter(i, 2) * 3 : 10 + jitter(i, 2) * 2) * k;
+        drawLeaf(ctx, x, y, out ? a + 0.95 : a + Math.PI - 0.9, l, l * 0.42, tones[i % 3], withAlpha(lighten(c0, 0.45), 0.6));
+      }
+      break;
+    }
+    case 'fire': {
+      // A glowing ring with teardrop flames on it: tall on top, small below (flames rise), each with a hot core.
+      const c1 = colors[1] ?? lighten(c0, 0.55);
+      const base = r + 1.5 * k;
+      const n = 24;
+      const flames = (scale: number, fill: string) => {
+        ctx.fillStyle = fill;
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * TAU + jitter(i, 3) * 0.1;
+          const top = Math.max(0, -Math.sin(a));
+          let dx = Math.cos(a);
+          let dy = Math.sin(a) - 0.8;
+          const norm = Math.hypot(dx, dy);
+          dx /= norm;
+          dy /= norm;
+          const len = Math.min(20, 7 + jitter(i, 4) * 5 + top * 9) * k * scale;
+          const w = (13 + jitter(i, 5) * 5) * k * scale;
+          const [bx, by] = polar(cx, cy, base, a);
+          const sway = (jitter(i, 6) - 0.5) * 5 * k * scale;
+          const [px, py] = [-dy, dx];
+          const [tx, ty] = [bx + dx * len + px * sway, by + dy * len + py * sway];
+          const [lx, ly] = [bx + px * w / 2, by + py * w / 2];
+          const [rx, ry] = [bx - px * w / 2, by - py * w / 2];
+          ctx.beginPath();
+          ctx.moveTo(lx, ly);
+          ctx.bezierCurveTo(lx + dx * len * 0.45, ly + dy * len * 0.45, tx + px * w * 0.12 - dx * len * 0.25, ty + py * w * 0.12 - dy * len * 0.25, tx, ty);
+          ctx.bezierCurveTo(tx - px * w * 0.12 - dx * len * 0.25, ty - py * w * 0.12 - dy * len * 0.25, rx + dx * len * 0.45, ry + dy * len * 0.45, rx, ry);
+          ctx.quadraticCurveTo(bx - dx * w * 0.4, by - dy * w * 0.4, lx, ly);
+          ctx.closePath();
+          ctx.fill();
+        }
+      };
+      ctx.shadowColor = c0;
+      ctx.shadowBlur = 18 * k;
+      ctx.strokeStyle = c0;
+      ctx.lineWidth = 5 * k;
+      ring(ctx, cx, cy, base);
+      ctx.stroke();
+      flames(1, c0);
+      ctx.shadowBlur = 6 * k;
+      ctx.shadowColor = c1;
+      flames(0.6, c1);
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = c1;
+      ctx.lineWidth = 1.6 * k;
+      ring(ctx, cx, cy, base);
+      ctx.stroke();
+      flames(0.3, lighten(c1, 0.7));
+      break;
+    }
+    case 'laurel': {
+      const R = r + 7 * k;
+      const stem = colors[1] ?? darken(c0, 0.35);
+      for (const side of [-1, 1]) {
+        // From the bottom up one side, leaving a gap at the top; side −1 = right (angles decreasing).
+        const from = Math.PI / 2 + side * 0.14;
+        const to = Math.PI / 2 + side * (Math.PI - 0.45);
+        ctx.beginPath();
+        ctx.arc(cx, cy, R, Math.min(from, to), Math.max(from, to));
+        ctx.strokeStyle = stem;
+        ctx.lineWidth = 2.4 * k;
+        ctx.stroke();
+        const n = 12;
+        for (let i = 0; i <= n; i++) {
+          const t = (i + 0.4) / (n + 0.4);
+          const a = from + (to - from) * t;
+          const [x, y] = polar(cx, cy, R, a);
+          const travel = a + side * Math.PI / 2;
+          const l = (15 - t * 5) * k;
+          const tone = i % 2 ? lighten(c0, 0.16) : c0;
+          if (i === n) drawLeaf(ctx, x, y, travel, l, l * 0.4, tone);
+          else {
+            drawLeaf(ctx, x, y, travel - side * 0.55, l, l * 0.4, tone, withAlpha(lighten(c0, 0.5), 0.5));
+            drawLeaf(ctx, x, y, travel + side * 0.55, l * 0.9, l * 0.38, darken(tone, 0.14));
+          }
+        }
+      }
+      // Ribbon tying both branches at the bottom.
+      const [bx, by] = polar(cx, cy, R, Math.PI / 2);
+      ctx.fillStyle = stem;
+      for (const side of [-1, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bx + side * 7 * k, by + 8 * k);
+        ctx.lineTo(bx + side * 3.5 * k, by + 8.5 * k);
+        ctx.closePath();
+        ctx.fill();
+        ring(ctx, bx + side * 3.6 * k, by - 0.6 * k, 2.8 * k);
+        ctx.fill();
+      }
+      ring(ctx, bx, by, 2.4 * k);
+      ctx.fill();
+      break;
+    }
+    case 'blossom': {
+      const R = r + 5 * k;
+      const twig = colors[1] ?? '#6B4A33';
+      const leaf = '#6FA04A';
+      wobblyRing(ctx, cx, cy, R, 1.6 * k);
+      ctx.strokeStyle = twig;
+      ctx.lineWidth = 1.8 * k;
+      ctx.stroke();
+      for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * TAU + 0.2;
+        const [x, y] = polar(cx, cy, R + Math.sin(a * 7) * 1.6 * k, a);
+        drawLeaf(ctx, x, y, a + (i % 2 ? 0.85 : Math.PI - 0.85), 9 * k, 3.4 * k, i % 3 ? leaf : darken(leaf, 0.25));
+      }
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * TAU + jitter(i, 7) * 0.3;
+        const [x, y] = polar(cx, cy, R + Math.sin(a * 7) * 1.6 * k, a);
+        const fr = (5 + jitter(i, 8) * 1.8) * k;
+        ctx.fillStyle = i % 2 ? lighten(c0, 0.35) : c0;
+        for (let p = 0; p < 5; p++) {
+          ring(ctx, ...polar(x, y, fr * 0.85, a + (p / 5) * TAU), fr * 0.62);
+          ctx.fill();
+        }
+        ctx.fillStyle = '#F5C451';
+        ring(ctx, x, y, fr * 0.34);
+        ctx.fill();
+      }
+      for (let i = 0; i < 6; i++) {
+        ctx.fillStyle = lighten(c0, 0.2);
+        ring(ctx, ...polar(cx, cy, R + 2.5 * k, (i / 6) * TAU + 0.68), 2 * k);
+        ctx.fill();
+      }
+      break;
+    }
+    case 'crystal': {
+      const c1 = colors[1] ?? lighten(c0, 0.5);
+      const base = r + 2 * k;
+      ctx.strokeStyle = c1;
+      ctx.lineWidth = 2 * k;
+      ring(ctx, cx, cy, base);
+      ctx.stroke();
+      ctx.shadowColor = c0;
+      ctx.shadowBlur = 8 * k;
+      const n = 20;
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * TAU + jitter(i, 9) * 0.1;
+        const len = (5 + jitter(i, 10) * 10) * k;
+        const half = 0.08 + jitter(i, 11) * 0.04;
+        const left = polar(cx, cy, base, a - half);
+        const right = polar(cx, cy, base, a + half);
+        const tip = polar(cx, cy, base + len, a);
+        const inner = polar(cx, cy, base - 2.5 * k, a);
+        ctx.fillStyle = c0;
+        ctx.beginPath();
+        ctx.moveTo(...left); ctx.lineTo(...tip); ctx.lineTo(...right); ctx.lineTo(...inner);
+        ctx.closePath();
+        ctx.fill();
+        // The lit facet.
+        ctx.fillStyle = withAlpha(lighten(c0, 0.6), 0.85);
+        ctx.beginPath();
+        ctx.moveTo(...left); ctx.lineTo(...tip); ctx.lineTo(...inner);
+        ctx.closePath();
+        ctx.fill();
+      }
+      break;
+    }
+    case 'lightning': {
+      const core = colors[1] ?? '#FFFFFF';
+      const R = r + 6 * k;
+      const path = () => {
+        ctx.beginPath();
+        const n = 48;
+        for (let i = 0; i <= n; i++) {
+          const [x, y] = polar(cx, cy, R + (i % 2 ? 1 : -1) * (1.5 + jitter(i % n, 12) * 3.5) * k, (i / n) * TAU);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+      };
+      ctx.lineJoin = 'round';
+      ctx.shadowColor = c0;
+      ctx.shadowBlur = 14 * k;
+      ctx.strokeStyle = c0;
+      ctx.lineWidth = 3.2 * k;
+      path();
+      ctx.stroke();
+      ctx.stroke();
+      ctx.shadowBlur = 4 * k;
+      ctx.strokeStyle = core;
+      ctx.lineWidth = 1.2 * k;
+      path();
+      ctx.stroke();
+      break;
+    }
+  }
+}
+
 function drawAvatar(ctx: Ctx, image: ProfileImage | null, { cx, cy, r }: Circle, frame: FrameData | null, accent: string, name: string) {
   const colors = frame?.colors.length ? frame.colors : [accent];
   const width = frame ? Math.min(12, Math.max(2, frame.width)) : 3;
@@ -1371,6 +1649,14 @@ function drawAvatar(ctx: Ctx, image: ProfileImage | null, { cx, cy, r }: Circle,
       ctx.strokeStyle = colors[1] ?? '#FFFFFF';
       ring(ctx, cx, cy, at);
       ctx.stroke();
+      break;
+    case 'vine':
+    case 'fire':
+    case 'laurel':
+    case 'blossom':
+    case 'crystal':
+    case 'lightning':
+      drawIllustratedFrame(ctx, frame.style, cx, cy, r, colors);
       break;
     case 'crown':
       ctx.strokeStyle = gradient();

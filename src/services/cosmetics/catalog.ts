@@ -2,7 +2,7 @@
 // shop_items storage with a short in-memory cache for the card renderer.
 
 import {
-  BACKGROUND_SCENES, BADGE_GLYPHS, COSMETIC_SLOTS, RARITIES,
+  BACKGROUND_SCENES, BADGE_GLYPHS, COSMETIC_SLOTS, FRAME_STYLES, RARITIES,
   type BackgroundScene, type BadgeGlyph, type CosmeticItem, type CosmeticSlot, type ItemAvailability, type Rarity, type SlotData,
 } from '../../shared/cosmetics.js';
 import { HttpError, badRequest, body, bool, hexColor, int, str } from '../../web/http.js';
@@ -102,11 +102,17 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('frame', 'frame-neon-violet', 'epic', 2500, 'Neonviolett', 'Leuchtende Neonröhre in Violett.', { style: 'neon', colors: ['#A78BFA'], width: 5 }),
   item('frame', 'frame-gold-double', 'epic', 3200, 'Goldfassung', 'Doppelte Fassung in Gold und Bronze.', { style: 'double', colors: ['#F5C451', '#B45309'], width: 6 }),
   item('frame', 'frame-crown', 'legendary', 7000, 'Königskrone', 'Goldener Rahmen mit Krone.', { style: 'crown', colors: ['#F5C451', '#FDE68A'], width: 6 }),
+  item('frame', 'frame-olive', 'rare', 1300, 'Olivenzweig', 'Zwei Olivenzweige, unten mit einer Schleife gebunden.', { style: 'laurel', colors: ['#9DB76B', '#5A7A3A'], width: 5 }),
+  item('frame', 'frame-glacier', 'rare', 1400, 'Gletscherzacken', 'Kühle Eiszacken in Gletscherblau.', { style: 'crystal', colors: ['#7DD3FC', '#E0F2FE'], width: 5 }),
+  item('frame', 'frame-wildfire', 'epic', 3200, 'Flammenkranz', 'Lodernde Flammen rund um deinen Avatar.', { style: 'fire', colors: ['#FF5A1F', '#FFC94A'], width: 6 }),
+  item('frame', 'frame-storm', 'epic', 2800, 'Gewitterring', 'Knisternde Blitze in Violett.', { style: 'lightning', colors: ['#A78BFA', '#FFFFFF'], width: 5 }),
+  item('frame', 'frame-laurel-gold', 'legendary', 6500, 'Lorbeerkranz', 'Goldener Lorbeer für alle, die vorne liegen.', { style: 'laurel', colors: ['#D4AF37', '#8A6D1F'], width: 6 }),
+  item('frame', 'frame-soulfire', 'legendary', 6800, 'Seelenfeuer', 'Blaue Flammen mit eisigem Kern.', { style: 'fire', colors: ['#3B82F6', '#A5F3FC'], width: 6 }),
   item('frame', 'frame-void-glow', 'mythic', 9000, 'Leerenschein', 'Nur auf dem Schwarzmarkt: pulsierender Schein in Türkis und Violett.', { style: 'glow', colors: ['#22D3EE', '#A78BFA'], width: 7 }, BM),
   item('frame', 'frame-pumpkin', 'epic', 2200, 'Kürbisglut', 'Halloween-Edition: glimmender Kürbisrahmen.', { style: 'gradient', colors: ['#F97316', '#7C2D12'], width: 5 }, ev('halloween')),
-  item('frame', 'frame-frost', 'epic', 2400, 'Eiskristall', 'Winter-Edition: frostig leuchtender Rahmen.', { style: 'glow', colors: ['#BAE6FD', '#E0F2FE'], width: 5 }, ev('christmas')),
+  item('frame', 'frame-frost', 'epic', 2400, 'Eiskristall', 'Winter-Edition: Eiszacken rund um deinen Avatar.', { style: 'crystal', colors: ['#BAE6FD', '#F0F9FF'], width: 5 }, ev('christmas')),
   item('frame', 'frame-black-gold', 'legendary', 5000, 'Black Gold', 'Black-Friday-Edition: goldene Neonlinie.', { style: 'neon', colors: ['#F5C451'], width: 6 }, ev('black-friday')),
-  item('frame', 'frame-valentine', 'epic', 2200, 'Rosenranke', 'Valentins-Edition: glühender Rahmen in Rosé.', { style: 'glow', colors: ['#FB7185', '#FECDD3'], width: 5 }, ev('valentine')),
+  item('frame', 'frame-valentine', 'epic', 2200, 'Rosenranke', 'Valentins-Edition: Rosenblüten an einer feinen Ranke.', { style: 'blossom', colors: ['#FB7185', '#7A3B2E'], width: 5 }, ev('valentine')),
   item('frame', 'frame-carnival', 'epic', 2200, 'Narrenkappe', 'Faschings-Edition: bunter Doppelrahmen.', { style: 'double', colors: ['#A855F7', '#FACC15'], width: 5 }, ev('carnival')),
 
   // ---------- Abzeichen ----------
@@ -221,7 +227,7 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('nameStyle', 'name-forest-light', 'rare', 1100, 'Waldlicht', 'Verlauf von hellem Moos zu Farngrün.', { colors: ['#C7DCA7', '#5FA35A'], glow: false }),
   item('nameStyle', 'name-amber-shine', 'epic', 2800, 'Bernsteinschimmer', 'Leuchtender Verlauf in Honig und Bernstein.', { colors: ['#FFD889', '#F2A531', '#B5600F'], glow: true }),
   item('frame', 'frame-walnut-ring', 'rare', 1100, 'Walnussring', 'Breiter Ring aus dunklem Walnuss.', { style: 'solid', colors: ['#7A4A2A'], width: 6 }),
-  item('frame', 'frame-ivy', 'epic', 2600, 'Efeuranke', 'Zwei Ringe in Moos und tiefem Efeugrün.', { style: 'double', colors: ['#8FB36B', '#3F6B2E'], width: 6 }),
+  item('frame', 'frame-ivy', 'epic', 2600, 'Efeuranke', 'Efeu, der sich in zwei Ranken um deinen Avatar windet.', { style: 'vine', colors: ['#7FA857', '#3F6B2E'], width: 6 }),
   item('frame', 'frame-amber-setting', 'legendary', 6000, 'Bernsteinfassung', 'Leuchtende Fassung aus Bernstein.', { style: 'glow', colors: ['#F2A531', '#FFD889'], width: 6 }),
   item('badge', 'badge-acorn', 'common', 350, 'Eichel', 'Klein, aber oho.', badge('acorn', '#C98A4B')),
   item('badge', 'badge-fir', 'rare', 850, 'Tanne', 'Immer grün, bei jedem Wetter.', badge('tree', '#5FA35A')),
@@ -242,9 +248,9 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('background', 'bg-dungeon-torches', 'epic', 2600, 'Kerkerfackeln', 'Steinmauer im Fackelschein – bereit für den nächsten Raid.', scene('dungeon', ['#1B1714', '#3A322C', '#FF9A3C', '#7A4A2A'])),
   item('background', 'bg-orbital', 'epic', 3200, 'Orbitalstation', 'Ein Ringplanet, Sternenstaub und ein kleiner Mond.', scene('orbital', ['#05060F', '#7C5CFF', '#F2A531', '#22D3EE'])),
   item('background', 'bg-pirate-cove', 'epic', 3000, 'Piratenbucht', 'Ein Schiff unter Segeln im Mondlicht.', scene('pirate-cove', ['#0B1A2E', '#123A5A', '#F4E7C5', '#0A0F18'])),
-  item('frame', 'frame-sakura', 'rare', 1200, 'Kirschblütenring', 'Zarter Neonring in Blütenrosa.', { style: 'neon', colors: ['#F7A8C4'], width: 5 }),
+  item('frame', 'frame-sakura', 'rare', 1200, 'Kirschblütenring', 'Kirschblüten an einem feinen Zweig.', { style: 'blossom', colors: ['#F7A8C4', '#6B4A33'], width: 5 }),
   item('frame', 'frame-neon-pink', 'epic', 2400, 'Neonpink', 'Leuchtröhre in kräftigem Pink.', { style: 'neon', colors: ['#FF3DCB'], width: 5 }),
-  item('frame', 'frame-torchlight', 'epic', 2300, 'Fackelschein', 'Warm flackernder Schein.', { style: 'glow', colors: ['#FF9A3C', '#FFD166'], width: 6 }),
+  item('frame', 'frame-torchlight', 'epic', 2300, 'Fackelschein', 'Warm flackernde Flammen wie von einer Fackel.', { style: 'fire', colors: ['#FF8A2A', '#FFD166'], width: 6 }),
   item('nameStyle', 'name-synthwave', 'epic', 2700, 'Synthwave', 'Verlauf von Pink zu Cyan mit Schein.', { colors: ['#FF3DCB', '#33E1FF'], glow: true }),
   item('title', 'title-shadow-runner', 'epic', 2200, 'Schattenläufer', 'Lautlos und schnell.', { text: 'Schattenläufer', color: '#F7A8C4' }),
   item('title', 'title-pixel-hero', 'rare', 900, 'Pixelheld', 'Acht Bit, volles Herz.', { text: 'Pixelheld', color: '#FFD166' }),
@@ -321,7 +327,7 @@ export function parseSlotData(slot: CosmeticSlot, input: unknown): SlotData[Cosm
     case 'accent': return { color: hexColor(d.color, 'Farbe') };
     case 'nameStyle': return { colors: colors(d.colors, 'Farben', 3), glow: bool(d.glow, 'Leuchten') };
     case 'frame': return {
-      style: oneOf(d.style, ['solid', 'gradient', 'glow', 'double', 'dashed', 'neon', 'crown'] as const, 'Stil'),
+      style: oneOf(d.style, FRAME_STYLES, 'Stil'),
       colors: colors(d.colors, 'Farben', 3),
       width: int(d.width, 'Breite', 1, 12),
     };

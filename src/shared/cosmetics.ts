@@ -28,7 +28,9 @@ export type BackgroundScene = (typeof BACKGROUND_SCENES)[number];
 export interface BackgroundData { kind: 'solid' | 'gradient' | 'pattern' | 'aurora' | 'mesh' | 'scene'; colors: string[]; angle: number; pattern: PatternKind; scene?: BackgroundScene }
 export interface AccentData { color: string }
 export interface NameStyleData { colors: string[]; glow: boolean }
-export interface FrameData { style: 'solid' | 'gradient' | 'glow' | 'double' | 'dashed' | 'neon' | 'crown'; colors: string[]; width: number }
+export const FRAME_STYLES = ['solid', 'gradient', 'glow', 'double', 'dashed', 'neon', 'crown', 'vine', 'fire', 'laurel', 'blossom', 'crystal', 'lightning'] as const;
+/** Illustrated styles (vine … lightning) take colours [main, second] and ignore `width`. */
+export interface FrameData { style: (typeof FRAME_STYLES)[number]; colors: string[]; width: number }
 /** Badge glyph: one of BADGE_GLYPHS (drawn as vector shapes by the renderer, no emoji fonts needed). */
 export interface BadgeData { glyph: BadgeGlyph; color: string }
 export interface TitleData { text: string; color: string }
