@@ -6,6 +6,7 @@ import cron from 'node-cron';
 import type { Client, EmbedBuilder } from 'discord.js';
 import { CURRENCY } from '../../shared/cosmetics.js';
 import { logger } from '../../utils/logger.js';
+import { addActivity, startActivityTracker } from './activity.js';
 import { syncAchievements } from './achievements.js';
 import { seedCatalog } from './catalog.js';
 import { getEconomyConfig, levelReward } from './config.js';
@@ -41,6 +42,7 @@ export async function rewardMinigame(embed: EmbedBuilder, user: { id: string; bo
   const now = Date.now();
   if (now - (lastReward.get(key) ?? 0) < REWARD_COOLDOWN_MS) return;
   lastReward.set(key, now);
+  addActivity(user.id, `game_${game}`);
   if (lastReward.size > 5000) {
     for (const [entry, at] of lastReward) if (now - at >= REWARD_COOLDOWN_MS) lastReward.delete(entry);
   }
@@ -82,6 +84,7 @@ export async function onXpGained(guild: { id: string; name: string }, userId: st
 /** Counting game: a correct number is one monthly mini-game point (no Bernis, to avoid spam). */
 export async function onCountingCorrect(guildId: string, userId: string): Promise<void> {
   try {
+    addActivity(userId, 'counting');
     await recordMinigamePoints(guildId, userId);
   } catch (error) {
     logger.warn('Zählspiel-Punkt konnte nicht gespeichert werden:', (error as Error).message);
@@ -101,6 +104,7 @@ export async function startCosmetics(client: Client): Promise<void> {
   } catch (error) {
     logger.error('Berni-Katalog konnte nicht angelegt werden:', error);
   }
+  startActivityTracker();
   cron.schedule('5 0 1-3 * *', async () => {
     try {
       await runMonthlyPayout(client);

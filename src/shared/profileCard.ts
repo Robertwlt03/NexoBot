@@ -544,6 +544,45 @@ export const GLYPH_DRAWERS: Record<BadgeGlyph, GlyphDrawer> = {
     ctx.closePath();
     ctx.fill();
   },
+  chat: (ctx) => {
+    // Speech bubble with a tail bottom left and three dots cut out.
+    ctx.beginPath();
+    box(ctx, -11.5, -9.5, 23, 16, 5);
+    ctx.moveTo(-6, 5);
+    ctx.lineTo(-8.5, 11);
+    ctx.lineTo(-0.5, 5);
+    ctx.closePath();
+    circle(ctx, -5, -1.5, 1.8);
+    circle(ctx, 0, -1.5, 1.8);
+    circle(ctx, 5, -1.5, 1.8);
+    ctx.fill('evenodd');
+  },
+  mic: (ctx) => {
+    ctx.beginPath();
+    box(ctx, -4.5, -12, 9, 15, 4.5);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.lineWidth = 2.4;
+    ctx.arc(0, -2, 8, 0.15, Math.PI - 0.15);
+    ctx.moveTo(0, 6);
+    ctx.lineTo(0, 10.5);
+    ctx.moveTo(-5, 11);
+    ctx.lineTo(5, 11);
+    ctx.stroke();
+  },
+  clock: (ctx) => {
+    // Face with the hands cut out.
+    ctx.beginPath();
+    circle(ctx, 0, 0, 11.5);
+    ctx.moveTo(-1.3, -8);
+    ctx.lineTo(1.3, -8);
+    ctx.lineTo(1.3, -1.3);
+    ctx.lineTo(6.5, 2.2);
+    ctx.lineTo(5.2, 4.3);
+    ctx.lineTo(-1.3, 0.6);
+    ctx.closePath();
+    ctx.fill('evenodd');
+  },
   egg: (ctx) => {
     ctx.beginPath();
     ctx.moveTo(0, -12);

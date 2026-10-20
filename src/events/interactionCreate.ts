@@ -16,6 +16,7 @@ import { createInteractionTraceContext, runWithTraceContext } from '../utils/log
 import { validateChatInputPayloadOrThrow } from '../utils/commandInputValidation.js';
 import { enforceAbuseProtection, formatCooldownDuration } from '../utils/abuseProtection.js';
 import { isCommandEnabled } from '../services/commandAccessService.js';
+import { addActivity } from '../services/cosmetics/activity.js';
 import { resolveSlashAccessKey } from '../utils/messageAdapter.js';
 import { isCollectorManagedComponent } from '../utils/collectorComponents.js';
 import { ResponseCoordinator } from '../utils/responseCoordinator.js';
@@ -188,6 +189,7 @@ export default {
               return;
             }
 
+            addActivity(interaction.user.id, 'commands');
             await command.execute(interaction, guildConfig, client);
           } catch (error) {
             await handleInteractionError(interaction, error, withTraceContext({

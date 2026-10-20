@@ -21,6 +21,7 @@ import {
   recordCorrectCount,
 } from '../services/countingGameService.js';
 import { recordMessage } from '../services/statsTracker.js';
+import { recordMessageActivity } from '../services/cosmetics/activity.js';
 import type { BotEvent, NexoClient } from '../types/index.js';
 
 const MESSAGE_XP_RATE_LIMIT_ATTEMPTS = 12;
@@ -32,6 +33,7 @@ export default {
     try {
       if (message.author.bot || !message.guild) return;
       recordMessage(message);
+      recordMessageActivity(message);
 
       logger.debug(`Message received from ${message.author.tag}: ${message.content}`);
 

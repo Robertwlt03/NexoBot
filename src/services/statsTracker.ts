@@ -16,6 +16,7 @@ import { getGuildConfig } from './config/guildConfig.js';
 import { DETAIL_RETENTION_DAYS, type ActivityHeatmap } from '../web/dto/insightsDetail.js';
 import { INSIGHT_RANGES, type InsightRange } from '../web/dto/insights.js';
 import { logger } from '../utils/logger.js';
+import { addActivity } from './cosmetics/activity.js';
 
 export const FLUSH_INTERVAL_MS = 60_000;
 const MINUTE_MS = 60_000;
@@ -158,6 +159,7 @@ function bumpMember(key: string, messages: number, voiceMs: number) {
 /** Voice time of one session (key `${guildId}|${userId}`) for the guild and the member. */
 function addVoice(key: string, guildId: string, ms: number, now: number) {
   bump(guildId, { voiceMs: ms }, now);
+  addActivity(key.split('|')[1], 'voice_ms', ms);
   bumpMember(`${key}|${dayKey(now)}`, 0, ms);
 }
 

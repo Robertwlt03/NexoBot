@@ -34,6 +34,7 @@ const configuredTables = {
     monthly_payouts: 'monthly_payouts',
     user_achievements: 'user_achievements',
     economy_config: 'economy_config',
+    user_stats: 'user_stats',
 };
 
 const allowedTableIdentifiers = new Set([
@@ -69,6 +70,7 @@ const allowedTableIdentifiers = new Set([
     'monthly_payouts',
     'user_achievements',
     'economy_config',
+    'user_stats',
 ]);
 
 const validatedTables = Object.fromEntries(
