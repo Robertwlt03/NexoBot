@@ -47,30 +47,60 @@ export function BundleArt({ items, large = false }: { items: CosmeticItem[]; lar
   );
 }
 
+/** Mini thumbnails of everything inside, overlapping like a hand of cards. */
+function Contents({ items }: { items: CosmeticItem[] }) {
+  const shown = items.slice(0, 5);
+  return (
+    <span className="flex items-center">
+      {shown.map((item, i) => (
+        <span key={item.id} className="relative -ml-2 h-9 w-9 overflow-hidden rounded-lg bg-[#0d0b0a] ring-2 ring-[#0d0b0a] first:ml-0" style={{ zIndex: shown.length - i }}>
+          <span className="game-tile-field absolute inset-0" style={{ '--tile': RARITY_TILE[item.rarity] } as CSSProperties} />
+          <ItemVisual item={item} className="h-full w-full rounded-none !bg-transparent" />
+        </span>
+      ))}
+      {items.length > shown.length && <span className="ml-1.5 text-[12px] font-semibold text-white/70">+{items.length - shown.length}</span>}
+    </span>
+  );
+}
+
+/**
+ * Bundles are the special offers of the shop: a holographic frame that slowly circles the tile, a "Komplett-Look"
+ * ribbon, your card wearing the whole set and what is inside right on the tile.
+ */
 function BundleTile({ bundle, items, onOpen }: { bundle: ShopBundle; items: CosmeticItem[]; onOpen: () => void }) {
   const tint = tintOf(items);
+  const saving = bundle.owned === 0 ? bundle.fullPrice - bundle.price : 0;
   return (
     <button type="button" onClick={onOpen} data-mode="dark" style={{ '--tile': tint } as CSSProperties}
-      className="js-item game-tile group relative flex cursor-pointer flex-col overflow-hidden rounded-[18px] border-0 bg-[#0d0b0a] p-0 text-left font-[inherit] ring-1 ring-white/[.08] transition duration-300 hover:-translate-y-1 hover:ring-[color-mix(in_srgb,var(--tile)_70%,transparent)] hover:shadow-[0_22px_44px_-18px_color-mix(in_srgb,var(--tile)_55%,transparent)]">
-      <div className="game-tile-field relative aspect-[16/10] w-full overflow-hidden">
-        {/* Your own card already wearing the whole bundle, tilted and running off the edge like a store preview. */}
-        {items.some((item) => item.slot !== 'levelup') ? (
-          <div className="absolute left-[9%] top-[22%] w-[112%] origin-top-left -rotate-[7deg] overflow-hidden rounded-xl shadow-[0_24px_50px_-16px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[5deg] group-hover:scale-[1.03]">
-            <TryOnPreview items={items.filter((item) => item.slot !== 'levelup')} resolution={0.5} />
-          </div>
-        ) : <BundleArt items={items} />}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-[#0d0b0a] to-transparent" />
-        <span className="absolute left-2.5 top-2.5 z-10 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-[.08em] text-white backdrop-blur">Paket · {items.length} St.</span>
-        {bundle.owned > 0 && <span className="absolute right-2.5 top-2.5 z-10 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] font-semibold text-[#86efac] backdrop-blur">{bundle.owned} im Besitz</span>}
-      </div>
-      <div className="relative w-full px-4 pb-4 pt-3">
-        <h3 className="truncate text-[16px] font-bold uppercase tracking-[.02em] text-white">{bundle.name}</h3>
-        <p className="mt-0.5 line-clamp-1 text-[12.5px] text-white/60">{bundle.description}</p>
-        <div className="mt-2.5 flex items-center gap-2 text-[16px] font-bold text-white">
-          {bundle.price > 0 ? <Price price={bundle.fullPrice} finalPrice={bundle.price} /> : <span className="text-[13px] font-semibold text-[#86efac]">Alles im Besitz</span>}
-        </div>
-      </div>
-      <span className="absolute inset-x-0 bottom-0 h-[3px]" style={{ background: tint }} />
+      className="js-item bundle-tile group cursor-pointer border-0 p-[1.5px] text-left font-[inherit] transition duration-300 hover:-translate-y-1">
+      <span className="game-tile relative flex h-full flex-col overflow-hidden rounded-[19px] bg-[#0d0b0a]">
+        <span className="game-tile-field relative block aspect-[16/9] w-full overflow-hidden">
+          {/* Your own card already wearing the whole bundle, tilted and running off the edge like a store preview. */}
+          {items.some((item) => item.slot !== 'levelup') ? (
+            <span className="absolute left-[8%] top-[20%] block w-[108%] origin-top-left -rotate-[7deg] overflow-hidden rounded-xl shadow-[0_24px_50px_-16px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[5deg] group-hover:scale-[1.03]">
+              <TryOnPreview items={items.filter((item) => item.slot !== 'levelup')} resolution={0.5} />
+            </span>
+          ) : <BundleArt items={items} />}
+          <span className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#0d0b0a] to-transparent" />
+          {/* Ribbon across the corner. */}
+          <span className="absolute -right-[50px] top-[30px] z-10 w-[200px] rotate-45 bg-[linear-gradient(90deg,#b5600f,#ffd889,#b5600f)] py-1 text-center text-[10px] font-extrabold uppercase tracking-[.16em] text-[#2a1405] shadow-[0_6px_16px_-6px_rgba(0,0,0,.8)]">Komplett-Look</span>
+          <span className="absolute left-3 top-3 z-10 rounded-md bg-black/70 px-2 py-0.5 text-[11px] font-bold uppercase tracking-[.08em] text-white backdrop-blur">Paket · {items.length} Artikel</span>
+        </span>
+        <span className="relative flex w-full flex-1 flex-col px-5 pb-5 pt-1">
+          <span className="block truncate text-[19px] font-extrabold uppercase tracking-[.02em] text-white">{bundle.name}</span>
+          <span className="mt-0.5 line-clamp-1 block text-[13px] text-white/60">{bundle.description}</span>
+          <span className="mt-3.5 flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
+            <Contents items={items} />
+            <span className="ml-auto shrink-0 text-right">
+              <span className="flex items-center justify-end gap-2 text-[18px] font-bold text-white">
+                {bundle.price > 0 ? <Price price={bundle.fullPrice} finalPrice={bundle.price} /> : <span className="text-[13px] font-semibold text-[#86efac]">Alles im Besitz</span>}
+              </span>
+              {saving > 0 && <span className="mt-0.5 block text-[12px] font-semibold text-[#86efac]">Du sparst <Bernis amount={saving} /></span>}
+              {bundle.owned > 0 && bundle.price > 0 && <span className="mt-0.5 block text-[12px] font-medium text-white/60">{bundle.owned} schon im Besitz</span>}
+            </span>
+          </span>
+        </span>
+      </span>
     </button>
   );
 }
@@ -177,20 +207,35 @@ function BundleDetail({ bundle, parts, onClose }: { bundle: ShopBundle; parts: S
 /** "Pakete" section of the shop front. */
 export function BundleSection({ bundles, listings }: { bundles: ShopBundle[]; listings: ShopListing[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
   const byId = useMemo(() => new Map(listings.map((entry) => [entry.item.id, entry])), [listings]);
   const partsOf = (bundle: ShopBundle) => bundle.itemIds.flatMap((id) => byId.get(id) ?? []);
   const shown = bundles.filter((bundle) => partsOf(bundle).length >= 2);
   const open = shown.find((bundle) => bundle.id === openId);
   if (!shown.length) return null;
+  const visible = expanded ? shown : shown.slice(0, 4);
   return (
-    <section className="mt-10">
-      <div className="mb-3.5">
-        <h2 className="text-[19px] font-semibold tracking-tight">Pakete</h2>
-        <p className="mt-0.5 text-[13px] text-mute">Komplette Looks, die zusammenpassen – mit einem Klick, und was du schon hast, zahlst du nicht.</p>
+    // A showcase of its own (dark in both modes), so bundles do not read as just more cards.
+    <section data-mode="dark" className="relative mt-12 overflow-hidden rounded-[28px] border border-white/[.07] bg-[#120d09] p-5 md:p-7">
+      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#f2a531]/15 blur-[90px]" />
+      <div className="pointer-events-none absolute -bottom-28 right-0 h-72 w-96 rounded-full bg-[#8fb36b]/12 blur-[100px]" />
+      <div className="relative mb-5 flex flex-wrap items-end gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="flex items-center gap-2 text-[11.5px] font-extrabold uppercase tracking-[.22em] text-[#ffd889]"><Glyph name="star" size={14} /> Komplett-Looks</p>
+          <h2 className="mt-1.5 text-[26px] font-bold tracking-tight text-white">Pakete</h2>
+          <p className="mt-1 max-w-[560px] text-[13.5px] text-white/65">Alles, was zusammenpasst, in einem Klick. Was du schon besitzt, zahlst du nicht.</p>
+        </div>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {shown.map((bundle) => <BundleTile key={bundle.id} bundle={bundle} items={partsOf(bundle).map((part) => part.item)} onOpen={() => setOpenId(bundle.id)} />)}
+      <div className="relative grid grid-cols-1 gap-5 md:grid-cols-2">
+        {visible.map((bundle) => <BundleTile key={bundle.id} bundle={bundle} items={partsOf(bundle).map((part) => part.item)} onOpen={() => setOpenId(bundle.id)} />)}
       </div>
+      {shown.length > 4 && (
+        <div className="relative mt-5 flex justify-center">
+          <button type="button" className="btn btn-secondary" onClick={() => setExpanded((value) => !value)}>
+            {expanded ? 'Weniger anzeigen' : `Alle ${shown.length} Pakete anzeigen`}
+          </button>
+        </div>
+      )}
       {open && <BundleDetail bundle={open} parts={partsOf(open)} onClose={() => setOpenId(null)} />}
     </section>
   );

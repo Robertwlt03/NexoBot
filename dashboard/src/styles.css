@@ -368,4 +368,14 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 .wood-light { display: none; }
 [data-mode="light"] .wood-dark { display: none; }
 [data-mode="light"] .wood-light { display: block; }
+
+/* ---------- Bundle tiles (me/bundles.tsx): holographic frame that slowly circles the tile ---------- */
+.bundle-tile { position: relative; display: block; border-radius: 20px; background: conic-gradient(from var(--holo-angle), var(--tile), #ffd889, #8fe3ff, #f7a8c4, var(--tile)); box-shadow: 0 24px 60px -30px color-mix(in srgb, var(--tile) 70%, transparent); }
+.bundle-tile:hover { box-shadow: 0 30px 70px -24px color-mix(in srgb, var(--tile) 85%, transparent); }
+@media (prefers-reduced-motion: no-preference) {
+  .bundle-tile { animation: holo-spin 7s linear infinite; }
 }
+}
+
+@property --holo-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes holo-spin { to { --holo-angle: 360deg; } }
