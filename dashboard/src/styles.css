@@ -379,3 +379,15 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 
 @property --holo-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 @keyframes holo-spin { to { --holo-angle: 360deg; } }
+
+/* ---------- Event particles (me/EventScene.tsx): each one is a full-height column, so translateY(100%) = the container ---------- */
+.event-particle { position: absolute; top: 0; height: 100%; transform: translateY(var(--y)); }
+.event-sway { display: block; transform: rotate(var(--spin)); }
+@media (prefers-reduced-motion: no-preference) {
+  .event-fall { animation: event-fall var(--dur) linear var(--delay) infinite; }
+  .event-rise { animation: event-rise var(--dur) linear var(--delay) infinite; }
+  .event-sway { animation: event-sway calc(var(--dur) / 3) ease-in-out var(--delay) infinite alternate; }
+}
+@keyframes event-fall { from { transform: translateY(-12%); } to { transform: translateY(105%); } }
+@keyframes event-rise { from { transform: translateY(105%); } to { transform: translateY(-12%); } }
+@keyframes event-sway { from { transform: translateX(calc(var(--sway) * -1)) rotate(calc(var(--spin) * -1)); } to { transform: translateX(var(--sway)) rotate(var(--spin)); } }

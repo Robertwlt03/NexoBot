@@ -51,7 +51,7 @@ export function runningEvents(now: Date, stored: ShopEvent[]): ShopEvent[] {
 }
 
 /** The next few active events that have not started yet (one occurrence per event). */
-export function upcomingEvents(now: Date, stored: ShopEvent[], limit = 3): ShopEvent[] {
+export function upcomingEvents(now: Date, stored: ShopEvent[], limit = 5): ShopEvent[] {
   const seen = new Set<string>();
   return eventOccurrences(now, stored)
     .filter((event) => event.active && Date.parse(event.startsAt) > now.getTime() && !seen.has(event.id) && seen.add(event.id))

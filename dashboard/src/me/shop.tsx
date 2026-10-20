@@ -19,6 +19,7 @@ import { Glyph, ItemVisual, Bernis, Price, RARITY_TILE, RarityLabel, backgroundS
 import { ProductDialog } from './ProductDialog';
 import { BundleSection } from './bundles';
 import { Celebration } from './Celebration';
+import { EVENT_THEMES, EventMascot, EventParticles, eventTheme } from './EventScene';
 import { Icon } from '../icons';
 
 export type ShopVariant = 'shop' | 'blackmarket';
@@ -31,22 +32,30 @@ const forSale = (item: CosmeticItem) => item.price > 0 && !NOT_FOR_SALE[item.ava
 
 // ---------- Upcoming events strip ----------
 
+/** Event calendar: what comes next, each in its own season's colours and figure. */
 export function UpcomingEvents({ events }: { events: ShopEvent[] }) {
   const now = useNow(60_000);
   if (!events.length) return null;
   return (
     <section className="mt-8">
-      <h2 className="mb-3 text-[13px] font-medium text-mute">Demnächst</h2>
+      <h2 className="text-[19px] font-semibold tracking-tight">Kommende Events</h2>
+      <p className="mb-3.5 mt-0.5 text-[13px] text-mute">Wann im Shop was ansteht – mit Rabatten und Event-Artikeln.</p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {events.map((event) => (
-          <div key={event.id} className="flex items-center gap-3.5 rounded-2xl border border-white/[.06] bg-surface p-4">
-            <span className="icon-tile"><span className="text-[13px] font-semibold">−{event.discount}%</span></span>
-            <div className="min-w-0 flex-1">
-              <h3 className="truncate text-[14.5px] font-medium">{event.name}</h3>
-              <p className="truncate text-[12.5px] text-mute">{formatDate(event.startsAt)} – {formatDate(event.endsAt)} · in {countdown(event.startsAt, now)}</p>
+        {events.map((event) => {
+          const theme = eventTheme(event);
+          const { tint } = EVENT_THEMES[theme];
+          return (
+            <div key={event.id} data-mode="dark" style={{ '--tile': tint } as CSSProperties} className="game-tile-field relative flex items-center gap-3.5 overflow-hidden rounded-2xl p-4 ring-1 ring-white/[.08]">
+              <EventMascot theme={theme} className="h-14 w-14 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-[.14em]" style={{ color: tint }}>in {countdown(event.startsAt, now)}</p>
+                <h3 className="truncate text-[15px] font-semibold text-white">{event.name}</h3>
+                <p className="truncate text-[12.5px] text-white/65">{formatDate(event.startsAt)} – {formatDate(event.endsAt)}</p>
+              </div>
+              {event.discount > 0 && <span className="shrink-0 rounded-md bg-[#facc15] px-1.5 py-0.5 text-[12px] font-bold text-[#1a1405]">−{event.discount} %</span>}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
@@ -138,6 +147,7 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
   const catalogRef = useRef<HTMLDivElement>(null);
   const owned = useMemo(() => new Set(me.inventory.map((o) => o.itemId)), [me.inventory]);
   const event = events[0];
+  const theme = event ? eventTheme(event) : null;
 
   // Featured: the running event's own items and deals first, otherwise the most precious items you don't own yet.
   const featured = useMemo(() => {
@@ -177,6 +187,7 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
       <section data-mode="dark" className="@container relative overflow-hidden rounded-[24px] border border-white/[.07]">
         <div className="absolute inset-0" style={heroBackground?.slot === 'background' ? backgroundStyle(heroBackground.data) : { background: 'var(--hero-glow), var(--brand-gradient)' }} />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(9,9,12,.94)_0%,rgba(9,9,12,.7)_45%,rgba(9,9,12,.15)_100%)]" />
+        {theme && <EventParticles theme={theme} />}
         {/* Two columns only when the banner itself is wide enough (container query), so the text never gets squeezed. */}
         <div className="relative grid items-center gap-6 p-6 @3xl:grid-cols-[minmax(0,1fr)_minmax(0,400px)] @3xl:p-9">
           <div className="min-w-0">
@@ -185,7 +196,10 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
                 ? <><span className="h-1.5 w-1.5 rounded-full bg-pos shadow-[0_0_8px_var(--pos)]" /> Event läuft · endet in <span className="tabular-nums text-ink">{countdown(event.endsAt, now)}</span></>
                 : <><span className="h-1.5 w-1.5 rounded-full bg-accent" /> Empfohlen für dich</>}
             </div>
-            <h2 className="mt-3 text-[30px] font-semibold leading-[1.1] tracking-tight text-ink @3xl:text-[40px]">{event ? event.name : 'Hol dir den Look'}</h2>
+            <h2 className="mt-3 flex items-center gap-3 text-[30px] font-semibold leading-[1.1] tracking-tight text-ink @3xl:text-[40px]">
+              {event ? event.name : 'Hol dir den Look'}
+              {theme && <EventMascot theme={theme} className="h-14 w-14 shrink-0 @3xl:hidden" />}
+            </h2>
             <p className="mt-3 max-w-[480px] text-[14.5px] text-body">{event ? event.description : 'Die besten Stücke, die dir noch fehlen – rechts schon auf deiner Karte angelegt.'}</p>
             {event && (
               <div className="mt-5 flex max-w-[480px] items-center gap-4 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 backdrop-blur">
@@ -194,11 +208,14 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
               </div>
             )}
           </div>
-          <div className="hidden max-w-[440px] @xl:block">
+          <div className="relative hidden max-w-[440px] @xl:block">
+            {/* The event's figure peeks out from behind the card. */}
+            {theme && <EventMascot theme={theme} className="absolute -top-[60px] right-6 hidden w-24 @3xl:block" />}
             <ProfileCardPreview subject={cardSubject(user, me, null, me.profile.bio)} cosmetics={look} className="w-full rounded-2xl shadow-[0_30px_60px_-20px_rgba(0,0,0,.8)] ring-1 ring-white/10" />
           </div>
         </div>
       </section>
+      <UpcomingEvents events={upcoming} />
       <section className="mt-8">
         <h2 className="mb-3.5 text-[19px] font-semibold tracking-tight">{event ? `Highlights aus „${event.name}“` : 'Empfohlen'}</h2>
         {/* Bento: one 2×2 feature tile, four regular ones. */}
@@ -217,7 +234,6 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
       {bySlot.map((g) => (
         <Shelf key={g.slot} title={SLOT_PLURAL[g.slot]} listings={g.list} owned={owned} onOpen={setOpenId} onAll={() => showAll(g.slot)} />
       ))}
-      <UpcomingEvents events={upcoming} />
 
       <section ref={catalogRef} className="mt-12 scroll-mt-6">
         <h2 className="mb-3 text-[19px] font-semibold tracking-tight">Alle Artikel</h2>
