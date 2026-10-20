@@ -34,7 +34,7 @@ export interface FrameData { style: (typeof FRAME_STYLES)[number]; colors: strin
 /** Badge glyph: one of BADGE_GLYPHS (drawn as vector shapes by the renderer, no emoji fonts needed). */
 export interface BadgeData { glyph: BadgeGlyph; color: string }
 export interface TitleData { text: string; color: string }
-export const XP_BAR_STYLES = ['solid', 'gradient', 'striped', 'segmented', 'glow', 'pixel', 'beads', 'wave', 'flame', 'vine', 'comet'] as const;
+export const XP_BAR_STYLES = ['solid', 'gradient', 'striped', 'segmented', 'glow', 'pixel', 'wave', 'flame', 'vine', 'comet'] as const;
 export interface XpBarData { style: (typeof XP_BAR_STYLES)[number]; colors: string[] }
 export interface FontData { font: 'inter' | 'unbounded' | 'caveat' }
 export interface EffectData { effect: 'sparkles' | 'snow' | 'confetti' | 'aurora' | 'scanlines' | 'stardust' | 'embers' | 'hearts' | 'leaves' }

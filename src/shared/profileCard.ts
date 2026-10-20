@@ -1843,7 +1843,7 @@ function drawStats(ctx: Ctx, block: StatBlock, subject: ProfileCardSubject, acce
 
 // ---------- XP bar ----------
 
-const ILLUSTRATED_XP: ReadonlySet<XpBarData['style']> = new Set(['pixel', 'beads', 'wave', 'flame', 'vine', 'comet']);
+const ILLUSTRATED_XP: ReadonlySet<XpBarData['style']> = new Set(['pixel', 'wave', 'flame', 'vine', 'comet']);
 
 /** Illustrated XP bars; decorations may reach a few px above and below the bar. */
 function drawIllustratedXp(ctx: Ctx, { x, y, w, h }: Rect, fraction: number, style: XpBarData['style'], [c0, c1]: string[]) {
@@ -1870,33 +1870,6 @@ function drawIllustratedXp(ctx: Ctx, { x, y, w, h }: Rect, fraction: number, sty
           ctx.fillStyle = lit ? (row === 0 ? lighten(c0, 0.22) : c0) : col < filled ? c1 : 'rgba(255, 255, 255, 0.07)';
           ctx.fillRect(x + col * cell + 0.5, y + row * cell + 0.5, cell - 1, cell - 1);
         }
-      }
-      break;
-    }
-    case 'beads': {
-      // A string of pearls: filled ones shine, the rest wait as dim glass.
-      const step = h * 1.3;
-      const count = Math.floor(w / step);
-      const filled = Math.round(fraction * count);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x, y + r);
-      ctx.lineTo(x + w, y + r);
-      ctx.stroke();
-      for (let i = 0; i < count; i++) {
-        const bx = x + step / 2 + i * (w - step) / Math.max(1, count - 1);
-        const br = r * 0.95;
-        ctx.beginPath();
-        circle(ctx, bx, y + r, br);
-        if (i < filled) {
-          const shine = ctx.createRadialGradient(bx - br * 0.35, y + r - br * 0.35, 0, bx, y + r, br);
-          shine.addColorStop(0, lighten(c1, 0.5));
-          shine.addColorStop(0.6, c0);
-          shine.addColorStop(1, darken(c0, 0.3));
-          ctx.fillStyle = shine;
-        } else ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.fill();
       }
       break;
     }
