@@ -10,7 +10,7 @@ import { Notice } from '../components/ui';
 import { equipItem, isEquipped, useEquip, useMe, useMutation, useWalletUpdate } from './api';
 import { Celebration } from './Celebration';
 import { ProductDialog } from './ProductDialog';
-import { ProductStage } from './ProductStage';
+import { ProductStage, TryOnPreview } from './ProductStage';
 import { Bernis, Glyph, ItemVisual, Price, RARITY_TILE, RarityLabel } from './visuals';
 
 /** The bundle's colour: its rarest item. */
@@ -53,7 +53,13 @@ function BundleTile({ bundle, items, onOpen }: { bundle: ShopBundle; items: Cosm
     <button type="button" onClick={onOpen} data-mode="dark" style={{ '--tile': tint } as CSSProperties}
       className="js-item game-tile group relative flex cursor-pointer flex-col overflow-hidden rounded-[18px] border-0 bg-[#0d0b0a] p-0 text-left font-[inherit] ring-1 ring-white/[.08] transition duration-300 hover:-translate-y-1 hover:ring-[color-mix(in_srgb,var(--tile)_70%,transparent)] hover:shadow-[0_22px_44px_-18px_color-mix(in_srgb,var(--tile)_55%,transparent)]">
       <div className="game-tile-field relative aspect-[16/10] w-full overflow-hidden">
-        <BundleArt items={items} />
+        {/* Your own card already wearing the whole bundle, tilted and running off the edge like a store preview. */}
+        {items.some((item) => item.slot !== 'levelup') ? (
+          <div className="absolute left-[9%] top-[22%] w-[112%] origin-top-left -rotate-[7deg] overflow-hidden rounded-xl shadow-[0_24px_50px_-16px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[5deg] group-hover:scale-[1.03]">
+            <TryOnPreview items={items.filter((item) => item.slot !== 'levelup')} />
+          </div>
+        ) : <BundleArt items={items} />}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-[#0d0b0a] to-transparent" />
         <span className="absolute left-2.5 top-2.5 z-10 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-[.08em] text-white backdrop-blur">Paket · {items.length} St.</span>
         {bundle.owned > 0 && <span className="absolute right-2.5 top-2.5 z-10 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] font-semibold text-[#86efac] backdrop-blur">{bundle.owned} im Besitz</span>}
       </div>
