@@ -380,14 +380,24 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 @property --holo-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 @keyframes holo-spin { to { --holo-angle: 360deg; } }
 
-/* ---------- Event particles (me/EventScene.tsx): each one is a full-height column, so translateY(100%) = the container ---------- */
-.event-particle { position: absolute; top: 0; height: 100%; transform: translateY(var(--y)); }
+/* ---------- Event scenes (me/EventScene.tsx) ----------
+   Each particle is a column as tall as its container, so translateY(100%) = the container's height. */
+.event-particle { position: absolute; height: 100%; opacity: var(--o); transform: translate(calc(var(--wind) * var(--t)), calc(var(--dist) * var(--t))); }
 .event-sway { display: block; transform: rotate(var(--spin)); }
 @media (prefers-reduced-motion: no-preference) {
-  .event-fall { animation: event-fall var(--dur) linear var(--delay) infinite; }
-  .event-rise { animation: event-rise var(--dur) linear var(--delay) infinite; }
+  .event-particle { animation: event-drift var(--dur) linear var(--delay) infinite; }
   .event-sway { animation: event-sway calc(var(--dur) / 3) ease-in-out var(--delay) infinite alternate; }
+  .event-swing { animation: event-swing 4.5s ease-in-out infinite alternate; }
+  .event-bob { animation: event-bob 5s ease-in-out infinite alternate; }
+  .event-turn { animation: spin 90s linear infinite; }
+  .event-twinkle { animation: event-twinkle 3.3s ease-in-out infinite alternate; }
 }
-@keyframes event-fall { from { transform: translateY(-12%); } to { transform: translateY(105%); } }
-@keyframes event-rise { from { transform: translateY(105%); } to { transform: translateY(-12%); } }
+@keyframes event-drift {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10%, 80% { opacity: var(--o); }
+  100% { transform: translate(var(--wind), var(--dist)); opacity: 0; }
+}
 @keyframes event-sway { from { transform: translateX(calc(var(--sway) * -1)) rotate(calc(var(--spin) * -1)); } to { transform: translateX(var(--sway)) rotate(var(--spin)); } }
+@keyframes event-swing { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+@keyframes event-bob { from { transform: translateY(-4px); } to { transform: translateY(4px); } }
+@keyframes event-twinkle { from { opacity: .35; } to { opacity: 1; } }
