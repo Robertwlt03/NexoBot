@@ -82,8 +82,8 @@ function BundleTile({ bundle, items, onOpen }: { bundle: ShopBundle; items: Cosm
             </span>
           ) : <BundleArt items={items} />}
           <span className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#0d0b0a] to-transparent" />
-          {/* Ribbon across the corner. */}
-          <span className="absolute -right-[50px] top-[30px] z-10 w-[200px] rotate-45 bg-[linear-gradient(90deg,#b5600f,#ffd889,#b5600f)] py-1 text-center text-[10px] font-extrabold uppercase tracking-[.16em] text-[#2a1405] shadow-[0_6px_16px_-6px_rgba(0,0,0,.8)]">Komplett-Look</span>
+          {/* Ribbon across the corner, centred on its diagonal (58px in from both edges) so the text never runs off. */}
+          <span className="absolute -right-[52px] top-[46px] z-10 h-6 w-[220px] rotate-45 bg-[linear-gradient(90deg,#b5600f,#ffd889,#b5600f)] text-center leading-6 text-[10px] font-extrabold uppercase tracking-[.16em] text-[#2a1405] shadow-[0_6px_16px_-6px_rgba(0,0,0,.8)]">Komplett-Look</span>
           <span className="absolute left-3 top-3 z-10 rounded-md bg-black/70 px-2 py-0.5 text-[11px] font-bold uppercase tracking-[.08em] text-white backdrop-blur">Paket · {items.length} Artikel</span>
         </span>
         <span className="relative flex w-full flex-1 flex-col px-5 pb-5 pt-1">
