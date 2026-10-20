@@ -357,8 +357,8 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
       <ProductDialog title={item.name} onClose={onClose}
         stage={<ProductStage items={[item]} tint={tint} kicker={`${RARITY_LABELS[item.rarity]} · ${SLOT_LABELS[item.slot]}`} />}>
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 md:p-7">
-          {/* The item itself, big, on its rarity light. */}
-          <div className="game-tile-field relative mx-auto aspect-square w-full max-w-[260px] shrink-0 overflow-hidden rounded-[20px] ring-1 ring-white/10 max-md:max-w-[180px]" style={{ '--tile': tint } as CSSProperties} data-mode="dark">
+          {/* The item itself, big, on its rarity light (stacked layouts skip it: the stage above shows it). */}
+          <div className="game-tile-field relative mx-auto aspect-square w-full max-w-[260px] shrink-0 overflow-hidden rounded-[20px] ring-1 ring-white/10 max-lg:hidden" style={{ '--tile': tint } as CSSProperties} data-mode="dark">
             <ItemVisual item={item} className="h-full w-full scale-[1.25] rounded-none !bg-transparent" />
           </div>
           <div>

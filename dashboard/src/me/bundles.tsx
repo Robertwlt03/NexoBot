@@ -110,7 +110,9 @@ function BundleDetail({ bundle, parts, onClose }: { bundle: ShopBundle; parts: S
     <>
       <ProductDialog title={bundle.name} onClose={onClose} stage={<ProductStage items={items} tint={tint} kicker={`Paket · ${items.length} Artikel`} />}>
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 md:p-7">
-          <div className="game-tile-field relative mx-auto aspect-[16/10] w-full max-w-[320px] shrink-0 overflow-hidden rounded-[20px] ring-1 ring-white/10" style={{ '--tile': tint } as CSSProperties} data-mode="dark">
+          {/* The fan floats on a soft glow (no second frame); stacked layouts skip it, the stage above shows the look. */}
+          <div className="relative mx-auto aspect-[16/10] w-full max-w-[320px] shrink-0 max-lg:hidden" data-mode="dark"
+            style={{ background: `radial-gradient(60% 60% at 50% 50%, color-mix(in srgb, ${tint} 35%, transparent), transparent 72%)` }}>
             <BundleArt items={items} large />
           </div>
           <div>
