@@ -60,8 +60,24 @@ export interface ShopListing {
   availableUntil: string | null;
 }
 
+/** A set of matching items sold together; you only pay for the ones you do not own yet. */
+export interface ShopBundle {
+  id: string;
+  name: string;
+  description: string;
+  itemIds: string[];
+  /** What buying the bundle costs now: the current prices of the items you do not own yet. */
+  price: number;
+  /** The same items at their regular prices (for the crossed-out price). */
+  fullPrice: number;
+  /** How many of the items you already own. */
+  owned: number;
+}
+
 /** GET /me/shop */
-export interface ShopResponse { listings: ShopListing[]; events: ShopEvent[]; upcoming: ShopEvent[]; wallet: WalletSummary }
+export interface ShopResponse { listings: ShopListing[]; bundles: ShopBundle[]; events: ShopEvent[]; upcoming: ShopEvent[]; wallet: WalletSummary }
+
+/** POST /me/shop/buy-bundle { bundleId } returns PurchaseResult. */
 
 /** GET /me/blackmarket */
 export interface BlackMarketResponse { weekStart: string; endsAt: string; listings: ShopListing[]; wallet: WalletSummary }

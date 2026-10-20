@@ -6,7 +6,8 @@ import type { ShopListing } from '../../../src/web/dto/profile';
 import { AmberIcon } from '../components/AmberIcon';
 import { PageHeader, Spinner } from '../components/ui';
 import { countdown, formatDate, useMe, useNow } from './api';
-import { ItemDetail, RARITY_TILE, StoreCard } from './shop';
+import { ItemDetail, StoreCard } from './shop';
+import { RARITY_TILE } from './visuals';
 
 // Which cards this viewer already turned over this week (a per-browser convenience; buying never depends on it).
 const storageKey = (weekStart: string) => `nexo.blackmarket.revealed.${weekStart}`;

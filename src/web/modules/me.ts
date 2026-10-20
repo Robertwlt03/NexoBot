@@ -16,7 +16,7 @@ import { NO_DB_MESSAGE, T, cosmeticsPool, isSnowflake, requirePool } from '../..
 import { loadCatalog } from '../../services/cosmetics/catalog.js';
 import { parseProfileSettings, readDashboardTheme, readProfileSettings, writeDashboardTheme, writeProfileSettings } from '../../services/cosmetics/profile.js';
 import { claimDaily, getDailyState, listTransactions, walletSummary } from '../../services/cosmetics/wallet.js';
-import { blackMarketResponse, gift, ownedItems, purchase, shopResponse } from '../../services/cosmetics/shop.js';
+import { blackMarketResponse, gift, ownedItems, purchase, purchaseBundle, shopResponse } from '../../services/cosmetics/shop.js';
 import { listAchievements, syncAchievements } from '../../services/cosmetics/achievements.js';
 import { userRankings } from '../../services/cosmetics/rankings.js';
 
@@ -93,6 +93,10 @@ export function meRouter(client: NexoClient): Router {
 
   router.post('/shop/buy', async (req, res) => {
     res.json(await purchase(locals(res).session.userId, body(req.body).itemId));
+  });
+
+  router.post('/shop/buy-bundle', async (req, res) => {
+    res.json(await purchaseBundle(locals(res).session.userId, body(req.body).bundleId));
   });
 
   router.post('/shop/gift', async (req, res) => {

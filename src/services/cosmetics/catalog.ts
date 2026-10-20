@@ -214,6 +214,28 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('sticker', 'sticker-toadstool', 'rare', 1000, 'Pilz-Sticker', 'Ein Fliegenpilz für die Ecke.', { glyph: 'mushroom', color: '#E2574C', corner: 'tr' }),
 ];
 
+// ---------- Bundles ----------
+
+export interface BundleDef { id: string; name: string; description: string; itemIds: string[] }
+
+/** Matching sets from the regular shop, sold together (shop/bundles). Only shop items: events and the black market keep their own rules. */
+export const BUNDLES: BundleDef[] = [
+  { id: 'bundle-forest', name: 'Wald-Paket', description: 'Farne, Efeu und fallendes Laub – deine Karte wie eine Lichtung im Wald.',
+    itemIds: ['bg-fern-shade', 'frame-ivy', 'name-forest-light', 'badge-fir', 'effect-falling-leaves', 'title-forest-spirit'] },
+  { id: 'bundle-amber', name: 'Bernstein-Paket', description: 'Warmes Harzlicht von Hintergrund bis XP-Balken.',
+    itemIds: ['bg-amber-glow', 'frame-amber-setting', 'name-amber-shine', 'xp-resin-flow', 'acc-walnut'] },
+  { id: 'bundle-walnut', name: 'Walnuss-Paket', description: 'Dunkles Holz, Eicheln und ein bisschen Holzwurm.',
+    itemIds: ['bg-walnut-grain', 'frame-walnut-ring', 'badge-acorn', 'sticker-acorn', 'title-woodworm', 'acc-moss'] },
+  { id: 'bundle-gold', name: 'Gold-Paket', description: 'Für alle, die gekrönt werden wollen – inklusive royalem Level-up.',
+    itemIds: ['bg-golden-hour', 'frame-crown', 'name-gold', 'title-visionary', 'xp-gold-flow', 'lvl-royal'] },
+  { id: 'bundle-night-sky', name: 'Nachthimmel-Paket', description: 'Sterne, Mond und tiefes Blau.',
+    itemIds: ['bg-starfield', 'effect-stardust', 'sticker-moon', 'name-sky', 'xp-dusk'] },
+  { id: 'bundle-aurora', name: 'Polarlicht-Paket', description: 'Grüne Schleier am Himmel und auf deinem Namen.',
+    itemIds: ['bg-aurora', 'name-aurora', 'effect-aurora', 'xp-mint-striped', 'frame-mint-double'] },
+  { id: 'bundle-neon', name: 'Neon-Paket', description: 'Röhrenlicht, Scanlines und ein leuchtendes Level-up.',
+    itemIds: ['bg-circuit', 'frame-neon-violet', 'effect-scanlines', 'xp-ice-segments', 'lvl-neon'] },
+];
+
 // ---------- Owner input validation ----------
 
 const AVAILABILITIES: ItemAvailability[] = ['shop', 'blackmarket', 'event', 'achievement', 'ranking'];

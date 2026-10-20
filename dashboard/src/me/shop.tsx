@@ -6,7 +6,7 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { COSMETIC_SLOTS, RARITIES, RARITY_LABELS, SLOT_LABELS, levelUpReward } from '../../../src/shared/cosmetics';
 import type { CosmeticItem, CosmeticSlot, Rarity } from '../../../src/shared/cosmetics';
-import type { PurchaseResult, ShopEvent, ShopListing } from '../../../src/web/dto/profile';
+import type { PurchaseResult, ShopBundle, ShopEvent, ShopListing } from '../../../src/web/dto/profile';
 import { useUser } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
 import { ProfileCardPreview } from '../components/ProfileCardPreview';
@@ -15,7 +15,9 @@ import { Empty, Field, Notice, Select, Switch, Tabs, TextInput } from '../compon
 import {
   cardSubject, countdown, equipItem, formatDate, isEquipped, reducedMotion, resolveCosmetics, useEquip, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
-import { Glyph, ItemVisual, Bernis, Price, RarityLabel, backgroundStyle } from './visuals';
+import { Glyph, ItemVisual, Bernis, Price, RARITY_TILE, RarityLabel, backgroundStyle } from './visuals';
+import { ProductDialog } from './ProductDialog';
+import { BundleSection } from './bundles';
 import { Celebration } from './Celebration';
 import { Icon } from '../icons';
 
@@ -52,10 +54,6 @@ export function UpcomingEvents({ events }: { events: ShopEvent[] }) {
 
 // ---------- Store card, shelves & storefront ----------
 
-/** Rarity identity of a tile (game-shop convention: grey, blue, purple, gold, red). Only used inside item tiles. */
-export const RARITY_TILE: Record<Rarity, string> = {
-  common: '#8a8f99', rare: '#3b8cf6', epic: '#a35cf5', legendary: '#f2a516', mythic: '#f2415f',
-};
 
 /**
  * Game-shop tile: the item art on a glowing field in its rarity colour, light rays behind it, name in caps,
@@ -124,7 +122,7 @@ function Shelf({ title, hint, listings, owned, onOpen, onAll }: {
 }
 
 /** Shop front page: hero with the featured look, shelves per topic, then the full searchable catalog. */
-export function Storefront({ listings, events, upcoming }: { listings: ShopListing[]; events: ShopEvent[]; upcoming: ShopEvent[] }) {
+export function Storefront({ listings, bundles, events, upcoming }: { listings: ShopListing[]; bundles: ShopBundle[]; events: ShopEvent[]; upcoming: ShopEvent[] }) {
   const { me, items } = useMe();
   const user = useUser();
   const now = useNow();
@@ -205,6 +203,7 @@ export function Storefront({ listings, events, upcoming }: { listings: ShopListi
         </div>
       </section>
 
+      <BundleSection bundles={bundles} listings={listings} />
       <Shelf title={event ? `Mehr aus „${event.name}“` : 'Weitere Empfehlungen'} listings={featured.slice(5)} owned={owned} onOpen={setOpenId} />
       <Shelf title="Im Angebot" hint="Reduziert, solange das Event läuft." listings={deals} owned={owned} onOpen={setOpenId} />
       <Shelf title="Neu im Shop" listings={fresh} owned={owned} onOpen={setOpenId} />
@@ -356,7 +355,7 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
   return (
     <>
       <ProductDialog title={item.name} onClose={onClose}
-        stage={<ProductStage item={item} tint={tint} kicker={`${RARITY_LABELS[item.rarity]} · ${SLOT_LABELS[item.slot]}`} />}>
+        stage={<ProductStage items={[item]} tint={tint} kicker={`${RARITY_LABELS[item.rarity]} · ${SLOT_LABELS[item.slot]}`} />}>
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 md:p-7">
           {/* The item itself, big, on its rarity light. */}
           <div className="game-tile-field relative mx-auto aspect-square w-full max-w-[260px] shrink-0 overflow-hidden rounded-[20px] ring-1 ring-white/10 max-md:max-w-[180px]" style={{ '--tile': tint } as CSSProperties} data-mode="dark">
@@ -434,27 +433,3 @@ const WHERE_IT_SHOWS: Record<CosmeticSlot, string> = {
   levelup: 'deinen Level-up-Nachrichten', layout: 'deiner Profilkarte (/profil)', sticker: 'deiner Profilkarte (/profil)',
 };
 
-/** Two-pane product view (like a game/Discord store): info and buy on the left, the item in context on the right. */
-function ProductDialog({ title, stage, children, onClose }: { title: string; stage: ReactNode; children: ReactNode; onClose: () => void }) {
-  const root = useRef<HTMLDivElement>(null);
-  useGSAP(() => {
-    if (reducedMotion()) return;
-    gsap.from('.js-veil', { autoAlpha: 0, duration: 0.2 });
-    gsap.from('.js-panel', { y: 18, scale: 0.97, autoAlpha: 0, duration: 0.4, ease: 'power3.out' });
-  }, { scope: root });
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-  return (
-    <div ref={root} className="fixed inset-0 z-50 grid place-items-center p-3 md:p-6" role="dialog" aria-modal="true" aria-label={title}>
-      <button type="button" aria-label="Schließen" className="js-veil absolute inset-0 cursor-default border-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
-      <div className="js-panel relative grid h-[min(720px,100%)] w-[min(1120px,100%)] grid-rows-[minmax(260px,42%)_1fr] overflow-hidden rounded-[24px] border border-white/[.08] bg-surface shadow-[0_40px_120px_-30px_rgba(0,0,0,.9)] md:grid-cols-[400px_1fr] md:grid-rows-1">
-        <div className="order-2 flex min-h-0 flex-col md:order-1">{children}</div>
-        <div className="order-1 min-h-0 md:order-2">{stage}</div>
-        <button type="button" aria-label="Schließen" onClick={onClose} className="icon-btn absolute right-3 top-3 z-10 bg-black/45 text-white backdrop-blur hover:bg-black/60"><span className="rotate-45"><Icon name="plus" size={18} /></span></button>
-      </div>
-    </div>
-  );
-}

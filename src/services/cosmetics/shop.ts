@@ -3,15 +3,15 @@
 
 import { randomInt } from 'node:crypto';
 import { COSMETIC_SLOTS, RARITIES, type CosmeticItem } from '../../shared/cosmetics.js';
-import type { BlackMarketResponse, OwnedItem, PurchaseResult, ShopEvent, ShopListing, ShopResponse } from '../../web/dto/profile.js';
+import type { BlackMarketResponse, OwnedItem, PurchaseResult, ShopBundle, ShopEvent, ShopListing, ShopResponse } from '../../web/dto/profile.js';
 import { HttpError, badRequest } from '../../web/http.js';
-import { loadCatalog } from './catalog.js';
+import { BUNDLES, loadCatalog, type BundleDef } from './catalog.js';
 import { getEconomyConfig } from './config.js';
 import { T, requirePool, withTx, type Queryable } from './db.js';
 import { eventFor, loadStoredEvents, priceFor, runningEvents, upcomingEvents } from './events.js';
 import { sanitizeBio } from './profile.js';
 import { weekEnd, weekStartOf } from './time.js';
-import { noteTx, spendTx, walletSummary } from './wallet.js';
+import { lockWallet, noteTx, spendTx, walletSummary } from './wallet.js';
 import { syncAchievements } from './achievements.js';
 
 export async function ownedItems(userId: string, client: Queryable = requirePool()): Promise<OwnedItem[]> {
@@ -165,7 +165,59 @@ export async function shopResponse(userId: string): Promise<ShopResponse> {
       const base = listing(entry, ctx, eventFor(entry, ctx.running)?.endsAt ?? null);
       return itemIds.includes(entry.id) ? { ...base, ...blackMarketPrice(entry, weekStart, ctx.running) } : base;
     });
-  return { listings, events: ctx.running, upcoming: upcomingEvents(new Date(), ctx.stored), wallet: await walletSummary(userId) };
+  const byId = new Map(listings.map((entry) => [entry.item.id, entry]));
+  const bundles = BUNDLES.flatMap((def) => bundleFor(def, byId) ?? []);
+  return { listings, bundles, events: ctx.running, upcoming: upcomingEvents(new Date(), ctx.stored), wallet: await walletSummary(userId) };
+}
+
+// ---------- Bundles ----------
+
+/** Price of a bundle: the current prices of the items still missing (already owned ones are free). */
+export function bundlePrice(listings: Pick<ShopListing, 'finalPrice' | 'owned'>[]): number {
+  return listings.reduce((sum, entry) => sum + (entry.owned ? 0 : entry.finalPrice), 0);
+}
+
+/** A bundle as the shop shows it; null when fewer than two of its items are on sale right now. */
+export function bundleFor(def: BundleDef, listings: Map<string, ShopListing>): ShopBundle | null {
+  const parts = def.itemIds.flatMap((id) => {
+    const entry = listings.get(id);
+    return entry && entry.item.availability === 'shop' ? [entry] : [];
+  });
+  if (parts.length < 2) return null;
+  return {
+    id: def.id, name: def.name, description: def.description, itemIds: parts.map((entry) => entry.item.id),
+    price: bundlePrice(parts), fullPrice: parts.reduce((sum, entry) => sum + entry.item.price, 0), owned: parts.filter((entry) => entry.owned).length,
+  };
+}
+
+/** Buys every item of a bundle you do not own yet, in one transaction, for their summed current prices. */
+export async function purchaseBundle(userId: string, bundleId: unknown): Promise<PurchaseResult> {
+  const def = BUNDLES.find((entry) => entry.id === bundleId);
+  if (!def) throw new HttpError(404, 'Dieses Paket gibt es nicht (mehr).');
+  const ctx = await context(null);
+  const { weekStart, itemIds: rotation } = await currentRotation(ctx.catalog);
+  const entries = def.itemIds.flatMap((id) => {
+    const entry = ctx.catalog.get(id);
+    return entry?.active && entry.availability === 'shop' && entry.price > 0 ? [entry] : [];
+  });
+  if (entries.length < 2) throw badRequest('Dieses Paket ist gerade nicht erhältlich.');
+  await withTx(async (client) => {
+    // Lock first, then read what you own: a parallel single purchase cannot slip in between.
+    await lockWallet(client, userId);
+    const owned = new Set((await ownedItems(userId, client)).map((entry) => entry.itemId));
+    const missing = entries.filter((entry) => !owned.has(entry.id));
+    if (!missing.length) throw new HttpError(409, 'Du besitzt schon alles aus diesem Paket.');
+    // Same price per item as a single purchase would charge (event or black-market discount included).
+    const price = missing.reduce((sum, entry) => sum + (rotation.includes(entry.id)
+      ? blackMarketPrice(entry, weekStart, ctx.running).finalPrice
+      : priceFor(entry, ctx.running).finalPrice), 0);
+    await spendTx(client, userId, price, 'purchase', `Paket: ${def.name} (${missing.length} Artikel)`, { bundleId: def.id, items: missing.length });
+    for (const entry of missing) {
+      await client.query(`INSERT INTO ${T.user_inventory} (user_id, item_id, source) VALUES ($1, $2, 'purchase') ON CONFLICT DO NOTHING`, [userId, entry.id]);
+    }
+  });
+  await syncAchievements(userId);
+  return { wallet: await walletSummary(userId), inventory: await ownedItems(userId) };
 }
 
 export async function blackMarketResponse(userId: string | null): Promise<BlackMarketResponse> {

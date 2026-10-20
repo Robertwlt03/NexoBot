@@ -17,7 +17,8 @@ const WALLET_COLUMNS = `balance, lifetime_earned, daily_earned, to_char(daily_da
   to_char(last_daily_claim, 'YYYY-MM-DD') AS last_daily_claim`;
 
 /** Locks (and creates) the user's wallet row inside a transaction. */
-async function lockWallet(client: pg.PoolClient, userId: string): Promise<WalletRow> {
+/** Creates the wallet if needed and locks its row until the transaction ends (serialises one user's purchases). */
+export async function lockWallet(client: pg.PoolClient, userId: string): Promise<WalletRow> {
   await client.query(`INSERT INTO ${T.user_wallets} (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING`, [userId]);
   const result = await client.query<WalletRow>(`SELECT ${WALLET_COLUMNS} FROM ${T.user_wallets} WHERE user_id = $1 FOR UPDATE`, [userId]);
   return result.rows[0];

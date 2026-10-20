@@ -75,6 +75,11 @@ export const RARITY_CLASS: Record<Rarity, { border: string; text: string }> = {
   mythic: { border: 'border-rose-500/25', text: 'text-(--rarity-mythic)' },
 };
 
+/** Rarity identity of a tile (game-shop convention: grey, blue, purple, gold, red). Only used inside item tiles. */
+export const RARITY_TILE: Record<Rarity, string> = {
+  common: '#8a8f99', rare: '#3b8cf6', epic: '#a35cf5', legendary: '#f2a516', mythic: '#f2415f',
+};
+
 export function RarityLabel({ rarity }: { rarity: Rarity }) {
   return <span className={`text-[12px] font-medium ${RARITY_CLASS[rarity].text}`}>{RARITY_LABELS[rarity]}</span>;
 }
