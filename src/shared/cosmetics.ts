@@ -30,7 +30,7 @@ export interface BadgeData { glyph: BadgeGlyph; color: string }
 export interface TitleData { text: string; color: string }
 export interface XpBarData { style: 'solid' | 'gradient' | 'striped' | 'segmented' | 'glow'; colors: string[] }
 export interface FontData { font: 'inter' | 'unbounded' | 'caveat' }
-export interface EffectData { effect: 'sparkles' | 'snow' | 'confetti' | 'aurora' | 'scanlines' | 'stardust' | 'embers' | 'hearts' }
+export interface EffectData { effect: 'sparkles' | 'snow' | 'confetti' | 'aurora' | 'scanlines' | 'stardust' | 'embers' | 'hearts' | 'leaves' }
 export interface LevelupData { style: 'classic' | 'minimal' | 'neon' | 'royal' | 'retro'; color: string }
 export interface LayoutData { layout: 'classic' | 'compact' | 'centered' | 'split' }
 export interface StickerData { glyph: BadgeGlyph; color: string; corner: 'tl' | 'tr' | 'bl' | 'br' }
@@ -38,6 +38,7 @@ export interface StickerData { glyph: BadgeGlyph; color: string; corner: 'tl' | 
 export const BADGE_GLYPHS = [
   'star', 'crown', 'flame', 'bolt', 'heart', 'diamond', 'shield', 'leaf', 'moon', 'sun', 'snowflake', 'skull',
   'music', 'controller', 'fish', 'pickaxe', 'dice', 'trophy', 'rocket', 'ghost', 'pumpkin', 'gift', 'paw', 'code',
+  'acorn', 'mushroom', 'tree',
 ] as const;
 export type BadgeGlyph = (typeof BADGE_GLYPHS)[number];
 

@@ -185,6 +185,33 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('sticker', 'sticker-chrome-skull', 'mythic', 3000, 'Chromschädel-Sticker', 'Nur auf dem Schwarzmarkt.', { glyph: 'skull', color: '#E5E7EB', corner: 'br' }, BM),
   item('sticker', 'sticker-boo', 'rare', 900, 'Buh!', 'Halloween-Edition.', { glyph: 'ghost', color: '#E2E8F0', corner: 'tr' }, ev('halloween')),
   item('sticker', 'sticker-sunshine', 'rare', 800, 'Sonnenschein', 'Sommer-Edition.', { glyph: 'sun', color: '#FBBF24', corner: 'tr' }, ev('summer-sale')),
+
+  // ---------- Wald-Kollektion (Walnuss, Moos, Bernstein) ----------
+  item('background', 'bg-moss-cushion', 'common', 450, 'Moospolster', 'Weiches, dunkles Moosgrün.', bg('gradient', ['#1F2A16', '#3C5A2A'], 140)),
+  item('background', 'bg-walnut-grain', 'rare', 1200, 'Walnussmaserung', 'Geschwungene Maserung in dunklem Walnuss.', bg('pattern', ['#24160D', '#7A4A2A'], 0, 'waves')),
+  item('background', 'bg-forest-floor', 'rare', 1000, 'Waldboden', 'Moos, Laub und Erde im Abendlicht.', bg('mesh', ['#1A120B', '#3C5A2A', '#6B4426', '#1F2A16'])),
+  item('background', 'bg-birch-grove', 'epic', 2200, 'Birkenhain', 'Helle Birkenstämme im Dämmerlicht.', bg('pattern', ['#26241F', '#E8E2D6'], 0, 'diagonal')),
+  item('background', 'bg-fern-shade', 'epic', 2600, 'Farnschatten', 'Grünes Licht, das durch Farne fällt.', bg('aurora', ['#0E140B', '#4D7A35', '#A3C47A'])),
+  item('background', 'bg-amber-glow', 'legendary', 6500, 'Bernsteinglut', 'Warmes Licht wie durch einen Bernstein.', bg('mesh', ['#2A1405', '#B5600F', '#F2A531', '#FFD889'])),
+  item('accent', 'acc-moss', 'common', 350, 'Moosgrün', 'Ruhiges, natürliches Grün.', { color: '#8FB36B' }),
+  item('accent', 'acc-fern', 'rare', 900, 'Farngrün', 'Kräftiges Grün junger Farne.', { color: '#5FA35A' }),
+  item('accent', 'acc-walnut', 'rare', 950, 'Walnussbraun', 'Warmes Braun mit Bernsteinschimmer.', { color: '#C98A4B' }),
+  item('nameStyle', 'name-forest-light', 'rare', 1100, 'Waldlicht', 'Verlauf von hellem Moos zu Farngrün.', { colors: ['#C7DCA7', '#5FA35A'], glow: false }),
+  item('nameStyle', 'name-amber-shine', 'epic', 2800, 'Bernsteinschimmer', 'Leuchtender Verlauf in Honig und Bernstein.', { colors: ['#FFD889', '#F2A531', '#B5600F'], glow: true }),
+  item('frame', 'frame-walnut-ring', 'rare', 1100, 'Walnussring', 'Breiter Ring aus dunklem Walnuss.', { style: 'solid', colors: ['#7A4A2A'], width: 6 }),
+  item('frame', 'frame-ivy', 'epic', 2600, 'Efeuranke', 'Zwei Ringe in Moos und tiefem Efeugrün.', { style: 'double', colors: ['#8FB36B', '#3F6B2E'], width: 6 }),
+  item('frame', 'frame-amber-setting', 'legendary', 6000, 'Bernsteinfassung', 'Leuchtende Fassung aus Bernstein.', { style: 'glow', colors: ['#F2A531', '#FFD889'], width: 6 }),
+  item('badge', 'badge-acorn', 'common', 350, 'Eichel', 'Klein, aber oho.', badge('acorn', '#C98A4B')),
+  item('badge', 'badge-fir', 'rare', 850, 'Tanne', 'Immer grün, bei jedem Wetter.', badge('tree', '#5FA35A')),
+  item('badge', 'badge-toadstool', 'rare', 950, 'Fliegenpilz', 'Schön anzusehen, besser nicht essen.', badge('mushroom', '#E2574C')),
+  item('title', 'title-woodworm', 'common', 400, 'Holzwurm', 'Immer irgendwo im Holz unterwegs.', { text: 'Holzwurm', color: '#C98A4B' }),
+  item('title', 'title-forest-spirit', 'epic', 2400, 'Waldgeist', 'Kennt jeden Pfad im Wald.', { text: 'Waldgeist', color: '#A3C47A' }),
+  item('xpBar', 'xp-moss-edge', 'rare', 1000, 'Mooskante', 'Gestreift in Efeu- und Moosgrün.', { style: 'striped', colors: ['#4D7A35', '#8FB36B'] }),
+  item('xpBar', 'xp-resin-flow', 'epic', 2600, 'Harzfluss', 'Leuchtender Balken wie flüssiger Bernstein.', { style: 'glow', colors: ['#F2A531', '#FFD889'] }),
+  item('effect', 'effect-falling-leaves', 'epic', 2800, 'Fallendes Laub', 'Blätter in Moos und Herbstgold schweben über deine Karte.', { effect: 'leaves' }),
+  item('levelup', 'lvl-forest-clearing', 'epic', 2400, 'Waldlichtung', 'Ein Aufstieg im grünen Licht.', { style: 'classic', color: '#8FB36B' }),
+  item('sticker', 'sticker-acorn', 'rare', 900, 'Eichel-Sticker', 'Eine Eichel für die Ecke.', { glyph: 'acorn', color: '#C98A4B', corner: 'br' }),
+  item('sticker', 'sticker-toadstool', 'rare', 1000, 'Pilz-Sticker', 'Ein Fliegenpilz für die Ecke.', { glyph: 'mushroom', color: '#E2574C', corner: 'tr' }),
 ];
 
 // ---------- Owner input validation ----------
@@ -222,7 +249,7 @@ export function parseSlotData(slot: CosmeticSlot, input: unknown): SlotData[Cosm
     case 'title': return { text: str(d.text, 'Titeltext', { min: 1, max: 32 }), color: hexColor(d.color, 'Farbe') };
     case 'xpBar': return { style: oneOf(d.style, ['solid', 'gradient', 'striped', 'segmented', 'glow'] as const, 'Stil'), colors: colors(d.colors, 'Farben', 3) };
     case 'font': return { font: oneOf(d.font, ['inter', 'unbounded', 'caveat'] as const, 'Schrift') };
-    case 'effect': return { effect: oneOf(d.effect, ['sparkles', 'snow', 'confetti', 'aurora', 'scanlines', 'stardust', 'embers', 'hearts'] as const, 'Effekt') };
+    case 'effect': return { effect: oneOf(d.effect, ['sparkles', 'snow', 'confetti', 'aurora', 'scanlines', 'stardust', 'embers', 'hearts', 'leaves'] as const, 'Effekt') };
     case 'levelup': return { style: oneOf(d.style, ['classic', 'minimal', 'neon', 'royal', 'retro'] as const, 'Stil'), color: hexColor(d.color, 'Farbe') };
     case 'layout': return { layout: oneOf(d.layout, ['classic', 'compact', 'centered', 'split'] as const, 'Layout') };
     case 'sticker': return {

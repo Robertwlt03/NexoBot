@@ -1,5 +1,5 @@
 // Shop building blocks shared by the shop and the black market: filters, item grid, detail modal with buy/gift.
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { Link } from 'react-router';
 import gsap from 'gsap';
@@ -9,8 +9,9 @@ import type { CosmeticItem, CosmeticSlot, Rarity } from '../../../src/shared/cos
 import type { PurchaseResult, ShopEvent, ShopListing } from '../../../src/web/dto/profile';
 import { useUser } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
-import { LevelUpPreview, ProfileCardPreview } from '../components/ProfileCardPreview';
-import { Empty, Field, Modal, Notice, Select, Switch, Tabs, TextInput } from '../components/ui';
+import { ProfileCardPreview } from '../components/ProfileCardPreview';
+import { ProductStage } from './ProductStage';
+import { Empty, Field, Notice, Select, Switch, Tabs, TextInput } from '../components/ui';
 import {
   cardSubject, countdown, equipItem, formatDate, isEquipped, reducedMotion, resolveCosmetics, useEquip, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
@@ -112,7 +113,8 @@ function Shelf({ title, hint, listings, owned, onOpen, onAll }: {
           <button type="button" className="icon-btn" aria-label="Weiter blättern" onClick={() => scroll(1)}><Icon name="arrowRight" size={18} /></button>
         </div>
       </div>
-      <div ref={track} className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-3 [scrollbar-width:none] md:-mx-2 md:scroll-px-2 md:px-2">
+      {/* A scroller clips everything outside it: room above for the hover lift, below for the rarity glow. */}
+      <div ref={track} className="-mx-4 -my-3 -mb-12 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-14 pt-3 [scrollbar-width:none] md:-mx-2 md:scroll-px-2 md:px-2">
         {listings.map((l) => (
           <StoreCard key={l.item.id} listing={l} owned={owned.has(l.item.id)} variant="shop" onOpen={() => onOpen(l.item.id)} className="w-[200px] shrink-0 snap-start md:w-[220px]" />
         ))}
@@ -293,18 +295,6 @@ export function ItemBrowser({ listings, variant, filters = true, slot: slotProp,
 
 // ---------- Detail modal ----------
 
-/** The member's card with `item` put on (temporarily), or the level-up message for level-up styles. */
-export function TryOnPreview({ item }: { item: CosmeticItem }) {
-  const { me, items } = useMe();
-  const user = useUser();
-  const catalog = useMemo(() => new Map(items).set(item.id, item), [items, item]);
-  const subject = cardSubject(user, me, null, me.profile.bio);
-  const cosmetics = resolveCosmetics(equipItem(me.profile.equipped, item), catalog);
-  return item.slot === 'levelup'
-    ? <LevelUpPreview subject={subject} cosmetics={cosmetics} level={subject.level + 1} reward={levelUpReward(subject.level + 1)} />
-    : <ProfileCardPreview subject={subject} cosmetics={cosmetics} className="w-full" />;
-}
-
 const SNOWFLAKE = /^\d{17,20}$/;
 
 export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; owned: boolean; onClose: () => void }) {
@@ -359,66 +349,112 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
     );
   }
 
-  let footer: ReactNode;
-  if (giftMode) {
-    footer = (
-      <>
-        <button type="button" className="btn btn-secondary" onClick={() => setGiftMode(false)}>Zurück</button>
-        <button type="button" className="btn btn-primary" disabled={busy || after < 0 || !SNOWFLAKE.test(toUserId)} onClick={gift}>Geschenk senden</button>
-      </>
-    );
-  } else {
-    footer = (
-      <>
-        <button type="button" className="btn btn-ghost mr-auto" onClick={onClose}>Schließen</button>
-        {buyable && <button type="button" className="btn btn-secondary" disabled={busy || after < 0} onClick={() => setGiftMode(true)}>Verschenken</button>}
-        {owned
-          ? <button type="button" className="btn btn-primary" disabled={equip.busy || equipped} onClick={() => equip.apply(equipItem(me.profile.equipped, item), `„${item.name}“ angelegt.`)}>{equipped ? 'Angelegt' : 'Jetzt anlegen'}</button>
-          : buyable && <button type="button" className="btn btn-primary" disabled={busy || after < 0} onClick={buy}>{after < 0 ? 'Nicht genug Bernis' : 'Kaufen'}</button>}
-      </>
-    );
-  }
+  const tint = RARITY_TILE[item.rarity];
+  const putOn = () => equip.apply(equipItem(me.profile.equipped, item), `„${item.name}“ angelegt.`);
+  const where = WHERE_IT_SHOWS[item.slot];
 
   return (
     <>
-      <Modal title={item.name} onClose={onClose} footer={footer}>
-        <div className="-mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-mute">
-          {SLOT_LABELS[item.slot]} · <RarityLabel rarity={item.rarity} />
-          {listing.availableUntil && <span className="badge badge-warn">bis {formatDate(listing.availableUntil)}</span>}
-        </div>
-        <div className="max-h-[62vh] space-y-4 overflow-y-auto">
+      <ProductDialog title={item.name} onClose={onClose}
+        stage={<ProductStage item={item} tint={tint} kicker={`${RARITY_LABELS[item.rarity]} · ${SLOT_LABELS[item.slot]}`} />}>
+        <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 md:p-7">
+          {/* The item itself, big, on its rarity light. */}
+          <div className="game-tile-field relative mx-auto aspect-square w-full max-w-[260px] shrink-0 overflow-hidden rounded-[20px] ring-1 ring-white/10 max-md:max-w-[180px]" style={{ '--tile': tint } as CSSProperties} data-mode="dark">
+            <ItemVisual item={item} className="h-full w-full scale-[1.25] rounded-none !bg-transparent" />
+          </div>
           <div>
-            <p className="mb-2 text-[12.5px] font-medium text-mute">Vorschau auf deiner Karte</p>
-            <TryOnPreview item={item} />
+            <p className="text-[11px] font-bold uppercase tracking-[.16em]" style={{ color: tint }}>{RARITY_LABELS[item.rarity]} · {SLOT_LABELS[item.slot]}</p>
+            <h2 className="mt-1.5 text-[26px] font-bold leading-tight tracking-tight">{item.name}</h2>
+            <p className="mt-2 text-[14px] text-body">{item.description}</p>
           </div>
-          <div className="flex gap-4">
-            <ItemVisual item={item} className="w-28 shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p className="text-[14px] text-body">{item.description}</p>
-              <div className="mt-3 text-[15px]">
-                {owned ? <span className="text-pos">Im Besitz</span>
-                  : buyable ? <Price price={item.price} finalPrice={listing.finalPrice} /> : <span className="text-faint">{NOT_FOR_SALE[item.availability] ?? 'Nicht käuflich'}</span>}
+          <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[13px] text-mute">
+            <li className="flex items-center gap-2"><Glyph name="check" size={15} /> Zu sehen auf: {where}</li>
+            {listing.availableUntil && <li className="flex items-center gap-2"><Glyph name="clock" size={15} /> Nur bis {formatDate(listing.availableUntil)}</li>}
+            {owned && <li className="flex items-center gap-2 text-pos"><Glyph name="box" size={15} /> Schon in deinem Inventar</li>}
+          </ul>
+
+          <div className="mt-auto flex flex-col gap-3">
+            {!owned && buyable && (
+              <div>
+                <div className="flex items-baseline gap-2 text-[26px] font-bold text-ink">
+                  <Bernis amount={listing.finalPrice} large />
+                  {listing.discount > 0 && <><span className="text-[15px] font-medium text-faint line-through"><Bernis amount={item.price} /></span><span className="text-[15px] font-semibold text-pos">−{listing.discount} %</span></>}
+                </div>
+                <p className="mt-1 text-[12.5px] text-faint">{after >= 0 ? <>Danach hast du noch <Bernis amount={after} />.</> : <>Dir fehlen <Bernis amount={-after} />.</>}</p>
               </div>
-              {buyable && !owned && after >= 0 && <p className="mt-1 text-[12.5px] text-faint">Danach: <Bernis amount={after} /></p>}
-            </div>
+            )}
+            {!buyable && !owned && <p className="text-[13.5px] text-faint">{NOT_FOR_SALE[item.availability] ?? 'Nicht käuflich'}</p>}
+            {buyable && after < 0 && !owned && (
+              <Notice tone="warn">Hol dir den <Link to="/me">Tagesbonus</Link>, spiel Minispiele oder steig im Level auf.</Notice>
+            )}
+
+            {giftMode ? (
+              <div className="stack rounded-2xl border border-white/[.08] p-4">
+                <Field label="Discord-Nutzer-ID" hint="Rechtsklick auf das Profil → „Nutzer-ID kopieren“ (Entwicklermodus)." error={toUserId && !SNOWFLAKE.test(toUserId) ? 'Eine Nutzer-ID hat 17–20 Ziffern.' : null}>
+                  <TextInput value={toUserId} onChange={(v) => setToUserId(v.trim())} placeholder="z. B. 401234567890123456" maxLength={20} />
+                </Field>
+                <Field label="Nachricht (optional)" hint={`${message.length}/100`}>
+                  <TextInput value={message} onChange={setMessage} placeholder="Viel Spaß damit!" maxLength={100} />
+                </Field>
+                <p className="faint">Kostet dich <Bernis amount={listing.finalPrice} /> – auch wenn du den Artikel selbst schon hast.</p>
+                <div className="flex gap-2">
+                  <button type="button" className="btn btn-secondary" onClick={() => setGiftMode(false)}>Zurück</button>
+                  <button type="button" className="btn btn-primary flex-1" disabled={busy || after < 0 || !SNOWFLAKE.test(toUserId)} onClick={gift}>Geschenk senden</button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                {owned
+                  ? <button type="button" className="btn btn-primary min-h-12 flex-1 text-[15px]" disabled={equip.busy || equipped} onClick={putOn}>{equipped ? 'Angelegt' : 'Jetzt anlegen'}</button>
+                  : buyable && (
+                    <button type="button" className="btn btn-primary min-h-12 flex-1 text-[15px]" disabled={busy || after < 0} onClick={buy}>
+                      {after < 0 ? 'Nicht genug Bernis' : <>Für <Bernis amount={listing.finalPrice} /> kaufen</>}
+                    </button>
+                  )}
+                {buyable && (
+                  <button type="button" className="btn btn-secondary min-h-12 w-12 px-0" title="Verschenken" aria-label="Verschenken" disabled={busy || after < 0} onClick={() => setGiftMode(true)}>
+                    <Glyph name="gift" size={20} />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
-          {buyable && after < 0 && (
-            <Notice tone="warn">Dir fehlen <Bernis amount={-after} />. Hol dir den <Link to="/me">Tagesbonus</Link>, spiel Minispiele oder steig im Level auf.</Notice>
-          )}
-          {giftMode && (
-            <div className="stack rounded-2xl border border-white/[.06] p-4">
-              <Field label="Discord-Nutzer-ID" hint="Rechtsklick auf das Profil → „Nutzer-ID kopieren“ (Entwicklermodus)." error={toUserId && !SNOWFLAKE.test(toUserId) ? 'Eine Nutzer-ID hat 17–20 Ziffern.' : null}>
-                <TextInput value={toUserId} onChange={(v) => setToUserId(v.trim())} placeholder="z. B. 401234567890123456" maxLength={20} />
-              </Field>
-              <Field label="Nachricht (optional)" hint={`${message.length}/100`}>
-                <TextInput value={message} onChange={setMessage} placeholder="Viel Spaß damit!" maxLength={100} />
-              </Field>
-              <p className="faint">Kostet dich <Bernis amount={listing.finalPrice} /> – auch wenn du den Artikel selbst schon hast.</p>
-            </div>
-          )}
         </div>
-      </Modal>
+      </ProductDialog>
       {dialog}
     </>
+  );
+}
+
+/** Where a slot shows up, for the "you get" list. */
+const WHERE_IT_SHOWS: Record<CosmeticSlot, string> = {
+  background: 'deiner Profilkarte (/profil)', accent: 'deiner Profilkarte und Willkommenskarten', nameStyle: 'deiner Profilkarte (/profil)',
+  frame: 'deiner Profilkarte und Willkommenskarten', badge: 'deiner Profilkarte (bis zu 3 Abzeichen)', title: 'deiner Profilkarte (/profil)',
+  xpBar: 'deiner Profilkarte (/profil)', font: 'deiner Profilkarte (/profil)', effect: 'deiner Profilkarte (/profil)',
+  levelup: 'deinen Level-up-Nachrichten', layout: 'deiner Profilkarte (/profil)', sticker: 'deiner Profilkarte (/profil)',
+};
+
+/** Two-pane product view (like a game/Discord store): info and buy on the left, the item in context on the right. */
+function ProductDialog({ title, stage, children, onClose }: { title: string; stage: ReactNode; children: ReactNode; onClose: () => void }) {
+  const root = useRef<HTMLDivElement>(null);
+  useGSAP(() => {
+    if (reducedMotion()) return;
+    gsap.from('.js-veil', { autoAlpha: 0, duration: 0.2 });
+    gsap.from('.js-panel', { y: 18, scale: 0.97, autoAlpha: 0, duration: 0.4, ease: 'power3.out' });
+  }, { scope: root });
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  return (
+    <div ref={root} className="fixed inset-0 z-50 grid place-items-center p-3 md:p-6" role="dialog" aria-modal="true" aria-label={title}>
+      <button type="button" aria-label="Schließen" className="js-veil absolute inset-0 cursor-default border-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
+      <div className="js-panel relative grid h-[min(720px,100%)] w-[min(1120px,100%)] grid-rows-[minmax(260px,42%)_1fr] overflow-hidden rounded-[24px] border border-white/[.08] bg-surface shadow-[0_40px_120px_-30px_rgba(0,0,0,.9)] md:grid-cols-[400px_1fr] md:grid-rows-1">
+        <div className="order-2 flex min-h-0 flex-col md:order-1">{children}</div>
+        <div className="order-1 min-h-0 md:order-2">{stage}</div>
+        <button type="button" aria-label="Schließen" onClick={onClose} className="icon-btn absolute right-3 top-3 z-10 bg-black/45 text-white backdrop-blur hover:bg-black/60"><span className="rotate-45"><Icon name="plus" size={18} /></span></button>
+      </div>
+    </div>
   );
 }

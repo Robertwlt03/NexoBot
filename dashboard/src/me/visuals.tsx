@@ -35,6 +35,9 @@ export const GLYPHS = {
   gift: <><rect x="3" y="8" width="18" height="5" rx="1" /><path d="M5 13v8h14v-8M12 8v13" /><path d="M12 8C10.5 4 6.5 4 7 6.5S12 8 12 8zM12 8c1.5-4 5.5-4 5-1.5S12 8 12 8z" /></>,
   paw: <><circle cx="6.5" cy="10" r="1.8" /><circle cx="10" cy="6" r="1.8" /><circle cx="14" cy="6" r="1.8" /><circle cx="17.5" cy="10" r="1.8" /><path d="M12 12c-3 0-5.5 3.5-5.5 5.5 0 1.5 1.5 2 3 1.5s3.5-.5 5 0 3 0 3-1.5C17.5 15.5 15 12 12 12z" /></>,
   code: <path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16" />,
+  acorn: <><path d="M4.5 11a7.5 5 0 0 1 15 0z" /><path d="M12 6V3.5" /><path d="M6.5 11h11c0 4.5-2.5 7.5-5.5 9-3-1.5-5.5-4.5-5.5-9z" /></>,
+  mushroom: <><path d="M2.5 12a9.5 8.5 0 0 1 19 0z" /><path d="M8.5 12l-.5 8.5h8l-.5-8.5" /></>,
+  tree: <path d="M12 2l6 7.5h-3l5.5 7H14v5.5h-4v-5.5H3.5l5.5-7H6z" />,
   // Member-area navigation (not badge glyphs).
   user: <><circle cx="12" cy="8" r="4" /><path d="M4 21c.8-4 4-6 8-6s7.2 2 8 6" /></>,
   bag: <><path d="M5 8h14l-1 13H6z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></>,

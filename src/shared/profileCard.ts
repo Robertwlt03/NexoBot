@@ -529,6 +529,46 @@ export const GLYPH_DRAWERS: Record<BadgeGlyph, GlyphDrawer> = {
     ctx.lineTo(-2.4, 9.5);
     ctx.stroke();
   },
+  acorn: (ctx) => {
+    ctx.beginPath();
+    // Cap with stalk, then the nut below it.
+    ctx.moveTo(-9.5, -1);
+    ctx.bezierCurveTo(-9.5, -7.5, -5, -9.8, 0, -9.8);
+    ctx.bezierCurveTo(5, -9.8, 9.5, -7.5, 9.5, -1);
+    ctx.closePath();
+    box(ctx, -1.2, -12.6, 2.4, 4, 1);
+    ctx.moveTo(-7.2, 0.6);
+    ctx.lineTo(7.2, 0.6);
+    ctx.bezierCurveTo(7.2, 6.8, 3.8, 10.6, 0, 12.2);
+    ctx.bezierCurveTo(-3.8, 10.6, -7.2, 6.8, -7.2, 0.6);
+    ctx.closePath();
+    ctx.fill();
+  },
+  mushroom: (ctx) => {
+    ctx.beginPath();
+    ctx.moveTo(-11.5, 0.5);
+    ctx.bezierCurveTo(-11.5, -7.5, -6, -11.5, 0, -11.5);
+    ctx.bezierCurveTo(6, -11.5, 11.5, -7.5, 11.5, 0.5);
+    ctx.closePath();
+    // Spots are holes in the cap.
+    circle(ctx, -5, -5, 2);
+    circle(ctx, 3.5, -7.2, 1.6);
+    circle(ctx, 6, -2.4, 1.4);
+    ctx.fill('evenodd');
+    ctx.beginPath();
+    ctx.moveTo(-4.2, 2.2);
+    ctx.lineTo(4.2, 2.2);
+    ctx.bezierCurveTo(4.6, 6, 5.2, 9, 5.8, 11.8);
+    ctx.lineTo(-5.8, 11.8);
+    ctx.bezierCurveTo(-5.2, 9, -4.6, 6, -4.2, 2.2);
+    ctx.closePath();
+    ctx.fill();
+  },
+  tree: (ctx) => {
+    ctx.beginPath();
+    poly(ctx, [[0, -12.5], [7.5, -3.5], [4, -3.5], [10, 5], [2, 5], [2, 12], [-2, 12], [-2, 5], [-10, 5], [-4, -3.5], [-7.5, -3.5]]);
+    ctx.fill();
+  },
 };
 
 /** Draws `glyph` centred at (x, y), `size` px wide, in `color`. */
@@ -907,6 +947,14 @@ function drawEffect(ctx: Ctx, effect: EffectData['effect'], accent: string, w: n
       for (let i = 0; i < 18; i++) {
         ctx.globalAlpha = 0.16 + rng() * 0.3;
         drawGlyph(ctx, 'heart', rng() * w, rng() * h, 8 + rng() * 12, rng() < 0.5 ? '#FF7AB6' : lighten(accent, 0.3), (rng() - 0.5) * 0.8);
+      }
+      break;
+    case 'leaves':
+      // Falling leaves in moss, fern and autumn amber.
+      for (let i = 0; i < 22; i++) {
+        ctx.globalAlpha = 0.22 + rng() * 0.38;
+        const color = ['#8FB36B', '#5FA35A', '#C98A4B', '#E0A85A'][Math.floor(rng() * 4)];
+        drawGlyph(ctx, 'leaf', rng() * w, rng() * h, 9 + rng() * 13, color, rng() * Math.PI * 2);
       }
       break;
   }
