@@ -2,9 +2,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { MAX_EQUIPPED_BADGES } from '../../../src/shared/cosmetics';
+import { MAX_EQUIPPED_BADGES, withSpot } from '../../../src/shared/cosmetics';
 import type {
-  CosmeticItem, CosmeticSlot, EquippedCosmetics, ProfileCardSubject, ResolvedCosmetics, SlotData,
+  CosmeticItem, CosmeticSlot, EquippedCosmetics, ProfileCardSubject, ResolvedCosmetics, SlotData, StickerSpot,
 } from '../../../src/shared/cosmetics';
 import type { ApiUser } from '../../../src/web/apiTypes';
 import type { BlackMarketResponse, MeProfileResponse, OwnedItem, ShopResponse, WalletSummary } from '../../../src/web/dto/profile';
@@ -51,7 +51,7 @@ function pick<S extends CosmeticSlot>(items: Map<string, CosmeticItem>, id: stri
 }
 
 /** Equipped ids → data for the card renderer (unknown ids fall back to the Nexo default look). */
-export function resolveCosmetics(equipped: EquippedCosmetics, items: Map<string, CosmeticItem>): ResolvedCosmetics {
+export function resolveCosmetics(equipped: EquippedCosmetics, items: Map<string, CosmeticItem>, stickerSpot: StickerSpot | null = null): ResolvedCosmetics {
   return {
     background: pick(items, equipped.background, 'background'),
     accent: pick(items, equipped.accent, 'accent'),
@@ -64,7 +64,7 @@ export function resolveCosmetics(equipped: EquippedCosmetics, items: Map<string,
     effect: pick(items, equipped.effect, 'effect'),
     levelup: pick(items, equipped.levelup, 'levelup'),
     layout: pick(items, equipped.layout, 'layout'),
-    sticker: pick(items, equipped.sticker, 'sticker'),
+    sticker: withSpot(pick(items, equipped.sticker, 'sticker'), stickerSpot),
   };
 }
 

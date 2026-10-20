@@ -27,7 +27,7 @@ export function ProductDialog({ title, stage, children, onClose }: { title: stri
       <div className="js-panel relative grid h-[min(720px,100%)] w-[min(1120px,100%)] grid-rows-[minmax(260px,42%)_1fr] overflow-hidden rounded-[24px] border border-white/[.08] bg-surface shadow-[0_40px_120px_-30px_rgba(0,0,0,.9)] lg:grid-cols-[400px_1fr] lg:grid-rows-1">
         <div className="order-2 flex min-h-0 flex-col lg:order-1">{children}</div>
         <div className="order-1 min-h-0 lg:order-2">{stage}</div>
-        <button type="button" aria-label="Schließen" onClick={onClose} className="icon-btn absolute right-3 top-3 z-10 bg-black/45 text-white backdrop-blur hover:bg-black/60"><span className="rotate-45"><Icon name="plus" size={18} /></span></button>
+        <button type="button" aria-label="Schließen" onClick={onClose} className="icon-btn absolute right-3 top-3 z-10 bg-black/45 text-white backdrop-blur hover:bg-black/60"><Icon name="x" size={18} /></button>
       </div>
     </div>
   );

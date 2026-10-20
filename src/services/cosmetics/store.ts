@@ -3,7 +3,7 @@
 // Without the database everyone has the default look and an empty wallet; read errors fall back the same way.
 
 import type { CosmeticItem, ResolvedCosmetics, SlotData, UserProfileSettings } from '../../shared/cosmetics.js';
-import { defaultProfileSettings } from '../../shared/cosmetics.js';
+import { defaultProfileSettings, withSpot } from '../../shared/cosmetics.js';
 import { logger } from '../../utils/logger.js';
 import { loadCatalog } from './catalog.js';
 import { T, cosmeticsPool } from './db.js';
@@ -42,7 +42,7 @@ export function resolveEquipped(settings: UserProfileSettings, catalog: Map<stri
     effect: pick(equipped.effect, 'effect'),
     levelup: pick(equipped.levelup, 'levelup'),
     layout: pick(equipped.layout, 'layout'),
-    sticker: pick(equipped.sticker, 'sticker'),
+    sticker: withSpot(pick(equipped.sticker, 'sticker'), settings.stickerSpot),
   };
 }
 

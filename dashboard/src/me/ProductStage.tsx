@@ -23,7 +23,7 @@ export function TryOnPreview({ items: wearing, surface = 'card', className = 'w-
     return map;
   }, [items, wearing]);
   const subject = cardSubject(user, me, null, me.profile.bio);
-  const cosmetics = resolveCosmetics(wearing.reduce((equipped, item) => equipItem(equipped, item), me.profile.equipped), catalog);
+  const cosmetics = resolveCosmetics(wearing.reduce((equipped, item) => equipItem(equipped, item), me.profile.equipped), catalog, me.profile.stickerSpot);
   return surface === 'levelup'
     ? <LevelUpPreview subject={subject} cosmetics={cosmetics} level={subject.level + 1} reward={levelUpReward(subject.level + 1)} className={className} />
     : <ProfileCardPreview subject={subject} cosmetics={cosmetics} className={className} resolution={resolution} />;

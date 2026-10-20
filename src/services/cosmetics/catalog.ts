@@ -2,7 +2,7 @@
 // shop_items storage with a short in-memory cache for the card renderer.
 
 import {
-  BACKGROUND_SCENES, BADGE_GLYPHS, COSMETIC_SLOTS, FRAME_STYLES, RARITIES, XP_BAR_STYLES,
+  BACKGROUND_SCENES, BADGE_GLYPHS, COSMETIC_SLOTS, FRAME_STYLES, RARITIES, STICKER_SPOTS, XP_BAR_STYLES,
   type BackgroundScene, type BadgeGlyph, type CosmeticItem, type CosmeticSlot, type ItemAvailability, type Rarity, type SlotData,
 } from '../../shared/cosmetics.js';
 import { HttpError, badRequest, body, bool, hexColor, int, str } from '../../web/http.js';
@@ -376,7 +376,7 @@ export function parseSlotData(slot: CosmeticSlot, input: unknown): SlotData[Cosm
     case 'sticker': return {
       glyph: oneOf(d.glyph, BADGE_GLYPHS, 'Symbol'),
       color: hexColor(d.color, 'Farbe'),
-      corner: oneOf(d.corner, ['tl', 'tr', 'bl', 'br'] as const, 'Ecke'),
+      corner: oneOf(d.corner, STICKER_SPOTS, 'Ecke'),
     };
   }
 }

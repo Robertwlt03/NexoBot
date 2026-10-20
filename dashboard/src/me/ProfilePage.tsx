@@ -3,8 +3,9 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { COSMETIC_SLOTS, DAILY_BONUS, MAX_BIO_LENGTH, MAX_EQUIPPED_BADGES, SLOT_LABELS, levelUpReward } from '../../../src/shared/cosmetics';
-import type { CosmeticItem, CosmeticSlot, UserProfileSettings } from '../../../src/shared/cosmetics';
+import { COSMETIC_SLOTS, DAILY_BONUS, MAX_BIO_LENGTH, MAX_EQUIPPED_BADGES, SLOT_LABELS, STICKER_SPOTS, levelUpReward } from '../../../src/shared/cosmetics';
+import { PROFILE_CARD_HEIGHT, PROFILE_CARD_WIDTH, profileGeometry, stickerPoint } from '../../../src/shared/profileCard';
+import type { CosmeticItem, CosmeticSlot, ResolvedCosmetics, StickerSpot, UserProfileSettings } from '../../../src/shared/cosmetics';
 import type { DailyClaimResult, MeProfileResponse } from '../../../src/web/dto/profile';
 import { api, useUser } from '../api';
 import { LevelUpPreview, ProfileCardPreview } from '../components/ProfileCardPreview';
@@ -149,6 +150,26 @@ function SlotEditor({ value, onChange }: { value: UserProfileSettings; onChange:
   );
 }
 
+const SPOT_LABELS: Record<StickerSpot, string> = { tl: 'oben links', tr: 'oben rechts', bl: 'unten links', br: 'unten rechts', avatar: 'auf deinem Avatar' };
+
+/** Tap targets on the card preview: one per spot the sticker can go, the current one ringed. */
+function StickerSpots({ cosmetics, current, onPick }: { cosmetics: ResolvedCosmetics; current: StickerSpot; onPick: (spot: StickerSpot) => void }) {
+  const avatar = profileGeometry(cosmetics.layout?.layout ?? 'classic').avatar;
+  return (
+    <>
+      {STICKER_SPOTS.map((spot) => {
+        const at = stickerPoint(spot, avatar);
+        const active = spot === current;
+        return (
+          <button key={spot} type="button" aria-label={`Sticker ${SPOT_LABELS[spot]} platzieren`} aria-pressed={active} onClick={() => onPick(spot)}
+            style={{ left: `${(at.x / PROFILE_CARD_WIDTH) * 100}%`, top: `${(at.y / PROFILE_CARD_HEIGHT) * 100}%` }}
+            className={`absolute grid h-[13%] min-h-7 -translate-x-1/2 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-2 bg-transparent p-0 transition aspect-square ${active ? 'border-white/80' : 'border-dashed border-white/45 hover:border-white/90 hover:bg-white/10'}`} />
+        );
+      })}
+    </>
+  );
+}
+
 export default function ProfilePage() {
   const { me, setMe, items } = useMe();
   const user = useUser();
@@ -160,7 +181,7 @@ export default function ProfilePage() {
   const form = useDraft(me.profile, persist);
   const value = form.draft ?? me.profile;
   const subject = cardSubject(user, me, guildId, value.bio);
-  const cosmetics = resolveCosmetics(value.equipped, items);
+  const cosmetics = resolveCosmetics(value.equipped, items, value.stickerSpot);
 
   return (
     <>
@@ -171,7 +192,11 @@ export default function ProfilePage() {
       {/* The card is the centrepiece: full width until there is room for a side column (xl). */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
         <Card title="Deine Karte" description="So sieht deine Profilkarte gerade aus.">
-          <ProfileCardPreview subject={subject} cosmetics={cosmetics} className="w-full" />
+          <div className="relative">
+            <ProfileCardPreview subject={subject} cosmetics={cosmetics} className="w-full" />
+            {cosmetics.sticker && <StickerSpots cosmetics={cosmetics} current={cosmetics.sticker.corner} onPick={(stickerSpot) => form.setDraft({ ...value, stickerSpot })} />}
+          </div>
+          {cosmetics.sticker && <p className="mt-3 text-[13px] text-mute">Tippe auf einen Kreis, um deinen Sticker dort aufzukleben.</p>}
           {me.levels.length > 1 && (
             <div className="mt-4 flex flex-wrap items-center gap-3 text-[13px] text-mute">
               Level von

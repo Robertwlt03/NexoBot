@@ -2,8 +2,8 @@
 // reads (a stored value that no longer fits simply falls back to the default look).
 
 import {
-  COSMETIC_SLOTS, MAX_BIO_LENGTH, MAX_EQUIPPED_BADGES, SLOT_LABELS, defaultProfileSettings,
-  type CosmeticItem, type CosmeticSlot, type EquippedCosmetics, type UserProfileSettings,
+  COSMETIC_SLOTS, MAX_BIO_LENGTH, MAX_EQUIPPED_BADGES, SLOT_LABELS, STICKER_SPOTS, defaultProfileSettings,
+  type CosmeticItem, type CosmeticSlot, type EquippedCosmetics, type StickerSpot, type UserProfileSettings,
 } from '../../shared/cosmetics.js';
 import { HttpError, badRequest, body, bool } from '../../web/http.js';
 import { T, cosmeticsPool, requirePool } from './db.js';
@@ -50,7 +50,12 @@ export function parseProfileSettings(input: unknown, catalog: Map<string, Cosmet
   const bio = sanitizeBio(typeof raw.bio === 'string' ? raw.bio : '');
   if (bio.length > MAX_BIO_LENGTH) throw badRequest(`Bio: höchstens ${MAX_BIO_LENGTH} Zeichen.`);
 
-  return { equipped, bio, showOnWelcome: raw.showOnWelcome === undefined ? true : bool(raw.showOnWelcome, 'Auf Willkommenskarten zeigen') };
+  const spot = raw.stickerSpot ?? null;
+  if (spot !== null && !STICKER_SPOTS.includes(spot as StickerSpot)) throw badRequest('Sticker-Platz: unbekannte Position.');
+  return {
+    equipped, bio, showOnWelcome: raw.showOnWelcome === undefined ? true : bool(raw.showOnWelcome, 'Auf Willkommenskarten zeigen'),
+    stickerSpot: spot as StickerSpot | null,
+  };
 }
 
 /** Lenient read of stored settings (wrong types are dropped). */
@@ -68,6 +73,7 @@ export function normalizeSettings(stored: unknown): UserProfileSettings {
     : [];
   settings.bio = typeof raw.bio === 'string' ? raw.bio.slice(0, MAX_BIO_LENGTH) : '';
   settings.showOnWelcome = raw.showOnWelcome !== false;
+  settings.stickerSpot = STICKER_SPOTS.includes(raw.stickerSpot as StickerSpot) ? raw.stickerSpot as StickerSpot : null;
   return settings;
 }
 

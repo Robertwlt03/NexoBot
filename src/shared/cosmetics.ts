@@ -40,7 +40,14 @@ export interface FontData { font: 'inter' | 'unbounded' | 'caveat' }
 export interface EffectData { effect: 'sparkles' | 'snow' | 'confetti' | 'aurora' | 'scanlines' | 'stardust' | 'embers' | 'hearts' | 'leaves' }
 export interface LevelupData { style: 'classic' | 'minimal' | 'neon' | 'royal' | 'retro'; color: string }
 export interface LayoutData { layout: 'classic' | 'compact' | 'centered' | 'split' }
-export interface StickerData { glyph: BadgeGlyph; color: string; corner: 'tl' | 'tr' | 'bl' | 'br' }
+/** Where a sticker sits: a card corner, or on the avatar's edge like a sticker slapped on the photo. */
+export const STICKER_SPOTS = ['tl', 'tr', 'bl', 'br', 'avatar'] as const;
+export type StickerSpot = (typeof STICKER_SPOTS)[number];
+export interface StickerData { glyph: BadgeGlyph; color: string; corner: StickerSpot }
+/** The member's chosen spot wins over the sticker's default. */
+export function withSpot(sticker: StickerData | null, spot: StickerSpot | null): StickerData | null {
+  return sticker && spot ? { ...sticker, corner: spot } : sticker;
+}
 
 export const BADGE_GLYPHS = [
   'star', 'crown', 'flame', 'bolt', 'heart', 'diamond', 'shield', 'leaf', 'moon', 'sun', 'snowflake', 'skull',
@@ -115,6 +122,8 @@ export interface UserProfileSettings {
   bio: string;
   /** Show this user's frame/colours on welcome cards of servers that allow member styles. */
   showOnWelcome: boolean;
+  /** Where the member puts their sticker (null = the sticker's own default spot). */
+  stickerSpot: StickerSpot | null;
 }
 
 export function emptyEquipped(): EquippedCosmetics {
@@ -122,7 +131,7 @@ export function emptyEquipped(): EquippedCosmetics {
 }
 
 export function defaultProfileSettings(): UserProfileSettings {
-  return { equipped: emptyEquipped(), bio: '', showOnWelcome: true };
+  return { equipped: emptyEquipped(), bio: '', showOnWelcome: true, stickerSpot: null };
 }
 
 /** Equipped items resolved to their data, ready for rendering (missing = Nexo default look). */

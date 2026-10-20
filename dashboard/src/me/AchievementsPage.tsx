@@ -2,7 +2,7 @@ import type { AchievementsResponse } from '../../../src/web/dto/profile';
 import { useApi } from '../api';
 import { Card, Empty, Notice, PageHeader, Spinner, Stats } from '../components/ui';
 import { formatDate, num, useMe } from './api';
-import { Glyph, ItemVisual, Bernis } from './visuals';
+import { GLYPHS, Glyph, Bernis } from './visuals';
 
 export default function AchievementsPage() {
   const { items } = useMe();
@@ -30,11 +30,16 @@ export default function AchievementsPage() {
         {sorted.map((a) => {
           const item = a.itemId ? items.get(a.itemId) : undefined;
           const title = a.titleId ? items.get(a.titleId) : undefined;
+          const badge = item?.slot === 'badge' ? item.data : null;
           const pct = a.progress ? Math.min(100, (a.progress.current / Math.max(a.progress.target, 1)) * 100) : a.unlockedAt ? 100 : 0;
           return (
             <article key={a.id} className={`flex flex-col rounded-2xl border p-4 ${a.unlockedAt ? 'border-white/[.1] bg-surface' : 'border-white/[.05] bg-white/[.015]'}`}>
               <div className="flex items-start gap-3">
-                <span className={`icon-tile ${a.unlockedAt ? 'text-ink' : '!text-faint'}`}><Glyph name="medal" size={18} /></span>
+                {/* The achievement's own badge symbol, in its colour once unlocked (mixed with the text colour for contrast). */}
+                <span className={`icon-tile ${a.unlockedAt ? '' : '!text-faint'}`}
+                  style={a.unlockedAt && badge ? { color: `color-mix(in srgb, ${badge.color} 70%, var(--text-strong))`, background: `color-mix(in srgb, ${badge.color} 12%, transparent)` } : undefined}>
+                  <Glyph name={badge && badge.glyph in GLYPHS ? badge.glyph : 'medal'} size={18} />
+                </span>
                 <div className="min-w-0 flex-1">
                   <h3 className={`text-[14.5px] font-medium ${a.unlockedAt ? '' : 'text-body'}`}>{a.name}</h3>
                   <p className="mt-0.5 text-[12.5px] text-mute">{a.description}</p>
@@ -52,8 +57,7 @@ export default function AchievementsPage() {
               <div className="mt-auto flex items-center gap-3 border-t border-white/[.05] pt-3 text-[13px]">
                 <Bernis amount={a.reward} className="text-ink" />
                 {(a.itemId || title) && (
-                  <span className="ml-auto flex min-w-0 items-center gap-2 text-[12.5px] text-mute">
-                    {item && <ItemVisual item={item} className="w-10 rounded-md" />}
+                  <span className="ml-auto flex min-w-0 items-center gap-2 text-right text-[12.5px] text-mute">
                     <span className="min-w-0">
                       {a.itemId && <span className="block truncate">+ {item ? `Abzeichen „${item.name}“` : 'Abzeichen'}</span>}
                       {title?.slot === 'title' && <span className="block truncate">+ Titel <span style={{ color: title.data.color }}>„{title.data.text}“</span></span>}

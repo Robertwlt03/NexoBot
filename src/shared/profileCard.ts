@@ -658,8 +658,10 @@ export const PROFILE_LAYOUTS: ProfileLayout[] = ['classic', 'compact', 'centered
 export const FRAME_MAX_OUTSET = 22;
 export const BADGE_SIZE = 40;
 export const BADGE_GAP = 8;
-export const STICKER_RADIUS = 22;
-export const STICKER_INSET = 34;
+/** Sticker size by spot: big top right and on the avatar; smaller where the avatar or the XP bar are close. */
+export const STICKER_RADIUS = 30;
+export const STICKER_RADIUS_SMALL = 22;
+export const stickerRadius = (spot: StickerData['corner']) => (spot === 'tr' || spot === 'avatar' ? STICKER_RADIUS : STICKER_RADIUS_SMALL);
 
 export function profileGeometry(layout: ProfileLayout): ProfileGeometry {
   const badges = { right: W - 40, top: 34 };
@@ -727,10 +729,10 @@ export function profileGeometry(layout: ProfileLayout): ProfileGeometry {
 }
 
 /** Centre of a sticker in `corner` of a card of size w×h. */
-export function stickerCenter(corner: StickerData['corner'], w = W, h = H): { x: number; y: number } {
+export function stickerCenter(corner: Exclude<StickerData['corner'], 'avatar'>, w = W, h = H): { x: number; y: number } {
   return {
-    x: corner === 'tl' || corner === 'bl' ? STICKER_INSET : w - STICKER_INSET,
-    y: corner === 'tl' || corner === 'tr' ? STICKER_INSET : h - STICKER_INSET,
+    x: corner === 'tl' || corner === 'bl' ? stickerRadius(corner) + 12 : w - stickerRadius(corner) - 12,
+    y: corner === 'tl' || corner === 'tr' ? stickerRadius(corner) + 12 : h - stickerRadius(corner) - 12,
   };
 }
 
@@ -2061,25 +2063,54 @@ function drawBadges(ctx: Ctx, badges: BadgeData[], right: number, top: number): 
   return shown.length ? shown.length * (BADGE_SIZE + BADGE_GAP) - BADGE_GAP : 0;
 }
 
-function drawSticker(ctx: Ctx, sticker: StickerData, w: number, h: number) {
-  const { x, y } = stickerCenter(sticker.corner, w, h);
-  const rotation = { tl: -0.22, tr: 0.22, bl: 0.16, br: -0.16 }[sticker.corner];
+/**
+ * A die-cut vinyl sticker: the symbol itself (not a disc) with a thick white cut line around it, a soft shadow that
+ * lifts it off the card, a slight tilt and a gloss across the top.
+ */
+function drawSticker(ctx: Ctx, sticker: StickerData, x: number, y: number) {
+  const size = stickerRadius(sticker.corner) * 1.7;
+  const rotation = { tl: -0.22, tr: 0.2, bl: 0.14, br: -0.16, avatar: 0.26 }[sticker.corner];
+  // Cut line: every shape the glyph fills or strokes is also stroked wide and filled in white.
+  const k = 24 / size;
+  const cut = 4.5 * 2 * k;
+  const fill = ctx.fill;
+  const stroke = ctx.stroke;
   ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(rotation);
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-  ctx.shadowBlur = 10;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+  ctx.shadowBlur = 8;
   ctx.shadowOffsetY = 3;
-  ctx.beginPath();
-  circle(ctx, 0, 0, STICKER_RADIUS);
-  ctx.fillStyle = sticker.color;
-  ctx.fill();
-  resetShadow(ctx);
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 3;
-  ctx.stroke();
-  drawGlyph(ctx, sticker.glyph, 0, 0, 24, brightness(sticker.color) > 0.62 ? '#17151F' : '#FFFFFF');
+  ctx.fill = function cutFill(this: Ctx) {
+    const width = this.lineWidth;
+    this.lineWidth = cut;
+    stroke.call(this);
+    this.lineWidth = width;
+    fill.call(this);
+  } as Ctx['fill'];
+  ctx.stroke = function cutStroke(this: Ctx) {
+    const width = this.lineWidth;
+    this.lineWidth = width + cut;
+    stroke.call(this);
+    this.lineWidth = width;
+  } as Ctx['stroke'];
+  try {
+    drawGlyph(ctx, sticker.glyph, x, y, size, '#FFFFFF', rotation);
+  } finally {
+    ctx.fill = fill;
+    ctx.stroke = stroke;
+  }
   ctx.restore();
+  drawGlyph(ctx, sticker.glyph, x, y, size, sticker.color, rotation);
+  // Gloss: light falling on the top left, fading out towards the middle (in glyph units, ±12).
+  const gloss = ctx.createLinearGradient(-12, -12, 6, 6);
+  gloss.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+  gloss.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
+  drawGlyph(ctx, sticker.glyph, x, y, size, gloss as unknown as string, rotation);
+}
+
+/** Centre of a sticker on the card: a corner, or on the avatar's lower right edge. */
+export function stickerPoint(spot: StickerData['corner'], avatar: Circle, w = W, h = H): { x: number; y: number } {
+  if (spot !== 'avatar') return stickerCenter(spot, w, h);
+  return { x: avatar.cx + avatar.r * 0.74, y: avatar.cy + avatar.r * 0.7 };
 }
 
 // ---------- Item preview ----------
@@ -2113,13 +2144,7 @@ export function renderItemPreview<I extends ProfileImage>(
       drawXpBar(ctx, { x: w * 0.2, y: h * 0.74, w: w * 0.6, h: 12 }, 0.62, null, accent);
       break;
     case 'badge': zoomAt(2.2); drawBadges(ctx, [item.data], BADGE_SIZE / 2, -BADGE_SIZE / 2); break;
-    case 'sticker': {
-      const at = stickerCenter(item.data.corner, w, h);
-      zoomAt(1.9);
-      ctx.translate(-at.x, -at.y);
-      drawSticker(ctx, item.data, w, h);
-      break;
-    }
+    case 'sticker': zoomAt(2.2); drawSticker(ctx, item.data, 0, 0); break;
     case 'xpBar': drawXpBar(ctx, { x: w * 0.12, y: h / 2 - 10, w: w * 0.76, h: 20 }, 0.66, item.data, accent); break;
     case 'nameStyle': drawName(ctx, subject.name, w / 2, h / 2 + 14, 'center', 44, 'inter', item.data, w * 0.86); break;
     case 'font': drawName(ctx, subject.name, w / 2, h / 2 + 14, 'center', 44, item.data.font, null, w * 0.86); break;
@@ -2206,7 +2231,10 @@ export function renderProfileCard<I extends ProfileImage>(
   }
 
   if (effect === 'scanlines') drawEffect(ctx, effect, accent, W, H, seed);
-  if (sticker) drawSticker(ctx, sticker, W, H);
+  if (sticker) {
+    const at = stickerPoint(sticker.corner, g.avatar);
+    drawSticker(ctx, sticker, at.x, at.y);
+  }
   ctx.restore();
 
   ctx.save();
