@@ -1,4 +1,4 @@
-// /profil: the member's Nexo profile card, Kristalle balance and the way to the profile shop in the dashboard.
+// /profil: the member's Nexo profile card, Bernis balance and the way to the profile shop in the dashboard.
 
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, SlashCommandBuilder } from 'discord.js';
 import type { Command } from '../../types/index.js';
@@ -27,12 +27,12 @@ const EARN_TEXT = `${CURRENCY.name} bekommst du für Level-ups, Minispiele, Mona
 export default {
   data: new SlashCommandBuilder()
     .setName('profil')
-    .setDescription('Dein Nexo-Profil: Profilkarte, Kristalle und Shop')
+    .setDescription('Dein Nexo-Profil: Profilkarte, Bernis und Shop')
     .addSubcommand((sub) => sub
       .setName('ansehen')
       .setDescription('Zeigt die Profilkarte von dir oder einem anderen Mitglied')
       .addUserOption((option) => option.setName('nutzer').setDescription('Wessen Profil du sehen willst').setRequired(false)))
-    .addSubcommand((sub) => sub.setName('kristalle').setDescription('Zeigt deinen Kristalle-Kontostand'))
+    .addSubcommand((sub) => sub.setName('bernis').setDescription('Zeigt deinen Bernis-Kontostand'))
     .addSubcommand((sub) => sub.setName('shop').setDescription('Öffnet den Profil-Shop im Dashboard'))
     .setDMPermission(false),
 
@@ -40,7 +40,7 @@ export default {
     const subcommand = interaction.options.getSubcommand();
     const url = shopUrl();
 
-    if (subcommand === 'kristalle') {
+    if (subcommand === 'bernis') {
       const balance = await getBalance(interaction.user.id);
       await InteractionHelper.safeReply(interaction, {
         embeds: [createEmbed({ title: `${CURRENCY.symbol} Deine ${CURRENCY.name}`, description: `Du hast **${formatNumber(balance)}** ${balance === 1 ? CURRENCY.singular : CURRENCY.name}.\n\n${EARN_TEXT}` })],

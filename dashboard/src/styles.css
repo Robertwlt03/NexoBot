@@ -10,13 +10,13 @@
  * The same values exist as Tailwind colours (tailwind.css: canvas, surface, ink, mute, accent …).
  */
 :root, [data-mode="dark"] {
-  /* Werkbank, dark: walnut and graphite, like the workshop in the evening. */
-  --bg-app: #110e0b;
-  --bg-sidebar: #1c1712;
-  --bg-main: #17130f;
-  --bg-card: #241e18;
-  --bg-card-hover: #2d261f;
-  --bg-input: #1a1511;
+  /* Walnut & moss, dark: deep walnut surfaces, moss green as the accent. */
+  --bg-app: #100b07;
+  --bg-sidebar: #1b140e;
+  --bg-main: #16110c;
+  --bg-card: #231a13;
+  --bg-card-hover: #2c2118;
+  --bg-input: #19130d;
   /* Overlay ink as RGB channels: hairlines, hover tints and chips are this colour at low alpha. */
   --ov: 255 241 224;
   --bg-hover: rgb(var(--ov) / 0.05);
@@ -24,19 +24,19 @@
   --border: rgb(var(--ov) / 0.07);
   --border-strong: rgb(var(--ov) / 0.13);
   /* Form controls need a 3:1 boundary (WCAG 1.4.11). */
-  --border-input: #736a60;
+  --border-input: #74675b;
   /* Rarity label colours (me/visuals.tsx). */
   --rarity-rare: #7dd3fc;
   --rarity-epic: #c4b5fd;
   --rarity-legendary: #fde68a;
   --rarity-mythic: #fda4af;
-  /* Page colour over the photo behind the text column (measured: ≥ 84 % keeps 4.5:1 on every photo). */
-  --scrim: 88%;
+  /* Page colour over the walnut behind the text column (measured: ≥ 64 % keeps 4.5:1 on the wood). */
+  --scrim: 70%;
 
-  --text-strong: #f5ede2;
-  --text: #dccfbf;
-  --text-muted: #b3a28f;
-  --text-faint: #9a8b7d;
+  --text-strong: #f3ebe0;
+  --text: #d9ccbb;
+  --text-muted: #ae9e87;
+  --text-faint: #978875;
 
   --pos: #4ade80;
   --neg: #f87171;
@@ -47,22 +47,22 @@
 
   /* Tailwind colour tokens (tailwind.css) follow the mode. */
   --color-white: #fff3e4;
-  --color-rail: #110e0b;
-  --color-canvas: #17130f;
-  --color-panel: #1c1712;
-  --color-surface: #241e18;
-  --color-raised: #2d261f;
-  --color-field: #1a1511;
-  --color-ink: #f5ede2;
-  --color-body: #dccfbf;
-  --color-mute: #b3a28f;
-  --color-faint: #9a8b7d;
+  --color-rail: #100b07;
+  --color-canvas: #16110c;
+  --color-panel: #1b140e;
+  --color-surface: #231a13;
+  --color-raised: #2c2118;
+  --color-field: #19130d;
+  --color-ink: #f3ebe0;
+  --color-body: #d9ccbb;
+  --color-mute: #ae9e87;
+  --color-faint: #978875;
   --color-pos: #4ade80;
   --color-neg: #f87171;
   --color-warn: #fbbf24;
 }
 
-/* Werkbank, light: plaster, birch and oak, brown ink. Chosen per member on the design page. */
+/* Walnut & moss, light: plaster and birch with walnut ink. Chosen per member on the design page. */
 [data-mode="light"] {
   --bg-app: #e3d9ca;
   --bg-sidebar: #e8dfd1;
@@ -78,6 +78,7 @@
   --rarity-epic: #6d28d9;
   --rarity-legendary: #8a5306;
   --rarity-mythic: #be123c;
+  /* Light text needs more: ≥ 88 % over the dark walnut. */
   --scrim: 92%;
 
   --text-strong: #2e241b;
@@ -110,21 +111,21 @@
 
 /* Mode-independent tokens. */
 :root {
-  --accent: #d39b5c;
-  --accent-strong: #ad7f4b;
-  --accent-ink: #1e160d;
-  --accent-soft: rgba(211, 155, 92, 0.12);
+  --accent: #8fb36b;
+  --accent-strong: #759358;
+  --accent-ink: #14190f;
+  --accent-soft: rgba(143, 179, 107, 0.12);
   /* Defaults of the per-user theme (src/shared/theme.ts themeVariables overrides all of these at runtime). */
-  --accent-hover: #dbad79;
-  --accent-line: rgba(211, 155, 92, 0.28);
-  --accent-glow: rgba(211, 155, 92, 0.6);
-  --accent-text: #e7c8a5;
-  --accent-text-muted: #d0b79b;
-  --accent-2: #8fa7b3;
-  --hero-glow: radial-gradient(120% 140% at 100% 0%, rgba(173, 127, 75, .32), transparent 55%), radial-gradient(90% 120% at 0% 100%, rgba(143, 167, 179, .1), transparent 60%);
-  --chart-primary: #b87e3a;
+  --accent-hover: #a3c186;
+  --accent-line: rgba(143, 179, 107, 0.28);
+  --accent-glow: rgba(143, 179, 107, 0.6);
+  --accent-text: #c1d5ae;
+  --accent-text-muted: #b8bc9c;
+  --accent-2: #c98a4b;
+  --hero-glow: radial-gradient(120% 140% at 100% 0%, rgba(117, 147, 88, .32), transparent 55%), radial-gradient(90% 120% at 0% 100%, rgba(201, 138, 75, .1), transparent 60%);
+  --chart-primary: #759a4f;
   --brand: var(--accent);
-  --brand-gradient: linear-gradient(135deg, #483623 0%, #31261a 45%, #241e18 100%);
+  --brand-gradient: linear-gradient(135deg, #353b25 0%, #272819 45%, #231a13 100%);
   --success: #2f9e6a;
   --success-hover: #278758;
   --danger: #c9434c;
@@ -134,7 +135,7 @@
   --radius-sm: 10px;
   --radius: 16px;
   --radius-lg: 22px;
-  --ring: 0 0 0 3px rgba(211, 155, 92, 0.22);
+  --ring: 0 0 0 3px rgba(143, 179, 107, 0.22);
   --font: "Inter Variable", "Inter", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-display: var(--font);
   --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;

@@ -26,7 +26,7 @@ const badge = (glyph: BadgeGlyph, color: string) => ({ glyph, color });
 
 /** Achievement badges (ids `ach-<achievement id>`); the achievements themselves live in achievements.ts. */
 export const ACHIEVEMENT_BADGES: { achievementId: string; name: string; description: string; rarity: Rarity; glyph: BadgeGlyph; color: string }[] = [
-  { achievementId: 'first_purchase', name: 'Erster Einkauf', description: 'Dein erstes Item aus dem Kristall-Shop.', rarity: 'common', glyph: 'gift', color: '#7DD3FC' },
+  { achievementId: 'first_purchase', name: 'Erster Einkauf', description: 'Dein erstes Item aus dem Berni-Shop.', rarity: 'common', glyph: 'gift', color: '#7DD3FC' },
   { achievementId: 'level_10', name: 'Aufsteiger', description: 'Level 10 auf einem Server erreicht.', rarity: 'common', glyph: 'star', color: '#CBD5E1' },
   { achievementId: 'level_25', name: 'Stammgast', description: 'Level 25 auf einem Server erreicht.', rarity: 'rare', glyph: 'star', color: '#38BDF8' },
   { achievementId: 'level_50', name: 'Lebende Legende', description: 'Level 50 auf einem Server erreicht.', rarity: 'legendary', glyph: 'star', color: '#F5C451' },
@@ -38,7 +38,7 @@ export const ACHIEVEMENT_BADGES: { achievementId: string; name: string; descript
   { achievementId: 'black_market', name: 'Schattenhändler', description: 'Etwas auf dem Schwarzmarkt gekauft.', rarity: 'epic', glyph: 'moon', color: '#A78BFA' },
   { achievementId: 'monthly_top3', name: 'Podiumsplatz', description: 'In einem Monatsranking unter den Top 3 gelandet.', rarity: 'epic', glyph: 'trophy', color: '#E2E8F0' },
   { achievementId: 'collector_10', name: 'Sammler', description: '10 Cosmetics in deiner Sammlung.', rarity: 'rare', glyph: 'diamond', color: '#22D3EE' },
-  { achievementId: 'lifetime_10000', name: 'Kristallschatz', description: 'Insgesamt 10.000 Kristalle verdient.', rarity: 'legendary', glyph: 'diamond', color: '#F5C451' },
+  { achievementId: 'lifetime_10000', name: 'Bernsteinschatz', description: 'Insgesamt 10.000 Bernis verdient.', rarity: 'legendary', glyph: 'diamond', color: '#F5C451' },
 ];
 
 export const RANKING_ITEMS = { winnerBadge: 'rank-badge-champion', winnerTitle: 'rank-title-champion', podiumBadge: 'rank-badge-podium' } as const;
@@ -130,7 +130,7 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('title', 'title-chatterbox', 'common', 350, 'Plaudertasche', 'Immer etwas zu erzählen.', { text: 'Plaudertasche', color: '#7DD3FC' }),
   item('title', 'title-strategist', 'rare', 900, 'Stratege', 'Denkt drei Züge voraus.', { text: 'Stratege', color: '#A78BFA' }),
   item('title', 'title-lucky', 'rare', 1000, 'Glückspilz', 'Das Glück ist mit dir.', { text: 'Glückspilz', color: '#34D399' }),
-  item('title', 'title-collector', 'epic', 2500, 'Kristallsammler', 'Für echte Sammler.', { text: 'Kristallsammler', color: '#22D3EE' }),
+  item('title', 'title-collector', 'epic', 2500, 'Bernsteinsammler', 'Für echte Sammler.', { text: 'Bernsteinsammler', color: '#22D3EE' }),
   item('title', 'title-visionary', 'legendary', 6000, 'Visionär', 'Sieht, was andere nicht sehen.', { text: 'Visionär', color: '#F5C451' }),
   item('title', 'title-shadow-lord', 'mythic', 6000, 'Schattenfürst', 'Nur auf dem Schwarzmarkt.', { text: 'Schattenfürst', color: '#A78BFA' }, BM),
   item('title', 'title-oracle', 'mythic', 5000, 'Orakel', 'Nur auf dem Schwarzmarkt.', { text: 'Orakel', color: '#22D3EE' }, BM),

@@ -257,7 +257,7 @@ export const migrationStatements: Record<number, string[]> = {
         `CREATE INDEX IF NOT EXISTS idx_channel_daily_stats_day ON ${t.channel_daily_stats}(day)`,
         `CREATE INDEX IF NOT EXISTS idx_guild_hourly_stats_day ON ${t.guild_hourly_stats}(day)`,
     ],
-    // v4 nexo-cosmetics: global Kristalle wallet, cosmetics shop and monthly rankings (services/cosmetics/*).
+    // v4 nexo-cosmetics: global Bernis wallet, cosmetics shop and monthly rankings (services/cosmetics/*).
     4: [
         `CREATE TABLE IF NOT EXISTS ${t.user_wallets} (
             user_id TEXT PRIMARY KEY,

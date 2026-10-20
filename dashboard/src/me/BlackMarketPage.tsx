@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { ShopListing } from '../../../src/web/dto/profile';
-import { CrystalIcon } from '../components/CrystalIcon';
+import { AmberIcon } from '../components/AmberIcon';
 import { PageHeader, Spinner } from '../components/ui';
 import { countdown, formatDate, useMe, useNow } from './api';
 import { ItemDetail, RARITY_TILE, StoreCard } from './shop';
@@ -29,13 +29,13 @@ function RevealCard({ listing, revealed, owned, onReveal, onOpen }: {
   return (
     <div className="aspect-[3/4] [perspective:1400px]">
       <div className={`relative h-full w-full [transform-style:preserve-3d] motion-safe:transition-transform motion-safe:duration-700 motion-safe:ease-[cubic-bezier(.2,.8,.2,1)] ${revealed ? '[transform:rotateY(180deg)]' : ''}`}>
-        {/* Back: rarity glow, crystal emblem, "aufdecken". */}
+        {/* Back: rarity glow, amber emblem, "aufdecken". */}
         <button type="button" onClick={onReveal} aria-label="Karte aufdecken" tabIndex={revealed ? -1 : 0} style={{ '--tile': tint } as CSSProperties}
           className="group absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-4 overflow-hidden rounded-[18px] border-0 bg-[#0b090b] p-0 font-[inherit] ring-1 ring-[color-mix(in_srgb,var(--tile)_45%,transparent)] [backface-visibility:hidden] transition-shadow hover:shadow-[0_0_40px_-6px_var(--tile)]">
           <span className="absolute inset-0 bg-[radial-gradient(70%_55%_at_50%_45%,color-mix(in_srgb,var(--tile)_35%,transparent),transparent_70%),repeating-linear-gradient(135deg,rgb(255_255_255/.035)_0_2px,transparent_2px_12px)]" />
           <span className="absolute inset-3 rounded-[12px] border border-[color-mix(in_srgb,var(--tile)_40%,transparent)]" />
           <span className="relative transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6">
-            <CrystalIcon size={72} detail="full" />
+            <AmberIcon size={72} detail="full" />
           </span>
           <span className="relative text-[11px] font-bold uppercase tracking-[.24em]" style={{ color: tint }}>Aufdecken</span>
         </button>

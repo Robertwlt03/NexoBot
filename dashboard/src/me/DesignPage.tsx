@@ -26,7 +26,7 @@ function PresetTile({ preset, selected, onSelect }: { preset: (typeof THEME_PRES
 }
 
 const MODES: { id: ThemeMode; label: string; hint: string; canvas: string; card: string; line: string; ink: string }[] = [
-  { id: 'dark', label: 'Dunkel', hint: 'Nussbaum und Graphit, ruhig am Abend', canvas: '#17130f', card: '#241e18', line: '#3d342b', ink: '#f5ede2' },
+  { id: 'dark', label: 'Dunkel', hint: 'Tiefes Walnussholz, ruhig am Abend', canvas: '#16110c', card: '#231a13', line: '#3d3127', ink: '#f3ebe0' },
   { id: 'light', label: 'Hell', hint: 'Putz, Birke und Eiche, angenehm am Tag', canvas: '#efe8dd', card: '#faf6ef', line: '#ddd0bd', ink: '#2e241b' },
 ];
 
@@ -36,7 +36,7 @@ function ModeTile({ mode, selected, onSelect }: { mode: (typeof MODES)[number]; 
       className={`flex cursor-pointer items-center gap-4 rounded-2xl border bg-surface p-3 text-left transition hover:border-white/20 ${selected ? 'border-accent ring-1 ring-accent' : 'border-white/[.06]'}`}>
       {/* Mini page in the mode's own colours. */}
       <span className="relative h-16 w-24 shrink-0 overflow-hidden rounded-xl" style={{ background: mode.canvas, border: `1px solid ${mode.line}` }}>
-        <span className="absolute inset-x-0 top-0 h-6" style={{ background: `linear-gradient(90deg, ${mode.canvas}, transparent), linear-gradient(135deg, #c98b4a, #7a4a2a)` }} />
+        <span className="absolute inset-x-0 top-0 h-6" style={{ background: `linear-gradient(90deg, ${mode.canvas}, transparent), linear-gradient(135deg, #6b3f22, #3a2112)` }} />
         <span className="absolute bottom-2 left-2 right-2 h-6 rounded-md" style={{ background: mode.card, border: `1px solid ${mode.line}` }} />
         <span className="absolute left-2 top-2 h-1.5 w-8 rounded-full" style={{ background: mode.ink }} />
         <span className="absolute bottom-4 left-4 h-1.5 w-6 rounded-full bg-accent" />
@@ -69,7 +69,7 @@ export default function DesignPage() {
       <PageHeader kicker="Mein Profil" title="Dashboard-Design"
         description="Hell oder dunkel und deine eigenen Farben. Gilt nur für dich – auf allen Geräten, auf denen du dich mit Discord anmeldest." />
 
-      <Card title="Erscheinungsbild" description="Werkbank am Abend oder hell wie Birkenholz – beides ruhig und warm.">
+      <Card title="Erscheinungsbild" description="Dunkles Walnussholz für den Abend oder hell wie Birke – beides mit Moosgrün.">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {MODES.map((mode) => (
             <ModeTile key={mode.id} mode={mode} selected={value.mode === mode.id} onSelect={() => pick({ ...value, mode: mode.id })} />

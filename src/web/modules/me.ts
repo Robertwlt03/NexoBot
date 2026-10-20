@@ -1,5 +1,5 @@
 // Member area "Mein Profil" (/dashboard/api/me/...): any logged-in Discord user, no guild permission needed.
-// Kristalle and cosmetics are global per user. Contract: web/dto/profile.ts.
+// Bernis and cosmetics are global per user. Contract: web/dto/profile.ts.
 
 import express from 'express';
 import type { Router } from 'express';

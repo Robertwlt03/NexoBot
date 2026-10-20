@@ -13,7 +13,7 @@ import { Card, PageHeader, SaveBar, Select, SwitchRow, TextArea } from '../compo
 import {
   cardSubject, countdown, equipItem, isEquipped, num, reducedMotion, resolveCosmetics, unequipItem, useCountUp, useDraft, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
-import { Glyph, ItemVisual, Kristalle, RARITY_CLASS } from './visuals';
+import { Glyph, ItemVisual, Bernis, RARITY_CLASS } from './visuals';
 
 const STREAK_DAYS = DAILY_BONUS.maxStreakBonus / DAILY_BONUS.perStreakDay;
 
@@ -27,7 +27,7 @@ function WalletCard() {
         <span className="text-[13px] text-mute">Kontostand</span>
         <Link to="/me/verlauf" className="arrow-btn hover:no-underline" aria-label="Verlauf"><span className="inline-block rotate-[135deg]"><Icon name="arrowLeft" size={14} /></span></Link>
       </div>
-      <div className="mt-3 text-[36px] font-light leading-none tracking-[-0.03em] text-ink"><Kristalle amount={shown} large /></div>
+      <div className="mt-3 text-[36px] font-light leading-none tracking-[-0.03em] text-ink"><Bernis amount={shown} large /></div>
       <p className="mt-2 text-[12.5px] text-faint">Insgesamt verdient: {num(me.wallet.lifetimeEarned)}</p>
       <div className="mt-4">
         <div className="flex justify-between text-[12px] text-mute"><span>Heute aus Level & Minispielen</span><span className="tabular-nums">{num(todayEarned)} / {num(dailyCap)}</span></div>
@@ -71,7 +71,7 @@ function DailyCard() {
         <span className="text-[12.5px] text-[var(--accent-text-muted)]">Serie: <b className="font-medium text-ink">{daily.streak} {daily.streak === 1 ? 'Tag' : 'Tage'}</b></span>
       </div>
       <div className="relative mt-3 flex items-end gap-3">
-        <span className="text-[36px] font-light leading-none tracking-[-0.03em] text-ink"><Kristalle amount={daily.nextAmount} large /></span>
+        <span className="text-[36px] font-light leading-none tracking-[-0.03em] text-ink"><Bernis amount={daily.nextAmount} large /></span>
         {gain !== null && <span className="js-gain invisible pb-1 text-[15px] font-semibold text-pos">+{num(gain)}</span>}
       </div>
       <div className="js-streak mt-4 flex gap-1" aria-label={`Serienbonus ${Math.min(daily.streak, STREAK_DAYS)} von ${STREAK_DAYS}`}>

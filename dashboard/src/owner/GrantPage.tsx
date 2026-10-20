@@ -4,7 +4,7 @@ import { useUser } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
 import { Actions, Card, Field, Notice, NumberInput, PageHeader, TextInput } from '../components/ui';
 import { num, useMutation, useWalletUpdate } from '../me/api';
-import { Kristalle } from '../me/visuals';
+import { Bernis } from '../me/visuals';
 
 const SNOWFLAKE = /^\d{17,20}$/;
 
@@ -20,8 +20,8 @@ export default function GrantPage() {
   const valid = SNOWFLAKE.test(userId) && Number.isInteger(amount) && amount !== 0 && note.trim() !== '';
 
   const grant = () => confirm({
-    title: amount > 0 ? 'Kristalle gutschreiben' : 'Kristalle abziehen',
-    text: <>{amount > 0 ? 'Gutschrift' : 'Abzug'} von <Kristalle amount={Math.abs(amount)} /> für <code>{userId}</code> („{note.trim()}“). Wird als Owner-Buchung protokolliert.</>,
+    title: amount > 0 ? 'Bernis gutschreiben' : 'Bernis abziehen',
+    text: <>{amount > 0 ? 'Gutschrift' : 'Abzug'} von <Bernis amount={Math.abs(amount)} /> für <code>{userId}</code> („{note.trim()}“). Wird als Owner-Buchung protokolliert.</>,
     confirmLabel: amount > 0 ? 'Gutschreiben' : 'Abziehen', danger: amount < 0,
     onConfirm: async () => {
       const wallet = await run<WalletSummary>('/owner/grant', 'POST', { userId, amount, note: note.trim() }, 'Gebucht.');
@@ -33,7 +33,7 @@ export default function GrantPage() {
 
   return (
     <>
-      <PageHeader kicker="Owner" title="Kristalle vergeben" description="Für Tests und Support: Kristalle gutschreiben oder (mit negativem Betrag) abziehen." />
+      <PageHeader kicker="Owner" title="Bernis vergeben" description="Für Tests und Support: Bernis gutschreiben oder (mit negativem Betrag) abziehen." />
       <Card title="Buchung">
         <div className="stack">
           <div className="grid-2">
@@ -47,7 +47,7 @@ export default function GrantPage() {
         </div>
         <Actions><button type="button" className="btn btn-primary" disabled={!valid || busy} onClick={grant}>{amount < 0 ? 'Abziehen' : 'Gutschreiben'}</button></Actions>
       </Card>
-      {last && <Notice>Gebucht: {last.amount > 0 ? '+' : '−'}{num(Math.abs(last.amount))} für <code>{last.userId}</code>. Neuer Kontostand: <Kristalle amount={last.wallet.balance} />.</Notice>}
+      {last && <Notice>Gebucht: {last.amount > 0 ? '+' : '−'}{num(Math.abs(last.amount))} für <code>{last.userId}</code>. Neuer Kontostand: <Bernis amount={last.wallet.balance} />.</Notice>}
       {dialog}
     </>
   );

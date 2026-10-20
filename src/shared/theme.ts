@@ -15,8 +15,9 @@ export interface DashboardTheme {
 
 export interface ThemePreset { id: string; name: string; primary: string; secondary: string }
 
-/** Curated pairs that work in both modes. The first one is the default: Werkbank (honey oak and tool steel). */
+/** Curated pairs that work in both modes. The first one is the default: Walnuss & Moos (moss green, walnut amber). */
 export const THEME_PRESETS: readonly ThemePreset[] = [
+  { id: 'walnuss', name: 'Walnuss & Moos', primary: '#8fb36b', secondary: '#c98a4b' },
   { id: 'werkbank', name: 'Werkbank', primary: '#d39b5c', secondary: '#8fa7b3' },
   { id: 'nexo', name: 'Nexo', primary: '#a99bff', secondary: '#67e8f9' },
   { id: 'ozean', name: 'Ozean', primary: '#60a5fa', secondary: '#22d3ee' },
@@ -30,7 +31,7 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
   { id: 'graphit', name: 'Graphit', primary: '#e4e4e7', secondary: '#a1a1aa' },
 ];
 
-export const DEFAULT_THEME: DashboardTheme = { preset: 'werkbank', primary: THEME_PRESETS[0].primary, secondary: THEME_PRESETS[0].secondary, mode: 'dark' };
+export const DEFAULT_THEME: DashboardTheme = { preset: 'walnuss', primary: THEME_PRESETS[0].primary, secondary: THEME_PRESETS[0].secondary, mode: 'dark' };
 
 const HEX = /^#[0-9a-f]{6}$/i;
 export const isHexColor = (value: unknown): value is string => typeof value === 'string' && HEX.test(value);
@@ -52,8 +53,8 @@ export function normalizeTheme(raw: unknown): DashboardTheme {
 
 type Rgb = [number, number, number];
 // Surfaces of both modes (mirror styles.css).
-const SURFACE = '#241e18';
-const CANVAS = '#17130f';
+const SURFACE = '#231a13';
+const CANVAS = '#16110c';
 const LIGHT_SURFACE = '#faf6ef';
 const LIGHT_CANVAS = '#efe8dd';
 
@@ -118,7 +119,7 @@ export function themeVariables(theme: DashboardTheme): Record<string, string> {
     '--accent-line': rgba(primary, light ? 0.32 : 0.28),
     '--accent-glow': rgba(primary, light ? 0.4 : 0.6),
     '--accent-text': tint,
-    '--accent-text-muted': mix(tint, light ? '#625448' : '#b3a28f', 0.45),
+    '--accent-text-muted': mix(tint, light ? '#625448' : '#ae9e87', 0.45),
     '--accent-2': secondary,
     '--ring': `0 0 0 3px ${rgba(primary, 0.22)}`,
     '--brand-gradient': `linear-gradient(135deg, ${mix(primary, canvas, light ? 0.8 : 0.74)} 0%, ${mix(primary, canvas, light ? 0.9 : 0.86)} 45%, ${surface} 100%)`,

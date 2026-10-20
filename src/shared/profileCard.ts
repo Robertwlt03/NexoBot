@@ -2,7 +2,7 @@
 // bot (@napi-rs/canvas). Import-free apart from types, like welcomeCard.ts, so both sides draw the same pixels.
 // Randomness (patterns, effects) is seeded by the member's name, so preview == bot.
 
-import { drawCrystal } from './crystal.js';
+import { drawAmber } from './amber.js';
 import type {
   BackgroundData, BadgeData, BadgeGlyph, CosmeticItem, EffectData, FrameData, LayoutData, LevelupData, NameStyleData, PatternKind,
   ProfileCardSubject, ResolvedCosmetics, StickerData, XpBarData,
@@ -13,7 +13,7 @@ export const PROFILE_CARD_HEIGHT = 360;
 export const LEVELUP_CARD_WIDTH = 900;
 export const LEVELUP_CARD_HEIGHT = 240;
 /** Nexo's default accent (lavender). */
-export const DEFAULT_ACCENT = '#A99BFF';
+export const DEFAULT_ACCENT = '#8FB36B';
 
 /** Families of the bundled fonts (same names as CARD_FONTS in welcomeCard.ts, registered by the bot and the dashboard). */
 export const PROFILE_FONTS = { inter: 'NexoCard Inter', unbounded: 'NexoCard Unbounded', caveat: 'NexoCard Caveat' } as const;
@@ -762,7 +762,7 @@ function drawPattern(ctx: Ctx, kind: PatternKind, ink: string, w: number, h: num
 
 function drawBackground(ctx: Ctx, bg: BackgroundData | null, accent: string, w: number, h: number, seed: number) {
   if (!bg) {
-    ctx.fillStyle = linearGradient(ctx, 115, 0, 0, w, h, ['#18171F', '#0E0D13']);
+    ctx.fillStyle = linearGradient(ctx, 115, 0, 0, w, h, ['#241A12', '#120D09']);
     ctx.fillRect(0, 0, w, h);
     glow(ctx, w * 0.88, -h * 0.25, w * 0.5, accent, 0.2);
     glow(ctx, w * 0.02, h * 1.15, w * 0.38, accent, 0.08);
@@ -939,7 +939,7 @@ function drawAvatar(ctx: Ctx, image: ProfileImage | null, { cx, cy, r }: Circle,
   ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
   ctx.shadowBlur = 24;
   ctx.shadowOffsetY = 6;
-  ctx.fillStyle = '#121118';
+  ctx.fillStyle = '#1A130D';
   ring(ctx, cx, cy, r);
   ctx.fill();
   ctx.restore();
@@ -951,8 +951,8 @@ function drawAvatar(ctx: Ctx, image: ProfileImage | null, { cx, cy, r }: Circle,
     drawCover(ctx, image, cx - r, cy - r, r * 2, r * 2);
   } else {
     const gradient = ctx.createRadialGradient(cx - r * 0.4, cy - r * 0.5, 0, cx, cy, r * 1.3);
-    gradient.addColorStop(0, mix(accent, '#2A2638', 0.35));
-    gradient.addColorStop(1, '#1A1824');
+    gradient.addColorStop(0, mix(accent, '#33261B', 0.35));
+    gradient.addColorStop(1, '#1D150F');
     ctx.fillStyle = gradient;
     ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
@@ -1042,12 +1042,12 @@ function drawAvatar(ctx: Ctx, image: ProfileImage | null, { cx, cy, r }: Circle,
 
 // ---------- Text pieces ----------
 
-/** `crystal` draws the Kristalle currency icon (shared/crystal.ts) instead of text or a badge glyph. */
-interface Run { text?: string; glyph?: BadgeGlyph; crystal?: boolean; font: string; color: string; size?: number; gap?: number }
+/** `amber` draws the Bernis currency icon (shared/amber.ts) instead of text or a badge glyph. */
+interface Run { text?: string; glyph?: BadgeGlyph; amber?: boolean; font: string; color: string; size?: number; gap?: number }
 
 function runWidths(ctx: Ctx, runs: Run[]): number[] {
   return runs.map((run) => {
-    if (run.glyph || run.crystal) return (run.size ?? 16) + (run.gap ?? 6);
+    if (run.glyph || run.amber) return (run.size ?? 16) + (run.gap ?? 6);
     ctx.font = run.font;
     return ctx.measureText(run.text ?? '').width + (run.gap ?? 0);
   });
@@ -1062,9 +1062,9 @@ function drawRuns(ctx: Ctx, runs: Run[], x: number, y: number, align: 'left' | '
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   runs.forEach((run, index) => {
-    if (run.crystal) {
+    if (run.amber) {
       const size = run.size ?? 16;
-      drawCrystal(ctx, cursor + size / 2, y - size * 0.36, size * 1.15);
+      drawAmber(ctx, cursor + size / 2, y - size * 0.36, size * 1.15);
     } else if (run.glyph) {
       const size = run.size ?? 16;
       drawGlyph(ctx, run.glyph, cursor + size / 2, y - size * 0.36, size, run.color);
@@ -1103,7 +1103,7 @@ function drawName(
   ctx.restore();
 }
 
-const STAT_LABELS: Record<StatKey, string> = { level: 'LEVEL', rank: 'RANG', balance: 'KRISTALLE' };
+const STAT_LABELS: Record<StatKey, string> = { level: 'LEVEL', rank: 'RANG', balance: 'BERNIS' };
 
 function statValue(key: StatKey, subject: ProfileCardSubject): string {
   if (key === 'level') return String(subject.level);
@@ -1113,7 +1113,7 @@ function statValue(key: StatKey, subject: ProfileCardSubject): string {
 
 function valueRuns(key: StatKey, subject: ProfileCardSubject, size: number, accent: string): Run[] {
   const value = { text: statValue(key, subject), font: font('inter', 700, size), color: key === 'level' ? lighten(accent, 0.2) : TEXT };
-  return key === 'balance' ? [{ crystal: true, size: Math.round(size * 0.66), color: accent, font: '', gap: Math.round(size * 0.36) }, value] : [value];
+  return key === 'balance' ? [{ amber: true, size: Math.round(size * 0.66), color: accent, font: '', gap: Math.round(size * 0.36) }, value] : [value];
 }
 
 function drawStats(ctx: Ctx, block: StatBlock, subject: ProfileCardSubject, accent: string) {
@@ -1474,7 +1474,7 @@ function drawLevelUpBackground(ctx: Ctx, style: LevelUpStyle, color: string) {
     }
     case 'classic':
     default:
-      ctx.fillStyle = linearGradient(ctx, 115, 0, 0, LW, LH, ['#18171F', '#0E0D13']);
+      ctx.fillStyle = linearGradient(ctx, 115, 0, 0, LW, LH, ['#241A12', '#120D09']);
       ctx.fillRect(0, 0, LW, LH);
       glow(ctx, 120, 120, 280, color, 0.26);
       glow(ctx, LW - 120, LH + 40, 260, color, 0.12);
@@ -1551,9 +1551,9 @@ export function renderLevelUpCard<I extends ProfileImage>(
 
   if (reward > 0) {
     const runs: Run[] = [
-      { crystal: true, size: 16, color: highlight, font: '', gap: 11 },
+      { amber: true, size: 16, color: highlight, font: '', gap: 11 },
       { text: `+${formatNumber(reward)}`, font: font('inter', 700, 16), color: TEXT, gap: 6 },
-      { text: 'Kristalle', font: font('inter', 400, 16), color: SOFT },
+      { text: 'Bernis', font: font('inter', 400, 16), color: SOFT },
     ];
     const pillW = measureRuns(ctx, runs) + 32;
     roundedRect(ctx, x, 168, pillW, 36, 18);

@@ -9,12 +9,12 @@ import type { CosmeticItem } from '../../../src/shared/cosmetics';
 import type { BlackMarketResponse, MeProfileResponse, ShopResponse } from '../../../src/web/dto/profile';
 import { DirtyContext, useApi } from '../api';
 import { ServerRail, SideMenu, UserPanel } from '../components/Layout';
-import { PageBackdrop, photoFor } from '../components/Backdrop';
+import { PageBackdrop } from '../components/Backdrop';
 import { Notice, Spinner } from '../components/ui';
 import { Icon } from '../icons';
 import { MeContext, reducedMotion, useCountUp } from './api';
 import type { MeContextValue } from './api';
-import { Glyph, Kristalle } from './visuals';
+import { Bernis, GLYPHS, Glyph } from './visuals';
 import type { GlyphName } from './visuals';
 
 interface NavEntry { to: string; label: string; icon: GlyphName }
@@ -34,7 +34,7 @@ const OWNER_NAV: NavEntry[] = [
   { to: '/owner/artikel', label: 'Artikel', icon: 'tag' },
   { to: '/owner/events', label: 'Events', icon: 'calendar' },
   { to: '/owner/blackmarket', label: 'Black Market', icon: 'shuffle' },
-  { to: '/owner/kristalle', label: 'Kristalle vergeben', icon: 'diamond' },
+  { to: '/owner/bernis', label: 'Bernis vergeben', icon: 'gift' },
   { to: '/owner/einstellungen', label: 'Einstellungen', icon: 'sliders' },
 ];
 
@@ -42,7 +42,7 @@ function WalletPill({ balance }: { balance: number }) {
   const shown = useCountUp(balance);
   return (
     <span title="Dein Kontostand" className="inline-flex items-center gap-1.5 rounded-full border border-white/[.08] bg-white/[.04] px-3 py-1 text-[13px] font-medium text-ink">
-      <Kristalle amount={shown} />
+      <Bernis amount={shown} />
     </span>
   );
 }
@@ -138,7 +138,7 @@ export function MeLayout() {
           {profile.data && <span className="ml-auto lg:hidden"><WalletPill balance={profile.data.wallet.balance} /></span>}
         </header>
         <div className="relative flex-1 overflow-y-auto px-4 pb-32 pt-9 md:px-10">
-          <PageBackdrop photo={photoFor(location.pathname)} column={1100} />
+          <PageBackdrop art={current && GLYPHS[current.icon]} column={1100} />
           <div ref={pageRef} className="relative mx-auto max-w-[1100px]">
             {profile.loading && !profile.data && <Spinner />}
             {profile.error && !profile.data && <Notice tone="danger">{profile.error}</Notice>}

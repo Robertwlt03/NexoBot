@@ -60,7 +60,7 @@ export const addXp = wrapServiceBoundary(async function addXp(client: NexoClient
       }
     }
 
-    // Kristalle: awaited on level-up so the card shows what was really credited (daily cap); otherwise fire-and-forget.
+    // Bernis: awaited on level-up so the card shows what was really credited (daily cap); otherwise fire-and-forget.
     let reward = 0;
     if (!member.user.bot) {
       if (didLevelUp) reward = await onXpGained(guild, member.user.id, xpToAdd, initialLevel, levelData.level);
@@ -94,7 +94,7 @@ export const addXp = wrapServiceBoundary(async function addXp(client: NexoClient
     }
 
     await saveUserLevelData(client, guild.id, member.user.id, levelData);
-    // Global Kristalle economy: monthly activity score and level-up income (best effort, never blocks XP).
+    // Global Bernis economy: monthly activity score and level-up income (best effort, never blocks XP).
 
     return {
       level: levelData.level,

@@ -3,7 +3,7 @@ import type { TransactionPage } from '../../../src/web/dto/profile';
 import { useApi } from '../api';
 import { Card, Empty, Notice, PageHeader, Pager, Spinner, Stats, TableWrap } from '../components/ui';
 import { formatDateTime, num, useMe } from './api';
-import { Kristalle } from './visuals';
+import { Bernis } from './visuals';
 
 export default function HistoryPage() {
   const { me } = useMe();
@@ -11,16 +11,16 @@ export default function HistoryPage() {
   const { data, error, loading } = useApi<TransactionPage>(`/me/transactions?page=${page}`);
   return (
     <>
-      <PageHeader kicker="Mein Profil" title="Verlauf" description="Jede Bewegung auf deinem Kristall-Konto: Einnahmen aus Level-ups, Minispielen und Ranglisten, Käufe und Geschenke." />
+      <PageHeader kicker="Mein Profil" title="Verlauf" description="Jede Bewegung auf deinem Berni-Konto: Einnahmen aus Level-ups, Minispielen und Ranglisten, Käufe und Geschenke." />
       <Stats items={[
-        { label: 'Kontostand', value: <Kristalle amount={me.wallet.balance} /> },
-        { label: 'Insgesamt verdient', value: <Kristalle amount={me.wallet.lifetimeEarned} /> },
+        { label: 'Kontostand', value: <Bernis amount={me.wallet.balance} /> },
+        { label: 'Insgesamt verdient', value: <Bernis amount={me.wallet.lifetimeEarned} /> },
         { label: 'Heute (Level & Minispiele)', value: `${num(me.wallet.todayEarned)} / ${num(me.wallet.dailyCap)}`, hint: 'Tageslimit; Ranglisten, Erfolge und Tagesbonus zählen nicht mit.' },
       ]} />
       <Card>
         {error && <Notice tone="danger">{error}</Notice>}
         {!data && loading && <Spinner />}
-        {data && data.items.length === 0 && <Empty title="Noch keine Buchungen">Sobald du Kristalle verdienst oder ausgibst, steht es hier.</Empty>}
+        {data && data.items.length === 0 && <Empty title="Noch keine Buchungen">Sobald du Bernis verdienst oder ausgibst, steht es hier.</Empty>}
         {data && data.items.length > 0 && (
           <TableWrap>
             <thead><tr><th>Buchung</th><th className="text-right">Betrag</th></tr></thead>

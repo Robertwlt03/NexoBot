@@ -2,7 +2,7 @@ import type { AchievementsResponse } from '../../../src/web/dto/profile';
 import { useApi } from '../api';
 import { Card, Empty, Notice, PageHeader, Spinner, Stats } from '../components/ui';
 import { formatDate, num, useMe } from './api';
-import { Glyph, ItemVisual, Kristalle } from './visuals';
+import { Glyph, ItemVisual, Bernis } from './visuals';
 
 export default function AchievementsPage() {
   const { items } = useMe();
@@ -15,14 +15,14 @@ export default function AchievementsPage() {
 
   return (
     <>
-      <PageHeader kicker="Mein Profil" title="Erfolge" description="Kleine Ziele mit Belohnung: Kristalle und manchmal ein Abzeichen, das es nirgends zu kaufen gibt." />
+      <PageHeader kicker="Mein Profil" title="Erfolge" description="Kleine Ziele mit Belohnung: Bernis und manchmal ein Abzeichen, das es nirgends zu kaufen gibt." />
       {loading && !data && <Spinner />}
       {error && <Notice tone="danger">{error}</Notice>}
       {data && (
         <Stats items={[
           { label: 'Freigeschaltet', value: `${unlocked.length} / ${list.length}` },
-          { label: 'Damit verdient', value: <Kristalle amount={unlocked.reduce((sum, a) => sum + a.reward, 0)} /> },
-          { label: 'Noch offen', value: <Kristalle amount={list.filter((a) => !a.unlockedAt).reduce((sum, a) => sum + a.reward, 0)} /> },
+          { label: 'Damit verdient', value: <Bernis amount={unlocked.reduce((sum, a) => sum + a.reward, 0)} /> },
+          { label: 'Noch offen', value: <Bernis amount={list.filter((a) => !a.unlockedAt).reduce((sum, a) => sum + a.reward, 0)} /> },
         ]} />
       )}
       {data && list.length === 0 && <Card><Empty title="Noch keine Erfolge" /></Card>}
@@ -49,7 +49,7 @@ export default function AchievementsPage() {
                 {a.unlockedAt && <span className="badge badge-on">Freigeschaltet am {formatDate(a.unlockedAt)}</span>}
               </div>
               <div className="mt-auto flex items-center gap-3 border-t border-white/[.05] pt-3 text-[13px]">
-                <Kristalle amount={a.reward} className="text-ink" />
+                <Bernis amount={a.reward} className="text-ink" />
                 {a.itemId && (
                   <span className="ml-auto flex min-w-0 items-center gap-2 text-[12.5px] text-mute">
                     {item && <ItemVisual item={item} className="w-10 rounded-md" />}

@@ -5,7 +5,7 @@ import { useApi, useUser } from '../api';
 import { GuildIcon } from '../components/Layout';
 import { Card, Empty, Notice, PageHeader, Spinner, TableWrap } from '../components/ui';
 import { countdown, num, useNow } from './api';
-import { Kristalle } from './visuals';
+import { Bernis } from './visuals';
 
 const monthLabel = (month: string) => new Date(`${month}-01T12:00:00`).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
 
@@ -31,7 +31,7 @@ function RankingCard({ ranking }: { ranking: GuildRanking }) {
         ))}
       </ol>
       <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-faint">
-        {ranking.rewards.map((amount, i) => <span key={i}>Platz {i + 1}: <Kristalle amount={amount} className="text-body" /></span>)}
+        {ranking.rewards.map((amount, i) => <span key={i}>Platz {i + 1}: <Bernis amount={amount} className="text-body" /></span>)}
       </div>
     </Card>
   );
@@ -48,7 +48,7 @@ export default function RankingsPage() {
 
   return (
     <>
-      <PageHeader kicker="Mein Profil" title="Ranglisten" description="Jeden Monat bekommen die besten fünf pro Server Kristalle – getrennt für Minispiele und Aktivität." />
+      <PageHeader kicker="Mein Profil" title="Ranglisten" description="Jeden Monat bekommen die besten fünf pro Server Bernis – getrennt für Minispiele und Aktivität." />
       <Notice>Belohnungen gibt es auf Servern mit mindestens {MONTHLY_MIN_HUMANS} Menschen und von höchstens {MONTHLY_MAX_SERVERS} Servern pro Monat (die mit den höchsten Belohnungen zählen).</Notice>
       {loading && !data && <Spinner />}
       {error && <Notice tone="danger">{error}</Notice>}
@@ -71,7 +71,7 @@ export default function RankingsPage() {
         <section className="mt-8">
           <Card title="Letzte Auszahlungen">
             <TableWrap>
-              <thead><tr><th>Monat</th><th>Server</th><th>Rangliste</th><th>Platz</th><th className="text-right">Kristalle</th></tr></thead>
+              <thead><tr><th>Monat</th><th>Server</th><th>Rangliste</th><th>Platz</th><th className="text-right">Bernis</th></tr></thead>
               <tbody>
                 {data.lastPayouts.map((p, i) => (
                   <tr key={i}>

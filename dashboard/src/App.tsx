@@ -27,7 +27,7 @@ const MEMBER_PAGES = [
   ['/owner/artikel', lazy(() => import('./owner/ItemsPage'))],
   ['/owner/events', lazy(() => import('./owner/EventsPage'))],
   ['/owner/blackmarket', lazy(() => import('./owner/BlackMarketPage'))],
-  ['/owner/kristalle', lazy(() => import('./owner/GrantPage'))],
+  ['/owner/bernis', lazy(() => import('./owner/GrantPage'))],
   ['/owner/einstellungen', lazy(() => import('./owner/SettingsPage'))],
 ] as const;
 

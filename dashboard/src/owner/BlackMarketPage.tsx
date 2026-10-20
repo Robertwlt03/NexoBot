@@ -7,7 +7,7 @@ import { useConfirm } from '../components/ConfirmDialog';
 import { Actions, Card, Empty, Notice, PageHeader, Spinner } from '../components/ui';
 import { Icon } from '../icons';
 import { countdown, formatDate, useMe, useMutation, useNow } from '../me/api';
-import { Glyph, ItemVisual, Kristalle, RARITY_CLASS, RarityLabel } from '../me/visuals';
+import { Glyph, ItemVisual, Bernis, RARITY_CLASS, RarityLabel } from '../me/visuals';
 
 function Tile({ item, selected, onClick }: { item: CosmeticItem; selected?: boolean; onClick?: () => void }) {
   const Tag = onClick ? 'button' : 'div';
@@ -18,7 +18,7 @@ function Tile({ item, selected, onClick }: { item: CosmeticItem; selected?: bool
       <div className="px-1 pt-2.5">
         <h3 className="truncate text-[14px] font-medium">{item.name}</h3>
         <div className="mt-0.5 text-[12px] text-faint">{SLOT_LABELS[item.slot]} · <RarityLabel rarity={item.rarity} /></div>
-        <div className="mt-1.5 text-[13px]"><Kristalle amount={item.price} /></div>
+        <div className="mt-1.5 text-[13px]"><Bernis amount={item.price} /></div>
       </div>
       {selected && <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-ink"><Glyph name="check" size={14} /></span>}
     </Tag>

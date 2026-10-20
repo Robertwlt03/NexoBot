@@ -14,7 +14,7 @@ import { Empty, Field, Modal, Notice, Select, Switch, Tabs, TextInput } from '..
 import {
   cardSubject, countdown, equipItem, formatDate, isEquipped, reducedMotion, resolveCosmetics, useEquip, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
-import { Glyph, ItemVisual, Kristalle, Price, RarityLabel, backgroundStyle } from './visuals';
+import { Glyph, ItemVisual, Bernis, Price, RarityLabel, backgroundStyle } from './visuals';
 import { Celebration } from './Celebration';
 import { Icon } from '../icons';
 
@@ -327,7 +327,7 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
 
   const buy = () => confirm({
     title: 'Kauf bestätigen',
-    text: <>„{item.name}“ für <Kristalle amount={listing.finalPrice} /> kaufen? Danach hast du noch <Kristalle amount={after} />.</>,
+    text: <>„{item.name}“ für <Bernis amount={listing.finalPrice} /> kaufen? Danach hast du noch <Bernis amount={after} />.</>,
     confirmLabel: 'Kaufen', danger: false,
     onConfirm: async () => {
       const result = await run<PurchaseResult>('/me/shop/buy', 'POST', { itemId: item.id });
@@ -336,7 +336,7 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
   });
   const gift = () => confirm({
     title: 'Geschenk senden',
-    text: <>„{item.name}“ für <Kristalle amount={listing.finalPrice} /> an <code>{toUserId}</code> verschenken? Danach hast du noch <Kristalle amount={after} />.</>,
+    text: <>„{item.name}“ für <Bernis amount={listing.finalPrice} /> an <code>{toUserId}</code> verschenken? Danach hast du noch <Bernis amount={after} />.</>,
     confirmLabel: 'Verschenken', danger: false,
     onConfirm: async () => {
       const result = await run<PurchaseResult>('/me/shop/gift', 'POST', { itemId: item.id, toUserId, ...(message.trim() ? { message: message.trim() } : {}) });
@@ -374,7 +374,7 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
         {buyable && <button type="button" className="btn btn-secondary" disabled={busy || after < 0} onClick={() => setGiftMode(true)}>Verschenken</button>}
         {owned
           ? <button type="button" className="btn btn-primary" disabled={equip.busy || equipped} onClick={() => equip.apply(equipItem(me.profile.equipped, item), `„${item.name}“ angelegt.`)}>{equipped ? 'Angelegt' : 'Jetzt anlegen'}</button>
-          : buyable && <button type="button" className="btn btn-primary" disabled={busy || after < 0} onClick={buy}>{after < 0 ? 'Nicht genug Kristalle' : 'Kaufen'}</button>}
+          : buyable && <button type="button" className="btn btn-primary" disabled={busy || after < 0} onClick={buy}>{after < 0 ? 'Nicht genug Bernis' : 'Kaufen'}</button>}
       </>
     );
   }
@@ -399,11 +399,11 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
                 {owned ? <span className="text-pos">Im Besitz</span>
                   : buyable ? <Price price={item.price} finalPrice={listing.finalPrice} /> : <span className="text-faint">{NOT_FOR_SALE[item.availability] ?? 'Nicht käuflich'}</span>}
               </div>
-              {buyable && !owned && after >= 0 && <p className="mt-1 text-[12.5px] text-faint">Danach: <Kristalle amount={after} /></p>}
+              {buyable && !owned && after >= 0 && <p className="mt-1 text-[12.5px] text-faint">Danach: <Bernis amount={after} /></p>}
             </div>
           </div>
           {buyable && after < 0 && (
-            <Notice tone="warn">Dir fehlen <Kristalle amount={-after} />. Hol dir den <Link to="/me">Tagesbonus</Link>, spiel Minispiele oder steig im Level auf.</Notice>
+            <Notice tone="warn">Dir fehlen <Bernis amount={-after} />. Hol dir den <Link to="/me">Tagesbonus</Link>, spiel Minispiele oder steig im Level auf.</Notice>
           )}
           {giftMode && (
             <div className="stack rounded-2xl border border-white/[.06] p-4">
@@ -413,7 +413,7 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
               <Field label="Nachricht (optional)" hint={`${message.length}/100`}>
                 <TextInput value={message} onChange={setMessage} placeholder="Viel Spaß damit!" maxLength={100} />
               </Field>
-              <p className="faint">Kostet dich <Kristalle amount={listing.finalPrice} /> – auch wenn du den Artikel selbst schon hast.</p>
+              <p className="faint">Kostet dich <Bernis amount={listing.finalPrice} /> – auch wenn du den Artikel selbst schon hast.</p>
             </div>
           )}
         </div>

@@ -1,7 +1,7 @@
 // Item tiles (painted by the card renderer, see ItemPreviewCanvas), the member-area icons and currency helpers.
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { CURRENCY, RARITY_LABELS, SLOT_LABELS } from '../../../src/shared/cosmetics';
-import { CrystalIcon } from '../components/CrystalIcon';
+import { AmberIcon } from '../components/AmberIcon';
 import { ItemPreviewCanvas } from '../components/ProfileCardPreview';
 import type {
   BackgroundData, BadgeGlyph, CosmeticItem, LevelupData, Rarity,
@@ -10,7 +10,7 @@ import { num } from './api';
 
 // ---------- Glyphs (24px line icons; the badge glyphs double as member-area icons) ----------
 
-const GLYPHS = {
+export const GLYPHS = {
   star: <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" />,
   crown: <path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" />,
   flame: <path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.4 1.2-3.8 2.5-5 .3 1.8 1 2.8 2 3.2C11 9 11 6 12 3z" />,
@@ -76,11 +76,11 @@ export function RarityLabel({ rarity }: { rarity: Rarity }) {
   return <span className={`text-[12px] font-medium ${RARITY_CLASS[rarity].text}`}>{RARITY_LABELS[rarity]}</span>;
 }
 
-/** `large` shows the full Nexo crystal (visor, eyes, moon) for big hero numbers. */
-export function Kristalle({ amount, className = '', large = false }: { amount: number; className?: string; large?: boolean }) {
+/** `large` shows the full amber drop (vein, bubble) for big hero numbers. */
+export function Bernis({ amount, className = '', large = false }: { amount: number; className?: string; large?: boolean }) {
   return (
     <span className={`inline-flex items-center gap-[0.3em] whitespace-nowrap tabular-nums ${className}`}>
-      <CrystalIcon className={large ? 'h-[1.15em] w-[1.15em]' : 'h-[1.05em] w-[1.05em]'} detail={large ? 'full' : 'small'} title={CURRENCY.name} />{num(amount)}
+      <AmberIcon className={large ? 'h-[1.15em] w-[1.15em]' : 'h-[1.05em] w-[1.05em]'} detail={large ? 'full' : 'small'} title={CURRENCY.name} />{num(amount)}
     </span>
   );
 }
@@ -89,7 +89,7 @@ export function Kristalle({ amount, className = '', large = false }: { amount: n
 export function Price({ price, finalPrice, className = '' }: { price: number; finalPrice: number; className?: string }) {
   return (
     <span className={`inline-flex items-baseline gap-2 ${className}`}>
-      <Kristalle amount={finalPrice} className="font-medium text-ink" />
+      <Bernis amount={finalPrice} className="font-medium text-ink" />
       {finalPrice < price && <s className="text-[12px] text-faint">{num(price)}</s>}
     </span>
   );

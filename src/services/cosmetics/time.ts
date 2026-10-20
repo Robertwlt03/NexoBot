@@ -1,4 +1,4 @@
-// Europe/Berlin calendar helpers for the Kristall economy: days (daily cap, daily bonus), weeks (black market,
+// Europe/Berlin calendar helpers for the Bernis economy: days (daily cap, daily bonus), weeks (black market,
 // Monday 00:00) and months (rankings) all follow German local time, DST included.
 
 const TZ = 'Europe/Berlin';
