@@ -28,6 +28,15 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'monthly_top3', reward: 200, stat: 'top3', target: 1, showProgress: false },
   { id: 'collector_10', reward: 100, stat: 'items', target: 10, showProgress: true },
   { id: 'lifetime_10000', reward: 250, stat: 'lifetime', target: 10_000, showProgress: true },
+  { id: 'purchases_25', reward: 250, stat: 'purchases', target: 25, showProgress: true },
+  { id: 'level_100', reward: 600, stat: 'maxLevel', target: 100, showProgress: true },
+  { id: 'streak_100', reward: 800, stat: 'streak', target: 100, showProgress: true },
+  { id: 'wins_5000', reward: 1000, stat: 'wins', target: 5000, showProgress: true },
+  { id: 'gifts_10', reward: 200, stat: 'gifts', target: 10, showProgress: true },
+  { id: 'black_market_5', reward: 400, stat: 'blackMarket', target: 5, showProgress: true },
+  { id: 'monthly_top3_3', reward: 500, stat: 'top3', target: 3, showProgress: true },
+  { id: 'collector_50', reward: 400, stat: 'items', target: 50, showProgress: true },
+  { id: 'lifetime_100000', reward: 1000, stat: 'lifetime', target: 100_000, showProgress: true },
 ];
 
 const nameOf = (id: string) => ACHIEVEMENT_BADGES.find((entry) => entry.achievementId === id);
@@ -69,6 +78,15 @@ async function readStats(userId: string): Promise<{ stats: AchievementStats; unl
 export async function syncAchievements(userId: string): Promise<string[]> {
   if (!cosmeticsPool()) return [];
   try {
+    // Catch up on items added to achievements unlocked earlier (e.g. the achievement titles).
+    await requirePool().query(
+      `INSERT INTO ${T.user_inventory} (user_id, item_id, source)
+       SELECT a.user_id, i.id, 'achievement' FROM ${T.user_achievements} a
+       JOIN ${T.shop_items} i ON i.availability = 'achievement' AND i.achievement_id = a.achievement_id
+       WHERE a.user_id = $1
+       ON CONFLICT DO NOTHING`,
+      [userId],
+    );
     const unlockedNow: string[] = [];
     // Rewards can complete further achievements (lifetime, collector), so check twice at most.
     for (let round = 0; round < 2; round += 1) {
@@ -84,9 +102,12 @@ export async function syncAchievements(userId: string): Promise<string[]> {
           );
           if (!result.rowCount) return false;
           await earnTx(client, userId, def.reward, 'achievement', `Erfolg „${name}“`, null);
+          // Everything the achievement unlocks: its badge, its title and any item the owner tied to it.
           await client.query(
-            `INSERT INTO ${T.user_inventory} (user_id, item_id, source) VALUES ($1, $2, 'achievement') ON CONFLICT DO NOTHING`,
-            [userId, `ach-${def.id}`],
+            `INSERT INTO ${T.user_inventory} (user_id, item_id, source)
+             SELECT $1, id, 'achievement' FROM ${T.shop_items} WHERE availability = 'achievement' AND achievement_id = $2
+             ON CONFLICT DO NOTHING`,
+            [userId, def.id],
           );
           return true;
         });
@@ -111,6 +132,7 @@ export async function listAchievements(userId: string): Promise<Achievement[]> {
       description: meta?.description ?? '',
       reward: def.reward,
       itemId: `ach-${def.id}`,
+      titleId: meta?.title ? `ach-title-${def.id}` : null,
       unlockedAt: unlockedAt ? unlockedAt.toISOString() : null,
       progress: def.showProgress ? { current: Math.min(stats[def.stat], def.target), target: def.target } : null,
     };

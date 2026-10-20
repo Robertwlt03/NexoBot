@@ -123,6 +123,8 @@ export interface Achievement {
   reward: number;
   /** Badge item granted on unlock, if any. */
   itemId: string | null;
+  /** Title item granted on unlock (only available this way), if any. */
+  titleId: string | null;
   unlockedAt: string | null;
   progress: { current: number; target: number } | null;
 }

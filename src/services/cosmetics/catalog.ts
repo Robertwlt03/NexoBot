@@ -2,7 +2,7 @@
 // shop_items storage with a short in-memory cache for the card renderer.
 
 import {
-  BACKGROUND_SCENES, BADGE_GLYPHS, COSMETIC_SLOTS, FRAME_STYLES, RARITIES,
+  BACKGROUND_SCENES, BADGE_GLYPHS, COSMETIC_SLOTS, FRAME_STYLES, RARITIES, XP_BAR_STYLES,
   type BackgroundScene, type BadgeGlyph, type CosmeticItem, type CosmeticSlot, type ItemAvailability, type Rarity, type SlotData,
 } from '../../shared/cosmetics.js';
 import { HttpError, badRequest, body, bool, hexColor, int, str } from '../../web/http.js';
@@ -26,20 +26,30 @@ const badge = (glyph: BadgeGlyph, color: string) => ({ glyph, color });
 const scene = (name: BackgroundScene, colors: string[]) => ({ kind: 'scene' as const, colors, angle: 0, pattern: 'none' as const, scene: name });
 
 /** Achievement badges (ids `ach-<achievement id>`); the achievements themselves live in achievements.ts. */
-export const ACHIEVEMENT_BADGES: { achievementId: string; name: string; description: string; rarity: Rarity; glyph: BadgeGlyph; color: string }[] = [
-  { achievementId: 'first_purchase', name: 'Erster Einkauf', description: 'Dein erstes Item aus dem Berni-Shop.', rarity: 'common', glyph: 'gift', color: '#7DD3FC' },
-  { achievementId: 'level_10', name: 'Aufsteiger', description: 'Level 10 auf einem Server erreicht.', rarity: 'common', glyph: 'star', color: '#CBD5E1' },
-  { achievementId: 'level_25', name: 'Stammgast', description: 'Level 25 auf einem Server erreicht.', rarity: 'rare', glyph: 'star', color: '#38BDF8' },
-  { achievementId: 'level_50', name: 'Lebende Legende', description: 'Level 50 auf einem Server erreicht.', rarity: 'legendary', glyph: 'star', color: '#F5C451' },
-  { achievementId: 'streak_7', name: 'Treue Woche', description: '7 Tage in Folge den Tagesbonus abgeholt.', rarity: 'rare', glyph: 'flame', color: '#FB923C' },
-  { achievementId: 'streak_30', name: 'Monat der Treue', description: '30 Tage in Folge den Tagesbonus abgeholt.', rarity: 'epic', glyph: 'flame', color: '#F43F5E' },
-  { achievementId: 'wins_100', name: 'Spielkind', description: '100 Minispiel-Erfolge gesammelt.', rarity: 'rare', glyph: 'controller', color: '#818CF8' },
-  { achievementId: 'wins_1000', name: 'Spielemeister', description: '1.000 Minispiel-Erfolge gesammelt.', rarity: 'legendary', glyph: 'controller', color: '#F5C451' },
-  { achievementId: 'first_gift', name: 'Großes Herz', description: 'Dein erstes Item verschenkt.', rarity: 'rare', glyph: 'heart', color: '#FDA4AF' },
-  { achievementId: 'black_market', name: 'Schattenhändler', description: 'Etwas auf dem Schwarzmarkt gekauft.', rarity: 'epic', glyph: 'moon', color: '#A78BFA' },
-  { achievementId: 'monthly_top3', name: 'Podiumsplatz', description: 'In einem Monatsranking unter den Top 3 gelandet.', rarity: 'epic', glyph: 'trophy', color: '#E2E8F0' },
-  { achievementId: 'collector_10', name: 'Sammler', description: '10 Cosmetics in deiner Sammlung.', rarity: 'rare', glyph: 'diamond', color: '#22D3EE' },
-  { achievementId: 'lifetime_10000', name: 'Bernsteinschatz', description: 'Insgesamt 10.000 Bernis verdient.', rarity: 'legendary', glyph: 'diamond', color: '#F5C451' },
+/** Each achievement grants its badge `ach-<id>` and a title `ach-title-<id>` that exists nowhere else. */
+export const ACHIEVEMENT_BADGES: { achievementId: string; name: string; description: string; rarity: Rarity; glyph: BadgeGlyph; color: string; title: string }[] = [
+  { achievementId: 'first_purchase', name: 'Erster Einkauf', description: 'Dein erstes Item aus dem Berni-Shop.', rarity: 'common', glyph: 'gift', color: '#7DD3FC', title: 'Shopping-Neuling' },
+  { achievementId: 'purchases_25', name: 'Shopaholic', description: '25 Einkäufe im Berni-Shop.', rarity: 'epic', glyph: 'gift', color: '#38BDF8', title: 'Shopaholic' },
+  { achievementId: 'level_10', name: 'Aufsteiger', description: 'Level 10 auf einem Server erreicht.', rarity: 'common', glyph: 'star', color: '#CBD5E1', title: 'Kein Neuling mehr' },
+  { achievementId: 'level_25', name: 'Stammgast', description: 'Level 25 auf einem Server erreicht.', rarity: 'rare', glyph: 'star', color: '#38BDF8', title: 'Gehört zum Inventar' },
+  { achievementId: 'level_50', name: 'Lebende Legende', description: 'Level 50 auf einem Server erreicht.', rarity: 'legendary', glyph: 'star', color: '#F5C451', title: 'Lebende Legende' },
+  { achievementId: 'level_100', name: 'Endgegner', description: 'Level 100 auf einem Server erreicht.', rarity: 'mythic', glyph: 'crown', color: '#F5C451', title: 'Endgegner' },
+  { achievementId: 'streak_7', name: 'Treue Woche', description: '7 Tage in Folge den Tagesbonus abgeholt.', rarity: 'rare', glyph: 'flame', color: '#FB923C', title: 'Gewohnheitstier' },
+  { achievementId: 'streak_30', name: 'Monat der Treue', description: '30 Tage in Folge den Tagesbonus abgeholt.', rarity: 'epic', glyph: 'flame', color: '#F43F5E', title: 'Unaufhaltsam' },
+  { achievementId: 'streak_100', name: 'Eiserne Treue', description: '100 Tage in Folge den Tagesbonus abgeholt.', rarity: 'legendary', glyph: 'flame', color: '#F59E0B', title: 'Hat nie Urlaub' },
+  { achievementId: 'wins_100', name: 'Spielkind', description: '100 Minispiel-Erfolge gesammelt.', rarity: 'rare', glyph: 'controller', color: '#818CF8', title: 'Zocker' },
+  { achievementId: 'wins_1000', name: 'Spielemeister', description: '1.000 Minispiel-Erfolge gesammelt.', rarity: 'legendary', glyph: 'controller', color: '#F5C451', title: 'Spielemeister' },
+  { achievementId: 'wins_5000', name: 'Minispiel-Legende', description: '5.000 Minispiel-Erfolge gesammelt.', rarity: 'mythic', glyph: 'controller', color: '#F472B6', title: 'Minispiel-Monarch' },
+  { achievementId: 'first_gift', name: 'Großes Herz', description: 'Dein erstes Item verschenkt.', rarity: 'rare', glyph: 'heart', color: '#FDA4AF', title: 'Wichtel' },
+  { achievementId: 'gifts_10', name: 'Wichtelmeister', description: '10 Items verschenkt.', rarity: 'epic', glyph: 'gift', color: '#FB7185', title: 'Weihnachtsmann in Teilzeit' },
+  { achievementId: 'black_market', name: 'Schattenhändler', description: 'Etwas auf dem Schwarzmarkt gekauft.', rarity: 'epic', glyph: 'moon', color: '#A78BFA', title: 'Kennt da jemanden' },
+  { achievementId: 'black_market_5', name: 'Stammkunde der Nacht', description: '5 Käufe auf dem Schwarzmarkt.', rarity: 'legendary', glyph: 'moon', color: '#C084FC', title: 'Unterwelt-Stammkunde' },
+  { achievementId: 'monthly_top3', name: 'Podiumsplatz', description: 'In einem Monatsranking unter den Top 3 gelandet.', rarity: 'epic', glyph: 'trophy', color: '#E2E8F0', title: 'Treppchenstürmer' },
+  { achievementId: 'monthly_top3_3', name: 'Podest-Abo', description: 'Dreimal in einem Monatsranking unter den Top 3.', rarity: 'legendary', glyph: 'trophy', color: '#F5C451', title: 'Podest-Abonnent' },
+  { achievementId: 'collector_10', name: 'Sammler', description: '10 Cosmetics in deiner Sammlung.', rarity: 'rare', glyph: 'diamond', color: '#22D3EE', title: 'Jäger und Sammler' },
+  { achievementId: 'collector_50', name: 'Museumsdirektor', description: '50 Cosmetics in deiner Sammlung.', rarity: 'legendary', glyph: 'diamond', color: '#A78BFA', title: 'Museumsdirektor' },
+  { achievementId: 'lifetime_10000', name: 'Bernsteinschatz', description: 'Insgesamt 10.000 Bernis verdient.', rarity: 'legendary', glyph: 'diamond', color: '#F5C451', title: 'Bernsteinbaron' },
+  { achievementId: 'lifetime_100000', name: 'Goldhaufen', description: 'Insgesamt 100.000 Bernis verdient.', rarity: 'mythic', glyph: 'diamond', color: '#FDE68A', title: 'Drache auf dem Goldhaufen' },
 ];
 
 export const RANKING_ITEMS = { winnerBadge: 'rank-badge-champion', winnerTitle: 'rank-title-champion', podiumBadge: 'rank-badge-podium' } as const;
@@ -161,6 +171,24 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('title', 'title-egg-hunter', 'rare', 800, 'Eiersucher', 'Oster-Edition.', { text: 'Eiersucher', color: '#86EFAC' }, ev('easter')),
   item('title', 'title-leaf-collector', 'rare', 800, 'Laubsammler', 'Herbst-Edition.', { text: 'Laubsammler', color: '#F59E0B' }, ev('autumn')),
   item('title', RANKING_ITEMS.winnerTitle, 'legendary', 0, 'Monatssieger', 'Platz 1 in einem Monatsranking.', { text: 'Monatssieger', color: '#F5C451' }, RANKING),
+  item('title', 'title-lurker', 'common', 350, 'Professioneller Lurker', 'Liest alles, schreibt nie.', { text: 'Professioneller Lurker', color: '#94A3B8' }),
+  item('title', 'title-coffee', 'common', 400, 'Kaffeejunkie', 'Läuft mit Koffein.', { text: 'Kaffeejunkie', color: '#C08A5B' }),
+  item('title', 'title-brb', 'common', 450, 'Immer kurz AFK', 'Bin gleich wieder da. Wirklich.', { text: 'Immer kurz AFK', color: '#CBD5E1' }),
+  item('title', 'title-emoji-artist', 'common', 500, 'Emoji-Künstler', 'Spricht fließend Emoji.', { text: 'Emoji-Künstler', color: '#FCD34D' }),
+  item('title', 'title-meme-lord', 'rare', 900, 'Meme-Lord', 'Herrscher über alle Memes.', { text: 'Meme-Lord', color: '#F472B6' }),
+  item('title', 'title-voice-resident', 'rare', 1000, 'Wohnt im Voice-Chat', 'Hat dort schon einen Zweitwohnsitz.', { text: 'Wohnt im Voice-Chat', color: '#7DD3FC' }),
+  item('title', 'title-side-quest', 'rare', 1100, 'Nebenquest-Fan', 'Die Hauptstory kann warten.', { text: 'Nebenquest-Fan', color: '#86EFAC' }),
+  item('title', 'title-ping', 'rare', 1200, 'Ping 999', 'Lag ist eine Lebenseinstellung.', { text: 'Ping 999', color: '#F87171' }),
+  item('title', 'title-spoiler', 'rare', 1300, 'Spoiler-Alarm', 'Weiß schon, wie es ausgeht.', { text: 'Spoiler-Alarm', color: '#FB923C' }),
+  item('title', 'title-main-character', 'epic', 2400, 'Hauptcharakter', 'Die Geschichte dreht sich um dich.', { text: 'Hauptcharakter', color: '#F5C451' }),
+  item('title', 'title-rage-quit', 'epic', 2600, 'Rage-Quitter', 'Verlässt Spiele mit Stil.', { text: 'Rage-Quitter', color: '#EF4444' }),
+  item('title', 'title-final-boss', 'epic', 3000, 'Bossgegner', 'Am Ende wartet immer jemand.', { text: 'Bossgegner', color: '#C084FC' }),
+  item('title', 'title-honorary', 'legendary', 5500, 'Ehrenmitglied', 'Für alle, die einfach dazugehören.', { text: 'Ehrenmitglied', color: '#FDE68A' }),
+  item('title', 'title-myth', 'legendary', 7000, 'Mythos', 'Man erzählt sich Geschichten über dich.', { text: 'Mythos', color: '#A78BFA' }),
+  item('title', 'title-shroom-whisperer', 'rare', 1000, 'Pilzflüsterer', 'Herbst-Edition.', { text: 'Pilzflüsterer', color: '#F87171' }, ev('autumn')),
+  item('title', 'title-pumpkin-carver', 'rare', 1000, 'Kürbisschnitzer', 'Halloween-Edition.', { text: 'Kürbisschnitzer', color: '#FB923C' }, ev('halloween')),
+  ...ACHIEVEMENT_BADGES.map((entry) => item('title', `ach-title-${entry.achievementId}`, entry.rarity, 0, entry.title, `Erfolg „${entry.name}“: ${entry.description}`,
+    { text: entry.title, color: entry.color }, { availability: 'achievement', achievementId: entry.achievementId })),
 
   // ---------- XP-Balken ----------
   item('xpBar', 'xp-sky', 'common', 300, 'Himmelblau', 'Schlichter Balken in Himmelblau.', { style: 'solid', colors: ['#38BDF8'] }),
@@ -168,6 +196,16 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('xpBar', 'xp-mint-striped', 'rare', 1000, 'Mintstreifen', 'Gestreift in Smaragd und Mint.', { style: 'striped', colors: ['#10B981', '#6EE7B7'] }),
   item('xpBar', 'xp-ice-segments', 'epic', 2200, 'Eissegmente', 'Segmentierter Balken in Eisblau.', { style: 'segmented', colors: ['#22D3EE', '#A5F3FC'] }),
   item('xpBar', 'xp-gold-flow', 'legendary', 5500, 'Goldfluss', 'Leuchtender Goldbalken.', { style: 'glow', colors: ['#F59E0B', '#FDE68A'] }),
+  item('xpBar', 'xp-8bit', 'common', 500, '8-Bit-Leben', 'Grüne Pixel wie im Retro-Spiel.', { style: 'pixel', colors: ['#4ADE80', '#166534'] }),
+  item('xpBar', 'xp-ocean', 'rare', 1200, 'Meeresströmung', 'Wellen und Bläschen in Ozeanblau.', { style: 'wave', colors: ['#0EA5E9', '#7DD3FC'] }),
+  item('xpBar', 'xp-ivy-growth', 'rare', 1300, 'Efeuwuchs', 'Eine Ranke, die mit dir wächst.', { style: 'vine', colors: ['#6FA04A', '#3F6B2E'] }),
+  item('xpBar', 'xp-pearls', 'epic', 2400, 'Perlenkette', 'Jede Perle ein Stück Fortschritt.', { style: 'beads', colors: ['#E9DCC4', '#FFFFFF'] }),
+  item('xpBar', 'xp-potion', 'epic', 2600, 'Zaubertrank', 'Blubbernder Trank in Violett.', { style: 'wave', colors: ['#8B5CF6', '#F0ABFC'] }),
+  item('xpBar', 'xp-wildfire', 'epic', 2800, 'Lauffeuer', 'Dein Fortschritt brennt.', { style: 'flame', colors: ['#FF5A1F', '#FFD166'] }),
+  item('xpBar', 'xp-gold-beads', 'legendary', 5200, 'Goldperlen', 'Eine Kette aus reinem Gold.', { style: 'beads', colors: ['#F5C451', '#FFF1B0'] }),
+  item('xpBar', 'xp-comet', 'legendary', 5800, 'Kometenschweif', 'Ein Komet zieht durch die Sterne.', { style: 'comet', colors: ['#A78BFA', '#E0E7FF'] }),
+  item('xpBar', 'xp-will-o-wisp', 'rare', 1100, 'Irrlicht', 'Halloween-Edition: grünes Geisterfeuer.', { style: 'flame', colors: ['#65A30D', '#ECFCCB'] }, ev('halloween')),
+  item('xpBar', 'xp-snow-pearls', 'rare', 1100, 'Schneeperlen', 'Winter-Edition: Perlen aus Eis.', { style: 'beads', colors: ['#BAE6FD', '#FFFFFF'] }, ev('christmas')),
   item('xpBar', 'xp-void-stream', 'mythic', 5000, 'Leerenstrom', 'Nur auf dem Schwarzmarkt: schillernder Energiestrom.', { style: 'glow', colors: ['#A78BFA', '#22D3EE', '#F0ABFC'] }, BM),
   item('xpBar', 'xp-candy-cane', 'rare', 1000, 'Zuckerstange', 'Weihnachts-Edition.', { style: 'striped', colors: ['#F43F5E', '#F8FAFC'] }, ev('christmas')),
   item('xpBar', 'xp-easter-pastel', 'rare', 1000, 'Pastellstreifen', 'Oster-Edition.', { style: 'striped', colors: ['#F9A8D4', '#A7F3D0'] }, ev('easter')),
@@ -257,7 +295,7 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('title', 'title-bounty-hunter', 'epic', 2400, 'Kopfgeldjäger', 'Von Station zu Station unterwegs.', { text: 'Kopfgeldjäger', color: '#22D3EE' }),
   item('title', 'title-buccaneer', 'rare', 1000, 'Freibeuter', 'Segel gesetzt, Kurs auf Abenteuer.', { text: 'Freibeuter', color: '#F4E7C5' }),
   item('title', 'title-dungeon-master', 'epic', 2500, 'Dungeonmeister', 'Kennt jede Falle beim Namen.', { text: 'Dungeonmeister', color: '#FF9A3C' }),
-  item('xpBar', 'xp-pixel', 'rare', 1000, 'Pixelbalken', 'Segmentiert wie eine alte Lebensanzeige.', { style: 'segmented', colors: ['#FFD166', '#E86F5B'] }),
+  item('xpBar', 'xp-pixel', 'rare', 1000, 'Pixelbalken', 'Pixelig wie eine alte Lebensanzeige.', { style: 'pixel', colors: ['#FFD166', '#E86F5B'] }),
   item('badge', 'badge-jolly-roger', 'rare', 1000, 'Totenkopfflagge', 'Für alle, die gern in See stechen.', badge('skull', '#F4E7C5')),
   item('badge', 'badge-guardian', 'rare', 900, 'Schildwache', 'Hält die Stellung.', badge('shield', '#CBD5E1')),
 ];
@@ -333,7 +371,7 @@ export function parseSlotData(slot: CosmeticSlot, input: unknown): SlotData[Cosm
     };
     case 'badge': return { glyph: oneOf(d.glyph, BADGE_GLYPHS, 'Symbol'), color: hexColor(d.color, 'Farbe') };
     case 'title': return { text: str(d.text, 'Titeltext', { min: 1, max: 32 }), color: hexColor(d.color, 'Farbe') };
-    case 'xpBar': return { style: oneOf(d.style, ['solid', 'gradient', 'striped', 'segmented', 'glow'] as const, 'Stil'), colors: colors(d.colors, 'Farben', 3) };
+    case 'xpBar': return { style: oneOf(d.style, XP_BAR_STYLES, 'Stil'), colors: colors(d.colors, 'Farben', 3) };
     case 'font': return { font: oneOf(d.font, ['inter', 'unbounded', 'caveat'] as const, 'Schrift') };
     case 'effect': return { effect: oneOf(d.effect, ['sparkles', 'snow', 'confetti', 'aurora', 'scanlines', 'stardust', 'embers', 'hearts', 'leaves'] as const, 'Effekt') };
     case 'levelup': return { style: oneOf(d.style, ['classic', 'minimal', 'neon', 'royal', 'retro'] as const, 'Stil'), color: hexColor(d.color, 'Farbe') };

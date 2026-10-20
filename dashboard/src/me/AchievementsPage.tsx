@@ -15,7 +15,7 @@ export default function AchievementsPage() {
 
   return (
     <>
-      <PageHeader kicker="Mein Profil" title="Erfolge" description="Kleine Ziele mit Belohnung: Bernis und manchmal ein Abzeichen, das es nirgends zu kaufen gibt." />
+      <PageHeader kicker="Mein Profil" title="Erfolge" description="Kleine Ziele mit Belohnung: Bernis, ein Abzeichen und ein Titel, die es nirgends zu kaufen gibt." />
       {loading && !data && <Spinner />}
       {error && <Notice tone="danger">{error}</Notice>}
       {data && (
@@ -29,6 +29,7 @@ export default function AchievementsPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {sorted.map((a) => {
           const item = a.itemId ? items.get(a.itemId) : undefined;
+          const title = a.titleId ? items.get(a.titleId) : undefined;
           const pct = a.progress ? Math.min(100, (a.progress.current / Math.max(a.progress.target, 1)) * 100) : a.unlockedAt ? 100 : 0;
           return (
             <article key={a.id} className={`flex flex-col rounded-2xl border p-4 ${a.unlockedAt ? 'border-white/[.1] bg-surface' : 'border-white/[.05] bg-white/[.015]'}`}>
@@ -50,10 +51,13 @@ export default function AchievementsPage() {
               </div>
               <div className="mt-auto flex items-center gap-3 border-t border-white/[.05] pt-3 text-[13px]">
                 <Bernis amount={a.reward} className="text-ink" />
-                {a.itemId && (
+                {(a.itemId || title) && (
                   <span className="ml-auto flex min-w-0 items-center gap-2 text-[12.5px] text-mute">
                     {item && <ItemVisual item={item} className="w-10 rounded-md" />}
-                    <span className="truncate">+ {item ? `Abzeichen „${item.name}“` : 'Abzeichen'}</span>
+                    <span className="min-w-0">
+                      {a.itemId && <span className="block truncate">+ {item ? `Abzeichen „${item.name}“` : 'Abzeichen'}</span>}
+                      {title?.slot === 'title' && <span className="block truncate">+ Titel <span style={{ color: title.data.color }}>„{title.data.text}“</span></span>}
+                    </span>
                   </span>
                 )}
               </div>

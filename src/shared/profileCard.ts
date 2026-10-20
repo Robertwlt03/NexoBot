@@ -1315,70 +1315,82 @@ function wobblyRing(ctx: Ctx, cx: number, cy: number, R: number, amp: number) {
   ctx.closePath();
 }
 
+export const ILLUSTRATED_FRAMES: ReadonlySet<FrameData['style']> = new Set(['vine', 'fire', 'laurel', 'blossom', 'crystal', 'lightning']);
+
+/** Shadow that front-layer pieces cast onto the avatar. */
+function castShadow(ctx: Ctx, k: number) {
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = 4 * k;
+  ctx.shadowOffsetY = 2 * k;
+}
+
 /**
- * Illustrated frames: vines, flames, laurel, blossoms, ice, lightning (colours [main, second]). Sizes follow the avatar radius (k = 1 at
- * r 68) and stay within FRAME_MAX_OUTSET (the tallest flames on top just reach it).
+ * Illustrated frames (colours [main, second]) in two layers around the avatar: 'back' is drawn before the picture,
+ * so it disappears behind it; 'front' after, reaching over the picture's edge and casting a shadow onto it. Sizes
+ * follow the avatar radius (k = 1 at r 68) and stay within FRAME_MAX_OUTSET (the tallest flames just reach it).
  */
-function drawIllustratedFrame(ctx: Ctx, style: FrameData['style'], cx: number, cy: number, r: number, colors: string[]) {
+function drawIllustratedFrame(ctx: Ctx, style: FrameData['style'], cx: number, cy: number, r: number, colors: string[], layer: 'back' | 'front') {
   const k = r / 68;
   const c0 = colors[0];
+  const front = layer === 'front';
   switch (style) {
     case 'vine': {
-      // Two stems winding around each other, leaves on both, curls in between.
-      const R = r + 5 * k;
+      // Two stems winding in and out across the picture's edge: one passes behind the picture, one over it.
+      const R = r + 1 * k;
       const stem = colors[1] ?? darken(c0, 0.45);
-      const at = (a: number, phase: number) => polar(cx, cy, R + Math.sin(a * 6 + phase) * 3 * k, a);
-      ctx.lineWidth = 2 * k;
-      for (const phase of [0, Math.PI]) {
-        ctx.beginPath();
-        for (let i = 0; i <= 120; i++) {
-          const [x, y] = at((i / 120) * TAU, phase);
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
+      const phase = front ? 0 : Math.PI;
+      const at = (a: number) => polar(cx, cy, R + Math.sin(a * 6 + phase) * 5 * k, a);
+      if (front) castShadow(ctx, k);
+      ctx.beginPath();
+      for (let i = 0; i <= 160; i++) {
+        const [x, y] = at((i / 160) * TAU);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = front ? stem : darken(stem, 0.25);
+      ctx.lineWidth = 2.2 * k;
+      ctx.stroke();
+      if (!front) {
+        ctx.lineWidth = 1.3 * k;
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * TAU + 0.5;
+          const [x, y] = polar(cx, cy, R + 11 * k, a + 0.06);
+          ctx.beginPath();
+          ctx.moveTo(...polar(cx, cy, R + 4 * k, a - 0.04));
+          ctx.quadraticCurveTo(...polar(cx, cy, R + 9 * k, a - 0.05), x, y);
+          ctx.arc(x - Math.cos(a) * 2.4 * k, y - Math.sin(a) * 2.4 * k, 2.4 * k, a, a + TAU * 0.8);
+          ctx.stroke();
         }
-        ctx.strokeStyle = phase ? darken(stem, 0.2) : stem;
-        ctx.stroke();
       }
-      ctx.strokeStyle = stem;
-      ctx.lineWidth = 1.3 * k;
-      for (let i = 0; i < 6; i++) {
-        const a = (i / 6) * TAU + 0.5;
-        const [sx, sy] = at(a, 0);
-        const [x, y] = polar(cx, cy, R + 9 * k, a + 0.06);
-        ctx.beginPath();
-        ctx.moveTo(sx, sy);
-        ctx.quadraticCurveTo(...polar(cx, cy, R + 7 * k, a - 0.05), x, y);
-        ctx.arc(x - Math.cos(a) * 2.4 * k, y - Math.sin(a) * 2.4 * k, 2.4 * k, a, a + TAU * 0.8);
-        ctx.stroke();
-      }
-      const tones = [c0, darken(c0, 0.25), lighten(c0, 0.14)];
-      const n = 30;
+      const tones = front ? [c0, lighten(c0, 0.14), darken(c0, 0.12)] : [darken(c0, 0.22), darken(c0, 0.32)];
+      const n = 16;
       for (let i = 0; i < n; i++) {
-        const a = (i / n) * TAU + jitter(i, 1) * 0.1;
-        const [x, y] = at(a, i % 2 ? Math.PI : 0);
-        const out = i % 3 !== 1;
-        const l = (out ? 12 + jitter(i, 2) * 3 : 10 + jitter(i, 2) * 2) * k;
-        drawLeaf(ctx, x, y, out ? a + 0.95 : a + Math.PI - 0.9, l, l * 0.42, tones[i % 3], withAlpha(lighten(c0, 0.45), 0.6));
+        const a = (i / n) * TAU + (front ? 0 : TAU / n / 2) + jitter(i, front ? 1 : 2) * 0.12;
+        const [x, y] = at(a);
+        const out = i % 2 === 0;
+        const l = (out ? 12 + jitter(i, 3) * 3 : 10 + jitter(i, 3) * 3) * k;
+        drawLeaf(ctx, x, y, out ? a + 0.95 : a + Math.PI - 0.9, l, l * 0.42, tones[i % tones.length], front ? withAlpha(lighten(c0, 0.45), 0.6) : undefined);
       }
       break;
     }
     case 'fire': {
-      // A glowing ring with teardrop flames on it: tall on top, small below (flames rise), each with a hot core.
+      // Behind: a blaze rising past the head. In front: smaller tongues licking up over the lower edge.
       const c1 = colors[1] ?? lighten(c0, 0.55);
-      const base = r + 1.5 * k;
-      const n = 24;
-      const flames = (scale: number, fill: string) => {
+      const n = front ? 30 : 24;
+      const flames = (base: number, maxLen: number, scale: number, fill: string, keep: (a: number) => boolean) => {
         ctx.fillStyle = fill;
         for (let i = 0; i < n; i++) {
-          const a = (i / n) * TAU + jitter(i, 3) * 0.1;
+          const a = (i / n) * TAU + jitter(i, front ? 13 : 3) * 0.1;
+          if (!keep(a)) continue;
           const top = Math.max(0, -Math.sin(a));
-          let dx = Math.cos(a);
-          let dy = Math.sin(a) - 0.8;
+          // Behind: outwards, leaning up. In front: straight up from the rim into the picture.
+          let dx = front ? Math.cos(a) * 0.25 : Math.cos(a);
+          let dy = front ? -1 : Math.sin(a) - 0.8;
           const norm = Math.hypot(dx, dy);
           dx /= norm;
           dy /= norm;
-          const len = Math.min(20, 7 + jitter(i, 4) * 5 + top * 9) * k * scale;
-          const w = (13 + jitter(i, 5) * 5) * k * scale;
+          const len = Math.min(maxLen, (front ? 8 : 8) + jitter(i, 4) * 6 + top * 9) * k * scale;
+          const w = (front ? 9 : 13) * (1 + jitter(i, 5) * 0.35) * k * scale;
           const [bx, by] = polar(cx, cy, base, a);
           const sway = (jitter(i, 6) - 0.5) * 5 * k * scale;
           const [px, py] = [-dy, dx];
@@ -1394,27 +1406,38 @@ function drawIllustratedFrame(ctx: Ctx, style: FrameData['style'], cx: number, c
           ctx.fill();
         }
       };
+      if (!front) {
+        const all = () => true;
+        const base = r - 2 * k;
+        ctx.shadowColor = c0;
+        ctx.shadowBlur = 18 * k;
+        flames(base, 24, 1, c0, all);
+        ctx.shadowBlur = 6 * k;
+        ctx.shadowColor = c1;
+        flames(base, 24, 0.68, c1, all);
+        break;
+      }
+      // Only along the bottom, so the face stays free.
+      const lower = (a: number) => Math.sin(a) > 0.45;
+      const base = r + 1 * k;
       ctx.shadowColor = c0;
-      ctx.shadowBlur = 18 * k;
+      ctx.shadowBlur = 10 * k;
       ctx.strokeStyle = c0;
-      ctx.lineWidth = 5 * k;
-      ring(ctx, cx, cy, base);
+      ctx.lineWidth = 3 * k;
+      ring(ctx, cx, cy, r);
       ctx.stroke();
-      flames(1, c0);
-      ctx.shadowBlur = 6 * k;
-      ctx.shadowColor = c1;
-      flames(0.6, c1);
+      flames(base, 14, 1, c0, lower);
       ctx.shadowBlur = 0;
-      ctx.strokeStyle = c1;
-      ctx.lineWidth = 1.6 * k;
-      ring(ctx, cx, cy, base);
-      ctx.stroke();
-      flames(0.3, lighten(c1, 0.7));
+      flames(base, 14, 0.6, c1, lower);
+      flames(base, 14, 0.3, lighten(c1, 0.7), lower);
       break;
     }
     case 'laurel': {
-      const R = r + 7 * k;
+      if (!front) break;
+      // A wreath lying on the picture: inner leaves reach over its edge.
+      const R = r + 3 * k;
       const stem = colors[1] ?? darken(c0, 0.35);
+      castShadow(ctx, k);
       for (const side of [-1, 1]) {
         // From the bottom up one side, leaving a gap at the top; side −1 = right (angles decreasing).
         const from = Math.PI / 2 + side * 0.14;
@@ -1430,12 +1453,12 @@ function drawIllustratedFrame(ctx: Ctx, style: FrameData['style'], cx: number, c
           const a = from + (to - from) * t;
           const [x, y] = polar(cx, cy, R, a);
           const travel = a + side * Math.PI / 2;
-          const l = (15 - t * 5) * k;
+          const l = (16 - t * 5) * k;
           const tone = i % 2 ? lighten(c0, 0.16) : c0;
           if (i === n) drawLeaf(ctx, x, y, travel, l, l * 0.4, tone);
           else {
             drawLeaf(ctx, x, y, travel - side * 0.55, l, l * 0.4, tone, withAlpha(lighten(c0, 0.5), 0.5));
-            drawLeaf(ctx, x, y, travel + side * 0.55, l * 0.9, l * 0.38, darken(tone, 0.14));
+            drawLeaf(ctx, x, y, travel + side * 0.6, l * 0.95, l * 0.38, darken(tone, 0.14));
           }
         }
       }
@@ -1445,97 +1468,112 @@ function drawIllustratedFrame(ctx: Ctx, style: FrameData['style'], cx: number, c
       for (const side of [-1, 1]) {
         ctx.beginPath();
         ctx.moveTo(bx, by);
-        ctx.lineTo(bx + side * 7 * k, by + 8 * k);
-        ctx.lineTo(bx + side * 3.5 * k, by + 8.5 * k);
+        ctx.lineTo(bx + side * 7 * k, by + 9 * k);
+        ctx.lineTo(bx + side * 3.5 * k, by + 9.5 * k);
         ctx.closePath();
         ctx.fill();
-        ring(ctx, bx + side * 3.6 * k, by - 0.6 * k, 2.8 * k);
+        ring(ctx, bx + side * 3.8 * k, by - 0.6 * k, 3 * k);
         ctx.fill();
       }
-      ring(ctx, bx, by, 2.4 * k);
+      ring(ctx, bx, by, 2.6 * k);
       ctx.fill();
       break;
     }
     case 'blossom': {
-      const R = r + 5 * k;
+      // The twig runs behind the picture; leaves and flowers sit on its edge.
+      const R = r + 2 * k;
       const twig = colors[1] ?? '#6B4A33';
       const leaf = '#6FA04A';
-      wobblyRing(ctx, cx, cy, R, 1.6 * k);
-      ctx.strokeStyle = twig;
-      ctx.lineWidth = 1.8 * k;
-      ctx.stroke();
-      for (let i = 0; i < 16; i++) {
-        const a = (i / 16) * TAU + 0.2;
-        const [x, y] = polar(cx, cy, R + Math.sin(a * 7) * 1.6 * k, a);
-        drawLeaf(ctx, x, y, a + (i % 2 ? 0.85 : Math.PI - 0.85), 9 * k, 3.4 * k, i % 3 ? leaf : darken(leaf, 0.25));
+      if (!front) {
+        wobblyRing(ctx, cx, cy, r + 4 * k, 2 * k);
+        ctx.strokeStyle = twig;
+        ctx.lineWidth = 2.2 * k;
+        ctx.stroke();
+        for (let i = 0; i < 14; i++) {
+          const a = (i / 14) * TAU + 0.45;
+          drawLeaf(ctx, ...polar(cx, cy, r + 5 * k, a), a + (i % 2 ? 0.6 : -0.6), 10 * k, 3.8 * k, i % 3 ? darken(leaf, 0.15) : darken(leaf, 0.35));
+        }
+        break;
+      }
+      castShadow(ctx, k);
+      for (let i = 0; i < 9; i++) {
+        const a = (i / 9) * TAU + 0.15;
+        drawLeaf(ctx, ...polar(cx, cy, R, a), a + (i % 2 ? 0.85 : Math.PI - 0.85), 9 * k, 3.4 * k, leaf);
       }
       for (let i = 0; i < 10; i++) {
         const a = (i / 10) * TAU + jitter(i, 7) * 0.3;
-        const [x, y] = polar(cx, cy, R + Math.sin(a * 7) * 1.6 * k, a);
-        const fr = (5 + jitter(i, 8) * 1.8) * k;
+        const [x, y] = polar(cx, cy, R + (jitter(i, 9) - 0.5) * 4 * k, a);
+        const fr = (5.2 + jitter(i, 8) * 2) * k;
         ctx.fillStyle = i % 2 ? lighten(c0, 0.35) : c0;
-        for (let p = 0; p < 5; p++) {
-          ring(ctx, ...polar(x, y, fr * 0.85, a + (p / 5) * TAU), fr * 0.62);
-          ctx.fill();
-        }
+        ctx.beginPath();
+        for (let p = 0; p < 5; p++) circle(ctx, ...polar(x, y, fr * 0.85, a + (p / 5) * TAU), fr * 0.62);
+        ctx.fill();
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0)';
         ctx.fillStyle = '#F5C451';
         ring(ctx, x, y, fr * 0.34);
         ctx.fill();
-      }
-      for (let i = 0; i < 6; i++) {
-        ctx.fillStyle = lighten(c0, 0.2);
-        ring(ctx, ...polar(cx, cy, R + 2.5 * k, (i / 6) * TAU + 0.68), 2 * k);
-        ctx.fill();
+        ctx.restore();
       }
       break;
     }
     case 'crystal': {
+      // Long shards grow behind the picture; frost creeps over its edge in front.
       const c1 = colors[1] ?? lighten(c0, 0.5);
-      const base = r + 2 * k;
-      ctx.strokeStyle = c1;
-      ctx.lineWidth = 2 * k;
-      ring(ctx, cx, cy, base);
-      ctx.stroke();
-      ctx.shadowColor = c0;
-      ctx.shadowBlur = 8 * k;
-      const n = 20;
-      for (let i = 0; i < n; i++) {
-        const a = (i / n) * TAU + jitter(i, 9) * 0.1;
-        const len = (5 + jitter(i, 10) * 10) * k;
-        const half = 0.08 + jitter(i, 11) * 0.04;
+      const shard = (base: number, a: number, len: number, half: number, dir: 1 | -1) => {
         const left = polar(cx, cy, base, a - half);
         const right = polar(cx, cy, base, a + half);
-        const tip = polar(cx, cy, base + len, a);
-        const inner = polar(cx, cy, base - 2.5 * k, a);
+        const tip = polar(cx, cy, base + dir * len, a);
+        const foot = polar(cx, cy, base - dir * 2.5 * k, a);
         ctx.fillStyle = c0;
         ctx.beginPath();
-        ctx.moveTo(...left); ctx.lineTo(...tip); ctx.lineTo(...right); ctx.lineTo(...inner);
+        ctx.moveTo(...left); ctx.lineTo(...tip); ctx.lineTo(...right); ctx.lineTo(...foot);
         ctx.closePath();
         ctx.fill();
-        // The lit facet.
         ctx.fillStyle = withAlpha(lighten(c0, 0.6), 0.85);
         ctx.beginPath();
-        ctx.moveTo(...left); ctx.lineTo(...tip); ctx.lineTo(...inner);
+        ctx.moveTo(...left); ctx.lineTo(...tip); ctx.lineTo(...foot);
         ctx.closePath();
         ctx.fill();
+      };
+      if (!front) {
+        ctx.shadowColor = c0;
+        ctx.shadowBlur = 8 * k;
+        for (let i = 0; i < 20; i++) shard(r - 2 * k, (i / 20) * TAU + jitter(i, 9) * 0.1, (8 + jitter(i, 10) * 12) * k, 0.08 + jitter(i, 11) * 0.04, 1);
+        break;
       }
+      castShadow(ctx, k);
+      ctx.strokeStyle = c1;
+      ctx.lineWidth = 2 * k;
+      ring(ctx, cx, cy, r + 0.5 * k);
+      ctx.stroke();
+      for (let i = 0; i < 14; i++) shard(r + 1.5 * k, (i / 14) * TAU + 0.11 + jitter(i, 14) * 0.15, (4 + jitter(i, 15) * 6) * k, 0.06 + jitter(i, 16) * 0.03, -1);
       break;
     }
     case 'lightning': {
+      // A glow ring behind, and a bolt that zigzags in and out across the picture's edge.
       const core = colors[1] ?? '#FFFFFF';
-      const R = r + 6 * k;
+      if (!front) {
+        ctx.shadowColor = c0;
+        ctx.shadowBlur = 18 * k;
+        ctx.strokeStyle = withAlpha(c0, 0.7);
+        ctx.lineWidth = 4 * k;
+        ring(ctx, cx, cy, r + 3 * k);
+        ctx.stroke();
+        break;
+      }
       const path = () => {
         ctx.beginPath();
         const n = 48;
         for (let i = 0; i <= n; i++) {
-          const [x, y] = polar(cx, cy, R + (i % 2 ? 1 : -1) * (1.5 + jitter(i % n, 12) * 3.5) * k, (i / n) * TAU);
+          const [x, y] = polar(cx, cy, r + 2 * k + (i % 2 ? 1 : -1) * (2 + jitter(i % n, 12) * 4) * k, (i / n) * TAU);
           if (i === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
       };
       ctx.lineJoin = 'round';
       ctx.shadowColor = c0;
-      ctx.shadowBlur = 14 * k;
+      ctx.shadowBlur = 7 * k;
       ctx.strokeStyle = c0;
       ctx.lineWidth = 3.2 * k;
       path();
@@ -1566,6 +1604,13 @@ function drawAvatar(ctx: Ctx, image: ProfileImage | null, { cx, cy, r }: Circle,
   ring(ctx, cx, cy, r);
   ctx.fill();
   ctx.restore();
+
+  const illustrated = !!frame && ILLUSTRATED_FRAMES.has(frame.style);
+  if (illustrated) {
+    ctx.save();
+    drawIllustratedFrame(ctx, frame.style, cx, cy, r, colors, 'back');
+    ctx.restore();
+  }
 
   ctx.save();
   ring(ctx, cx, cy, r);
@@ -1655,9 +1700,21 @@ function drawAvatar(ctx: Ctx, image: ProfileImage | null, { cx, cy, r }: Circle,
     case 'laurel':
     case 'blossom':
     case 'crystal':
-    case 'lightning':
-      drawIllustratedFrame(ctx, frame.style, cx, cy, r, colors);
+    case 'lightning': {
+      // The frame sits on the picture: darken its edge a little (inner shadow), then the front layer.
+      ctx.save();
+      ring(ctx, cx, cy, r);
+      ctx.clip();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      ctx.shadowBlur = 10 * (r / 68);
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.lineWidth = 6 * (r / 68);
+      ring(ctx, cx, cy, r + 3 * (r / 68));
+      ctx.stroke();
+      ctx.restore();
+      drawIllustratedFrame(ctx, frame.style, cx, cy, r, colors, 'front');
       break;
+    }
     case 'crown':
       ctx.strokeStyle = gradient();
       ring(ctx, cx, cy, at);
@@ -1786,11 +1843,183 @@ function drawStats(ctx: Ctx, block: StatBlock, subject: ProfileCardSubject, acce
 
 // ---------- XP bar ----------
 
+const ILLUSTRATED_XP: ReadonlySet<XpBarData['style']> = new Set(['pixel', 'beads', 'wave', 'flame', 'vine', 'comet']);
+
+/** Illustrated XP bars; decorations may reach a few px above and below the bar. */
+function drawIllustratedXp(ctx: Ctx, { x, y, w, h }: Rect, fraction: number, style: XpBarData['style'], [c0, c1]: string[]) {
+  const r = h / 2;
+  const fw = fraction <= 0 ? 0 : Math.max(h, w * fraction);
+  const track = () => {
+    roundedRect(ctx, x, y, w, h, r);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.fill();
+  };
+  const clipFill = () => {
+    roundedRect(ctx, x, y, fw, h, r);
+    ctx.clip();
+  };
+  switch (style) {
+    case 'pixel': {
+      // Two rows of square pixels, a lighter top row and a dithered leading edge, like an 8-bit health bar.
+      const cell = h / 2;
+      const cols = Math.floor(w / cell);
+      const filled = Math.round(fraction * cols);
+      for (let col = 0; col < cols; col++) {
+        for (let row = 0; row < 2; row++) {
+          const lit = col < filled - 2 || (col < filled && (col + row) % 2 === 0);
+          ctx.fillStyle = lit ? (row === 0 ? lighten(c0, 0.22) : c0) : col < filled ? c1 : 'rgba(255, 255, 255, 0.07)';
+          ctx.fillRect(x + col * cell + 0.5, y + row * cell + 0.5, cell - 1, cell - 1);
+        }
+      }
+      break;
+    }
+    case 'beads': {
+      // A string of pearls: filled ones shine, the rest wait as dim glass.
+      const step = h * 1.3;
+      const count = Math.floor(w / step);
+      const filled = Math.round(fraction * count);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, y + r);
+      ctx.lineTo(x + w, y + r);
+      ctx.stroke();
+      for (let i = 0; i < count; i++) {
+        const bx = x + step / 2 + i * (w - step) / Math.max(1, count - 1);
+        const br = r * 0.95;
+        ctx.beginPath();
+        circle(ctx, bx, y + r, br);
+        if (i < filled) {
+          const shine = ctx.createRadialGradient(bx - br * 0.35, y + r - br * 0.35, 0, bx, y + r, br);
+          shine.addColorStop(0, lighten(c1, 0.5));
+          shine.addColorStop(0.6, c0);
+          shine.addColorStop(1, darken(c0, 0.3));
+          ctx.fillStyle = shine;
+        } else ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.fill();
+      }
+      break;
+    }
+    case 'wave': {
+      // Liquid: two layered waves and a few bubbles.
+      track();
+      if (!fw) break;
+      ctx.save();
+      clipFill();
+      ctx.fillStyle = darken(c0, 0.15);
+      ctx.fillRect(x, y, fw, h);
+      for (const [level, alpha, phase] of [[0.3, 0.55, 0], [0.5, 0.9, 2]] as const) {
+        ctx.beginPath();
+        ctx.moveTo(x, y + h);
+        for (let px = 0; px <= fw; px += 2) ctx.lineTo(x + px, y + h * level + Math.sin(px / 9 + phase) * h * 0.14);
+        ctx.lineTo(x + fw, y + h);
+        ctx.closePath();
+        ctx.fillStyle = withAlpha(level < 0.4 ? c1 : c0, alpha);
+        ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      for (let i = 0; i < fw / 22; i++) {
+        ctx.beginPath();
+        circle(ctx, x + 10 + i * 22 + jitter(i, 20) * 10, y + h * (0.45 + jitter(i, 21) * 0.35), Math.max(0.8, h * (0.07 + jitter(i, 22) * 0.07)));
+        ctx.fill();
+      }
+      ctx.restore();
+      break;
+    }
+    case 'flame': {
+      // Glowing fill with little flames dancing along its top and a bigger one at the tip.
+      track();
+      if (!fw) break;
+      ctx.save();
+      ctx.shadowColor = withAlpha(c0, 0.8);
+      ctx.shadowBlur = 12;
+      roundedRect(ctx, x, y, fw, h, r);
+      ctx.fillStyle = linearGradient(ctx, 0, x, y, fw, h, [darken(c0, 0.2), c0, c1]);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      const tongue = (bx: number, base: number, len: number, wid: number, fill: string) => {
+        ctx.beginPath();
+        ctx.moveTo(bx - wid / 2, base);
+        ctx.quadraticCurveTo(bx - wid * 0.45, base - len * 0.6, bx + wid * 0.1, base - len);
+        ctx.quadraticCurveTo(bx + wid * 0.5, base - len * 0.5, bx + wid / 2, base);
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+      };
+      for (let i = 0; i * 9 < fw - 6; i++) tongue(x + 6 + i * 9, y + h * 0.75, h * (0.55 + jitter(i, 23) * 0.6), 7, withAlpha(lighten(c1, 0.35), 0.7));
+      ctx.shadowColor = c1;
+      ctx.shadowBlur = 10;
+      tongue(x + fw - r, y + h, h * 1.6, h * 1.1, c1);
+      tongue(x + fw - r, y + h, h * 0.95, h * 0.6, lighten(c1, 0.7));
+      ctx.restore();
+      break;
+    }
+    case 'vine': {
+      // A vine growing along the bar, leaves above and below, a fresh sprout at the tip.
+      track();
+      if (!fw) break;
+      roundedRect(ctx, x, y, fw, h, r);
+      ctx.fillStyle = withAlpha(c0, 0.22);
+      ctx.fill();
+      const stemY = (px: number) => y + r + Math.sin(px / 14) * h * 0.18;
+      ctx.beginPath();
+      for (let px = 0; px <= fw - 2; px += 2) {
+        if (px === 0) ctx.moveTo(x + px, stemY(px));
+        else ctx.lineTo(x + px, stemY(px));
+      }
+      ctx.strokeStyle = c1;
+      ctx.lineWidth = Math.max(1.5, h * 0.16);
+      ctx.stroke();
+      const gap = Math.max(10, h * 1.3);
+      for (let i = 0; (i + 0.5) * gap < fw - h; i++) {
+        const px = (i + 0.5) * gap;
+        const up = i % 2 === 0;
+        drawLeaf(ctx, x + px, stemY(px), up ? -0.75 : 0.75, h * 1.05, h * 0.38, i % 3 ? c0 : lighten(c0, 0.18));
+      }
+      drawLeaf(ctx, x + fw - 2, stemY(fw - 2), -0.5, h * 1.25, h * 0.45, lighten(c0, 0.25));
+      drawLeaf(ctx, x + fw - 2, stemY(fw - 2), 0.45, h * 1.0, h * 0.38, c0);
+      break;
+    }
+    case 'comet': {
+      // A comet racing through a starfield: its tail fades out behind it.
+      track();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      for (let i = 0; i < w / 14; i++) {
+        ctx.beginPath();
+        circle(ctx, x + 6 + i * 14 + jitter(i, 24) * 8, y + h * (0.2 + jitter(i, 25) * 0.6), 0.7 + jitter(i, 26) * 0.6);
+        ctx.fill();
+      }
+      if (!fw) break;
+      ctx.save();
+      roundedRect(ctx, x, y, fw, h, r);
+      const tail = ctx.createLinearGradient(x, 0, x + fw, 0);
+      tail.addColorStop(0, withAlpha(c0, 0));
+      tail.addColorStop(0.7, withAlpha(c0, 0.75));
+      tail.addColorStop(1, c1);
+      ctx.fillStyle = tail;
+      ctx.fill();
+      ctx.shadowColor = c1;
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      circle(ctx, x + fw - r, y + r, r * 1.05);
+      ctx.fill();
+      ctx.restore();
+      break;
+    }
+  }
+}
+
 function drawXpBar(ctx: Ctx, { x, y, w, h }: Rect, fraction: number, style: XpBarData | null, accent: string) {
   const colors = style?.colors.length ? style.colors : [accent, lighten(accent, 0.4)];
   const pair = colors.length > 1 ? colors : [colors[0], lighten(colors[0], 0.35)];
   const r = h / 2;
   ctx.save();
+  if (style && ILLUSTRATED_XP.has(style.style)) {
+    drawIllustratedXp(ctx, { x, y, w, h }, fraction, style.style, pair);
+    ctx.restore();
+    return;
+  }
   if (style?.style === 'segmented') {
     const count = 24;
     const gap = 4;
