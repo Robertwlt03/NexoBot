@@ -7,14 +7,62 @@ import type { ReactNode } from 'react';
 const MOSS = '#8aa866';
 const LINE = { fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 
-/** Leaf with its tip at (0,-1) and stem at (0,1), scaled and rotated into place. */
-const LEAF = 'M0 1 C -0.62 0.45 -0.6 -0.45 0 -1 C 0.6 -0.45 0.62 0.45 0 1 Z M0 0.85 L0 -0.7';
-const VINE = 'M600 10 C 556 14 520 40 474 44 C 424 48 404 30 356 44 C 306 58 300 110 258 128 C 222 143 196 128 172 140';
-const LEAVES: [x: number, y: number, size: number, angle: number][] = [
-  [562, 20, 15, -60], [514, 36, 12, 40], [474, 50, 14, -130], [424, 40, 11, 30], [380, 30, 13, -40],
-  [328, 60, 12, 70], [300, 96, 14, -20], [252, 136, 11, 110], [200, 140, 10, -70],
+type P = readonly [number, number];
+type Segment = readonly [P, P, P, P];
+/** The vine: cubic Bézier segments from the top-right corner down to the left. */
+const SEGMENTS: readonly Segment[] = [
+  [[600, 10], [556, 14], [520, 40], [474, 44]],
+  [[474, 44], [424, 48], [404, 30], [356, 44]],
+  [[356, 44], [306, 58], [300, 110], [258, 128]],
+  [[258, 128], [222, 143], [196, 128], [172, 140]],
 ];
-const TENDRILS = ['M514 36 c -10 -14 4 -26 12 -16 c 6 8 -4 14 -8 8', 'M328 60 c 14 -6 22 8 12 14 c -8 5 -12 -4 -6 -7', 'M252 136 c -4 14 -20 12 -18 2 c 2 -8 10 -6 9 0'];
+const VINE = `M${SEGMENTS[0][0].join(' ')} ${SEGMENTS.map(([, c1, c2, end]) => `C ${c1.join(' ')} ${c2.join(' ')} ${end.join(' ')}`).join(' ')}`;
+
+/** Point and direction (radians) of the vine at parameter t of segment i. */
+function along(i: number, t: number): { x: number; y: number; angle: number } {
+  const [p0, p1, p2, p3] = SEGMENTS[i];
+  const u = 1 - t;
+  const coord = (k: 0 | 1) => u * u * u * p0[k] + 3 * u * u * t * p1[k] + 3 * u * t * t * p2[k] + t * t * t * p3[k];
+  const slope = (k: 0 | 1) => 3 * u * u * (p1[k] - p0[k]) + 6 * u * t * (p2[k] - p1[k]) + 3 * t * t * (p3[k] - p2[k]);
+  return { x: coord(0), y: coord(1), angle: Math.atan2(slope(1), slope(0)) };
+}
+
+/** Leaf in a unit box: base at (0,0) on the vine, tip at (0,-1); the midrib stays inside the blade. */
+const LEAF = 'M0 0 C -0.44 -0.22 -0.46 -0.74 0 -1 C 0.46 -0.74 0.44 -0.22 0 0 Z';
+const MIDRIB = 'M0 -0.1 L0 -0.8';
+/** Where leaves grow: segment, position on it, side (1 / -1) and length. They alternate sides like a real vine. */
+const LEAF_SPOTS: readonly [segment: number, t: number, side: 1 | -1, size: number][] = [
+  [0, 0.22, 1, 26], [0, 0.62, -1, 22], [1, 0.12, 1, 24], [1, 0.55, -1, 20], [1, 0.92, 1, 22],
+  [2, 0.3, -1, 24], [2, 0.7, 1, 22], [3, 0.25, -1, 20], [3, 0.72, 1, 17],
+];
+/** Leaves stand off the vine at this angle (radians). */
+const LEAF_SPREAD = 0.95;
+const LEAVES = LEAF_SPOTS.map(([i, t, side, size]) => {
+  const { x, y, angle } = along(i, t);
+  // The leaf's own "up" (-y) points along angle + side × spread; SVG rotate() turns +x, so add 90°.
+  const deg = ((angle + side * LEAF_SPREAD) * 180) / Math.PI + 90;
+  return { key: `${i}-${t}`, transform: `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${deg.toFixed(1)}) scale(${size})`, size };
+});
+
+/** Curls branching off between the leaves, on the side with room. */
+const CURL_SPOTS: readonly [segment: number, t: number, side: 1 | -1][] = [[0, 0.42, 1], [2, 0.5, -1], [3, 0.5, 1]];
+const CURLS = CURL_SPOTS.map(([i, t, side]) => {
+  const { x, y, angle } = along(i, t);
+  const out = angle + side * 1.15;
+  // A short stalk, then a tightening spiral.
+  const points: string[] = [];
+  let px = x;
+  let py = y;
+  let heading = out;
+  for (let step = 0; step < 34; step += 1) {
+    const len = 2.6 * (1 - step / 44);
+    heading += side * (0.05 + step * 0.012);
+    px += Math.cos(heading) * len;
+    py += Math.sin(heading) * len;
+    points.push(`${px.toFixed(1)} ${py.toFixed(1)}`);
+  }
+  return `M${x.toFixed(1)} ${y.toFixed(1)} L${points.join(' L')}`;
+});
 
 /** Where the 24px icon sits and how big it is drawn (viewBox units). */
 const ICON_AT = { x: 446, y: 70, scale: 5.8 } as const;
@@ -47,9 +95,12 @@ export function Engraving({ art, width }: { art?: ReactNode; width: string }) {
   const lines = (stroke: string, grow: number) => (
     <g {...LINE} stroke={stroke}>
       <path d={VINE} strokeWidth={VINE_LINE * grow} />
-      {TENDRILS.map((d) => <path key={d} d={d} strokeWidth={VINE_LINE * 0.7 * grow} />)}
-      {LEAVES.map(([x, y, size, angle]) => (
-        <path key={`${x}-${y}`} d={LEAF} transform={`translate(${x} ${y}) rotate(${angle}) scale(${size})`} strokeWidth={(VINE_LINE * 0.8 * grow) / size} />
+      {CURLS.map((d) => <path key={d} d={d} strokeWidth={VINE_LINE * 0.6 * grow} />)}
+      {LEAVES.map((leaf) => (
+        <g key={leaf.key} transform={leaf.transform} strokeWidth={(VINE_LINE * 0.75 * grow) / leaf.size}>
+          <path d={LEAF} />
+          <path d={MIDRIB} strokeWidth={(VINE_LINE * 0.45 * grow) / leaf.size} />
+        </g>
       ))}
       {iconArt && (
         <g transform={`translate(${ICON_AT.x} ${ICON_AT.y}) scale(${ICON_AT.scale})`} strokeWidth={(ICON_LINE * grow) / ICON_AT.scale}>
@@ -66,10 +117,8 @@ export function Engraving({ art, width }: { art?: ReactNode; width: string }) {
       </defs>
       <g filter={`url(#${id}-scorch)`} opacity={0.55}>{lines('#1a0d05', 2.4)}</g>
       {/* Moss in the leaves: above the scorch, under the cut lines. */}
-      {LEAVES.map(([x, y, size, angle]) => (
-        <path key={`m${x}-${y}`} d={LEAF} transform={`translate(${x} ${y}) rotate(${angle}) scale(${size})`} fill={MOSS} fillOpacity={0.7} />
-      ))}
-      <g transform="translate(1.1 1.3)">{lines('rgba(255, 222, 180, 0.22)', 1)}</g>
+      {LEAVES.map((leaf) => <path key={`m${leaf.key}`} d={LEAF} transform={leaf.transform} fill={MOSS} fillOpacity={0.7} />)}
+      <g transform="translate(0.7 0.9)">{lines('rgba(255, 222, 180, 0.18)', 1)}</g>
       {lines('rgba(16, 8, 3, 0.9)', 1)}
     </svg>
   );

@@ -3,32 +3,20 @@
 
 import type { Achievement } from '../../web/dto/profile.js';
 import { logger } from '../../utils/logger.js';
-import { ACHIEVEMENT_BADGES } from './catalog.js';
+import { ACHIEVEMENT_BADGES, type AchievementStat } from './catalog.js';
+import { ACTIVITY_COUNTERS, CHAT_STATS, GAME_IDS } from './activity.js';
+import { normalizeSettings } from './profile.js';
+import { COSMETIC_SLOTS } from '../../shared/cosmetics.js';
 import { T, cosmeticsPool, requirePool, withTx } from './db.js';
 import { earnTx } from './wallet.js';
 
-export interface AchievementStats {
-  maxLevel: number; wins: number; items: number; streak: number; lifetime: number;
-  purchases: number; gifts: number; blackMarket: number; top3: number;
-}
+export type AchievementStats = Record<AchievementStat, number>;
 
-interface AchievementDef { id: string; reward: number; stat: keyof AchievementStats; target: number; showProgress: boolean }
+interface AchievementDef { id: string; reward: number; stat: AchievementStat; target: number; showProgress: boolean }
 
-export const ACHIEVEMENTS: AchievementDef[] = [
-  { id: 'first_purchase', reward: 50, stat: 'purchases', target: 1, showProgress: false },
-  { id: 'level_10', reward: 50, stat: 'maxLevel', target: 10, showProgress: true },
-  { id: 'level_25', reward: 120, stat: 'maxLevel', target: 25, showProgress: true },
-  { id: 'level_50', reward: 300, stat: 'maxLevel', target: 50, showProgress: true },
-  { id: 'streak_7', reward: 75, stat: 'streak', target: 7, showProgress: true },
-  { id: 'streak_30', reward: 300, stat: 'streak', target: 30, showProgress: true },
-  { id: 'wins_100', reward: 100, stat: 'wins', target: 100, showProgress: true },
-  { id: 'wins_1000', reward: 500, stat: 'wins', target: 1000, showProgress: true },
-  { id: 'first_gift', reward: 50, stat: 'gifts', target: 1, showProgress: false },
-  { id: 'black_market', reward: 150, stat: 'blackMarket', target: 1, showProgress: false },
-  { id: 'monthly_top3', reward: 200, stat: 'top3', target: 1, showProgress: false },
-  { id: 'collector_10', reward: 100, stat: 'items', target: 10, showProgress: true },
-  { id: 'lifetime_10000', reward: 250, stat: 'lifetime', target: 10_000, showProgress: true },
-];
+export const ACHIEVEMENTS: AchievementDef[] = ACHIEVEMENT_BADGES.map((entry) => ({
+  id: entry.achievementId, reward: entry.reward, stat: entry.stat, target: entry.target, showProgress: entry.target > 1,
+}));
 
 const nameOf = (id: string) => ACHIEVEMENT_BADGES.find((entry) => entry.achievementId === id);
 
@@ -36,39 +24,68 @@ export function metAchievements(stats: AchievementStats, unlocked: Set<string>):
   return ACHIEVEMENTS.filter((def) => !unlocked.has(def.id) && stats[def.stat] >= def.target);
 }
 
+const DERIVED_SQL = `SELECT
+  (SELECT MAX(level) FROM ${T.user_levels} WHERE user_id = $1) AS "maxLevel",
+  (SELECT COUNT(*) FROM ${T.user_levels} WHERE user_id = $1) AS servers,
+  (SELECT COUNT(*) FROM ${T.user_levels} WHERE user_id = $1 AND level >= 10) AS servers10,
+  (SELECT SUM(minigame_points) FROM ${T.monthly_scores} WHERE user_id = $1) AS wins,
+  (SELECT COUNT(*) FROM ${T.user_inventory} WHERE user_id = $1 AND source <> 'achievement') AS items,
+  (SELECT COUNT(*) FROM ${T.user_inventory} WHERE user_id = $1 AND source = 'gift') AS "giftsReceived",
+  (SELECT COUNT(*) FROM ${T.user_inventory} v JOIN ${T.shop_items} i ON i.id = v.item_id WHERE v.user_id = $1 AND i.availability = 'event') AS "eventItems",
+  (SELECT daily_streak FROM ${T.user_wallets} WHERE user_id = $1) AS streak,
+  (SELECT lifetime_earned FROM ${T.user_wallets} WHERE user_id = $1) AS lifetime,
+  (SELECT COUNT(*) FROM ${T.wallet_transactions} WHERE user_id = $1 AND reason IN ('purchase', 'gift_sent')) AS purchases,
+  (SELECT COALESCE(SUM(ABS(amount)), 0) FROM ${T.wallet_transactions} WHERE user_id = $1 AND reason IN ('purchase', 'gift_sent')) AS spent,
+  (SELECT COUNT(*) FROM ${T.wallet_transactions} WHERE user_id = $1 AND reason = 'gift_sent') AS gifts,
+  (SELECT COUNT(*) FROM ${T.wallet_transactions} WHERE user_id = $1 AND reason = 'daily') AS daily,
+  (SELECT COUNT(*) FROM ${T.wallet_transactions} WHERE user_id = $1 AND reason = 'purchase' AND meta->>'blackMarket' = '1') AS "blackMarket",
+  (SELECT COUNT(*) FROM ${T.wallet_transactions} WHERE user_id = $1 AND reason = 'monthly_ranking' AND (meta->>'rank')::int <= 3) AS top3,
+  (SELECT COUNT(*) FROM ${T.wallet_transactions} WHERE user_id = $1 AND reason = 'monthly_ranking' AND (meta->>'rank')::int = 1) AS "monthlyWins",
+  (SELECT COUNT(*) FROM ${T.birthdays} WHERE user_id = $1) AS birthday,
+  (SELECT settings FROM ${T.user_profiles} WHERE user_id = $1) AS settings`;
+
+/** Every stat an achievement can watch, from stored data and the activity counters. */
 async function readStats(userId: string): Promise<{ stats: AchievementStats; unlocked: Map<string, Date> }> {
   const pool = requirePool();
-  const [stats, unlocked] = await Promise.all([
-    pool.query<Record<keyof AchievementStats, string | null>>(
-      `SELECT
-         (SELECT MAX(level) FROM ${T.user_levels} WHERE user_id = $1) AS "maxLevel",
-         (SELECT SUM(minigame_points) FROM ${T.monthly_scores} WHERE user_id = $1) AS wins,
-         (SELECT COUNT(*) FROM ${T.user_inventory} WHERE user_id = $1) AS items,
-         (SELECT daily_streak FROM ${T.user_wallets} WHERE user_id = $1) AS streak,
-         (SELECT lifetime_earned FROM ${T.user_wallets} WHERE user_id = $1) AS lifetime,
-         (SELECT COUNT(*) FROM ${T.wallet_transactions} WHERE user_id = $1 AND reason IN ('purchase', 'gift_sent')) AS purchases,
-         (SELECT COUNT(*) FROM ${T.wallet_transactions} WHERE user_id = $1 AND reason = 'gift_sent') AS gifts,
-         (SELECT COUNT(*) FROM ${T.wallet_transactions} WHERE user_id = $1 AND reason = 'purchase' AND meta->>'blackMarket' = '1') AS "blackMarket",
-         (SELECT COUNT(*) FROM ${T.wallet_transactions} WHERE user_id = $1 AND reason = 'monthly_ranking' AND (meta->>'rank')::int <= 3) AS top3`,
-      [userId],
-    ),
+  const [derived, counters, unlocked] = await Promise.all([
+    pool.query<Record<string, unknown>>(DERIVED_SQL, [userId]),
+    pool.query<{ stat: string; value: string }>(`SELECT stat, value FROM ${T.user_stats} WHERE user_id = $1`, [userId]),
     pool.query<{ achievement_id: string; unlocked_at: Date }>(`SELECT achievement_id, unlocked_at FROM ${T.user_achievements} WHERE user_id = $1`, [userId]),
   ]);
-  const row = stats.rows[0];
-  const n = (key: keyof AchievementStats) => Number(row[key] ?? 0);
-  return {
-    stats: {
-      maxLevel: n('maxLevel'), wins: n('wins'), items: n('items'), streak: n('streak'), lifetime: n('lifetime'),
-      purchases: n('purchases'), gifts: n('gifts'), blackMarket: n('blackMarket'), top3: n('top3'),
-    },
-    unlocked: new Map(unlocked.rows.map((entry) => [entry.achievement_id, entry.unlocked_at])),
-  };
+  const row = derived.rows[0] ?? {};
+  const stored = new Map(counters.rows.map((entry) => [entry.stat, Number(entry.value)]));
+  const counter = (stat: string) => stored.get(stat) ?? 0;
+  const n = (key: string) => Number(row[key] ?? 0);
+  const settings = normalizeSettings(row.settings);
+  const { equipped } = settings;
+  const stats = {
+    ...Object.fromEntries([...ACTIVITY_COUNTERS, ...CHAT_STATS].map((stat) => [stat, counter(stat)])),
+    maxLevel: n('maxLevel'), servers: n('servers'), servers10: n('servers10'), wins: n('wins'), items: n('items'),
+    giftsReceived: n('giftsReceived'), eventItems: n('eventItems'), streak: n('streak'), lifetime: n('lifetime'),
+    purchases: n('purchases'), spent: n('spent'), gifts: n('gifts'), daily: n('daily'), blackMarket: n('blackMarket'),
+    top3: n('top3'), monthlyWins: n('monthlyWins'), birthday: Math.min(1, n('birthday')),
+    bio: settings.bio.trim() ? 1 : 0,
+    outfit: COSMETIC_SLOTS.every((slot) => (slot === 'badge' ? equipped.badges.length > 0 : equipped[slot] !== null)) ? 1 : 0,
+    voiceMinutes: Math.floor(counter('voice_ms') / 60_000),
+    gamesPlayed: GAME_IDS.filter((game) => counter(`game_${game}`) > 0).length,
+    achievements: unlocked.rows.length,
+  } as AchievementStats;
+  return { stats, unlocked: new Map(unlocked.rows.map((entry) => [entry.achievement_id, entry.unlocked_at])) };
 }
 
 /** Unlocks every achievement whose condition is met. Never throws (bot hooks call it fire-and-forget). */
 export async function syncAchievements(userId: string): Promise<string[]> {
   if (!cosmeticsPool()) return [];
   try {
+    // Catch up on items added to achievements unlocked earlier (e.g. the achievement titles).
+    await requirePool().query(
+      `INSERT INTO ${T.user_inventory} (user_id, item_id, source)
+       SELECT a.user_id, i.id, 'achievement' FROM ${T.user_achievements} a
+       JOIN ${T.shop_items} i ON i.availability = 'achievement' AND i.achievement_id = a.achievement_id
+       WHERE a.user_id = $1
+       ON CONFLICT DO NOTHING`,
+      [userId],
+    );
     const unlockedNow: string[] = [];
     // Rewards can complete further achievements (lifetime, collector), so check twice at most.
     for (let round = 0; round < 2; round += 1) {
@@ -84,9 +101,12 @@ export async function syncAchievements(userId: string): Promise<string[]> {
           );
           if (!result.rowCount) return false;
           await earnTx(client, userId, def.reward, 'achievement', `Erfolg „${name}“`, null);
+          // Everything the achievement unlocks: its badge, its title and any item the owner tied to it.
           await client.query(
-            `INSERT INTO ${T.user_inventory} (user_id, item_id, source) VALUES ($1, $2, 'achievement') ON CONFLICT DO NOTHING`,
-            [userId, `ach-${def.id}`],
+            `INSERT INTO ${T.user_inventory} (user_id, item_id, source)
+             SELECT $1, id, 'achievement' FROM ${T.shop_items} WHERE availability = 'achievement' AND achievement_id = $2
+             ON CONFLICT DO NOTHING`,
+            [userId, def.id],
           );
           return true;
         });
@@ -111,6 +131,7 @@ export async function listAchievements(userId: string): Promise<Achievement[]> {
       description: meta?.description ?? '',
       reward: def.reward,
       itemId: `ach-${def.id}`,
+      titleId: meta?.title ? `ach-title-${def.id}` : null,
       unlockedAt: unlockedAt ? unlockedAt.toISOString() : null,
       progress: def.showProgress ? { current: Math.min(stats[def.stat], def.target), target: def.target } : null,
     };

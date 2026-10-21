@@ -1,21 +1,25 @@
 // Shop building blocks shared by the shop and the black market: filters, item grid, detail modal with buy/gift.
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { Link } from 'react-router';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { COSMETIC_SLOTS, RARITIES, RARITY_LABELS, SLOT_LABELS, levelUpReward } from '../../../src/shared/cosmetics';
 import type { CosmeticItem, CosmeticSlot, Rarity } from '../../../src/shared/cosmetics';
-import type { PurchaseResult, ShopEvent, ShopListing } from '../../../src/web/dto/profile';
+import type { PurchaseResult, ShopBundle, ShopEvent, ShopListing } from '../../../src/web/dto/profile';
 import { useUser } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
-import { LevelUpPreview, ProfileCardPreview } from '../components/ProfileCardPreview';
-import { Empty, Field, Modal, Notice, Select, Switch, Tabs, TextInput } from '../components/ui';
+import { ProfileCardPreview } from '../components/ProfileCardPreview';
+import { ProductStage, TryOnPreview } from './ProductStage';
+import { Empty, Field, Notice, Select, Switch, Tabs, TextInput } from '../components/ui';
 import {
   cardSubject, countdown, equipItem, formatDate, isEquipped, reducedMotion, resolveCosmetics, useEquip, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
-import { Glyph, ItemVisual, Bernis, Price, RarityLabel, backgroundStyle } from './visuals';
+import { Glyph, ItemVisual, Bernis, Price, RARITY_TILE, RarityLabel, backgroundStyle } from './visuals';
+import { ProductDialog } from './ProductDialog';
+import { BundleSection } from './bundles';
 import { Celebration } from './Celebration';
+import { EVENT_THEMES, EventBackdrop, SCENE_ROOM, eventTheme } from './EventScene';
 import { Icon } from '../icons';
 
 export type ShopVariant = 'shop' | 'blackmarket';
@@ -28,33 +32,44 @@ const forSale = (item: CosmeticItem) => item.price > 0 && !NOT_FOR_SALE[item.ava
 
 // ---------- Upcoming events strip ----------
 
-export function UpcomingEvents({ events }: { events: ShopEvent[] }) {
+const startsIn = (start: string, now: number) => {
+  const days = Math.floor((Date.parse(start) - now) / 86_400_000);
+  return days >= 1 ? `in ${days} ${days === 1 ? 'Tag' : 'Tagen'}` : `in ${countdown(start, now)}`;
+};
+
+/**
+ * Event calendar, folded away at the very bottom: there for the curious, but the shop does not make you wait for the
+ * next event — it should arrive as a surprise.
+ */
+export function EventCalendar({ events }: { events: ShopEvent[] }) {
   const now = useNow(60_000);
   if (!events.length) return null;
   return (
-    <section className="mt-8">
-      <h2 className="mb-3 text-[13px] font-medium text-mute">Demnächst</h2>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {events.map((event) => (
-          <div key={event.id} className="flex items-center gap-3.5 rounded-2xl border border-white/[.06] bg-surface p-4">
-            <span className="icon-tile"><span className="text-[13px] font-semibold">−{event.discount}%</span></span>
-            <div className="min-w-0 flex-1">
-              <h3 className="truncate text-[14.5px] font-medium">{event.name}</h3>
-              <p className="truncate text-[12.5px] text-mute">{formatDate(event.startsAt)} – {formatDate(event.endsAt)} · in {countdown(event.startsAt, now)}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
+    <details className="group mt-12 rounded-2xl border border-white/[.06] bg-surface">
+      <summary className="flex cursor-pointer list-none items-center gap-2.5 px-4 py-3 text-[13.5px] text-mute hover:text-ink [&::-webkit-details-marker]:hidden">
+        <Glyph name="calendar" size={16} /> Event-Kalender
+        <span className="ml-auto flex transition-transform group-open:rotate-90"><Icon name="arrowRight" size={15} /></span>
+      </summary>
+      <ul className="m-0 list-none divide-y divide-white/[.05] border-t border-white/[.06] p-0">
+        {events.map((event) => {
+          const { tint, glyph } = EVENT_THEMES[eventTheme(event)];
+          return (
+            <li key={event.id} className="flex items-center gap-3 px-4 py-2.5 text-[13px]">
+              {/* The season's tint, mixed with the text colour so the icon keeps its contrast in both modes. */}
+              <span className="shrink-0" style={{ color: `color-mix(in srgb, ${tint} 70%, var(--text-strong))` }}><Glyph name={glyph} size={16} /></span>
+              <span className="min-w-0 flex-1 truncate"><span className="text-ink">{event.name}</span> <span className="text-mute">· {formatDate(event.startsAt)} – {formatDate(event.endsAt)}</span></span>
+              {event.discount > 0 && <span className="shrink-0 tabular-nums text-ink">−{event.discount} %</span>}
+              <span className="w-[92px] shrink-0 text-right text-[12px] text-mute">{startsIn(event.startsAt, now)}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </details>
   );
 }
 
 // ---------- Store card, shelves & storefront ----------
 
-/** Rarity identity of a tile (game-shop convention: grey, blue, purple, gold, red). Only used inside item tiles. */
-export const RARITY_TILE: Record<Rarity, string> = {
-  common: '#8a8f99', rare: '#3b8cf6', epic: '#a35cf5', legendary: '#f2a516', mythic: '#f2415f',
-};
 
 /**
  * Game-shop tile: the item art on a glowing field in its rarity colour, light rays behind it, name in caps,
@@ -71,7 +86,14 @@ export function StoreCard({ listing, owned, variant, onOpen, className = '', lar
     <button type="button" onClick={onOpen} data-mode="dark" style={style}
       className={`js-item game-tile group relative flex cursor-pointer flex-col overflow-hidden rounded-[18px] border-0 bg-[#0d0b0a] p-0 text-left font-[inherit] ring-1 ring-white/[.08] transition duration-300 hover:-translate-y-1 hover:ring-[color-mix(in_srgb,var(--tile)_70%,transparent)] hover:shadow-[0_22px_44px_-18px_color-mix(in_srgb,var(--tile)_55%,transparent)] ${large ? '' : 'aspect-[3/4]'} ${className}`}>
       <div className="game-tile-field relative min-h-0 w-full flex-1 overflow-hidden">
-        <ItemVisual item={item} className={`h-full w-full rounded-none !bg-transparent transition-transform duration-500 ${large ? 'scale-[1.25] group-hover:scale-[1.32]' : 'scale-[1.3] group-hover:scale-[1.42]'}`} />
+        {item.slot === 'background' ? (
+          // Backgrounds: your own card as it is now, only with this background, tilted like a store preview.
+          <div className={`absolute origin-top-left overflow-hidden rounded-lg shadow-[0_20px_44px_-14px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 ${large ? 'left-[8%] top-[24%] w-[118%] -rotate-[7deg] group-hover:-rotate-[5deg] group-hover:scale-[1.03]' : 'left-[5%] top-[30%] w-[122%] -rotate-[9deg] group-hover:-rotate-[7deg] group-hover:scale-[1.04]'}`}>
+            <TryOnPreview items={[item]} resolution={0.5} />
+          </div>
+        ) : (
+          <ItemVisual item={item} className={`h-full w-full rounded-none !bg-transparent transition-transform duration-500 ${large ? 'scale-[1.25] group-hover:scale-[1.32]' : 'scale-[1.3] group-hover:scale-[1.42]'}`} />
+        )}
         <div className="absolute left-2.5 top-2.5 flex flex-wrap gap-1.5">
           {listing.discount > 0 && <span className="rounded-md bg-[#facc15] px-1.5 py-0.5 text-[11.5px] font-bold text-[#1a1405]">−{listing.discount} %</span>}
           {listing.availableUntil && variant === 'shop' && <span className="rounded-md bg-black/55 px-1.5 py-0.5 text-[11px] font-semibold text-white/90 backdrop-blur">Begrenzt</span>}
@@ -112,7 +134,8 @@ function Shelf({ title, hint, listings, owned, onOpen, onAll }: {
           <button type="button" className="icon-btn" aria-label="Weiter blättern" onClick={() => scroll(1)}><Icon name="arrowRight" size={18} /></button>
         </div>
       </div>
-      <div ref={track} className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-3 [scrollbar-width:none] md:-mx-2 md:scroll-px-2 md:px-2">
+      {/* A scroller clips everything outside it: room above for the hover lift, below for the rarity glow. */}
+      <div ref={track} className="-mx-4 -my-3 -mb-12 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-14 pt-3 [scrollbar-width:none] md:-mx-2 md:scroll-px-2 md:px-2">
         {listings.map((l) => (
           <StoreCard key={l.item.id} listing={l} owned={owned.has(l.item.id)} variant="shop" onOpen={() => onOpen(l.item.id)} className="w-[200px] shrink-0 snap-start md:w-[220px]" />
         ))}
@@ -122,7 +145,7 @@ function Shelf({ title, hint, listings, owned, onOpen, onAll }: {
 }
 
 /** Shop front page: hero with the featured look, shelves per topic, then the full searchable catalog. */
-export function Storefront({ listings, events, upcoming }: { listings: ShopListing[]; events: ShopEvent[]; upcoming: ShopEvent[] }) {
+export function Storefront({ listings, bundles, events, upcoming }: { listings: ShopListing[]; bundles: ShopBundle[]; events: ShopEvent[]; upcoming: ShopEvent[] }) {
   const { me, items } = useMe();
   const user = useUser();
   const now = useNow();
@@ -131,6 +154,7 @@ export function Storefront({ listings, events, upcoming }: { listings: ShopListi
   const catalogRef = useRef<HTMLDivElement>(null);
   const owned = useMemo(() => new Set(me.inventory.map((o) => o.itemId)), [me.inventory]);
   const event = events[0];
+  const theme = event ? eventTheme(event) : null;
 
   // Featured: the running event's own items and deals first, otherwise the most precious items you don't own yet.
   const featured = useMemo(() => {
@@ -169,9 +193,11 @@ export function Storefront({ listings, events, upcoming }: { listings: ShopListi
       {/* Showcase banner: dark in both modes, like a lit shop window. */}
       <section data-mode="dark" className="@container relative overflow-hidden rounded-[24px] border border-white/[.07]">
         <div className="absolute inset-0" style={heroBackground?.slot === 'background' ? backgroundStyle(heroBackground.data) : { background: 'var(--hero-glow), var(--brand-gradient)' }} />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(9,9,12,.94)_0%,rgba(9,9,12,.7)_45%,rgba(9,9,12,.15)_100%)]" />
+        {/* With an event scene the right side stays dark too, so the scene reads against a calm ground. */}
+        <div className={`absolute inset-0 ${theme ? 'bg-[linear-gradient(90deg,rgba(9,9,12,.94)_0%,rgba(9,9,12,.72)_50%,rgba(9,9,12,.5)_100%)]' : 'bg-[linear-gradient(90deg,rgba(9,9,12,.94)_0%,rgba(9,9,12,.7)_45%,rgba(9,9,12,.15)_100%)]'}`} />
+        {theme && event && <EventBackdrop theme={theme} discount={event.discount} />}
         {/* Two columns only when the banner itself is wide enough (container query), so the text never gets squeezed. */}
-        <div className="relative grid items-center gap-6 p-6 @3xl:grid-cols-[minmax(0,1fr)_minmax(0,400px)] @3xl:p-9">
+        <div className={`relative grid items-center gap-6 p-6 @3xl:grid-cols-[minmax(0,1fr)_minmax(0,400px)] @3xl:p-9 ${theme ? SCENE_ROOM : ''}`}>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-2 text-[13px] text-body">
               {event
@@ -203,18 +229,19 @@ export function Storefront({ listings, events, upcoming }: { listings: ShopListi
         </div>
       </section>
 
+      <BundleSection bundles={bundles} listings={listings} />
       <Shelf title={event ? `Mehr aus „${event.name}“` : 'Weitere Empfehlungen'} listings={featured.slice(5)} owned={owned} onOpen={setOpenId} />
       <Shelf title="Im Angebot" hint="Reduziert, solange das Event läuft." listings={deals} owned={owned} onOpen={setOpenId} />
       <Shelf title="Neu im Shop" listings={fresh} owned={owned} onOpen={setOpenId} />
       {bySlot.map((g) => (
         <Shelf key={g.slot} title={SLOT_PLURAL[g.slot]} listings={g.list} owned={owned} onOpen={setOpenId} onAll={() => showAll(g.slot)} />
       ))}
-      <UpcomingEvents events={upcoming} />
 
       <section ref={catalogRef} className="mt-12 scroll-mt-6">
         <h2 className="mb-3 text-[19px] font-semibold tracking-tight">Alle Artikel</h2>
         <ItemBrowser listings={listings} variant="shop" slot={slot} onSlotChange={setSlot} />
       </section>
+      <EventCalendar events={upcoming} />
       {open && <ItemDetail listing={open} owned={owned.has(open.item.id)} onClose={() => setOpenId(null)} />}
     </>
   );
@@ -293,18 +320,6 @@ export function ItemBrowser({ listings, variant, filters = true, slot: slotProp,
 
 // ---------- Detail modal ----------
 
-/** The member's card with `item` put on (temporarily), or the level-up message for level-up styles. */
-export function TryOnPreview({ item }: { item: CosmeticItem }) {
-  const { me, items } = useMe();
-  const user = useUser();
-  const catalog = useMemo(() => new Map(items).set(item.id, item), [items, item]);
-  const subject = cardSubject(user, me, null, me.profile.bio);
-  const cosmetics = resolveCosmetics(equipItem(me.profile.equipped, item), catalog);
-  return item.slot === 'levelup'
-    ? <LevelUpPreview subject={subject} cosmetics={cosmetics} level={subject.level + 1} reward={levelUpReward(subject.level + 1)} />
-    : <ProfileCardPreview subject={subject} cosmetics={cosmetics} className="w-full" />;
-}
-
 const SNOWFLAKE = /^\d{17,20}$/;
 
 export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; owned: boolean; onClose: () => void }) {
@@ -359,66 +374,88 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
     );
   }
 
-  let footer: ReactNode;
-  if (giftMode) {
-    footer = (
-      <>
-        <button type="button" className="btn btn-secondary" onClick={() => setGiftMode(false)}>Zurück</button>
-        <button type="button" className="btn btn-primary" disabled={busy || after < 0 || !SNOWFLAKE.test(toUserId)} onClick={gift}>Geschenk senden</button>
-      </>
-    );
-  } else {
-    footer = (
-      <>
-        <button type="button" className="btn btn-ghost mr-auto" onClick={onClose}>Schließen</button>
-        {buyable && <button type="button" className="btn btn-secondary" disabled={busy || after < 0} onClick={() => setGiftMode(true)}>Verschenken</button>}
-        {owned
-          ? <button type="button" className="btn btn-primary" disabled={equip.busy || equipped} onClick={() => equip.apply(equipItem(me.profile.equipped, item), `„${item.name}“ angelegt.`)}>{equipped ? 'Angelegt' : 'Jetzt anlegen'}</button>
-          : buyable && <button type="button" className="btn btn-primary" disabled={busy || after < 0} onClick={buy}>{after < 0 ? 'Nicht genug Bernis' : 'Kaufen'}</button>}
-      </>
-    );
-  }
+  const tint = RARITY_TILE[item.rarity];
+  const putOn = () => equip.apply(equipItem(me.profile.equipped, item), `„${item.name}“ angelegt.`);
+  const where = WHERE_IT_SHOWS[item.slot];
 
   return (
     <>
-      <Modal title={item.name} onClose={onClose} footer={footer}>
-        <div className="-mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-mute">
-          {SLOT_LABELS[item.slot]} · <RarityLabel rarity={item.rarity} />
-          {listing.availableUntil && <span className="badge badge-warn">bis {formatDate(listing.availableUntil)}</span>}
-        </div>
-        <div className="max-h-[62vh] space-y-4 overflow-y-auto">
+      <ProductDialog title={item.name} onClose={onClose}
+        stage={<ProductStage items={[item]} tint={tint} kicker={`${RARITY_LABELS[item.rarity]} · ${SLOT_LABELS[item.slot]}`} />}>
+        <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 md:p-7">
+          {/* The item itself, big, on its rarity light (stacked layouts skip it: the stage above shows it). */}
+          <div className="game-tile-field relative mx-auto aspect-square w-full max-w-[260px] shrink-0 overflow-hidden rounded-[20px] ring-1 ring-white/10 max-lg:hidden" style={{ '--tile': tint } as CSSProperties} data-mode="dark">
+            <ItemVisual item={item} className="h-full w-full scale-[1.25] rounded-none !bg-transparent" />
+          </div>
           <div>
-            <p className="mb-2 text-[12.5px] font-medium text-mute">Vorschau auf deiner Karte</p>
-            <TryOnPreview item={item} />
+            <p className="text-[11px] font-bold uppercase tracking-[.16em]" style={{ color: tint }}>{RARITY_LABELS[item.rarity]} · {SLOT_LABELS[item.slot]}</p>
+            <h2 className="mt-1.5 text-[26px] font-bold leading-tight tracking-tight">{item.name}</h2>
+            <p className="mt-2 text-[14px] text-body">{item.description}</p>
           </div>
-          <div className="flex gap-4">
-            <ItemVisual item={item} className="w-28 shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p className="text-[14px] text-body">{item.description}</p>
-              <div className="mt-3 text-[15px]">
-                {owned ? <span className="text-pos">Im Besitz</span>
-                  : buyable ? <Price price={item.price} finalPrice={listing.finalPrice} /> : <span className="text-faint">{NOT_FOR_SALE[item.availability] ?? 'Nicht käuflich'}</span>}
+          <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[13px] text-mute">
+            <li className="flex items-center gap-2"><Glyph name="check" size={15} /> Zu sehen auf: {where}</li>
+            {listing.availableUntil && <li className="flex items-center gap-2"><Glyph name="clock" size={15} /> Nur bis {formatDate(listing.availableUntil)}</li>}
+            {owned && <li className="flex items-center gap-2 text-pos"><Glyph name="box" size={15} /> Schon in deinem Inventar</li>}
+          </ul>
+
+          <div className="mt-auto flex flex-col gap-3">
+            {!owned && buyable && (
+              <div>
+                <div className="flex items-baseline gap-2 text-[26px] font-bold text-ink">
+                  <Bernis amount={listing.finalPrice} large />
+                  {listing.discount > 0 && <><span className="text-[15px] font-medium text-faint line-through"><Bernis amount={item.price} /></span><span className="text-[15px] font-semibold text-pos">−{listing.discount} %</span></>}
+                </div>
+                <p className="mt-1 text-[12.5px] text-faint">{after >= 0 ? <>Danach hast du noch <Bernis amount={after} />.</> : <>Dir fehlen <Bernis amount={-after} />.</>}</p>
               </div>
-              {buyable && !owned && after >= 0 && <p className="mt-1 text-[12.5px] text-faint">Danach: <Bernis amount={after} /></p>}
-            </div>
+            )}
+            {!buyable && !owned && <p className="text-[13.5px] text-faint">{NOT_FOR_SALE[item.availability] ?? 'Nicht käuflich'}</p>}
+            {buyable && after < 0 && !owned && (
+              <Notice tone="warn">Hol dir den <Link to="/me">Tagesbonus</Link>, spiel Minispiele oder steig im Level auf.</Notice>
+            )}
+
+            {giftMode ? (
+              <div className="stack rounded-2xl border border-white/[.08] p-4">
+                <Field label="Discord-Nutzer-ID" hint="Rechtsklick auf das Profil → „Nutzer-ID kopieren“ (Entwicklermodus)." error={toUserId && !SNOWFLAKE.test(toUserId) ? 'Eine Nutzer-ID hat 17–20 Ziffern.' : null}>
+                  <TextInput value={toUserId} onChange={(v) => setToUserId(v.trim())} placeholder="z. B. 401234567890123456" maxLength={20} />
+                </Field>
+                <Field label="Nachricht (optional)" hint={`${message.length}/100`}>
+                  <TextInput value={message} onChange={setMessage} placeholder="Viel Spaß damit!" maxLength={100} />
+                </Field>
+                <p className="faint">Kostet dich <Bernis amount={listing.finalPrice} /> – auch wenn du den Artikel selbst schon hast.</p>
+                <div className="flex gap-2">
+                  <button type="button" className="btn btn-secondary" onClick={() => setGiftMode(false)}>Zurück</button>
+                  <button type="button" className="btn btn-primary flex-1" disabled={busy || after < 0 || !SNOWFLAKE.test(toUserId)} onClick={gift}>Geschenk senden</button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                {owned
+                  ? <button type="button" className="btn btn-primary min-h-12 flex-1 text-[15px]" disabled={equip.busy || equipped} onClick={putOn}>{equipped ? 'Angelegt' : 'Jetzt anlegen'}</button>
+                  : buyable && (
+                    <button type="button" className="btn btn-primary min-h-12 flex-1 text-[15px]" disabled={busy || after < 0} onClick={buy}>
+                      {after < 0 ? 'Nicht genug Bernis' : <>Für <Bernis amount={listing.finalPrice} /> kaufen</>}
+                    </button>
+                  )}
+                {buyable && (
+                  <button type="button" className="btn btn-secondary min-h-12 w-12 px-0" title="Verschenken" aria-label="Verschenken" disabled={busy || after < 0} onClick={() => setGiftMode(true)}>
+                    <Glyph name="gift" size={20} />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
-          {buyable && after < 0 && (
-            <Notice tone="warn">Dir fehlen <Bernis amount={-after} />. Hol dir den <Link to="/me">Tagesbonus</Link>, spiel Minispiele oder steig im Level auf.</Notice>
-          )}
-          {giftMode && (
-            <div className="stack rounded-2xl border border-white/[.06] p-4">
-              <Field label="Discord-Nutzer-ID" hint="Rechtsklick auf das Profil → „Nutzer-ID kopieren“ (Entwicklermodus)." error={toUserId && !SNOWFLAKE.test(toUserId) ? 'Eine Nutzer-ID hat 17–20 Ziffern.' : null}>
-                <TextInput value={toUserId} onChange={(v) => setToUserId(v.trim())} placeholder="z. B. 401234567890123456" maxLength={20} />
-              </Field>
-              <Field label="Nachricht (optional)" hint={`${message.length}/100`}>
-                <TextInput value={message} onChange={setMessage} placeholder="Viel Spaß damit!" maxLength={100} />
-              </Field>
-              <p className="faint">Kostet dich <Bernis amount={listing.finalPrice} /> – auch wenn du den Artikel selbst schon hast.</p>
-            </div>
-          )}
         </div>
-      </Modal>
+      </ProductDialog>
       {dialog}
     </>
   );
 }
+
+/** Where a slot shows up, for the "you get" list. */
+const WHERE_IT_SHOWS: Record<CosmeticSlot, string> = {
+  background: 'deiner Profilkarte (/profil)', accent: 'deiner Profilkarte und Willkommenskarten', nameStyle: 'deiner Profilkarte (/profil)',
+  frame: 'deiner Profilkarte und Willkommenskarten', badge: 'deiner Profilkarte (bis zu 3 Abzeichen)', title: 'deiner Profilkarte (/profil)',
+  xpBar: 'deiner Profilkarte (/profil)', font: 'deiner Profilkarte (/profil)', effect: 'deiner Profilkarte (/profil)',
+  levelup: 'deinen Level-up-Nachrichten', layout: 'deiner Profilkarte (/profil)', sticker: 'deiner Profilkarte (/profil)',
+};
+

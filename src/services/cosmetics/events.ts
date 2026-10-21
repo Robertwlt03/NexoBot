@@ -8,7 +8,7 @@ import { HttpError, badRequest, body, bool, int, str } from '../../web/http.js';
 import { T, cosmeticsPool, requirePool } from './db.js';
 import { berlinTime } from './time.js';
 
-export const AUTO_EVENT_IDS = ['black-friday', 'summer-sale', 'halloween', 'christmas', 'new-year'] as const;
+export const AUTO_EVENT_IDS = ['black-friday', 'summer-sale', 'halloween', 'christmas', 'new-year', 'valentine', 'carnival', 'easter', 'autumn'] as const;
 
 const auto = (id: string, name: string, description: string, start: Date, end: Date, discount: number): ShopEvent => ({
   id, name, description, startsAt: start.toISOString(), endsAt: end.toISOString(), discount, slots: null, kind: 'auto', active: true,
@@ -20,12 +20,28 @@ export function blackFridayDay(year: number): number {
   return 30 - ((weekday - 5 + 7) % 7);
 }
 
+/** Easter Sunday (Gregorian, anonymous algorithm) as [month, day]. */
+export function easterSunday(year: number): [number, number] {
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100;
+  const h = (19 * a + b - Math.floor(b / 4) - Math.floor((b - Math.floor((b + 8) / 25) + 1) / 3) + 15) % 30;
+  const l = (32 + 2 * (b % 4) + 2 * Math.floor(c / 4) - h - (c % 4)) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  return [month, ((h + l - 7 * m + 114) % 31) + 1];
+}
+
 /** Built-in events starting in `year` (Weihnachten runs into January of the next year). */
 export function calendarEvents(year: number): ShopEvent[] {
   const bf = blackFridayDay(year);
+  const [em, ed] = easterSunday(year);
   return [
     auto('new-year', 'Neujahr', 'Frisch ins neue Jahr: exklusive Neujahrs-Items.', berlinTime(year, 1, 1), berlinTime(year, 1, 8), 0),
+    auto('valentine', 'Valentinstag', '14 % auf den Shop und Event-Items zum Verschenken.', berlinTime(year, 2, 10), berlinTime(year, 2, 16), 14),
+    // Weiberfastnacht (Easter − 52) up to Aschermittwoch (Easter − 46); Palmsonntag up to the end of Ostermontag.
+    auto('carnival', 'Fasching', 'Helau und Alaaf: 11 % auf den Shop und närrische Event-Items.', berlinTime(year, em, ed - 52), berlinTime(year, em, ed - 46), 11),
+    auto('easter', 'Ostern', '15 % auf den Shop und Event-Items zum Suchen und Finden.', berlinTime(year, em, ed - 7), berlinTime(year, em, ed + 2), 15),
     auto('summer-sale', 'Sommer-Sale', '20 % auf den ganzen Shop.', berlinTime(year, 7, 15), berlinTime(year, 8, 16), 20),
+    auto('autumn', 'Goldener Herbst', '10 % auf den Shop und Herbst-Exklusives in Laubgold.', berlinTime(year, 9, 22), berlinTime(year, 10, 7), 10),
     auto('halloween', 'Halloween', '15 % auf den Shop und schaurige Event-Items.', berlinTime(year, 10, 24), berlinTime(year, 11, 1), 15),
     auto('black-friday', 'Black Friday', 'Black Friday bis Cyber Monday: 30 % auf den ganzen Shop.', berlinTime(year, 11, bf), berlinTime(year, 11, bf + 4), 30),
     auto('christmas', 'Weihnachten', '15 % auf den Shop und winterliche Event-Items.', berlinTime(year, 12, 15), berlinTime(year + 1, 1, 3), 15),
@@ -51,7 +67,7 @@ export function runningEvents(now: Date, stored: ShopEvent[]): ShopEvent[] {
 }
 
 /** The next few active events that have not started yet (one occurrence per event). */
-export function upcomingEvents(now: Date, stored: ShopEvent[], limit = 3): ShopEvent[] {
+export function upcomingEvents(now: Date, stored: ShopEvent[], limit = 6): ShopEvent[] {
   const seen = new Set<string>();
   return eventOccurrences(now, stored)
     .filter((event) => event.active && Date.parse(event.startsAt) > now.getTime() && !seen.has(event.id) && seen.add(event.id))

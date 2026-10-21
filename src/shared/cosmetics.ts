@@ -21,23 +21,39 @@ export type ItemAvailability = 'shop' | 'blackmarket' | 'event' | 'achievement' 
 // ---------- Item data per slot ----------
 
 export type PatternKind = 'none' | 'dots' | 'grid' | 'waves' | 'stars' | 'hex' | 'diagonal' | 'circuit';
-export interface BackgroundData { kind: 'solid' | 'gradient' | 'pattern' | 'aurora' | 'mesh'; colors: string[]; angle: number; pattern: PatternKind }
+/** Illustrated backgrounds drawn by the card renderer: game and character genres as original motifs (no franchise art or names). */
+export const BACKGROUND_SCENES = ['pixel', 'neon-city', 'moon-ninja', 'dungeon', 'orbital', 'pirate-cove'] as const;
+export type BackgroundScene = (typeof BACKGROUND_SCENES)[number];
+/** `scene` only with kind 'scene'; `colors` then recolour the scene (sky, landscape, light, details). */
+export interface BackgroundData { kind: 'solid' | 'gradient' | 'pattern' | 'aurora' | 'mesh' | 'scene'; colors: string[]; angle: number; pattern: PatternKind; scene?: BackgroundScene }
 export interface AccentData { color: string }
 export interface NameStyleData { colors: string[]; glow: boolean }
-export interface FrameData { style: 'solid' | 'gradient' | 'glow' | 'double' | 'dashed' | 'neon' | 'crown'; colors: string[]; width: number }
+export const FRAME_STYLES = ['solid', 'gradient', 'glow', 'double', 'dashed', 'neon', 'crown', 'vine', 'fire', 'laurel', 'blossom', 'crystal', 'lightning'] as const;
+/** Illustrated styles (vine … lightning) take colours [main, second] and ignore `width`. */
+export interface FrameData { style: (typeof FRAME_STYLES)[number]; colors: string[]; width: number }
 /** Badge glyph: one of BADGE_GLYPHS (drawn as vector shapes by the renderer, no emoji fonts needed). */
 export interface BadgeData { glyph: BadgeGlyph; color: string }
 export interface TitleData { text: string; color: string }
-export interface XpBarData { style: 'solid' | 'gradient' | 'striped' | 'segmented' | 'glow'; colors: string[] }
+export const XP_BAR_STYLES = ['solid', 'gradient', 'striped', 'segmented', 'glow', 'pixel', 'wave', 'flame', 'vine', 'comet'] as const;
+export interface XpBarData { style: (typeof XP_BAR_STYLES)[number]; colors: string[] }
 export interface FontData { font: 'inter' | 'unbounded' | 'caveat' }
-export interface EffectData { effect: 'sparkles' | 'snow' | 'confetti' | 'aurora' | 'scanlines' | 'stardust' | 'embers' | 'hearts' }
+export interface EffectData { effect: 'sparkles' | 'snow' | 'confetti' | 'aurora' | 'scanlines' | 'stardust' | 'embers' | 'hearts' | 'leaves' }
 export interface LevelupData { style: 'classic' | 'minimal' | 'neon' | 'royal' | 'retro'; color: string }
-export interface LayoutData { layout: 'classic' | 'compact' | 'centered' | 'split' }
-export interface StickerData { glyph: BadgeGlyph; color: string; corner: 'tl' | 'tr' | 'bl' | 'br' }
+export const CARD_LAYOUTS = ['classic', 'compact', 'centered', 'split', 'banner', 'mirror', 'minimal'] as const;
+export interface LayoutData { layout: (typeof CARD_LAYOUTS)[number] }
+/** Where a sticker sits: a card corner, or on the avatar's edge like a sticker slapped on the photo. */
+export const STICKER_SPOTS = ['tl', 'tr', 'bl', 'br', 'avatar'] as const;
+export type StickerSpot = (typeof STICKER_SPOTS)[number];
+export interface StickerData { glyph: BadgeGlyph; color: string; corner: StickerSpot }
+/** The member's chosen spot wins over the sticker's default. */
+export function withSpot(sticker: StickerData | null, spot: StickerSpot | null): StickerData | null {
+  return sticker && spot ? { ...sticker, corner: spot } : sticker;
+}
 
 export const BADGE_GLYPHS = [
   'star', 'crown', 'flame', 'bolt', 'heart', 'diamond', 'shield', 'leaf', 'moon', 'sun', 'snowflake', 'skull',
   'music', 'controller', 'fish', 'pickaxe', 'dice', 'trophy', 'rocket', 'ghost', 'pumpkin', 'gift', 'paw', 'code',
+  'acorn', 'mushroom', 'tree', 'egg', 'mask', 'chat', 'mic', 'clock',
 ] as const;
 export type BadgeGlyph = (typeof BADGE_GLYPHS)[number];
 
@@ -107,6 +123,8 @@ export interface UserProfileSettings {
   bio: string;
   /** Show this user's frame/colours on welcome cards of servers that allow member styles. */
   showOnWelcome: boolean;
+  /** Where the member puts their sticker (null = the sticker's own default spot). */
+  stickerSpot: StickerSpot | null;
 }
 
 export function emptyEquipped(): EquippedCosmetics {
@@ -114,7 +132,7 @@ export function emptyEquipped(): EquippedCosmetics {
 }
 
 export function defaultProfileSettings(): UserProfileSettings {
-  return { equipped: emptyEquipped(), bio: '', showOnWelcome: true };
+  return { equipped: emptyEquipped(), bio: '', showOnWelcome: true, stickerSpot: null };
 }
 
 /** Equipped items resolved to their data, ready for rendering (missing = Nexo default look). */

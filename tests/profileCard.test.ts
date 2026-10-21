@@ -4,7 +4,7 @@ import { createCanvas } from '@napi-rs/canvas';
 import { BADGE_GLYPHS, type ProfileCardSubject, type ResolvedCosmetics } from '../src/shared/cosmetics.js';
 import {
   FRAME_MAX_OUTSET, GLYPH_DRAWERS, LEVELUP_CARD_HEIGHT, LEVELUP_CARD_WIDTH, LEVELUP_STYLES, PROFILE_CARD_HEIGHT, PROFILE_CARD_WIDTH,
-  ITEM_PREVIEW_HEIGHT, ITEM_PREVIEW_WIDTH, PROFILE_FONTS, PROFILE_LAYOUTS, STICKER_RADIUS, createRng, drawGlyph, fitText, profileGeometry,
+  ITEM_PREVIEW_HEIGHT, ITEM_PREVIEW_WIDTH, PROFILE_FONTS, PROFILE_LAYOUTS, createRng, stickerRadius, drawGlyph, fitText, profileGeometry,
   renderItemPreview, renderLevelUpCard, renderProfileCard,
   seedFrom, stickerCenter, xpFraction,
 } from '../src/shared/profileCard.js';
@@ -55,10 +55,10 @@ test('layout geometry stays inside the card and clear of stickers', () => {
     assert.ok(g.text.nameY < g.text.titleY && g.text.titleY < g.text.bioY && g.text.bioY < g.xp.y, `${layout}: text order`);
     for (const corner of ['tl', 'tr', 'bl', 'br'] as const) {
       const s = stickerCenter(corner);
-      assert.ok(Math.hypot(s.x - cx, s.y - cy) > outer + STICKER_RADIUS, `${layout}: sticker ${corner} overlaps avatar`);
+      assert.ok(Math.hypot(s.x - cx, s.y - cy) > outer + stickerRadius(corner), `${layout}: sticker ${corner} overlaps avatar`);
       const nearestX = Math.min(Math.max(s.x, g.xp.x), g.xp.x + g.xp.w);
       const nearestY = Math.min(Math.max(s.y, g.xp.y), g.xp.y + g.xp.h);
-      assert.ok(Math.hypot(s.x - nearestX, s.y - nearestY) > STICKER_RADIUS, `${layout}: sticker ${corner} overlaps xp bar`);
+      assert.ok(Math.hypot(s.x - nearestX, s.y - nearestY) > stickerRadius(corner), `${layout}: sticker ${corner} overlaps xp bar`);
     }
   }
 });
@@ -113,8 +113,8 @@ test('shop tiles are painted by the card renderer for every item that shows on t
     const canvas = createCanvas(ITEM_PREVIEW_WIDTH, ITEM_PREVIEW_HEIGHT);
     const ctx = canvas.getContext('2d');
     const painted = renderItemPreview(ctx, item, subject, { avatar: null });
-    // Level-up styles and layouts are not part of one spot on the card; the dashboard sketches those itself.
-    assert.equal(painted, item.slot !== 'levelup' && item.slot !== 'layout', item.id);
+    // Level-up styles are not part of the card; the dashboard sketches those itself.
+    assert.equal(painted, item.slot !== 'levelup', item.id);
     if (!painted) continue;
     const alpha = ctx.getImageData(0, 0, ITEM_PREVIEW_WIDTH, ITEM_PREVIEW_HEIGHT).data.filter((_, index) => index % 4 === 3);
     assert.ok(alpha.some((value) => value > 0), `${item.id} paints nothing`);

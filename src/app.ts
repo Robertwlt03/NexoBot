@@ -25,6 +25,7 @@ import type { ServerCounter } from './services/serverstatsService.js';
 import type { NexoClient } from './types/index.js';
 import { createDashboardRouter } from './web/dashboard.js';
 import { startStatsTracker, stopStatsTracker } from './services/statsTracker.js';
+import { stopActivityTracker } from './services/cosmetics/activity.js';
 import { startCosmetics } from './services/cosmetics/hooks.js';
 
 /** Shape read by /health and /ready, including their fallbacks when no status is available. */
@@ -387,6 +388,7 @@ class NexoBot extends Client {
       }
 
       await stopStatsTracker(this).catch((error: unknown) => logger.warn('Statistik-Flush beim Beenden fehlgeschlagen:', error));
+      await stopActivityTracker().catch((error: unknown) => logger.warn('Aktivitäts-Flush beim Beenden fehlgeschlagen:', error));
 
       // Close database connection
       if (this.db && this.db.db) {

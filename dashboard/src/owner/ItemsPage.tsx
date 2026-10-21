@@ -3,7 +3,7 @@ import {
   BADGE_GLYPHS, COSMETIC_SLOTS, PRICE_BANDS, RARITIES, RARITY_LABELS, SLOT_LABELS, emptyEquipped,
 } from '../../../src/shared/cosmetics';
 import type {
-  BackgroundData, CosmeticItem, CosmeticSlot, EffectData, FontData, FrameData, ItemAvailability, LayoutData, LevelupData, Rarity, SlotData, StickerData, XpBarData,
+  BackgroundData, BackgroundScene, CosmeticItem, CosmeticSlot, EffectData, FontData, FrameData, ItemAvailability, LayoutData, LevelupData, Rarity, SlotData, StickerData, XpBarData,
 } from '../../../src/shared/cosmetics';
 import type { ShopEvent } from '../../../src/web/dto/profile';
 import { useApi, useUser } from '../api';
@@ -21,15 +21,16 @@ import { ItemVisual, Bernis, RarityLabel } from '../me/visuals';
 const opts = <T extends string>(labels: Record<T, string>) => (Object.keys(labels) as T[]).map((value) => ({ value, label: labels[value] }));
 
 export const AVAILABILITY_LABELS: Record<ItemAvailability, string> = { shop: 'Shop', blackmarket: 'Black Market', event: 'Event', achievement: 'Erfolg', ranking: 'Rangliste' };
-const KIND_LABELS: Record<BackgroundData['kind'], string> = { solid: 'Einfarbig', gradient: 'Verlauf', pattern: 'Muster', aurora: 'Polarlicht', mesh: 'Mesh' };
+const KIND_LABELS: Record<BackgroundData['kind'], string> = { solid: 'Einfarbig', gradient: 'Verlauf', pattern: 'Muster', aurora: 'Polarlicht', mesh: 'Mesh', scene: 'Szene (illustriert)' };
+const SCENE_LABELS: Record<BackgroundScene, string> = { pixel: 'Pixelabenteuer', 'neon-city': 'Neonstadt', 'moon-ninja': 'Mondschein-Ninja', dungeon: 'Kerker', orbital: 'Orbitalstation', 'pirate-cove': 'Piratenbucht' };
 const PATTERN_LABELS: Record<BackgroundData['pattern'], string> = { none: 'Keins', dots: 'Punkte', grid: 'Raster', waves: 'Wellen', stars: 'Sterne', hex: 'Waben', diagonal: 'Diagonal', circuit: 'Platine' };
-const FRAME_LABELS: Record<FrameData['style'], string> = { solid: 'Einfach', gradient: 'Verlauf', glow: 'Glühen', double: 'Doppelt', dashed: 'Gestrichelt', neon: 'Neon', crown: 'Krone' };
-const XP_LABELS: Record<XpBarData['style'], string> = { solid: 'Einfarbig', gradient: 'Verlauf', striped: 'Gestreift', segmented: 'Segmente', glow: 'Glühen' };
+const FRAME_LABELS: Record<FrameData['style'], string> = { solid: 'Einfach', gradient: 'Verlauf', glow: 'Glühen', double: 'Doppelt', dashed: 'Gestrichelt', neon: 'Neon', crown: 'Krone', vine: 'Ranke', fire: 'Flammen', laurel: 'Lorbeer', blossom: 'Blüten', crystal: 'Eiszacken', lightning: 'Blitze' };
+const XP_LABELS: Record<XpBarData['style'], string> = { solid: 'Einfarbig', gradient: 'Verlauf', striped: 'Gestreift', segmented: 'Segmente', glow: 'Glühen', pixel: 'Pixel', wave: 'Welle', flame: 'Flammen', vine: 'Ranke', comet: 'Komet' };
 const FONT_LABELS: Record<FontData['font'], string> = { inter: 'Inter', unbounded: 'Unbounded', caveat: 'Caveat (Handschrift)' };
-const EFFECT_LABELS: Record<EffectData['effect'], string> = { sparkles: 'Funkeln', snow: 'Schnee', confetti: 'Konfetti', aurora: 'Polarlicht', scanlines: 'Scanlines', stardust: 'Sternenstaub', embers: 'Glut', hearts: 'Herzen' };
+const EFFECT_LABELS: Record<EffectData['effect'], string> = { sparkles: 'Funkeln', snow: 'Schnee', confetti: 'Konfetti', aurora: 'Polarlicht', scanlines: 'Scanlines', stardust: 'Sternenstaub', embers: 'Glut', hearts: 'Herzen', leaves: 'Fallendes Laub' };
 const LEVELUP_LABELS: Record<LevelupData['style'], string> = { classic: 'Klassisch', minimal: 'Minimal', neon: 'Neon', royal: 'Königlich', retro: 'Retro' };
-const LAYOUT_LABELS: Record<LayoutData['layout'], string> = { classic: 'Klassisch', compact: 'Kompakt', centered: 'Zentriert', split: 'Geteilt' };
-const CORNER_LABELS: Record<StickerData['corner'], string> = { tl: 'Oben links', tr: 'Oben rechts', bl: 'Unten links', br: 'Unten rechts' };
+const LAYOUT_LABELS: Record<LayoutData['layout'], string> = { classic: 'Klassisch', compact: 'Kompakt', centered: 'Zentriert', split: 'Geteilt', banner: 'Banner', mirror: 'Gespiegelt', minimal: 'Minimal' };
+const CORNER_LABELS: Record<StickerData['corner'], string> = { tl: 'Oben links', tr: 'Oben rechts', bl: 'Unten links', br: 'Unten rechts', avatar: 'Auf dem Avatar' };
 
 const SLOT_DEFAULTS: { [S in CosmeticSlot]: SlotData[S] } = {
   background: { kind: 'gradient', colors: ['#2a2160', '#0e0b24'], angle: 135, pattern: 'none' },
@@ -88,7 +89,10 @@ function DataEditor({ item, onChange }: { item: CosmeticItem; onChange: (item: C
       const set = (patch: Partial<BackgroundData>) => onChange({ ...item, data: { ...item.data, ...patch } });
       return (
         <div className="grid-2">
-          <Field label="Art"><Select value={item.data.kind} onChange={(kind) => set({ kind })} options={opts(KIND_LABELS)} /></Field>
+          <Field label="Art"><Select value={item.data.kind} onChange={(kind) => set({ kind, ...(kind === 'scene' ? { scene: item.data.scene ?? 'pixel' } : {}) })} options={opts(KIND_LABELS)} /></Field>
+          {item.data.kind === 'scene' && (
+            <Field label="Motiv" hint="Farben: Himmel, Landschaft, Licht, Details."><Select value={item.data.scene ?? 'pixel'} onChange={(scene) => set({ scene })} options={opts(SCENE_LABELS)} /></Field>
+          )}
           <Field label="Muster" hint="Nur bei „Muster“."><Select value={item.data.pattern} onChange={(pattern) => set({ pattern })} options={opts(PATTERN_LABELS)} /></Field>
           <Field label="Winkel (Grad)"><NumberInput value={item.data.angle} onChange={(angle) => set({ angle })} min={0} max={360} /></Field>
           <Field label="Farben"><ColorList value={item.data.colors} onChange={(colors) => set({ colors })} /></Field>

@@ -4,7 +4,7 @@
 
 import { drawAmber } from './amber.js';
 import type {
-  BackgroundData, BadgeData, BadgeGlyph, CosmeticItem, EffectData, FrameData, LayoutData, LevelupData, NameStyleData, PatternKind,
+  BackgroundData, BackgroundScene, BadgeData, BadgeGlyph, CosmeticItem, EffectData, FrameData, LayoutData, LevelupData, NameStyleData, PatternKind,
   ProfileCardSubject, ResolvedCosmetics, StickerData, XpBarData,
 } from './cosmetics.js';
 
@@ -529,6 +529,125 @@ export const GLYPH_DRAWERS: Record<BadgeGlyph, GlyphDrawer> = {
     ctx.lineTo(-2.4, 9.5);
     ctx.stroke();
   },
+  acorn: (ctx) => {
+    ctx.beginPath();
+    // Cap with stalk, then the nut below it.
+    ctx.moveTo(-9.5, -1);
+    ctx.bezierCurveTo(-9.5, -7.5, -5, -9.8, 0, -9.8);
+    ctx.bezierCurveTo(5, -9.8, 9.5, -7.5, 9.5, -1);
+    ctx.closePath();
+    box(ctx, -1.2, -12.6, 2.4, 4, 1);
+    ctx.moveTo(-7.2, 0.6);
+    ctx.lineTo(7.2, 0.6);
+    ctx.bezierCurveTo(7.2, 6.8, 3.8, 10.6, 0, 12.2);
+    ctx.bezierCurveTo(-3.8, 10.6, -7.2, 6.8, -7.2, 0.6);
+    ctx.closePath();
+    ctx.fill();
+  },
+  chat: (ctx) => {
+    // Speech bubble with a tail bottom left and three dots cut out.
+    ctx.beginPath();
+    box(ctx, -11.5, -9.5, 23, 16, 5);
+    ctx.moveTo(-6, 5);
+    ctx.lineTo(-8.5, 11);
+    ctx.lineTo(-0.5, 5);
+    ctx.closePath();
+    circle(ctx, -5, -1.5, 1.8);
+    circle(ctx, 0, -1.5, 1.8);
+    circle(ctx, 5, -1.5, 1.8);
+    ctx.fill('evenodd');
+  },
+  mic: (ctx) => {
+    ctx.beginPath();
+    box(ctx, -4.5, -12, 9, 15, 4.5);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.lineWidth = 2.4;
+    ctx.arc(0, -2, 8, 0.15, Math.PI - 0.15);
+    ctx.moveTo(0, 6);
+    ctx.lineTo(0, 10.5);
+    ctx.moveTo(-5, 11);
+    ctx.lineTo(5, 11);
+    ctx.stroke();
+  },
+  clock: (ctx) => {
+    // Face with the hands cut out.
+    ctx.beginPath();
+    circle(ctx, 0, 0, 11.5);
+    ctx.moveTo(-1.3, -8);
+    ctx.lineTo(1.3, -8);
+    ctx.lineTo(1.3, -1.3);
+    ctx.lineTo(6.5, 2.2);
+    ctx.lineTo(5.2, 4.3);
+    ctx.lineTo(-1.3, 0.6);
+    ctx.closePath();
+    ctx.fill('evenodd');
+  },
+  egg: (ctx) => {
+    ctx.beginPath();
+    ctx.moveTo(0, -12);
+    ctx.bezierCurveTo(6.5, -12, 9.5, -2.5, 9.5, 3);
+    ctx.bezierCurveTo(9.5, 8.6, 5.2, 12, 0, 12);
+    ctx.bezierCurveTo(-5.2, 12, -9.5, 8.6, -9.5, 3);
+    ctx.bezierCurveTo(-9.5, -2.5, -6.5, -12, 0, -12);
+    ctx.closePath();
+    // Painted zigzag band and dots are holes.
+    poly(ctx, [[-9.4, 0], [-6.2, -2.8], [-3.1, 0], [0, -2.8], [3.1, 0], [6.2, -2.8], [9.4, 0], [9.5, 2.6], [6.2, -0.2], [3.1, 2.6], [0, -0.2], [-3.1, 2.6], [-6.2, -0.2], [-9.5, 2.6]]);
+    circle(ctx, -3.5, 6.5, 1.3);
+    circle(ctx, 3.5, 6.5, 1.3);
+    circle(ctx, 0, -6.5, 1.3);
+    ctx.fill('evenodd');
+  },
+  mask: (ctx) => {
+    ctx.beginPath();
+    ctx.moveTo(-12, -3);
+    ctx.bezierCurveTo(-11, -8.5, -5, -8, 0, -5);
+    ctx.bezierCurveTo(5, -8, 11, -8.5, 12, -3);
+    ctx.bezierCurveTo(12.4, 3, 8.5, 6.4, 4.4, 5.4);
+    ctx.bezierCurveTo(2.2, 4.8, 1.2, 3.2, 0, 3.2);
+    ctx.bezierCurveTo(-1.2, 3.2, -2.2, 4.8, -4.4, 5.4);
+    ctx.bezierCurveTo(-8.5, 6.4, -12.4, 3, -12, -3);
+    ctx.closePath();
+    // Eye holes.
+    ctx.moveTo(-2.4, -1.4);
+    ctx.bezierCurveTo(-3.4, -3.8, -8, -3.8, -8.6, -1);
+    ctx.bezierCurveTo(-7, 1.2, -3.6, 1, -2.4, -1.4);
+    ctx.closePath();
+    ctx.moveTo(2.4, -1.4);
+    ctx.bezierCurveTo(3.4, -3.8, 8, -3.8, 8.6, -1);
+    ctx.bezierCurveTo(7, 1.2, 3.6, 1, 2.4, -1.4);
+    ctx.closePath();
+    ctx.fill('evenodd');
+    // Handle stick.
+    ctx.beginPath();
+    poly(ctx, [[9.6, 4], [11.4, 3.2], [6.2, 12.4], [4.6, 11.8]]);
+    ctx.fill();
+  },
+  mushroom: (ctx) => {
+    ctx.beginPath();
+    ctx.moveTo(-11.5, 0.5);
+    ctx.bezierCurveTo(-11.5, -7.5, -6, -11.5, 0, -11.5);
+    ctx.bezierCurveTo(6, -11.5, 11.5, -7.5, 11.5, 0.5);
+    ctx.closePath();
+    // Spots are holes in the cap.
+    circle(ctx, -5, -5, 2);
+    circle(ctx, 3.5, -7.2, 1.6);
+    circle(ctx, 6, -2.4, 1.4);
+    ctx.fill('evenodd');
+    ctx.beginPath();
+    ctx.moveTo(-4.2, 2.2);
+    ctx.lineTo(4.2, 2.2);
+    ctx.bezierCurveTo(4.6, 6, 5.2, 9, 5.8, 11.8);
+    ctx.lineTo(-5.8, 11.8);
+    ctx.bezierCurveTo(-5.2, 9, -4.6, 6, -4.2, 2.2);
+    ctx.closePath();
+    ctx.fill();
+  },
+  tree: (ctx) => {
+    ctx.beginPath();
+    poly(ctx, [[0, -12.5], [7.5, -3.5], [4, -3.5], [10, 5], [2, 5], [2, 12], [-2, 12], [-2, 5], [-10, 5], [-4, -3.5], [-7.5, -3.5]]);
+    ctx.fill();
+  },
 };
 
 /** Draws `glyph` centred at (x, y), `size` px wide, in `color`. */
@@ -556,7 +675,8 @@ export interface StackedStat { key: StatKey; x: number; y: number; align: 'left'
 export type StatBlock =
   | { style: 'stacked'; items: StackedStat[] }
   | { style: 'tiles'; rect: Rect; keys: StatKey[] }
-  | { style: 'inline'; cx: number; y: number; keys: StatKey[] };
+  /** One line: label value · label value · XP; `x` is its centre (center) or start (left). */
+  | { style: 'inline'; x: number; y: number; align: 'left' | 'center'; keys: StatKey[] };
 
 export interface ProfileGeometry {
   avatar: Circle;
@@ -567,19 +687,21 @@ export interface ProfileGeometry {
   captionY: number | null;
   /** Right edge and top of the badge row. */
   badges: { right: number; top: number };
-  /** Tinted side panel (split layout). */
-  panel: Rect | null;
+  /** Tinted panel with a hairline on one edge: the side of the split layout, the banner strip. */
+  panel: (Rect & { edge: 'right' | 'bottom' }) | null;
   /** Small server label for layouts without bar captions. */
-  serverLabel: { x: number; y: number } | null;
+  serverLabel: { x: number; y: number; maxWidth: number } | null;
 }
 
-export const PROFILE_LAYOUTS: ProfileLayout[] = ['classic', 'compact', 'centered', 'split'];
+export const PROFILE_LAYOUTS: ProfileLayout[] = ['classic', 'compact', 'centered', 'split', 'banner', 'mirror', 'minimal'];
 /** Space a frame may take outside the avatar circle (widest style incl. gap). */
-export const FRAME_MAX_OUTSET = 18;
+export const FRAME_MAX_OUTSET = 22;
 export const BADGE_SIZE = 40;
 export const BADGE_GAP = 8;
-export const STICKER_RADIUS = 22;
-export const STICKER_INSET = 34;
+/** Sticker size by spot: big top right and on the avatar; smaller where the avatar or the XP bar are close. */
+export const STICKER_RADIUS = 30;
+export const STICKER_RADIUS_SMALL = 22;
+export const stickerRadius = (spot: StickerData['corner']) => (spot === 'tr' || spot === 'avatar' ? STICKER_RADIUS : STICKER_RADIUS_SMALL);
 
 export function profileGeometry(layout: ProfileLayout): ProfileGeometry {
   const badges = { right: W - 40, top: 34 };
@@ -597,14 +719,14 @@ export function profileGeometry(layout: ProfileLayout): ProfileGeometry {
       };
     case 'centered':
       return {
-        avatar: { cx: W / 2, cy: 94, r: 58 },
-        text: { x: W / 2, align: 'center', maxWidth: 760, nameY: 204, nameSize: 40, titleY: 234, bioY: 262 },
-        stats: { style: 'inline', cx: W / 2, y: 298, keys: ['level', 'rank', 'balance'] },
-        xp: { x: W / 2 - 280, y: 314, w: 560, h: 10 },
+        avatar: { cx: W / 2, cy: 88, r: 56 },
+        text: { x: W / 2, align: 'center', maxWidth: 760, nameY: 208, nameSize: 40, titleY: 238, bioY: 266 },
+        stats: { style: 'inline', x: W / 2, y: 300, align: 'center', keys: ['level', 'rank', 'balance'] },
+        xp: { x: W / 2 - 280, y: 318, w: 560, h: 10 },
         captionY: null,
         badges,
         panel: null,
-        serverLabel: { x: 40, y: 50 },
+        serverLabel: { x: 40, y: 50, maxWidth: 300 },
       };
     case 'split':
       return {
@@ -621,7 +743,50 @@ export function profileGeometry(layout: ProfileLayout): ProfileGeometry {
         xp: { x: 376, y: 292, w: W - 376 - 44, h: 14 },
         captionY: 278,
         badges,
-        panel: { x: 0, y: 0, w: 336, h: H },
+        panel: { x: 0, y: 0, w: 336, h: H, edge: 'right' },
+        serverLabel: null,
+      };
+    case 'banner':
+      // Discord-like: a tinted banner strip with the server name and badges; the avatar reaches into it.
+      return {
+        avatar: { cx: 130, cy: 128, r: 66 },
+        text: { x: 236, align: 'left', maxWidth: W - 236 - 44, nameY: 172, nameSize: 40, titleY: 204, bioY: 234 },
+        stats: { style: 'inline', x: 236, y: 276, align: 'left', keys: ['level', 'rank', 'balance'] },
+        xp: { x: 236, y: 296, w: W - 236 - 44, h: 12 },
+        captionY: null,
+        badges,
+        panel: { x: 0, y: 0, w: W, h: 116, edge: 'bottom' },
+        serverLabel: { x: 236, y: 98, maxWidth: 420 },
+      };
+    case 'mirror':
+      // Classic, mirrored: text on the left, the big avatar on the right with the badges below it.
+      return {
+        avatar: { cx: W - 150, cy: 142, r: 86 },
+        text: { x: 44, align: 'left', maxWidth: W - 260 - 44 - 28, nameY: 104, nameSize: 44, titleY: 138, bioY: 170 },
+        stats: {
+          style: 'stacked',
+          items: [
+            { key: 'level', x: 44, y: 214, align: 'left', size: 30 },
+            { key: 'rank', x: 204, y: 214, align: 'left', size: 30 },
+            { key: 'balance', x: 364, y: 214, align: 'left', size: 30 },
+          ],
+        },
+        xp: { x: 44, y: 292, w: W - 260 - 44 - 28, h: 14 },
+        captionY: 278,
+        badges: { right: W - 40, top: 290 },
+        panel: null,
+        serverLabel: null,
+      };
+    case 'minimal':
+      // Typography first: a big name, everything else in one quiet line and a thin XP line.
+      return {
+        avatar: { cx: 104, cy: 128, r: 60 },
+        text: { x: 212, align: 'left', maxWidth: W - 212 - 44, nameY: 128, nameSize: 54, titleY: 166, bioY: 200 },
+        stats: { style: 'inline', x: 44, y: 256, align: 'left', keys: ['level', 'rank', 'balance'] },
+        xp: { x: 44, y: 278, w: W - 88, h: 6 },
+        captionY: null,
+        badges,
+        panel: null,
         serverLabel: null,
       };
     case 'classic':
@@ -646,11 +811,23 @@ export function profileGeometry(layout: ProfileLayout): ProfileGeometry {
   }
 }
 
+/** Right edge of the badge row: moved left when the sticker would sit on it. */
+export function badgeRowRight(g: ProfileGeometry, sticker: StickerData | null): number {
+  if (!sticker) return g.badges.right;
+  const at = stickerPoint(sticker.corner, g.avatar);
+  const r = stickerRadius(sticker.corner);
+  const row = { x: g.badges.right - MAX_BADGE_ROW, y: g.badges.top, w: MAX_BADGE_ROW, h: BADGE_SIZE };
+  const touches = at.x + r > row.x && at.x - r < row.x + row.w && at.y + r > row.y && at.y - r < row.y + row.h;
+  return touches ? g.badges.right - (2 * r + 8) : g.badges.right;
+}
+const MAX_BADGE_ROW = 3 * (BADGE_SIZE + BADGE_GAP) - BADGE_GAP;
+
 /** Centre of a sticker in `corner` of a card of size w×h. */
-export function stickerCenter(corner: StickerData['corner'], w = W, h = H): { x: number; y: number } {
+export function stickerCenter(corner: Exclude<StickerData['corner'], 'avatar'>, w = W, h = H): { x: number; y: number } {
   return {
-    x: corner === 'tl' || corner === 'bl' ? STICKER_INSET : w - STICKER_INSET,
-    y: corner === 'tl' || corner === 'tr' ? STICKER_INSET : h - STICKER_INSET,
+    // Bottom spots sit closer to the edge, clear of the XP bar's decorations.
+    x: corner === 'tl' || corner === 'bl' ? stickerRadius(corner) + (corner === 'bl' ? 8 : 12) : w - stickerRadius(corner) - (corner === 'br' ? 8 : 12),
+    y: corner === 'tl' || corner === 'tr' ? stickerRadius(corner) + 12 : h - stickerRadius(corner) - 8,
   };
 }
 
@@ -802,12 +979,269 @@ function drawBackground(ctx: Ctx, bg: BackgroundData | null, accent: string, w: 
       spots.forEach(([x, y], i) => glow(ctx, x, y, w * 0.62, colors[i % colors.length], i === 0 ? 0.9 : 0.75));
       break;
     }
+    case 'scene':
+      drawScene(ctx, bg.scene ?? 'pixel', colors, w, h);
+      break;
   }
   if (bg.pattern !== 'none') drawPattern(ctx, bg.pattern, bg.kind === 'pattern' && colors[1] ? colors[1] : '#FFFFFF', w, h, rng);
   // Readability scrim: keeps white text legible on bright or busy backgrounds.
   const bright = colors.reduce((sum, color) => sum + brightness(color), 0) / colors.length;
   ctx.fillStyle = linearGradient(ctx, 0, 0, 0, w, h, [`rgba(6, 6, 10, ${0.3 + bright * 0.35})`, `rgba(6, 6, 10, ${0.12 + bright * 0.3})`]);
   ctx.fillRect(0, 0, w, h);
+}
+
+// ---------- Scene backgrounds ----------
+
+/**
+ * Original, genre-inspired illustrations (retro platformer, neon city, moonlit ninja, dungeon, space station, pirate
+ * cove) made of plain shapes: no franchise art, logos or names. Detail sits on the right; the left keeps room for the
+ * name. Same look for everyone (fixed seed per scene); `colors` = [sky, landscape, light, details].
+ */
+function drawScene(ctx: Ctx, scene: BackgroundScene, colors: string[], w: number, h: number) {
+  const [c0 = '#1B1A2E', c1 = mix(c0, '#FFFFFF', 0.3), c2 = '#FFD166', c3 = darken(c1, 0.4)] = colors;
+  const rng = createRng(seedFrom(`scene:${scene}`));
+  const sky = (top: string, bottom: string) => { ctx.fillStyle = linearGradient(ctx, 90, 0, 0, w, h, [top, bottom]); ctx.fillRect(0, 0, w, h); };
+  const disc = (x: number, y: number, r: number, color: string) => { ctx.beginPath(); circle(ctx, x, y, r); ctx.fillStyle = color; ctx.fill(); };
+  ctx.save();
+  switch (scene) {
+    case 'pixel': {
+      const px = Math.max(4, Math.round(h / 40));
+      sky(c0, c1);
+      // Blocky sun.
+      const sx = w * 0.8;
+      const sy = h * 0.36;
+      const sr = h * 0.2;
+      ctx.fillStyle = c2;
+      for (let y = sy - sr; y <= sy + sr; y += px) {
+        for (let x = sx - sr; x <= sx + sr; x += px) if ((x - sx) ** 2 + (y - sy) ** 2 <= sr * sr) ctx.fillRect(Math.round(x / px) * px, Math.round(y / px) * px, px, px);
+      }
+      // Clouds as stacks of blocks.
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+      for (let i = 0; i < 4; i++) {
+        const cx = w * (0.45 + rng() * 0.5);
+        const cy = h * (0.12 + rng() * 0.22);
+        for (let k = 0; k < 5; k++) ctx.fillRect(Math.round((cx + (k - 2) * px * 2) / px) * px, Math.round((cy - (k % 2) * px) / px) * px, px * 3, px * 2);
+      }
+      // Two stepped mountain ranges and a grass strip.
+      const ridge = (base: number, amp: number, freq: number, color: string) => {
+        ctx.fillStyle = color;
+        for (let x = 0; x < w; x += px) {
+          const top = Math.round((h * base - amp * h * (0.5 + 0.5 * Math.sin(x * freq + 1.3)) * (0.6 + 0.4 * Math.sin(x * freq * 0.37))) / px) * px;
+          ctx.fillRect(x, top, px, h - top);
+        }
+      };
+      ridge(0.78, 0.36, 0.006, mix(c3, c1, 0.5));
+      ridge(0.9, 0.24, 0.011, c3);
+      ctx.fillStyle = lighten(c3, 0.25);
+      ctx.fillRect(0, h - px * 3, w, px);
+      ctx.fillStyle = darken(c3, 0.35);
+      ctx.fillRect(0, h - px * 2, w, px * 2);
+      break;
+    }
+    case 'neon-city': {
+      sky(c0, mix(c1, c0, 0.7));
+      glow(ctx, w * 0.72, h * 0.74, w * 0.45, c1, 0.5);
+      // Striped retro sun on the horizon.
+      const sx = w * 0.72;
+      const sy = h * 0.6;
+      const sr = h * 0.3;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(sx - sr, sy - sr, sr * 2, sr);
+      ctx.clip();
+      ctx.beginPath();
+      circle(ctx, sx, sy, sr);
+      ctx.fillStyle = linearGradient(ctx, 90, sx - sr, sy - sr, sr * 2, sr, [c2, c1]);
+      ctx.fill();
+      ctx.fillStyle = mix(c1, c0, 0.6);
+      for (let i = 0; i < 5; i++) ctx.fillRect(sx - sr, sy - sr * (0.08 + i * 0.16), sr * 2, 2 + i * 1.6);
+      ctx.restore();
+      // Skyline with lit windows.
+      let x = w * 0.5;
+      while (x < w) {
+        const bw = h * (0.08 + rng() * 0.14);
+        // Lower right under the sun, so it shows above the roofs.
+        const nearSun = Math.abs(x + bw / 2 - w * 0.72) < h * 0.34;
+        const bh = h * (nearSun ? 0.1 + rng() * 0.12 : 0.22 + rng() * 0.38);
+        const top = h * 0.78 - bh;
+        ctx.fillStyle = darken(c3, 0.2);
+        ctx.fillRect(x, top, bw - 3, bh);
+        for (let wy = top + 8; wy < h * 0.76; wy += 11) {
+          for (let wx = x + 5; wx < x + bw - 9; wx += 9) {
+            if (rng() < 0.45) { ctx.fillStyle = withAlpha(rng() < 0.7 ? c2 : c1, 0.55 + rng() * 0.4); ctx.fillRect(wx, wy, 4, 5); }
+          }
+        }
+        x += bw;
+      }
+      // Glowing perspective grid.
+      const vy = h * 0.78;
+      ctx.fillStyle = darken(c0, 0.3);
+      ctx.fillRect(0, vy, w, h - vy);
+      ctx.strokeStyle = withAlpha(c1, 0.55);
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (let i = 0; i < 7; i++) { const y = vy + (h - vy) * (i / 6) ** 1.8; ctx.moveTo(0, y); ctx.lineTo(w, y); }
+      for (let i = -12; i <= 12; i++) { ctx.moveTo(w * 0.72, vy); ctx.lineTo(w * 0.72 + i * w * 0.09, h); }
+      ctx.stroke();
+      break;
+    }
+    case 'moon-ninja': {
+      sky(c0, darken(c0, 0.55));
+      glow(ctx, w * 0.78, h * 0.32, h * 0.6, c2, 0.28);
+      disc(w * 0.78, h * 0.32, h * 0.21, c2);
+      disc(w * 0.74, h * 0.27, h * 0.04, withAlpha(darken(c2, 0.2), 0.5));
+      disc(w * 0.82, h * 0.38, h * 0.03, withAlpha(darken(c2, 0.2), 0.45));
+      // Mountain ridge.
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      ctx.lineTo(0, h * 0.78);
+      ctx.bezierCurveTo(w * 0.2, h * 0.62, w * 0.35, h * 0.82, w * 0.5, h * 0.66);
+      ctx.bezierCurveTo(w * 0.62, h * 0.54, w * 0.78, h * 0.74, w, h * 0.6);
+      ctx.lineTo(w, h);
+      ctx.closePath();
+      ctx.fillStyle = c1;
+      ctx.fill();
+      // Bamboo on the right.
+      const stalk = darken(c1, 0.55);
+      for (let i = 0; i < 6; i++) {
+        const bx = w * (0.58 + i * 0.075 + rng() * 0.02);
+        const bw = h * (0.028 + rng() * 0.012);
+        ctx.fillStyle = stalk;
+        ctx.fillRect(bx, -10, bw, h + 20);
+        ctx.fillStyle = darken(stalk, 0.35);
+        for (let ny = h * (0.1 + rng() * 0.15); ny < h; ny += h * 0.22) ctx.fillRect(bx - 1, ny, bw + 2, 3);
+        ctx.fillStyle = stalk;
+        for (let k = 0; k < 3; k++) {
+          const ly = h * (0.12 + rng() * 0.6);
+          const dir = rng() < 0.5 ? -1 : 1;
+          ctx.beginPath();
+          ctx.moveTo(bx + bw / 2, ly);
+          ctx.quadraticCurveTo(bx + dir * h * 0.09, ly - h * 0.05, bx + dir * h * 0.16, ly + h * 0.02);
+          ctx.quadraticCurveTo(bx + dir * h * 0.08, ly + h * 0.01, bx + bw / 2, ly);
+          ctx.fill();
+        }
+      }
+      // Drifting blossom petals.
+      for (let i = 0; i < 26; i++) {
+        ctx.globalAlpha = 0.5 + rng() * 0.4;
+        ctx.save();
+        ctx.translate(w * (0.4 + rng() * 0.6), h * rng());
+        ctx.rotate(rng() * TAU);
+        ctx.scale(1, 0.55);
+        disc(0, 0, 2.5 + rng() * 3, c3);
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case 'dungeon': {
+      ctx.fillStyle = darken(c0, 0.2);
+      ctx.fillRect(0, 0, w, h);
+      // Stone wall: offset rows of rounded bricks.
+      const rowH = h / 8;
+      const brickW = rowH * 2.1;
+      for (let row = 0; row < 9; row++) {
+        for (let bx = -(row % 2) * brickW * 0.5; bx < w; bx += brickW) {
+          ctx.beginPath();
+          box(ctx, bx + 3, row * rowH + 3, brickW - 6, rowH - 6, 5);
+          ctx.fillStyle = mix(c1, c0, 0.25 + rng() * 0.45);
+          ctx.fill();
+        }
+      }
+      // Two torches throwing warm light.
+      for (const tx of [w * 0.62, w * 0.9]) {
+        const ty = h * 0.42;
+        glow(ctx, tx, ty, h * 0.75, c2, 0.4);
+        ctx.fillStyle = darken(c3, 0.3);
+        ctx.fillRect(tx - 5, ty, 10, h * 0.18);
+        ctx.fillRect(tx - 11, ty, 22, 6);
+        drawGlyph(ctx, 'flame', tx, ty - h * 0.07, h * 0.16, c2);
+        drawGlyph(ctx, 'flame', tx, ty - h * 0.05, h * 0.08, lighten(c2, 0.5));
+      }
+      ctx.fillStyle = linearGradient(ctx, 90, 0, h * 0.75, w, h * 0.25, ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.55)']);
+      ctx.fillRect(0, h * 0.75, w, h * 0.25);
+      break;
+    }
+    case 'orbital': {
+      ctx.fillStyle = c0;
+      ctx.fillRect(0, 0, w, h);
+      glow(ctx, w * 0.7, h * 0.3, w * 0.4, c1, 0.35);
+      glow(ctx, w * 0.95, h * 0.85, w * 0.3, c3, 0.3);
+      for (let i = 0; i < 160; i++) {
+        ctx.globalAlpha = 0.2 + rng() * 0.7;
+        disc(rng() * w, rng() * h, 0.4 + rng() * 1.2, '#FFFFFF');
+      }
+      ctx.globalAlpha = 1;
+      // Ringed planet, low on the right.
+      const px = w * 0.84;
+      const py = h * 0.78;
+      const pr = h * 0.36;
+      const ring = (front: boolean) => {
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(-0.25);
+        ctx.scale(1, 0.24);
+        ctx.beginPath();
+        ctx.arc(0, 0, pr * 1.55, front ? 0 : Math.PI, front ? Math.PI : TAU);
+        ctx.restore();
+        ctx.strokeStyle = withAlpha(c2, front ? 0.85 : 0.45);
+        ctx.lineWidth = h * 0.035;
+        ctx.stroke();
+      };
+      ring(false);
+      ctx.beginPath();
+      circle(ctx, px, py, pr);
+      const shade = ctx.createRadialGradient(px - pr * 0.4, py - pr * 0.5, pr * 0.1, px, py, pr);
+      shade.addColorStop(0, lighten(c1, 0.3));
+      shade.addColorStop(1, darken(c1, 0.6));
+      ctx.fillStyle = shade;
+      ctx.fill();
+      ring(true);
+      disc(w * 0.6, h * 0.24, h * 0.055, c2);
+      disc(w * 0.605, h * 0.235, h * 0.045, lighten(c2, 0.35));
+      break;
+    }
+    case 'pirate-cove': {
+      sky(c0, mix(c1, c0, 0.4));
+      for (let i = 0; i < 50; i++) {
+        ctx.globalAlpha = 0.3 + rng() * 0.6;
+        disc(rng() * w, rng() * h * 0.55, 0.5 + rng(), '#FFFFFF');
+      }
+      ctx.globalAlpha = 1;
+      glow(ctx, w * 0.8, h * 0.24, h * 0.5, c2, 0.3);
+      disc(w * 0.8, h * 0.24, h * 0.12, c2);
+      // Sea with a moon path.
+      const sea = h * 0.7;
+      ctx.fillStyle = c1;
+      ctx.fillRect(0, sea, w, h - sea);
+      ctx.strokeStyle = withAlpha(lighten(c1, 0.35), 0.5);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let k = 0; k < 5; k++) {
+        const y = sea + 10 + k * ((h - sea) / 5);
+        for (let x = 0; x <= w; x += 16) ctx.lineTo(x, y + Math.sin(x * 0.04 + k) * 2.5);
+        ctx.moveTo(0, y + 18);
+      }
+      ctx.stroke();
+      ctx.fillStyle = withAlpha(c2, 0.55);
+      for (let k = 0; k < 7; k++) ctx.fillRect(w * 0.8 - 24 + rng() * 48 - k * 2, sea + 6 + k * ((h - sea) / 8), 18 + rng() * 22, 2);
+      // Ship silhouette.
+      const sx = w * 0.62;
+      ctx.fillStyle = c3;
+      ctx.beginPath();
+      poly(ctx, [[sx, sea - 6], [sx + h * 0.62, sea - 6], [sx + h * 0.54, sea + 12], [sx + h * 0.08, sea + 12]]);
+      ctx.fill();
+      ctx.fillRect(sx + h * 0.2, sea - h * 0.5, 4, h * 0.45);
+      ctx.fillRect(sx + h * 0.42, sea - h * 0.4, 4, h * 0.35);
+      ctx.beginPath();
+      poly(ctx, [[sx + h * 0.06, sea - h * 0.14], [sx + h * 0.2, sea - h * 0.46], [sx + h * 0.32, sea - h * 0.14]]);
+      poly(ctx, [[sx + h * 0.3, sea - h * 0.12], [sx + h * 0.42, sea - h * 0.37], [sx + h * 0.55, sea - h * 0.12]]);
+      ctx.fill();
+      ctx.fillRect(sx + h * 0.2, sea - h * 0.54, 16, 9);
+      break;
+    }
+  }
+  ctx.restore();
 }
 
 // ---------- Effects ----------
@@ -909,6 +1343,14 @@ function drawEffect(ctx: Ctx, effect: EffectData['effect'], accent: string, w: n
         drawGlyph(ctx, 'heart', rng() * w, rng() * h, 8 + rng() * 12, rng() < 0.5 ? '#FF7AB6' : lighten(accent, 0.3), (rng() - 0.5) * 0.8);
       }
       break;
+    case 'leaves':
+      // Falling leaves in moss, fern and autumn amber.
+      for (let i = 0; i < 22; i++) {
+        ctx.globalAlpha = 0.22 + rng() * 0.38;
+        const color = ['#8FB36B', '#5FA35A', '#C98A4B', '#E0A85A'][Math.floor(rng() * 4)];
+        drawGlyph(ctx, 'leaf', rng() * w, rng() * h, 9 + rng() * 13, color, rng() * Math.PI * 2);
+      }
+      break;
   }
   ctx.restore();
 }
@@ -928,6 +1370,322 @@ function ring(ctx: Ctx, cx: number, cy: number, r: number) {
   ctx.arc(cx, cy, r, 0, TAU);
 }
 
+/** Stable 0–1 per index, for the hand-drawn irregularity of illustrated frames. */
+const jitter = (i: number, k: number) => {
+  const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+};
+const polar = (cx: number, cy: number, radius: number, angle: number): [number, number] => [cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius];
+
+/** Leaf from (x, y) pointing at `angle`: length l, half-width w, with a lighter midrib. */
+function drawLeaf(ctx: Ctx, x: number, y: number, angle: number, l: number, w: number, fill: string, vein?: string) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.quadraticCurveTo(l * 0.45, -w, l, 0);
+  ctx.quadraticCurveTo(l * 0.45, w, 0, 0);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (vein) {
+    ctx.beginPath();
+    ctx.moveTo(l * 0.12, 0);
+    ctx.lineTo(l * 0.82, 0);
+    ctx.strokeStyle = vein;
+    ctx.lineWidth = Math.max(0.6, w * 0.16);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/** A ring that wanders a little around radius R (vines, blossom twigs). */
+function wobblyRing(ctx: Ctx, cx: number, cy: number, R: number, amp: number) {
+  ctx.beginPath();
+  for (let i = 0; i <= 120; i++) {
+    const a = (i / 120) * TAU;
+    const [x, y] = polar(cx, cy, R + Math.sin(a * 7) * amp, a);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
+
+export const ILLUSTRATED_FRAMES: ReadonlySet<FrameData['style']> = new Set(['vine', 'fire', 'laurel', 'blossom', 'crystal', 'lightning']);
+
+/** Shadow that front-layer pieces cast onto the avatar. */
+function castShadow(ctx: Ctx, k: number) {
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = 4 * k;
+  ctx.shadowOffsetY = 2 * k;
+}
+
+/**
+ * Illustrated frames (colours [main, second]) in two layers around the avatar: 'back' is drawn before the picture,
+ * so it disappears behind it; 'front' after, reaching over the picture's edge and casting a shadow onto it. Sizes
+ * follow the avatar radius (k = 1 at r 68) and stay within FRAME_MAX_OUTSET (the tallest flames just reach it).
+ */
+function drawIllustratedFrame(ctx: Ctx, style: FrameData['style'], cx: number, cy: number, r: number, colors: string[], layer: 'back' | 'front') {
+  const k = r / 68;
+  const c0 = colors[0];
+  const front = layer === 'front';
+  switch (style) {
+    case 'vine': {
+      // Two stems winding in and out across the picture's edge: one passes behind the picture, one over it.
+      const R = r + 1 * k;
+      const stem = colors[1] ?? darken(c0, 0.45);
+      const phase = front ? 0 : Math.PI;
+      const at = (a: number) => polar(cx, cy, R + Math.sin(a * 6 + phase) * 5 * k, a);
+      if (front) castShadow(ctx, k);
+      ctx.beginPath();
+      for (let i = 0; i <= 160; i++) {
+        const [x, y] = at((i / 160) * TAU);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = front ? stem : darken(stem, 0.25);
+      ctx.lineWidth = 2.2 * k;
+      ctx.stroke();
+      if (!front) {
+        ctx.lineWidth = 1.3 * k;
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * TAU + 0.5;
+          const [x, y] = polar(cx, cy, R + 11 * k, a + 0.06);
+          ctx.beginPath();
+          ctx.moveTo(...polar(cx, cy, R + 4 * k, a - 0.04));
+          ctx.quadraticCurveTo(...polar(cx, cy, R + 9 * k, a - 0.05), x, y);
+          ctx.arc(x - Math.cos(a) * 2.4 * k, y - Math.sin(a) * 2.4 * k, 2.4 * k, a, a + TAU * 0.8);
+          ctx.stroke();
+        }
+      }
+      const tones = front ? [c0, lighten(c0, 0.14), darken(c0, 0.12)] : [darken(c0, 0.22), darken(c0, 0.32)];
+      const n = 16;
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * TAU + (front ? 0 : TAU / n / 2) + jitter(i, front ? 1 : 2) * 0.12;
+        const [x, y] = at(a);
+        const out = i % 2 === 0;
+        const l = (out ? 12 + jitter(i, 3) * 3 : 10 + jitter(i, 3) * 3) * k;
+        drawLeaf(ctx, x, y, out ? a + 0.95 : a + Math.PI - 0.9, l, l * 0.42, tones[i % tones.length], front ? withAlpha(lighten(c0, 0.45), 0.6) : undefined);
+      }
+      break;
+    }
+    case 'fire': {
+      // Behind: a blaze rising past the head. In front: smaller tongues licking up over the lower edge.
+      const c1 = colors[1] ?? lighten(c0, 0.55);
+      const n = front ? 30 : 24;
+      const flames = (base: number, maxLen: number, scale: number, fill: string, keep: (a: number) => boolean) => {
+        ctx.fillStyle = fill;
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * TAU + jitter(i, front ? 13 : 3) * 0.1;
+          if (!keep(a)) continue;
+          const top = Math.max(0, -Math.sin(a));
+          // Behind: outwards, leaning up. In front: straight up from the rim into the picture.
+          let dx = front ? Math.cos(a) * 0.25 : Math.cos(a);
+          let dy = front ? -1 : Math.sin(a) - 0.8;
+          const norm = Math.hypot(dx, dy);
+          dx /= norm;
+          dy /= norm;
+          const len = Math.min(maxLen, (front ? 8 : 8) + jitter(i, 4) * 6 + top * 9) * k * scale;
+          const w = (front ? 9 : 13) * (1 + jitter(i, 5) * 0.35) * k * scale;
+          const [bx, by] = polar(cx, cy, base, a);
+          const sway = (jitter(i, 6) - 0.5) * 5 * k * scale;
+          const [px, py] = [-dy, dx];
+          const [tx, ty] = [bx + dx * len + px * sway, by + dy * len + py * sway];
+          const [lx, ly] = [bx + px * w / 2, by + py * w / 2];
+          const [rx, ry] = [bx - px * w / 2, by - py * w / 2];
+          ctx.beginPath();
+          ctx.moveTo(lx, ly);
+          ctx.bezierCurveTo(lx + dx * len * 0.45, ly + dy * len * 0.45, tx + px * w * 0.12 - dx * len * 0.25, ty + py * w * 0.12 - dy * len * 0.25, tx, ty);
+          ctx.bezierCurveTo(tx - px * w * 0.12 - dx * len * 0.25, ty - py * w * 0.12 - dy * len * 0.25, rx + dx * len * 0.45, ry + dy * len * 0.45, rx, ry);
+          ctx.quadraticCurveTo(bx - dx * w * 0.4, by - dy * w * 0.4, lx, ly);
+          ctx.closePath();
+          ctx.fill();
+        }
+      };
+      if (!front) {
+        const all = () => true;
+        const base = r - 2 * k;
+        ctx.shadowColor = c0;
+        ctx.shadowBlur = 18 * k;
+        flames(base, 24, 1, c0, all);
+        ctx.shadowBlur = 6 * k;
+        ctx.shadowColor = c1;
+        flames(base, 24, 0.68, c1, all);
+        break;
+      }
+      // Only along the bottom, so the face stays free.
+      const lower = (a: number) => Math.sin(a) > 0.45;
+      const base = r + 1 * k;
+      ctx.shadowColor = c0;
+      ctx.shadowBlur = 10 * k;
+      ctx.strokeStyle = c0;
+      ctx.lineWidth = 3 * k;
+      ring(ctx, cx, cy, r);
+      ctx.stroke();
+      flames(base, 14, 1, c0, lower);
+      ctx.shadowBlur = 0;
+      flames(base, 14, 0.6, c1, lower);
+      flames(base, 14, 0.3, lighten(c1, 0.7), lower);
+      break;
+    }
+    case 'laurel': {
+      if (!front) break;
+      // A wreath lying on the picture: inner leaves reach over its edge.
+      const R = r + 3 * k;
+      const stem = colors[1] ?? darken(c0, 0.35);
+      castShadow(ctx, k);
+      for (const side of [-1, 1]) {
+        // From the bottom up one side, leaving a gap at the top; side −1 = right (angles decreasing).
+        const from = Math.PI / 2 + side * 0.14;
+        const to = Math.PI / 2 + side * (Math.PI - 0.45);
+        ctx.beginPath();
+        ctx.arc(cx, cy, R, Math.min(from, to), Math.max(from, to));
+        ctx.strokeStyle = stem;
+        ctx.lineWidth = 2.4 * k;
+        ctx.stroke();
+        const n = 12;
+        for (let i = 0; i <= n; i++) {
+          const t = (i + 0.4) / (n + 0.4);
+          const a = from + (to - from) * t;
+          const [x, y] = polar(cx, cy, R, a);
+          const travel = a + side * Math.PI / 2;
+          const l = (16 - t * 5) * k;
+          const tone = i % 2 ? lighten(c0, 0.16) : c0;
+          if (i === n) drawLeaf(ctx, x, y, travel, l, l * 0.4, tone);
+          else {
+            drawLeaf(ctx, x, y, travel - side * 0.55, l, l * 0.4, tone, withAlpha(lighten(c0, 0.5), 0.5));
+            drawLeaf(ctx, x, y, travel + side * 0.6, l * 0.95, l * 0.38, darken(tone, 0.14));
+          }
+        }
+      }
+      // Ribbon tying both branches at the bottom.
+      const [bx, by] = polar(cx, cy, R, Math.PI / 2);
+      ctx.fillStyle = stem;
+      for (const side of [-1, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bx + side * 7 * k, by + 9 * k);
+        ctx.lineTo(bx + side * 3.5 * k, by + 9.5 * k);
+        ctx.closePath();
+        ctx.fill();
+        ring(ctx, bx + side * 3.8 * k, by - 0.6 * k, 3 * k);
+        ctx.fill();
+      }
+      ring(ctx, bx, by, 2.6 * k);
+      ctx.fill();
+      break;
+    }
+    case 'blossom': {
+      // The twig runs behind the picture; leaves and flowers sit on its edge.
+      const R = r + 2 * k;
+      const twig = colors[1] ?? '#6B4A33';
+      const leaf = '#6FA04A';
+      if (!front) {
+        wobblyRing(ctx, cx, cy, r + 4 * k, 2 * k);
+        ctx.strokeStyle = twig;
+        ctx.lineWidth = 2.2 * k;
+        ctx.stroke();
+        for (let i = 0; i < 14; i++) {
+          const a = (i / 14) * TAU + 0.45;
+          drawLeaf(ctx, ...polar(cx, cy, r + 5 * k, a), a + (i % 2 ? 0.6 : -0.6), 10 * k, 3.8 * k, i % 3 ? darken(leaf, 0.15) : darken(leaf, 0.35));
+        }
+        break;
+      }
+      castShadow(ctx, k);
+      for (let i = 0; i < 9; i++) {
+        const a = (i / 9) * TAU + 0.15;
+        drawLeaf(ctx, ...polar(cx, cy, R, a), a + (i % 2 ? 0.85 : Math.PI - 0.85), 9 * k, 3.4 * k, leaf);
+      }
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * TAU + jitter(i, 7) * 0.3;
+        const [x, y] = polar(cx, cy, R + (jitter(i, 9) - 0.5) * 4 * k, a);
+        const fr = (5.2 + jitter(i, 8) * 2) * k;
+        ctx.fillStyle = i % 2 ? lighten(c0, 0.35) : c0;
+        ctx.beginPath();
+        for (let p = 0; p < 5; p++) circle(ctx, ...polar(x, y, fr * 0.85, a + (p / 5) * TAU), fr * 0.62);
+        ctx.fill();
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0)';
+        ctx.fillStyle = '#F5C451';
+        ring(ctx, x, y, fr * 0.34);
+        ctx.fill();
+        ctx.restore();
+      }
+      break;
+    }
+    case 'crystal': {
+      // Long shards grow behind the picture; frost creeps over its edge in front.
+      const c1 = colors[1] ?? lighten(c0, 0.5);
+      const shard = (base: number, a: number, len: number, half: number, dir: 1 | -1) => {
+        const left = polar(cx, cy, base, a - half);
+        const right = polar(cx, cy, base, a + half);
+        const tip = polar(cx, cy, base + dir * len, a);
+        const foot = polar(cx, cy, base - dir * 2.5 * k, a);
+        ctx.fillStyle = c0;
+        ctx.beginPath();
+        ctx.moveTo(...left); ctx.lineTo(...tip); ctx.lineTo(...right); ctx.lineTo(...foot);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = withAlpha(lighten(c0, 0.6), 0.85);
+        ctx.beginPath();
+        ctx.moveTo(...left); ctx.lineTo(...tip); ctx.lineTo(...foot);
+        ctx.closePath();
+        ctx.fill();
+      };
+      if (!front) {
+        ctx.shadowColor = c0;
+        ctx.shadowBlur = 8 * k;
+        for (let i = 0; i < 20; i++) shard(r - 2 * k, (i / 20) * TAU + jitter(i, 9) * 0.1, (8 + jitter(i, 10) * 12) * k, 0.08 + jitter(i, 11) * 0.04, 1);
+        break;
+      }
+      castShadow(ctx, k);
+      ctx.strokeStyle = c1;
+      ctx.lineWidth = 2 * k;
+      ring(ctx, cx, cy, r + 0.5 * k);
+      ctx.stroke();
+      for (let i = 0; i < 14; i++) shard(r + 1.5 * k, (i / 14) * TAU + 0.11 + jitter(i, 14) * 0.15, (4 + jitter(i, 15) * 6) * k, 0.06 + jitter(i, 16) * 0.03, -1);
+      break;
+    }
+    case 'lightning': {
+      // A glow ring behind, and a bolt that zigzags in and out across the picture's edge.
+      const core = colors[1] ?? '#FFFFFF';
+      if (!front) {
+        ctx.shadowColor = c0;
+        ctx.shadowBlur = 18 * k;
+        ctx.strokeStyle = withAlpha(c0, 0.7);
+        ctx.lineWidth = 4 * k;
+        ring(ctx, cx, cy, r + 3 * k);
+        ctx.stroke();
+        break;
+      }
+      const path = () => {
+        ctx.beginPath();
+        const n = 48;
+        for (let i = 0; i <= n; i++) {
+          const [x, y] = polar(cx, cy, r + 2 * k + (i % 2 ? 1 : -1) * (2 + jitter(i % n, 12) * 4) * k, (i / n) * TAU);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+      };
+      ctx.lineJoin = 'round';
+      ctx.shadowColor = c0;
+      ctx.shadowBlur = 7 * k;
+      ctx.strokeStyle = c0;
+      ctx.lineWidth = 3.2 * k;
+      path();
+      ctx.stroke();
+      ctx.stroke();
+      ctx.shadowBlur = 4 * k;
+      ctx.strokeStyle = core;
+      ctx.lineWidth = 1.2 * k;
+      path();
+      ctx.stroke();
+      break;
+    }
+  }
+}
+
 function drawAvatar(ctx: Ctx, image: ProfileImage | null, { cx, cy, r }: Circle, frame: FrameData | null, accent: string, name: string) {
   const colors = frame?.colors.length ? frame.colors : [accent];
   const width = frame ? Math.min(12, Math.max(2, frame.width)) : 3;
@@ -943,6 +1701,13 @@ function drawAvatar(ctx: Ctx, image: ProfileImage | null, { cx, cy, r }: Circle,
   ring(ctx, cx, cy, r);
   ctx.fill();
   ctx.restore();
+
+  const illustrated = !!frame && ILLUSTRATED_FRAMES.has(frame.style);
+  if (illustrated) {
+    ctx.save();
+    drawIllustratedFrame(ctx, frame.style, cx, cy, r, colors, 'back');
+    ctx.restore();
+  }
 
   ctx.save();
   ring(ctx, cx, cy, r);
@@ -1027,6 +1792,26 @@ function drawAvatar(ctx: Ctx, image: ProfileImage | null, { cx, cy, r }: Circle,
       ring(ctx, cx, cy, at);
       ctx.stroke();
       break;
+    case 'vine':
+    case 'fire':
+    case 'laurel':
+    case 'blossom':
+    case 'crystal':
+    case 'lightning': {
+      // The frame sits on the picture: darken its edge a little (inner shadow), then the front layer.
+      ctx.save();
+      ring(ctx, cx, cy, r);
+      ctx.clip();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      ctx.shadowBlur = 10 * (r / 68);
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.lineWidth = 6 * (r / 68);
+      ring(ctx, cx, cy, r + 3 * (r / 68));
+      ctx.stroke();
+      ctx.restore();
+      drawIllustratedFrame(ctx, frame.style, cx, cy, r, colors, 'front');
+      break;
+    }
     case 'crown':
       ctx.strokeStyle = gradient();
       ring(ctx, cx, cy, at);
@@ -1148,18 +1933,163 @@ function drawStats(ctx: Ctx, block: StatBlock, subject: ProfileCardSubject, acce
     runs.push(separator,
       { text: formatNumber(subject.xp), font: font('inter', 700, 16), color: SOFT },
       { text: ` / ${formatNumber(subject.xpNeeded)} XP`, font: font('inter', 400, 16), color: MUTED });
-    drawRuns(ctx, runs, block.cx, block.y, 'center');
+    drawRuns(ctx, runs, block.x, block.y, block.align);
   }
   ctx.restore();
 }
 
 // ---------- XP bar ----------
 
+const ILLUSTRATED_XP: ReadonlySet<XpBarData['style']> = new Set(['pixel', 'wave', 'flame', 'vine', 'comet']);
+
+/** Illustrated XP bars; decorations may reach a few px above and below the bar. */
+function drawIllustratedXp(ctx: Ctx, { x, y, w, h }: Rect, fraction: number, style: XpBarData['style'], [c0, c1]: string[]) {
+  const r = h / 2;
+  const fw = fraction <= 0 ? 0 : Math.max(h, w * fraction);
+  const track = () => {
+    roundedRect(ctx, x, y, w, h, r);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.fill();
+  };
+  const clipFill = () => {
+    roundedRect(ctx, x, y, fw, h, r);
+    ctx.clip();
+  };
+  switch (style) {
+    case 'pixel': {
+      // Two rows of square pixels, a lighter top row and a dithered leading edge, like an 8-bit health bar.
+      const cell = h / 2;
+      const cols = Math.floor(w / cell);
+      const filled = Math.round(fraction * cols);
+      for (let col = 0; col < cols; col++) {
+        for (let row = 0; row < 2; row++) {
+          const lit = col < filled - 2 || (col < filled && (col + row) % 2 === 0);
+          ctx.fillStyle = lit ? (row === 0 ? lighten(c0, 0.22) : c0) : col < filled ? c1 : 'rgba(255, 255, 255, 0.07)';
+          ctx.fillRect(x + col * cell + 0.5, y + row * cell + 0.5, cell - 1, cell - 1);
+        }
+      }
+      break;
+    }
+    case 'wave': {
+      // Liquid: two layered waves and a few bubbles.
+      track();
+      if (!fw) break;
+      ctx.save();
+      clipFill();
+      ctx.fillStyle = darken(c0, 0.15);
+      ctx.fillRect(x, y, fw, h);
+      for (const [level, alpha, phase] of [[0.3, 0.55, 0], [0.5, 0.9, 2]] as const) {
+        ctx.beginPath();
+        ctx.moveTo(x, y + h);
+        for (let px = 0; px <= fw; px += 2) ctx.lineTo(x + px, y + h * level + Math.sin(px / 9 + phase) * h * 0.14);
+        ctx.lineTo(x + fw, y + h);
+        ctx.closePath();
+        ctx.fillStyle = withAlpha(level < 0.4 ? c1 : c0, alpha);
+        ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      for (let i = 0; i < fw / 22; i++) {
+        ctx.beginPath();
+        circle(ctx, x + 10 + i * 22 + jitter(i, 20) * 10, y + h * (0.45 + jitter(i, 21) * 0.35), Math.max(0.8, h * (0.07 + jitter(i, 22) * 0.07)));
+        ctx.fill();
+      }
+      ctx.restore();
+      break;
+    }
+    case 'flame': {
+      // Glowing fill with little flames dancing along its top and a bigger one at the tip.
+      track();
+      if (!fw) break;
+      ctx.save();
+      ctx.shadowColor = withAlpha(c0, 0.8);
+      ctx.shadowBlur = 12;
+      roundedRect(ctx, x, y, fw, h, r);
+      ctx.fillStyle = linearGradient(ctx, 0, x, y, fw, h, [darken(c0, 0.2), c0, c1]);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      const tongue = (bx: number, base: number, len: number, wid: number, fill: string) => {
+        ctx.beginPath();
+        ctx.moveTo(bx - wid / 2, base);
+        ctx.quadraticCurveTo(bx - wid * 0.45, base - len * 0.6, bx + wid * 0.1, base - len);
+        ctx.quadraticCurveTo(bx + wid * 0.5, base - len * 0.5, bx + wid / 2, base);
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+      };
+      for (let i = 0; i * 9 < fw - 6; i++) tongue(x + 6 + i * 9, y + h * 0.75, h * (0.55 + jitter(i, 23) * 0.6), 7, withAlpha(lighten(c1, 0.35), 0.7));
+      ctx.shadowColor = c1;
+      ctx.shadowBlur = 10;
+      tongue(x + fw - r, y + h, h * 1.6, h * 1.1, c1);
+      tongue(x + fw - r, y + h, h * 0.95, h * 0.6, lighten(c1, 0.7));
+      ctx.restore();
+      break;
+    }
+    case 'vine': {
+      // A vine growing along the bar, leaves above and below, a fresh sprout at the tip.
+      track();
+      if (!fw) break;
+      roundedRect(ctx, x, y, fw, h, r);
+      ctx.fillStyle = withAlpha(c0, 0.22);
+      ctx.fill();
+      const stemY = (px: number) => y + r + Math.sin(px / 14) * h * 0.18;
+      ctx.beginPath();
+      for (let px = 0; px <= fw - 2; px += 2) {
+        if (px === 0) ctx.moveTo(x + px, stemY(px));
+        else ctx.lineTo(x + px, stemY(px));
+      }
+      ctx.strokeStyle = c1;
+      ctx.lineWidth = Math.max(1.5, h * 0.16);
+      ctx.stroke();
+      const gap = Math.max(10, h * 1.3);
+      for (let i = 0; (i + 0.5) * gap < fw - h; i++) {
+        const px = (i + 0.5) * gap;
+        const up = i % 2 === 0;
+        drawLeaf(ctx, x + px, stemY(px), up ? -0.75 : 0.75, h * 1.05, h * 0.38, i % 3 ? c0 : lighten(c0, 0.18));
+      }
+      drawLeaf(ctx, x + fw - 2, stemY(fw - 2), -0.5, h * 1.25, h * 0.45, lighten(c0, 0.25));
+      drawLeaf(ctx, x + fw - 2, stemY(fw - 2), 0.45, h * 1.0, h * 0.38, c0);
+      break;
+    }
+    case 'comet': {
+      // A comet racing through a starfield: its tail fades out behind it.
+      track();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      for (let i = 0; i < w / 14; i++) {
+        ctx.beginPath();
+        circle(ctx, x + 6 + i * 14 + jitter(i, 24) * 8, y + h * (0.2 + jitter(i, 25) * 0.6), 0.7 + jitter(i, 26) * 0.6);
+        ctx.fill();
+      }
+      if (!fw) break;
+      ctx.save();
+      roundedRect(ctx, x, y, fw, h, r);
+      const tail = ctx.createLinearGradient(x, 0, x + fw, 0);
+      tail.addColorStop(0, withAlpha(c0, 0));
+      tail.addColorStop(0.7, withAlpha(c0, 0.75));
+      tail.addColorStop(1, c1);
+      ctx.fillStyle = tail;
+      ctx.fill();
+      ctx.shadowColor = c1;
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      circle(ctx, x + fw - r, y + r, r * 1.05);
+      ctx.fill();
+      ctx.restore();
+      break;
+    }
+  }
+}
+
 function drawXpBar(ctx: Ctx, { x, y, w, h }: Rect, fraction: number, style: XpBarData | null, accent: string) {
   const colors = style?.colors.length ? style.colors : [accent, lighten(accent, 0.4)];
   const pair = colors.length > 1 ? colors : [colors[0], lighten(colors[0], 0.35)];
   const r = h / 2;
   ctx.save();
+  if (style && ILLUSTRATED_XP.has(style.style)) {
+    drawIllustratedXp(ctx, { x, y, w, h }, fraction, style.style, pair);
+    ctx.restore();
+    return;
+  }
   if (style?.style === 'segmented') {
     const count = 24;
     const gap = 4;
@@ -1228,25 +2158,54 @@ function drawBadges(ctx: Ctx, badges: BadgeData[], right: number, top: number): 
   return shown.length ? shown.length * (BADGE_SIZE + BADGE_GAP) - BADGE_GAP : 0;
 }
 
-function drawSticker(ctx: Ctx, sticker: StickerData, w: number, h: number) {
-  const { x, y } = stickerCenter(sticker.corner, w, h);
-  const rotation = { tl: -0.22, tr: 0.22, bl: 0.16, br: -0.16 }[sticker.corner];
+/**
+ * A die-cut vinyl sticker: the symbol itself (not a disc) with a thick white cut line around it, a soft shadow that
+ * lifts it off the card, a slight tilt and a gloss across the top.
+ */
+export function drawSticker(ctx: Ctx, sticker: StickerData, x: number, y: number) {
+  const size = stickerRadius(sticker.corner) * 1.7;
+  const rotation = { tl: -0.22, tr: 0.2, bl: 0.14, br: -0.16, avatar: 0.26 }[sticker.corner];
+  // Cut line: every shape the glyph fills or strokes is also stroked wide and filled in white.
+  const k = 24 / size;
+  const cut = 4.5 * 2 * k;
+  const fill = ctx.fill;
+  const stroke = ctx.stroke;
   ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(rotation);
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-  ctx.shadowBlur = 10;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+  ctx.shadowBlur = 8;
   ctx.shadowOffsetY = 3;
-  ctx.beginPath();
-  circle(ctx, 0, 0, STICKER_RADIUS);
-  ctx.fillStyle = sticker.color;
-  ctx.fill();
-  resetShadow(ctx);
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 3;
-  ctx.stroke();
-  drawGlyph(ctx, sticker.glyph, 0, 0, 24, brightness(sticker.color) > 0.62 ? '#17151F' : '#FFFFFF');
+  ctx.fill = function cutFill(this: Ctx) {
+    const width = this.lineWidth;
+    this.lineWidth = cut;
+    stroke.call(this);
+    this.lineWidth = width;
+    fill.call(this);
+  } as Ctx['fill'];
+  ctx.stroke = function cutStroke(this: Ctx) {
+    const width = this.lineWidth;
+    this.lineWidth = width + cut;
+    stroke.call(this);
+    this.lineWidth = width;
+  } as Ctx['stroke'];
+  try {
+    drawGlyph(ctx, sticker.glyph, x, y, size, '#FFFFFF', rotation);
+  } finally {
+    ctx.fill = fill;
+    ctx.stroke = stroke;
+  }
   ctx.restore();
+  drawGlyph(ctx, sticker.glyph, x, y, size, sticker.color, rotation);
+  // Gloss: light falling on the top left, fading out towards the middle (in glyph units, ±12).
+  const gloss = ctx.createLinearGradient(-12, -12, 6, 6);
+  gloss.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+  gloss.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
+  drawGlyph(ctx, sticker.glyph, x, y, size, gloss as unknown as string, rotation);
+}
+
+/** Centre of a sticker on the card: a corner, or on the avatar's lower right edge. */
+export function stickerPoint(spot: StickerData['corner'], avatar: Circle, w = W, h = H): { x: number; y: number } {
+  if (spot !== 'avatar') return stickerCenter(spot, w, h);
+  return { x: avatar.cx + avatar.r * 0.74, y: avatar.cy + avatar.r * 0.7 };
 }
 
 // ---------- Item preview ----------
@@ -1280,17 +2239,25 @@ export function renderItemPreview<I extends ProfileImage>(
       drawXpBar(ctx, { x: w * 0.2, y: h * 0.74, w: w * 0.6, h: 12 }, 0.62, null, accent);
       break;
     case 'badge': zoomAt(2.2); drawBadges(ctx, [item.data], BADGE_SIZE / 2, -BADGE_SIZE / 2); break;
-    case 'sticker': {
-      const at = stickerCenter(item.data.corner, w, h);
-      zoomAt(1.9);
-      ctx.translate(-at.x, -at.y);
-      drawSticker(ctx, item.data, w, h);
-      break;
-    }
+    case 'sticker': zoomAt(2.2); drawSticker(ctx, item.data, 0, 0); break;
     case 'xpBar': drawXpBar(ctx, { x: w * 0.12, y: h / 2 - 10, w: w * 0.76, h: 20 }, 0.66, item.data, accent); break;
     case 'nameStyle': drawName(ctx, subject.name, w / 2, h / 2 + 14, 'center', 44, 'inter', item.data, w * 0.86); break;
     case 'font': drawName(ctx, subject.name, w / 2, h / 2 + 14, 'center', 44, item.data.font, null, w * 0.86); break;
     case 'title': drawRuns(ctx, [{ text: item.data.text, font: font('inter', 700, 26), color: item.data.color }], w / 2, h / 2 + 9, 'center'); break;
+    case 'layout': {
+      // The whole card, scaled down, in this layout with a sample member (the layout is the arrangement itself).
+      const k = (w * 0.94) / W;
+      ctx.translate((w - W * k) / 2, (h - H * k) / 2);
+      ctx.scale(k, k);
+      renderProfileCard(ctx, {
+        name: subject.name, username: subject.username, avatarUrl: null, bio: 'Hallo! Schön, dass du da bist.',
+        level: 12, xp: 860, xpNeeded: 1370, rank: 3, serverName: 'Nexo', balance: 1250,
+      }, {
+        background: null, accent: null, nameStyle: null, frame: null, badges: [{ glyph: 'star', color: '#F5C451' }], title: null,
+        xpBar: null, font: null, effect: null, levelup: null, layout: item.data, sticker: null,
+      }, assets);
+      break;
+    }
     default: ctx.restore(); return false;
   }
   ctx.restore();
@@ -1300,8 +2267,10 @@ export function renderItemPreview<I extends ProfileImage>(
 // ---------- Profile card ----------
 
 /** Draws the profile card at 1024×360 onto `ctx`. All cosmetics null = Nexo's default look. */
+/** `drawSticker: false` leaves the sticker out but keeps its room (the dashboard lets members drag it as an overlay). */
 export function renderProfileCard<I extends ProfileImage>(
   context: ProfileContext<NoInfer<I>>, subject: ProfileCardSubject, cosmetics: ResolvedCosmetics, assets: ProfileAssets<I>,
+  options: { drawSticker?: boolean } = {},
 ): void {
   const ctx: Ctx = context;
   const g = profileGeometry(cosmetics.layout?.layout ?? 'classic');
@@ -1318,15 +2287,18 @@ export function renderProfileCard<I extends ProfileImage>(
   if (effect && effect !== 'scanlines') drawEffect(ctx, effect, accent, W, H, seed);
 
   if (g.panel) {
-    ctx.fillStyle = linearGradient(ctx, 90, g.panel.x, g.panel.y, g.panel.w, g.panel.h, [withAlpha(accent, 0.1), 'rgba(255, 255, 255, 0.02)']);
-    ctx.fillRect(g.panel.x, g.panel.y, g.panel.w, g.panel.h);
+    const { panel } = g;
+    const strong = panel.edge === 'bottom';
+    ctx.fillStyle = linearGradient(ctx, strong ? 180 : 90, panel.x, panel.y, panel.w, panel.h, [withAlpha(accent, strong ? 0.22 : 0.1), withAlpha(accent, strong ? 0.08 : 0.02)]);
+    ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.07)';
-    ctx.fillRect(g.panel.x + g.panel.w - 1, 0, 1, H);
+    if (panel.edge === 'right') ctx.fillRect(panel.x + panel.w - 1, panel.y, 1, panel.h);
+    else ctx.fillRect(panel.x, panel.y + panel.h - 1, panel.w, 1);
   }
 
   drawAvatar(ctx, assets.avatar, g.avatar, cosmetics.frame, accent, subject.name);
 
-  const badgeRight = g.badges.right - (sticker?.corner === 'tr' ? 2 * STICKER_RADIUS + 8 : 0);
+  const badgeRight = badgeRowRight(g, sticker);
   const badgeWidth = drawBadges(ctx, cosmetics.badges, badgeRight, g.badges.top);
 
   const bio = subject.bio.trim().replace(/\s+/g, ' ');
@@ -1367,13 +2339,16 @@ export function renderProfileCard<I extends ProfileImage>(
   drawXpBar(ctx, g.xp, fraction, cosmetics.xpBar, accent);
 
   if (g.serverLabel && subject.serverName) {
-    const x = g.serverLabel.x + (sticker?.corner === 'tl' ? 2 * STICKER_RADIUS + 8 : 0);
-    const fitted = fitText(ctx, subject.serverName.toUpperCase(), 'inter', 700, 12, 12, 300);
+    const x = g.serverLabel.x + (sticker?.corner === 'tl' && g.serverLabel.x < 2 * STICKER_RADIUS + 20 ? 2 * STICKER_RADIUS + 8 : 0);
+    const fitted = fitText(ctx, subject.serverName.toUpperCase(), 'inter', 700, 12, 12, g.serverLabel.maxWidth);
     drawRuns(ctx, [{ text: fitted.text, font: font('inter', 700, 12), color: FAINT }], x, g.serverLabel.y, 'left');
   }
 
   if (effect === 'scanlines') drawEffect(ctx, effect, accent, W, H, seed);
-  if (sticker) drawSticker(ctx, sticker, W, H);
+  if (sticker && options.drawSticker !== false) {
+    const at = stickerPoint(sticker.corner, g.avatar);
+    drawSticker(ctx, sticker, at.x, at.y);
+  }
   ctx.restore();
 
   ctx.save();

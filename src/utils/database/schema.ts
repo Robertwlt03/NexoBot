@@ -351,6 +351,15 @@ export const migrationStatements: Record<number, string[]> = {
             config JSONB NOT NULL DEFAULT '{}'
         )`,
     ],
+    // v5 activity-stats: lifetime activity counters per user for achievements (services/cosmetics/activity.ts).
+    5: [
+        `CREATE TABLE IF NOT EXISTS ${t.user_stats} (
+            user_id TEXT NOT NULL,
+            stat TEXT NOT NULL,
+            value BIGINT NOT NULL DEFAULT 0,
+            PRIMARY KEY (user_id, stat)
+        )`,
+    ],
 };
 
 export const UPDATE_TIMESTAMP_FUNCTION = `

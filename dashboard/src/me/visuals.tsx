@@ -31,10 +31,17 @@ export const GLYPHS = {
   trophy: <><path d="M8 4h8v5a4 4 0 0 1-8 0z" /><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8M9.5 17h5" /></>,
   rocket: <><path d="M12 2.5c3.5 2.5 5 6 4.5 10.5L14 16h-4l-2.5-3C7 8.5 8.5 5 12 2.5z" /><path d="M10 16l-1 4 3-2 3 2-1-4M7.5 13L5 15l1 3M16.5 13L19 15l-1 3" /><circle cx="12" cy="9" r="1.5" /></>,
   ghost: <><path d="M5 20V10a7 7 0 0 1 14 0v10l-2.3-1.6L14.3 20 12 18.4 9.7 20l-2.4-1.6z" /><path d="M9.5 10h.01M14.5 10h.01" strokeWidth={3} /></>,
-  pumpkin: <><path d="M12 7c-5 0-8 3-8 7s3 6 8 6 8-2 8-6-3-7-8-7z" /><path d="M12 7c-2 2-2.5 9 0 13M12 7c2 2 2.5 9 0 13M12 7c0-2 1-3 2.5-4" /></>,
+  pumpkin: <><path d="M12 7.5c-1.4-.9-3.4-1.1-5.2-.4C3.9 8.2 2.5 11 2.8 14.2c.3 3.4 2.7 6 5.7 6.3 1.3.1 2.5-.2 3.5-.8 1 .6 2.2.9 3.5.8 3-.3 5.4-2.9 5.7-6.3.3-3.2-1.1-6-4-7.1-1.8-.7-3.8-.5-5.2.4z" /><path d="M12 7.5c-1.8 2.3-2.4 5-2.2 7.6.2 2.2.9 3.8 2.2 4.6 1.3-.8 2-2.4 2.2-4.6.2-2.6-.4-5.3-2.2-7.6M12 7.5V5c0-1.1.7-2 1.8-2.3" /></>,
   gift: <><rect x="3" y="8" width="18" height="5" rx="1" /><path d="M5 13v8h14v-8M12 8v13" /><path d="M12 8C10.5 4 6.5 4 7 6.5S12 8 12 8zM12 8c1.5-4 5.5-4 5-1.5S12 8 12 8z" /></>,
   paw: <><circle cx="6.5" cy="10" r="1.8" /><circle cx="10" cy="6" r="1.8" /><circle cx="14" cy="6" r="1.8" /><circle cx="17.5" cy="10" r="1.8" /><path d="M12 12c-3 0-5.5 3.5-5.5 5.5 0 1.5 1.5 2 3 1.5s3.5-.5 5 0 3 0 3-1.5C17.5 15.5 15 12 12 12z" /></>,
   code: <path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16" />,
+  acorn: <><path d="M4.5 11a7.5 5 0 0 1 15 0z" /><path d="M12 6V3.5" /><path d="M6.5 11h11c0 4.5-2.5 7.5-5.5 9-3-1.5-5.5-4.5-5.5-9z" /></>,
+  mushroom: <><path d="M2.5 12a9.5 8.5 0 0 1 19 0z" /><path d="M8.5 12l-.5 8.5h8l-.5-8.5" /></>,
+  tree: <path d="M12 2l6 7.5h-3l5.5 7H14v5.5h-4v-5.5H3.5l5.5-7H6z" />,
+  chat: <><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-9l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" /><path d="M8 11h.01M12 11h.01M16 11h.01" strokeWidth={3} /></>,
+  mic: <><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" /></>,
+  egg: <><path d="M12 3c4 0 7 6.5 7 11a7 7 0 0 1-14 0c0-4.5 3-11 7-11z" /><path d="M5.6 12.5l2.1-1.8 2.1 1.8 2.2-1.8 2.1 1.8 2.1-1.8 2.2 1.8" /></>,
+  mask: <><path d="M2.5 9c.8-3.5 5.5-3.3 9.5-1 4-2.3 8.7-2.5 9.5 1 .5 4.5-3 7-6 6-1.8-.6-2.3-2-3.5-2s-1.7 1.4-3.5 2c-3 1-6.5-1.5-6-6z" /><path d="M6 10.5c1.2-1.5 3-1.5 4 0M14 10.5c1-1.5 2.8-1.5 4 0" /></>,
   // Member-area navigation (not badge glyphs).
   user: <><circle cx="12" cy="8" r="4" /><path d="M4 21c.8-4 4-6 8-6s7.2 2 8 6" /></>,
   bag: <><path d="M5 8h14l-1 13H6z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></>,
@@ -72,6 +79,11 @@ export const RARITY_CLASS: Record<Rarity, { border: string; text: string }> = {
   mythic: { border: 'border-rose-500/25', text: 'text-(--rarity-mythic)' },
 };
 
+/** Rarity identity of a tile (game-shop convention: grey, blue, purple, gold, red). Only used inside item tiles. */
+export const RARITY_TILE: Record<Rarity, string> = {
+  common: '#8a8f99', rare: '#3b8cf6', epic: '#a35cf5', legendary: '#f2a516', mythic: '#f2415f',
+};
+
 export function RarityLabel({ rarity }: { rarity: Rarity }) {
   return <span className={`text-[12px] font-medium ${RARITY_CLASS[rarity].text}`}>{RARITY_LABELS[rarity]}</span>;
 }
@@ -105,6 +117,8 @@ export function backgroundStyle(data: BackgroundData): CSSProperties {
   const [a = '#15151b', b = a, c = b, d = c] = data.colors;
   switch (data.kind) {
     case 'solid': return { background: a };
+    // Scenes are drawn by the card renderer; CSS only needs their mood (backdrops, banners).
+    case 'scene': return { background: `linear-gradient(160deg, ${a}, ${b} 60%, ${c})` };
     case 'gradient': return { background: `linear-gradient(${data.angle}deg, ${data.colors.join(', ')})` };
     case 'aurora': return { background: `radial-gradient(60% 80% at 20% 20%, ${withAlpha(b, 'aa')}, transparent 70%), radial-gradient(70% 70% at 85% 70%, ${withAlpha(c, '99')}, transparent 70%), ${a}` };
     case 'mesh': return { background: `radial-gradient(at 0% 0%, ${a}, transparent 60%), radial-gradient(at 100% 0%, ${b}, transparent 60%), radial-gradient(at 0% 100%, ${c}, transparent 60%), radial-gradient(at 100% 100%, ${d}, transparent 60%), #1a1a22` };
@@ -137,23 +151,9 @@ function LevelupBanner({ data }: { data: LevelupData }) {
   return <span className="rounded-md px-2.5 py-1 text-[12px] font-bold tracking-wide" style={styles[data.style]}>LEVEL UP</span>;
 }
 
-function LayoutSketch({ layout }: { layout: 'classic' | 'compact' | 'centered' | 'split' }) {
-  const line = 'fill-white/25';
-  return (
-    <svg viewBox="0 0 80 50" className="w-3/4" aria-hidden="true">
-      <rect x=".5" y=".5" width="79" height="49" rx="6" className="fill-white/[.04] stroke-white/20" />
-      {layout === 'classic' && <><circle cx="16" cy="25" r="9" className={line} /><rect x="30" y="17" width="34" height="5" rx="2" className={line} /><rect x="30" y="27" width="24" height="4" rx="2" className="fill-white/15" /><rect x="30" y="36" width="42" height="3" rx="1.5" className="fill-white/15" /></>}
-      {layout === 'compact' && <><circle cx="12" cy="25" r="6" className={line} /><rect x="22" y="20" width="30" height="4" rx="2" className={line} /><rect x="22" y="28" width="50" height="3" rx="1.5" className="fill-white/15" /></>}
-      {layout === 'centered' && <><circle cx="40" cy="17" r="8" className={line} /><rect x="24" y="29" width="32" height="4" rx="2" className={line} /><rect x="18" y="38" width="44" height="3" rx="1.5" className="fill-white/15" /></>}
-      {layout === 'split' && <><rect x="6" y="6" width="28" height="38" rx="4" className="fill-white/15" /><circle cx="20" cy="22" r="7" className={line} /><rect x="40" y="16" width="30" height="5" rx="2" className={line} /><rect x="40" y="26" width="22" height="4" rx="2" className="fill-white/15" /><rect x="40" y="35" width="32" height="3" rx="1.5" className="fill-white/15" /></>}
-    </svg>
-  );
-}
-
 function previewOf(item: CosmeticItem): ReactNode {
   // Everything the card shows is painted by the card renderer, so tile and card always match.
   if (item.slot === 'levelup') return <LevelupBanner data={item.data} />;
-  if (item.slot === 'layout') return <LayoutSketch layout={item.data.layout} />;
   return <ItemPreviewCanvas item={item} />;
 }
 

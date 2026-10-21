@@ -6,8 +6,8 @@ import {
 import { HttpError } from '../src/web/http.js';
 import { dailyBonusAmount, defaultEconomyConfig, levelReward, parseEconomyConfig } from '../src/services/cosmetics/config.js';
 import { AUTO_EVENT_IDS, blackFridayDay, calendarEvents, eventFor, priceFor, runningEvents, upcomingEvents } from '../src/services/cosmetics/events.js';
-import { SEED_ITEMS, parseSlotData } from '../src/services/cosmetics/catalog.js';
-import { BLACK_MARKET_EXCLUSIVES, blackMarketDiscount, blackMarketPrice, rotationFor } from '../src/services/cosmetics/shop.js';
+import { BUNDLES, SEED_ITEMS, parseSlotData } from '../src/services/cosmetics/catalog.js';
+import { BLACK_MARKET_EXCLUSIVES, blackMarketDiscount, blackMarketPrice, bundleFor, bundlePrice, rotationFor } from '../src/services/cosmetics/shop.js';
 import { cappedGrant, dailyState } from '../src/services/cosmetics/wallet.js';
 import { selectPayouts, type Placement } from '../src/services/cosmetics/rankings.js';
 import { parseProfileSettings, sanitizeBio } from '../src/services/cosmetics/profile.js';
@@ -227,3 +227,35 @@ test('owner config validation rejects out-of-range values', () => {
   assert.throws(() => parseEconomyConfig({ monthlyRewards: [] }), HttpError);
   assert.throws(() => parseEconomyConfig({ blackMarketSize: 0 }), HttpError);
 });
+
+test('bundles only hold regular shop items, each at most once, and every slot only once', () => {
+  const ids = new Set<string>();
+  for (const bundle of BUNDLES) {
+    assert.ok(!ids.has(bundle.id), bundle.id);
+    ids.add(bundle.id);
+    assert.ok(bundle.itemIds.length >= 3, `${bundle.id}: at least three items`);
+    assert.equal(new Set(bundle.itemIds).size, bundle.itemIds.length, `${bundle.id}: duplicate item`);
+    const items = bundle.itemIds.map(seed);
+    for (const entry of items) assert.equal(entry.availability, 'shop', `${bundle.id}: ${entry.id} is not a shop item`);
+    // A bundle is one look: two items of the same slot would replace each other (badges may stack).
+    const slots = items.filter((entry) => entry.slot !== 'badge').map((entry) => entry.slot);
+    assert.equal(new Set(slots).size, slots.length, `${bundle.id}: two items of one slot`);
+  }
+});
+
+test('bundle price: current prices of the missing items, owned ones are free', () => {
+  assert.equal(bundlePrice([{ finalPrice: 400, owned: false }, { finalPrice: 900, owned: true }, { finalPrice: 1200, owned: false }]), 1600);
+  const def = BUNDLES[0];
+  const listings = new Map(def.itemIds.map((id, i) => {
+    const item = seed(id);
+    return [id, { item, finalPrice: Math.round(item.price * 0.8), discount: 20, eventId: 'sale', owned: i === 0, availableUntil: null }];
+  }));
+  const bundle = bundleFor(def, listings);
+  assert.ok(bundle);
+  assert.equal(bundle.owned, 1);
+  assert.equal(bundle.fullPrice, def.itemIds.reduce((sum, id) => sum + seed(id).price, 0));
+  assert.equal(bundle.price, def.itemIds.slice(1).reduce((sum, id) => sum + Math.round(seed(id).price * 0.8), 0));
+  // Fewer than two items on sale: no bundle.
+  assert.equal(bundleFor(def, new Map([...listings].slice(0, 1))), null);
+});
+

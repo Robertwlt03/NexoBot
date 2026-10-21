@@ -63,11 +63,12 @@ export function ServerPicker() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {guilds.map((guild) => (
               <article key={guild.id} className="js-server group relative overflow-hidden rounded-[20px] border border-white/[.06] bg-surface transition duration-300 hover:-translate-y-0.5 hover:border-white/[.14]">
-                <div className="relative h-24 overflow-hidden">
+                {/* Fades out through a mask instead of a gradient in the card colour: no hard bottom edge that could show
+                    as a line while the card lifts on hover. */}
+                <div className="relative h-24 overflow-hidden" style={{ maskImage: 'linear-gradient(to bottom, #000 15%, transparent)' }}>
                   {guild.iconUrl
                     ? <img src={guild.iconUrl} alt="" className="absolute inset-0 h-full w-full scale-150 object-cover opacity-30 blur-2xl saturate-[.8] transition duration-500 group-hover:scale-[1.7] group-hover:opacity-40" />
                     : <div className="absolute inset-0 bg-white/[.03]" />}
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface" />
                 </div>
                 <div className="relative -mt-10 px-5 pb-5">
                   <GuildIcon guild={guild} className="h-14 w-14 rounded-2xl text-lg ring-4 ring-surface" />
