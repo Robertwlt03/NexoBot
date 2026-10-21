@@ -39,7 +39,8 @@ export interface XpBarData { style: (typeof XP_BAR_STYLES)[number]; colors: stri
 export interface FontData { font: 'inter' | 'unbounded' | 'caveat' }
 export interface EffectData { effect: 'sparkles' | 'snow' | 'confetti' | 'aurora' | 'scanlines' | 'stardust' | 'embers' | 'hearts' | 'leaves' }
 export interface LevelupData { style: 'classic' | 'minimal' | 'neon' | 'royal' | 'retro'; color: string }
-export interface LayoutData { layout: 'classic' | 'compact' | 'centered' | 'split' }
+export const CARD_LAYOUTS = ['classic', 'compact', 'centered', 'split', 'banner', 'mirror', 'minimal'] as const;
+export interface LayoutData { layout: (typeof CARD_LAYOUTS)[number] }
 /** Where a sticker sits: a card corner, or on the avatar's edge like a sticker slapped on the photo. */
 export const STICKER_SPOTS = ['tl', 'tr', 'bl', 'br', 'avatar'] as const;
 export type StickerSpot = (typeof STICKER_SPOTS)[number];

@@ -151,23 +151,9 @@ function LevelupBanner({ data }: { data: LevelupData }) {
   return <span className="rounded-md px-2.5 py-1 text-[12px] font-bold tracking-wide" style={styles[data.style]}>LEVEL UP</span>;
 }
 
-function LayoutSketch({ layout }: { layout: 'classic' | 'compact' | 'centered' | 'split' }) {
-  const line = 'fill-white/25';
-  return (
-    <svg viewBox="0 0 80 50" className="w-3/4" aria-hidden="true">
-      <rect x=".5" y=".5" width="79" height="49" rx="6" className="fill-white/[.04] stroke-white/20" />
-      {layout === 'classic' && <><circle cx="16" cy="25" r="9" className={line} /><rect x="30" y="17" width="34" height="5" rx="2" className={line} /><rect x="30" y="27" width="24" height="4" rx="2" className="fill-white/15" /><rect x="30" y="36" width="42" height="3" rx="1.5" className="fill-white/15" /></>}
-      {layout === 'compact' && <><circle cx="12" cy="25" r="6" className={line} /><rect x="22" y="20" width="30" height="4" rx="2" className={line} /><rect x="22" y="28" width="50" height="3" rx="1.5" className="fill-white/15" /></>}
-      {layout === 'centered' && <><circle cx="40" cy="17" r="8" className={line} /><rect x="24" y="29" width="32" height="4" rx="2" className={line} /><rect x="18" y="38" width="44" height="3" rx="1.5" className="fill-white/15" /></>}
-      {layout === 'split' && <><rect x="6" y="6" width="28" height="38" rx="4" className="fill-white/15" /><circle cx="20" cy="22" r="7" className={line} /><rect x="40" y="16" width="30" height="5" rx="2" className={line} /><rect x="40" y="26" width="22" height="4" rx="2" className="fill-white/15" /><rect x="40" y="35" width="32" height="3" rx="1.5" className="fill-white/15" /></>}
-    </svg>
-  );
-}
-
 function previewOf(item: CosmeticItem): ReactNode {
   // Everything the card shows is painted by the card renderer, so tile and card always match.
   if (item.slot === 'levelup') return <LevelupBanner data={item.data} />;
-  if (item.slot === 'layout') return <LayoutSketch layout={item.data.layout} />;
   return <ItemPreviewCanvas item={item} />;
 }
 

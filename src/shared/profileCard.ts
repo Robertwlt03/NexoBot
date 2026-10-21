@@ -675,7 +675,8 @@ export interface StackedStat { key: StatKey; x: number; y: number; align: 'left'
 export type StatBlock =
   | { style: 'stacked'; items: StackedStat[] }
   | { style: 'tiles'; rect: Rect; keys: StatKey[] }
-  | { style: 'inline'; cx: number; y: number; keys: StatKey[] };
+  /** One line: label value · label value · XP; `x` is its centre (center) or start (left). */
+  | { style: 'inline'; x: number; y: number; align: 'left' | 'center'; keys: StatKey[] };
 
 export interface ProfileGeometry {
   avatar: Circle;
@@ -686,13 +687,13 @@ export interface ProfileGeometry {
   captionY: number | null;
   /** Right edge and top of the badge row. */
   badges: { right: number; top: number };
-  /** Tinted side panel (split layout). */
-  panel: Rect | null;
+  /** Tinted panel with a hairline on one edge: the side of the split layout, the banner strip. */
+  panel: (Rect & { edge: 'right' | 'bottom' }) | null;
   /** Small server label for layouts without bar captions. */
-  serverLabel: { x: number; y: number } | null;
+  serverLabel: { x: number; y: number; maxWidth: number } | null;
 }
 
-export const PROFILE_LAYOUTS: ProfileLayout[] = ['classic', 'compact', 'centered', 'split'];
+export const PROFILE_LAYOUTS: ProfileLayout[] = ['classic', 'compact', 'centered', 'split', 'banner', 'mirror', 'minimal'];
 /** Space a frame may take outside the avatar circle (widest style incl. gap). */
 export const FRAME_MAX_OUTSET = 22;
 export const BADGE_SIZE = 40;
@@ -718,14 +719,14 @@ export function profileGeometry(layout: ProfileLayout): ProfileGeometry {
       };
     case 'centered':
       return {
-        avatar: { cx: W / 2, cy: 94, r: 58 },
-        text: { x: W / 2, align: 'center', maxWidth: 760, nameY: 204, nameSize: 40, titleY: 234, bioY: 262 },
-        stats: { style: 'inline', cx: W / 2, y: 298, keys: ['level', 'rank', 'balance'] },
-        xp: { x: W / 2 - 280, y: 314, w: 560, h: 10 },
+        avatar: { cx: W / 2, cy: 88, r: 56 },
+        text: { x: W / 2, align: 'center', maxWidth: 760, nameY: 208, nameSize: 40, titleY: 238, bioY: 266 },
+        stats: { style: 'inline', x: W / 2, y: 300, align: 'center', keys: ['level', 'rank', 'balance'] },
+        xp: { x: W / 2 - 280, y: 318, w: 560, h: 10 },
         captionY: null,
         badges,
         panel: null,
-        serverLabel: { x: 40, y: 50 },
+        serverLabel: { x: 40, y: 50, maxWidth: 300 },
       };
     case 'split':
       return {
@@ -742,7 +743,50 @@ export function profileGeometry(layout: ProfileLayout): ProfileGeometry {
         xp: { x: 376, y: 292, w: W - 376 - 44, h: 14 },
         captionY: 278,
         badges,
-        panel: { x: 0, y: 0, w: 336, h: H },
+        panel: { x: 0, y: 0, w: 336, h: H, edge: 'right' },
+        serverLabel: null,
+      };
+    case 'banner':
+      // Discord-like: a tinted banner strip with the server name and badges; the avatar reaches into it.
+      return {
+        avatar: { cx: 130, cy: 128, r: 66 },
+        text: { x: 236, align: 'left', maxWidth: W - 236 - 44, nameY: 172, nameSize: 40, titleY: 204, bioY: 234 },
+        stats: { style: 'inline', x: 236, y: 276, align: 'left', keys: ['level', 'rank', 'balance'] },
+        xp: { x: 236, y: 296, w: W - 236 - 44, h: 12 },
+        captionY: null,
+        badges,
+        panel: { x: 0, y: 0, w: W, h: 116, edge: 'bottom' },
+        serverLabel: { x: 236, y: 98, maxWidth: 420 },
+      };
+    case 'mirror':
+      // Classic, mirrored: text on the left, the big avatar on the right with the badges below it.
+      return {
+        avatar: { cx: W - 150, cy: 142, r: 86 },
+        text: { x: 44, align: 'left', maxWidth: W - 260 - 44 - 28, nameY: 104, nameSize: 44, titleY: 138, bioY: 170 },
+        stats: {
+          style: 'stacked',
+          items: [
+            { key: 'level', x: 44, y: 214, align: 'left', size: 30 },
+            { key: 'rank', x: 204, y: 214, align: 'left', size: 30 },
+            { key: 'balance', x: 364, y: 214, align: 'left', size: 30 },
+          ],
+        },
+        xp: { x: 44, y: 292, w: W - 260 - 44 - 28, h: 14 },
+        captionY: 278,
+        badges: { right: W - 40, top: 290 },
+        panel: null,
+        serverLabel: null,
+      };
+    case 'minimal':
+      // Typography first: a big name, everything else in one quiet line and a thin XP line.
+      return {
+        avatar: { cx: 104, cy: 128, r: 60 },
+        text: { x: 212, align: 'left', maxWidth: W - 212 - 44, nameY: 128, nameSize: 54, titleY: 166, bioY: 200 },
+        stats: { style: 'inline', x: 44, y: 256, align: 'left', keys: ['level', 'rank', 'balance'] },
+        xp: { x: 44, y: 278, w: W - 88, h: 6 },
+        captionY: null,
+        badges,
+        panel: null,
         serverLabel: null,
       };
     case 'classic':
@@ -767,11 +811,23 @@ export function profileGeometry(layout: ProfileLayout): ProfileGeometry {
   }
 }
 
+/** Right edge of the badge row: moved left when the sticker would sit on it. */
+export function badgeRowRight(g: ProfileGeometry, sticker: StickerData | null): number {
+  if (!sticker) return g.badges.right;
+  const at = stickerPoint(sticker.corner, g.avatar);
+  const r = stickerRadius(sticker.corner);
+  const row = { x: g.badges.right - MAX_BADGE_ROW, y: g.badges.top, w: MAX_BADGE_ROW, h: BADGE_SIZE };
+  const touches = at.x + r > row.x && at.x - r < row.x + row.w && at.y + r > row.y && at.y - r < row.y + row.h;
+  return touches ? g.badges.right - (2 * r + 8) : g.badges.right;
+}
+const MAX_BADGE_ROW = 3 * (BADGE_SIZE + BADGE_GAP) - BADGE_GAP;
+
 /** Centre of a sticker in `corner` of a card of size w×h. */
 export function stickerCenter(corner: Exclude<StickerData['corner'], 'avatar'>, w = W, h = H): { x: number; y: number } {
   return {
-    x: corner === 'tl' || corner === 'bl' ? stickerRadius(corner) + 12 : w - stickerRadius(corner) - 12,
-    y: corner === 'tl' || corner === 'tr' ? stickerRadius(corner) + 12 : h - stickerRadius(corner) - 12,
+    // Bottom spots sit closer to the edge, clear of the XP bar's decorations.
+    x: corner === 'tl' || corner === 'bl' ? stickerRadius(corner) + (corner === 'bl' ? 8 : 12) : w - stickerRadius(corner) - (corner === 'br' ? 8 : 12),
+    y: corner === 'tl' || corner === 'tr' ? stickerRadius(corner) + 12 : h - stickerRadius(corner) - 8,
   };
 }
 
@@ -1877,7 +1933,7 @@ function drawStats(ctx: Ctx, block: StatBlock, subject: ProfileCardSubject, acce
     runs.push(separator,
       { text: formatNumber(subject.xp), font: font('inter', 700, 16), color: SOFT },
       { text: ` / ${formatNumber(subject.xpNeeded)} XP`, font: font('inter', 400, 16), color: MUTED });
-    drawRuns(ctx, runs, block.cx, block.y, 'center');
+    drawRuns(ctx, runs, block.x, block.y, block.align);
   }
   ctx.restore();
 }
@@ -2188,6 +2244,20 @@ export function renderItemPreview<I extends ProfileImage>(
     case 'nameStyle': drawName(ctx, subject.name, w / 2, h / 2 + 14, 'center', 44, 'inter', item.data, w * 0.86); break;
     case 'font': drawName(ctx, subject.name, w / 2, h / 2 + 14, 'center', 44, item.data.font, null, w * 0.86); break;
     case 'title': drawRuns(ctx, [{ text: item.data.text, font: font('inter', 700, 26), color: item.data.color }], w / 2, h / 2 + 9, 'center'); break;
+    case 'layout': {
+      // The whole card, scaled down, in this layout with a sample member (the layout is the arrangement itself).
+      const k = (w * 0.94) / W;
+      ctx.translate((w - W * k) / 2, (h - H * k) / 2);
+      ctx.scale(k, k);
+      renderProfileCard(ctx, {
+        name: subject.name, username: subject.username, avatarUrl: null, bio: 'Hallo! Schön, dass du da bist.',
+        level: 12, xp: 860, xpNeeded: 1370, rank: 3, serverName: 'Nexo', balance: 1250,
+      }, {
+        background: null, accent: null, nameStyle: null, frame: null, badges: [{ glyph: 'star', color: '#F5C451' }], title: null,
+        xpBar: null, font: null, effect: null, levelup: null, layout: item.data, sticker: null,
+      }, assets);
+      break;
+    }
     default: ctx.restore(); return false;
   }
   ctx.restore();
@@ -2217,15 +2287,18 @@ export function renderProfileCard<I extends ProfileImage>(
   if (effect && effect !== 'scanlines') drawEffect(ctx, effect, accent, W, H, seed);
 
   if (g.panel) {
-    ctx.fillStyle = linearGradient(ctx, 90, g.panel.x, g.panel.y, g.panel.w, g.panel.h, [withAlpha(accent, 0.1), 'rgba(255, 255, 255, 0.02)']);
-    ctx.fillRect(g.panel.x, g.panel.y, g.panel.w, g.panel.h);
+    const { panel } = g;
+    const strong = panel.edge === 'bottom';
+    ctx.fillStyle = linearGradient(ctx, strong ? 180 : 90, panel.x, panel.y, panel.w, panel.h, [withAlpha(accent, strong ? 0.22 : 0.1), withAlpha(accent, strong ? 0.08 : 0.02)]);
+    ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.07)';
-    ctx.fillRect(g.panel.x + g.panel.w - 1, 0, 1, H);
+    if (panel.edge === 'right') ctx.fillRect(panel.x + panel.w - 1, panel.y, 1, panel.h);
+    else ctx.fillRect(panel.x, panel.y + panel.h - 1, panel.w, 1);
   }
 
   drawAvatar(ctx, assets.avatar, g.avatar, cosmetics.frame, accent, subject.name);
 
-  const badgeRight = g.badges.right - (sticker?.corner === 'tr' ? 2 * STICKER_RADIUS + 8 : 0);
+  const badgeRight = badgeRowRight(g, sticker);
   const badgeWidth = drawBadges(ctx, cosmetics.badges, badgeRight, g.badges.top);
 
   const bio = subject.bio.trim().replace(/\s+/g, ' ');
@@ -2266,8 +2339,8 @@ export function renderProfileCard<I extends ProfileImage>(
   drawXpBar(ctx, g.xp, fraction, cosmetics.xpBar, accent);
 
   if (g.serverLabel && subject.serverName) {
-    const x = g.serverLabel.x + (sticker?.corner === 'tl' ? 2 * STICKER_RADIUS + 8 : 0);
-    const fitted = fitText(ctx, subject.serverName.toUpperCase(), 'inter', 700, 12, 12, 300);
+    const x = g.serverLabel.x + (sticker?.corner === 'tl' && g.serverLabel.x < 2 * STICKER_RADIUS + 20 ? 2 * STICKER_RADIUS + 8 : 0);
+    const fitted = fitText(ctx, subject.serverName.toUpperCase(), 'inter', 700, 12, 12, g.serverLabel.maxWidth);
     drawRuns(ctx, [{ text: fitted.text, font: font('inter', 700, 12), color: FAINT }], x, g.serverLabel.y, 'left');
   }
 

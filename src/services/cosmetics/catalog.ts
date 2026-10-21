@@ -2,7 +2,7 @@
 // shop_items storage with a short in-memory cache for the card renderer.
 
 import {
-  BACKGROUND_SCENES, BADGE_GLYPHS, COSMETIC_SLOTS, FRAME_STYLES, RARITIES, STICKER_SPOTS, XP_BAR_STYLES,
+  BACKGROUND_SCENES, BADGE_GLYPHS, CARD_LAYOUTS, COSMETIC_SLOTS, FRAME_STYLES, RARITIES, STICKER_SPOTS, XP_BAR_STYLES,
   type BackgroundScene, type BadgeGlyph, type CosmeticItem, type CosmeticSlot, type ItemAvailability, type Rarity, type SlotData,
 } from '../../shared/cosmetics.js';
 import { HttpError, badRequest, body, bool, hexColor, int, str } from '../../web/http.js';
@@ -305,6 +305,9 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('layout', 'layout-compact', 'rare', 900, 'Kompakt', 'Alles Wichtige auf kleinem Raum.', { layout: 'compact' }),
   item('layout', 'layout-centered', 'epic', 2000, 'Zentriert', 'Avatar und Name in der Mitte.', { layout: 'centered' }),
   item('layout', 'layout-split', 'legendary', 5000, 'Geteilt', 'Zweigeteiltes Layout mit großer Statistikfläche.', { layout: 'split' }),
+  item('layout', 'layout-banner', 'epic', 2400, 'Banner', 'Ein Bannerstreifen oben, dein Avatar ragt hinein – wie ein Profil auf Discord.', { layout: 'banner' }),
+  item('layout', 'layout-mirror', 'rare', 1200, 'Gespiegelt', 'Der Avatar rechts, deine Abzeichen darunter.', { layout: 'mirror' }),
+  item('layout', 'layout-minimal', 'rare', 1400, 'Minimal', 'Große Schrift, viel Luft und eine schlanke XP-Linie.', { layout: 'minimal' }),
 
   // ---------- Sticker ----------
   item('sticker', 'sticker-paw', 'common', 300, 'Pfotenabdruck', 'Ein kleiner Pfotenabdruck.', { glyph: 'paw', color: '#FDA4AF', corner: 'br' }),
@@ -443,7 +446,7 @@ export function parseSlotData(slot: CosmeticSlot, input: unknown): SlotData[Cosm
     case 'font': return { font: oneOf(d.font, ['inter', 'unbounded', 'caveat'] as const, 'Schrift') };
     case 'effect': return { effect: oneOf(d.effect, ['sparkles', 'snow', 'confetti', 'aurora', 'scanlines', 'stardust', 'embers', 'hearts', 'leaves'] as const, 'Effekt') };
     case 'levelup': return { style: oneOf(d.style, ['classic', 'minimal', 'neon', 'royal', 'retro'] as const, 'Stil'), color: hexColor(d.color, 'Farbe') };
-    case 'layout': return { layout: oneOf(d.layout, ['classic', 'compact', 'centered', 'split'] as const, 'Layout') };
+    case 'layout': return { layout: oneOf(d.layout, CARD_LAYOUTS, 'Layout') };
     case 'sticker': return {
       glyph: oneOf(d.glyph, BADGE_GLYPHS, 'Symbol'),
       color: hexColor(d.color, 'Farbe'),

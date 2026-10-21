@@ -113,8 +113,8 @@ test('shop tiles are painted by the card renderer for every item that shows on t
     const canvas = createCanvas(ITEM_PREVIEW_WIDTH, ITEM_PREVIEW_HEIGHT);
     const ctx = canvas.getContext('2d');
     const painted = renderItemPreview(ctx, item, subject, { avatar: null });
-    // Level-up styles and layouts are not part of one spot on the card; the dashboard sketches those itself.
-    assert.equal(painted, item.slot !== 'levelup' && item.slot !== 'layout', item.id);
+    // Level-up styles are not part of the card; the dashboard sketches those itself.
+    assert.equal(painted, item.slot !== 'levelup', item.id);
     if (!painted) continue;
     const alpha = ctx.getImageData(0, 0, ITEM_PREVIEW_WIDTH, ITEM_PREVIEW_HEIGHT).data.filter((_, index) => index % 4 === 3);
     assert.ok(alpha.some((value) => value > 0), `${item.id} paints nothing`);

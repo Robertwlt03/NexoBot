@@ -29,7 +29,7 @@ const XP_LABELS: Record<XpBarData['style'], string> = { solid: 'Einfarbig', grad
 const FONT_LABELS: Record<FontData['font'], string> = { inter: 'Inter', unbounded: 'Unbounded', caveat: 'Caveat (Handschrift)' };
 const EFFECT_LABELS: Record<EffectData['effect'], string> = { sparkles: 'Funkeln', snow: 'Schnee', confetti: 'Konfetti', aurora: 'Polarlicht', scanlines: 'Scanlines', stardust: 'Sternenstaub', embers: 'Glut', hearts: 'Herzen', leaves: 'Fallendes Laub' };
 const LEVELUP_LABELS: Record<LevelupData['style'], string> = { classic: 'Klassisch', minimal: 'Minimal', neon: 'Neon', royal: 'Königlich', retro: 'Retro' };
-const LAYOUT_LABELS: Record<LayoutData['layout'], string> = { classic: 'Klassisch', compact: 'Kompakt', centered: 'Zentriert', split: 'Geteilt' };
+const LAYOUT_LABELS: Record<LayoutData['layout'], string> = { classic: 'Klassisch', compact: 'Kompakt', centered: 'Zentriert', split: 'Geteilt', banner: 'Banner', mirror: 'Gespiegelt', minimal: 'Minimal' };
 const CORNER_LABELS: Record<StickerData['corner'], string> = { tl: 'Oben links', tr: 'Oben rechts', bl: 'Unten links', br: 'Unten rechts', avatar: 'Auf dem Avatar' };
 
 const SLOT_DEFAULTS: { [S in CosmeticSlot]: SlotData[S] } = {
