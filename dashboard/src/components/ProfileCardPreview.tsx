@@ -70,9 +70,13 @@ function useCardCanvas(width: number, height: number, avatarUrl: string | null, 
   return ref;
 }
 
-export function ProfileCardPreview({ subject, cosmetics, className = '', resolution = 1 }: { subject: ProfileCardSubject; cosmetics: ResolvedCosmetics; className?: string; resolution?: number }) {
-  const ref = useCardCanvas(PROFILE_CARD_WIDTH, PROFILE_CARD_HEIGHT, subject.avatarUrl, JSON.stringify([subject, cosmetics]),
-    (ctx, avatar) => renderProfileCard(ctx, subject, cosmetics, { avatar }), resolution);
+export function ProfileCardPreview({ subject, cosmetics, className = '', resolution = 1, hideSticker = false }: {
+  subject: ProfileCardSubject; cosmetics: ResolvedCosmetics; className?: string; resolution?: number;
+  /** Leave the sticker out (StickerPlacement draws it as a draggable overlay). */
+  hideSticker?: boolean;
+}) {
+  const ref = useCardCanvas(PROFILE_CARD_WIDTH, PROFILE_CARD_HEIGHT, subject.avatarUrl, JSON.stringify([subject, cosmetics, hideSticker]),
+    (ctx, avatar) => renderProfileCard(ctx, subject, cosmetics, { avatar }, { drawSticker: !hideSticker }), resolution);
   return (
     <canvas ref={ref} width={PROFILE_CARD_WIDTH} height={PROFILE_CARD_HEIGHT} role="img"
       aria-label={`Profilkarte von ${subject.name}, Level ${subject.level}`}

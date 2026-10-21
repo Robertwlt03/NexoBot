@@ -2106,7 +2106,7 @@ function drawBadges(ctx: Ctx, badges: BadgeData[], right: number, top: number): 
  * A die-cut vinyl sticker: the symbol itself (not a disc) with a thick white cut line around it, a soft shadow that
  * lifts it off the card, a slight tilt and a gloss across the top.
  */
-function drawSticker(ctx: Ctx, sticker: StickerData, x: number, y: number) {
+export function drawSticker(ctx: Ctx, sticker: StickerData, x: number, y: number) {
   const size = stickerRadius(sticker.corner) * 1.7;
   const rotation = { tl: -0.22, tr: 0.2, bl: 0.14, br: -0.16, avatar: 0.26 }[sticker.corner];
   // Cut line: every shape the glyph fills or strokes is also stroked wide and filled in white.
@@ -2197,8 +2197,10 @@ export function renderItemPreview<I extends ProfileImage>(
 // ---------- Profile card ----------
 
 /** Draws the profile card at 1024×360 onto `ctx`. All cosmetics null = Nexo's default look. */
+/** `drawSticker: false` leaves the sticker out but keeps its room (the dashboard lets members drag it as an overlay). */
 export function renderProfileCard<I extends ProfileImage>(
   context: ProfileContext<NoInfer<I>>, subject: ProfileCardSubject, cosmetics: ResolvedCosmetics, assets: ProfileAssets<I>,
+  options: { drawSticker?: boolean } = {},
 ): void {
   const ctx: Ctx = context;
   const g = profileGeometry(cosmetics.layout?.layout ?? 'classic');
@@ -2270,7 +2272,7 @@ export function renderProfileCard<I extends ProfileImage>(
   }
 
   if (effect === 'scanlines') drawEffect(ctx, effect, accent, W, H, seed);
-  if (sticker) {
+  if (sticker && options.drawSticker !== false) {
     const at = stickerPoint(sticker.corner, g.avatar);
     drawSticker(ctx, sticker, at.x, at.y);
   }

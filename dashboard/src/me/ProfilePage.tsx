@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import gsap from 'gsap';
+import { Draggable } from 'gsap/Draggable';
+import { InertiaPlugin } from 'gsap/InertiaPlugin';
 import { useGSAP } from '@gsap/react';
 import { COSMETIC_SLOTS, DAILY_BONUS, MAX_BIO_LENGTH, MAX_EQUIPPED_BADGES, SLOT_LABELS, STICKER_SPOTS, levelUpReward } from '../../../src/shared/cosmetics';
-import { PROFILE_CARD_HEIGHT, PROFILE_CARD_WIDTH, profileGeometry, stickerPoint, stickerRadius } from '../../../src/shared/profileCard';
-import type { CosmeticItem, CosmeticSlot, ResolvedCosmetics, StickerSpot, UserProfileSettings } from '../../../src/shared/cosmetics';
+import { PROFILE_CARD_HEIGHT, PROFILE_CARD_WIDTH, drawSticker, profileGeometry, stickerPoint, stickerRadius } from '../../../src/shared/profileCard';
+import type { CosmeticItem, CosmeticSlot, ResolvedCosmetics, StickerData, StickerSpot, UserProfileSettings } from '../../../src/shared/cosmetics';
 import type { DailyClaimResult, MeProfileResponse } from '../../../src/web/dto/profile';
 import { api, useUser } from '../api';
 import { LevelUpPreview, ProfileCardPreview } from '../components/ProfileCardPreview';
@@ -152,53 +154,130 @@ function SlotEditor({ value, onChange }: { value: UserProfileSettings; onChange:
 
 const SPOT_LABELS: Record<StickerSpot, string> = { tl: 'oben links', tr: 'oben rechts', bl: 'unten links', br: 'unten rechts', avatar: 'auf deinem Avatar' };
 
+gsap.registerPlugin(Draggable, InertiaPlugin);
+
+/** The sticker exactly as the card renderer paints it, on its own small canvas (in card units × 2). */
+function StickerCanvas({ sticker }: { sticker: StickerData }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const box = stickerRadius(sticker.corner) * 2.6;
+  useEffect(() => {
+    const ctx = ref.current?.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    ctx.clearRect(0, 0, box, box);
+    drawSticker(ctx, sticker, box / 2, box / 2);
+  }, [sticker, box]);
+  return <canvas ref={ref} width={box * 2} height={box * 2} className="pointer-events-none block h-full w-full" />;
+}
+
 /**
- * Sticker placement on the card preview. The spots only show while the sticker is lifted: dragged (it snaps to the
- * nearest spot as you move) or just picked from the inventory (then tap a spot). Otherwise only the sticker itself
- * is grabbable.
+ * The member's sticker as a GSAP Draggable over the card (the card itself is drawn without it). Grab it and it
+ * lifts (bigger, tilted, deeper shadow); the spot it would land on lights up; let go or throw it and it flies to
+ * the nearest spot and settles with a little bounce. A short press (or Enter) lifts it so a spot can be tapped;
+ * right after picking a sticker from the inventory the spots show too. Reduced motion: no flight, just the move.
  */
-function StickerPlacement({ cosmetics, current, placing, setPlacing, onPick }: {
-  cosmetics: ResolvedCosmetics; current: StickerSpot; placing: boolean; setPlacing: (placing: boolean) => void; onPick: (spot: StickerSpot) => void;
+function StickerPlacement({ sticker, layout, placing, setPlacing, onPick }: {
+  sticker: StickerData; layout: ResolvedCosmetics['layout']; placing: boolean; setPlacing: (placing: boolean) => void; onPick: (spot: StickerSpot) => void;
 }) {
-  const avatar = profileGeometry(cosmetics.layout?.layout ?? 'classic').avatar;
+  const root = useRef<HTMLDivElement>(null);
+  const piece = useRef<HTMLDivElement>(null);
+  const current = sticker.corner;
+  const [lifted, setLifted] = useState(false);
+  const [target, setTarget] = useState<StickerSpot>(current);
+  const avatar = profileGeometry(layout?.layout ?? 'classic').avatar;
   const points = STICKER_SPOTS.map((spot) => ({ spot, ...stickerPoint(spot, avatar) }));
   const pct = (x: number, y: number) => ({ left: `${(x / PROFILE_CARD_WIDTH) * 100}%`, top: `${(y / PROFILE_CARD_HEIGHT) * 100}%` });
-  const nearest = (event: ReactPointerEvent<HTMLElement>) => {
-    const box = event.currentTarget.parentElement!.getBoundingClientRect();
-    const x = ((event.clientX - box.left) / box.width) * PROFILE_CARD_WIDTH;
-    const y = ((event.clientY - box.top) / box.height) * PROFILE_CARD_HEIGHT;
-    return points.reduce((best, p) => (Math.hypot(p.x - x, p.y - y) < Math.hypot(best.x - x, best.y - y) ? p : best)).spot;
+  // Draggable's x/y are offsets from where the sticker sits now; convert spots into that space (in px).
+  const live = useRef({ current, points, onPick, setPlacing });
+  live.current = { current, points, onPick, setPlacing };
+  const offsetOf = (spot: StickerSpot) => {
+    const { width, height } = root.current!.getBoundingClientRect();
+    const all = live.current.points;
+    const from = all.find((p) => p.spot === live.current.current)!;
+    const to = all.find((p) => p.spot === spot)!;
+    return { x: ((to.x - from.x) / PROFILE_CARD_WIDTH) * width, y: ((to.y - from.y) / PROFILE_CARD_HEIGHT) * height };
   };
+  const nearest = (x: number, y: number) => live.current.points.reduce((best, p) => {
+    const a = offsetOf(p.spot);
+    const b = offsetOf(best.spot);
+    return Math.hypot(a.x - x, a.y - y) < Math.hypot(b.x - x, b.y - y) ? p : best;
+  }).spot;
+
+  const { contextSafe } = useGSAP(() => {
+    const el = piece.current!;
+    gsap.set(el, { xPercent: -50, yPercent: -50 });
+    const calm = reducedMotion();
+    const settle = (spot: StickerSpot) => {
+      gsap.to(el, { scale: 1, rotation: 0, duration: calm ? 0 : 0.45, ease: 'back.out(3)' });
+      setLifted(false);
+      if (spot !== live.current.current) live.current.onPick(spot);
+    };
+    const [drag] = Draggable.create(el, {
+      type: 'x,y',
+      bounds: root.current,
+      inertia: !calm,
+      // A short glide: where you let go matters most, a flick still carries it a bit further.
+      throwResistance: 2500,
+      maxDuration: 0.6,
+      minDuration: 0.2,
+      minimumMovement: 4,
+      // Let go near a spot and it lands there; thrown into open space, the glide decides. Always on a spot.
+      snap: {
+        points: (point: { x: number; y: number }) => {
+          const drop = offsetOf(nearest(drag.x, drag.y));
+          const capture = root.current!.getBoundingClientRect().width * 0.12;
+          return Math.hypot(drop.x - drag.x, drop.y - drag.y) < capture ? drop : offsetOf(nearest(point.x, point.y));
+        },
+      },
+      onPress() {
+        setTarget(live.current.current);
+        gsap.to(el, { scale: 1.2, rotation: 8, duration: calm ? 0 : 0.2, ease: 'power2.out' });
+        setLifted(true);
+      },
+      onDrag() { setTarget(nearest(this.x, this.y)); },
+      onThrowUpdate() { setTarget(nearest(this.x, this.y)); },
+      onRelease() {
+        if (calm || !this.isThrowing) {
+          const spot = nearest(this.x, this.y);
+          gsap.set(el, offsetOf(spot));
+          settle(spot);
+        }
+      },
+      onThrowComplete() { settle(nearest(this.x, this.y)); },
+      onClick() {
+        gsap.to(el, { scale: 1, rotation: 0, duration: calm ? 0 : 0.2 });
+        setLifted(false);
+        live.current.setPlacing(true);
+      },
+    });
+  }, { scope: root });
+
+  // Once React has moved the sticker to its new spot, the drag offset goes back to zero (no jump).
+  useLayoutEffect(() => { if (piece.current) gsap.set(piece.current, { x: 0, y: 0 }); }, [current]);
+
+  const flyTo = contextSafe((spot: StickerSpot) => {
+    setPlacing(false);
+    if (spot === current) return;
+    gsap.to(piece.current, { ...offsetOf(spot), duration: reducedMotion() ? 0 : 0.5, ease: 'back.out(1.6)', onComplete: () => onPick(spot) });
+  });
+
+  const box = stickerRadius(current) * 2.6;
   const at = points.find((p) => p.spot === current)!;
-  const size = `${((stickerRadius(current) * 2.2) / PROFILE_CARD_WIDTH) * 100}%`;
-  // Lifted = being dragged (spots as guides) or waiting for a tap on a spot (after picking it, or a short press).
-  const [dragging, setDragging] = useState(false);
-  const moved = useRef(false);
+  const showSpots = placing || lifted;
   return (
-    <>
-      {(placing || dragging) && points.map(({ spot, x, y }) => (
+    <div ref={root} className="absolute inset-0">
+      {showSpots && points.map(({ spot, x, y }) => (
         <button key={spot} type="button" aria-label={`Sticker ${SPOT_LABELS[spot]} aufkleben`} aria-pressed={spot === current}
-          onClick={() => { onPick(spot); setPlacing(false); }} style={pct(x, y)} tabIndex={dragging ? -1 : 0}
-          className={`absolute grid aspect-square h-[13%] min-h-7 -translate-x-1/2 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-2 bg-transparent p-0 transition ${dragging ? 'pointer-events-none' : ''} ${spot === current ? 'border-white/80' : 'border-dashed border-white/45 hover:border-white/90 hover:bg-white/10'}`} />
+          onClick={() => flyTo(spot)} style={pct(x, y)} tabIndex={lifted ? -1 : 0}
+          className={`absolute grid aspect-square h-[14%] min-h-7 -translate-x-1/2 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-2 p-0 transition duration-200 ${lifted ? 'pointer-events-none' : ''} ${(lifted ? spot === target : spot === current) ? 'scale-110 border-white/90 bg-white/15' : 'border-dashed border-white/40 bg-transparent hover:border-white/90 hover:bg-white/10'}`} />
       ))}
-      {/* The sticker itself: drag it (it snaps to the nearest spot), or press it to lift it and tap a spot. */}
-      {!placing && (
-        <button type="button" aria-label={`Sticker ${SPOT_LABELS[current]} – zum Verschieben ziehen oder drücken`}
-          style={{ ...pct(at.x, at.y), width: size }}
-          className={`absolute aspect-square -translate-x-1/2 -translate-y-1/2 touch-none rounded-full border-0 bg-transparent p-0 ${dragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-          onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); moved.current = false; setDragging(true); }}
-          onPointerMove={(event) => {
-            if (!dragging) return;
-            moved.current = true;
-            const spot = nearest(event);
-            if (spot !== current) onPick(spot);
-          }}
-          onPointerUp={() => { setDragging(false); if (!moved.current) setPlacing(true); }}
-          onPointerCancel={() => setDragging(false)}
-          // Keyboard: Enter/Space lifts it (pointer presses are handled above; their click has detail > 0).
-          onClick={(event) => { if (event.detail === 0) setPlacing(true); }} />
-      )}
-    </>
+      <div ref={piece} role="button" tabIndex={0} aria-label={`Sticker ${SPOT_LABELS[current]} – zum Verschieben ziehen oder drücken`}
+        onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setPlacing(true); } }}
+        style={{ ...pct(at.x, at.y), width: `${(box / PROFILE_CARD_WIDTH) * 100}%` }}
+        className={`absolute z-10 aspect-square cursor-grab touch-none select-none rounded-full outline-none transition-[filter] duration-200 focus-visible:ring-2 focus-visible:ring-accent active:cursor-grabbing ${lifted ? 'drop-shadow-[0_14px_14px_rgba(0,0,0,.55)]' : ''}`}>
+        <StickerCanvas sticker={sticker} />
+      </div>
+    </div>
   );
 }
 
@@ -233,9 +312,9 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
         <Card title="Deine Karte" description="So sieht deine Profilkarte gerade aus.">
           <div className="relative">
-            <ProfileCardPreview subject={subject} cosmetics={cosmetics} className="w-full" />
+            <ProfileCardPreview subject={subject} cosmetics={cosmetics} className="w-full" hideSticker />
             {cosmetics.sticker && (
-              <StickerPlacement cosmetics={cosmetics} current={cosmetics.sticker.corner} placing={placing} setPlacing={setPlacing}
+              <StickerPlacement sticker={cosmetics.sticker} layout={cosmetics.layout} placing={placing} setPlacing={setPlacing}
                 onPick={(stickerSpot) => form.setDraft({ ...value, stickerSpot })} />
             )}
           </div>
