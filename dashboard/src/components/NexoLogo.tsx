@@ -1,5 +1,6 @@
-// The Nexo robot as inline SVG so GSAP can animate its parts: floating, blinking, a pulsing antenna,
-// chest lights and a moon that circles the orbit (in front of the head on the lower half, behind it above).
+// The Nexo logo: a turned walnut coin ("Holztaler") with the Nexo robot stuck on it as a die-cut sticker.
+// Inline SVG so GSAP can animate the robot's parts: blinking, a pulsing antenna, chest lights and a moon that
+// circles the orbit (in front of the head on the lower half, behind it above); the sticker itself floats gently.
 import { useId, useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -17,6 +18,17 @@ interface NexoLogoProps {
 
 // Orbit ellipse: centre, radii and tilt in SVG units.
 const ORBIT = { cx: 512, cy: 560, rx: 400, ry: 88, tilt: (-10 * Math.PI) / 180 };
+
+/** Growth rings of the end grain: slightly wobbly circles around a heart a little off centre. */
+const RINGS = Array.from({ length: 12 }, (_, i) => {
+  const r = 40 + i * 36 + (i % 2) * 6;
+  const points = Array.from({ length: 49 }, (_, k) => {
+    const a = (k / 48) * Math.PI * 2;
+    const wobble = 1 + Math.sin(a * 3 + i) * 0.025 + Math.sin(a * 7 + i * 2) * 0.012;
+    return `${(530 + Math.cos(a) * r * wobble).toFixed(1)} ${(500 + Math.sin(a) * r * wobble * 0.96).toFixed(1)}`;
+  });
+  return { d: `M${points.join('L')}Z`, w: i % 3 ? 4 + (i % 2) * 3 : 10 };
+});
 
 function orbitPoint(angle: number) {
   const x = ORBIT.rx * Math.cos(angle);
@@ -38,7 +50,7 @@ export function NexoLogo({ className, animated = true, followPointer = false, ti
     const mm = gsap.matchMedia();
     mm.add('(prefers-reduced-motion: no-preference)', () => {
       const q = gsap.utils.selector(root);
-      gsap.to(q('.nx-body'), { y: -14, duration: 2.6, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+      gsap.to(q('.nx-sticker'), { y: -10, rotation: 1.5, svgOrigin: '512 512', duration: 2.6, ease: 'sine.inOut', yoyo: true, repeat: -1 });
       gsap.to(q('.nx-antenna-light'), { scale: 1.35, transformOrigin: '50% 50%', duration: 0.9, ease: 'sine.inOut', yoyo: true, repeat: -1 });
       gsap.to(q('.nx-eye'), { scaleY: 0.08, transformOrigin: '50% 50%', duration: 0.09, yoyo: true, repeat: -1, repeatDelay: 3.4, ease: 'power1.in' });
       gsap.fromTo(q('.nx-light'), { opacity: 0.25 }, { opacity: 1, duration: 0.5, stagger: { each: 0.25, repeat: -1, yoyo: true } });
@@ -77,8 +89,23 @@ export function NexoLogo({ className, animated = true, followPointer = false, ti
   const start = orbitPoint(-0.4);
 
   return (
-    <svg ref={root} className={className} viewBox="90 160 844 600" role="img" aria-label={title} xmlns="http://www.w3.org/2000/svg">
+    <svg ref={root} className={className} viewBox="0 0 1024 1024" role="img" aria-label={title} xmlns="http://www.w3.org/2000/svg">
       <defs>
+        <radialGradient id={`${id}-wood`} cx="42%" cy="38%" r="70%">
+          <stop offset="0" stopColor="#8A5A34" /><stop offset=".55" stopColor="#5E3A1F" /><stop offset="1" stopColor="#3A2212" />
+        </radialGradient>
+        <linearGradient id={`${id}-rim`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#A8744A" /><stop offset=".5" stopColor="#6A4022" /><stop offset="1" stopColor="#2E1A0C" />
+        </linearGradient>
+        <clipPath id={`${id}-coin`}><circle cx="512" cy="512" r="452" /></clipPath>
+        {/* Fine fibres of the wood, tinted brown. */}
+        <filter id={`${id}-grain`} x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9 0.06" numOctaves="2" seed="7" />
+          <feColorMatrix values="0 0 0 0 0.16  0 0 0 0 0.08  0 0 0 0 0.03  0 0 0 0.55 0" />
+        </filter>
+        <filter id={`${id}-lift`} x="-10%" y="-10%" width="120%" height="125%">
+          <feDropShadow dx="0" dy="14" stdDeviation="14" floodColor="#1A0E05" floodOpacity=".55" />
+        </filter>
         <linearGradient id={`${id}-eye`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#A78BFA" /><stop offset="1" stopColor="#22D3EE" />
         </linearGradient>
@@ -91,6 +118,30 @@ export function NexoLogo({ className, animated = true, followPointer = false, ti
         <clipPath id={`${id}-front`}><rect x="-600" y="0" width="1200" height="600" /></clipPath>
       </defs>
 
+      {/* The coin: rim, end grain with growth rings, an engraved groove and a soft sheen. */}
+      <circle cx="512" cy="512" r="492" fill={ref('rim')} />
+      <circle cx="512" cy="512" r="452" fill={ref('wood')} />
+      <g clipPath={ref('coin')}>
+        {RINGS.map((ring, i) => <path key={i} d={ring.d} fill="none" stroke={i % 3 ? '#2E1A0C' : '#C08A5B'} strokeOpacity={i % 3 ? 0.28 : 0.16} strokeWidth={ring.w} />)}
+        <rect x="0" y="0" width="1024" height="1024" filter={ref('grain')} opacity=".55" />
+        <ellipse cx="380" cy="300" rx="300" ry="190" fill="#FFF3E0" opacity=".07" transform="rotate(-30 380 300)" />
+      </g>
+      <circle cx="512" cy="512" r="452" fill="none" stroke="#24140A" strokeOpacity=".55" strokeWidth="6" />
+      <circle cx="512" cy="512" r="420" fill="none" stroke="#24140A" strokeOpacity=".45" strokeWidth="5" />
+      <circle cx="512" cy="512" r="415" fill="none" stroke="#FFE7C7" strokeOpacity=".12" strokeWidth="3" />
+      <circle cx="512" cy="512" r="490" fill="none" stroke="#FFE7C7" strokeOpacity=".18" strokeWidth="4" />
+
+      {/* The robot as a die-cut sticker: a thick white cut line around its silhouette, lifted off the wood. */}
+      <g className="nx-sticker">
+      <g transform="translate(512 522) rotate(-7) scale(.82) translate(-512 -470)">
+      <g filter={ref('lift')} fill="#FFFFFF" stroke="#FFFFFF" strokeLinejoin="round">
+        <g transform={`translate(${ORBIT.cx} ${ORBIT.cy}) rotate(-10)`}><ellipse rx={ORBIT.rx} ry={ORBIT.ry} fill="none" strokeWidth="64" /></g>
+        <rect x="497" y="236" width="30" height="80" rx="15" strokeWidth="50" />
+        <circle cx="512" cy="226" r="27" strokeWidth="50" />
+        <rect x="214" y="450" width="96" height="160" rx="46" strokeWidth="50" />
+        <rect x="714" y="450" width="96" height="160" rx="46" strokeWidth="50" />
+        <rect x="262" y="310" width="500" height="420" rx="150" strokeWidth="50" />
+      </g>
       <g transform={`translate(${ORBIT.cx} ${ORBIT.cy}) rotate(-10)`} opacity="0.7">
         <ellipse rx={ORBIT.rx} ry={ORBIT.ry} fill="none" stroke={ref('orbit')} strokeWidth="14" />
       </g>
@@ -124,6 +175,8 @@ export function NexoLogo({ className, animated = true, followPointer = false, ti
         <ellipse rx={ORBIT.rx} ry={ORBIT.ry} fill="none" stroke={ref('orbit')} strokeWidth="14" />
       </g>
       <circle className="nx-moon-front" cx={start.x} cy={start.y} r="13" fill="#FFFFFF" opacity="0" />
+      </g>
+      </g>
     </svg>
   );
 }
