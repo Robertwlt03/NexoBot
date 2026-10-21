@@ -64,12 +64,13 @@ function Contents({ items }: { items: CosmeticItem[] }) {
 }
 
 /**
- * Bundles are the special offers of the shop: a holographic frame that slowly circles the tile, a "Komplett-Look"
- * ribbon, your card wearing the whole set and what is inside right on the tile.
+ * Bundles are the special offers of the shop: a holographic frame that slowly circles the tile, game-style tags
+ * (bundle and deal), your card wearing the whole set and what is inside right on the tile.
  */
 function BundleTile({ bundle, items, onOpen }: { bundle: ShopBundle; items: CosmeticItem[]; onOpen: () => void }) {
   const tint = tintOf(items);
   const saving = bundle.owned === 0 ? bundle.fullPrice - bundle.price : 0;
+  const percent = saving > 0 ? Math.round((saving / bundle.fullPrice) * 100) : 0;
   return (
     <button type="button" onClick={onOpen} data-mode="dark" style={{ '--tile': tint } as CSSProperties}
       className="js-item bundle-tile group cursor-pointer border-0 p-[1.5px] text-left font-[inherit] transition duration-300 hover:-translate-y-1">
@@ -82,9 +83,20 @@ function BundleTile({ bundle, items, onOpen }: { bundle: ShopBundle; items: Cosm
             </span>
           ) : <BundleArt items={items} />}
           <span className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#0d0b0a] to-transparent" />
-          {/* Ribbon across the corner, centred on its diagonal (58px in from both edges) so the text never runs off. */}
-          <span className="absolute -right-[52px] top-[46px] z-10 h-6 w-[220px] rotate-45 bg-[linear-gradient(90deg,#b5600f,#ffd889,#b5600f)] text-center leading-6 text-[10px] font-extrabold uppercase tracking-[.16em] text-[#2a1405] shadow-[0_6px_16px_-6px_rgba(0,0,0,.8)]">Komplett-Look</span>
-          <span className="absolute left-3 top-3 z-10 rounded-md bg-black/70 px-2 py-0.5 text-[11px] font-bold uppercase tracking-[.08em] text-white backdrop-blur">Paket · {items.length} Artikel</span>
+          {/* Shop-tile tags as in games: slanted labels bleeding off the edge – what it is on the left, the deal on the right. */}
+          <span className="absolute left-0 top-4 z-10 flex drop-shadow-[0_6px_10px_rgba(0,0,0,.6)]">
+            <span className="-ml-2 -skew-x-12 py-1 pl-5 pr-3" style={{ background: 'color-mix(in srgb, var(--tile) 70%, #000)' }}>
+              <span className="block skew-x-12 text-[12.5px] font-black uppercase italic tracking-[.12em] text-white">Paket</span>
+            </span>
+            <span className="-skew-x-12 bg-[#0d0b0a]/85 px-2.5 py-1">
+              <span className="block skew-x-12 text-[11px] font-bold uppercase tracking-[.08em] text-white/85">{items.length} Artikel</span>
+            </span>
+          </span>
+          {percent > 0 && (
+            <span className="absolute right-0 top-4 z-10 -mr-2 -skew-x-12 bg-[#facc15] py-1 pl-3 pr-5 drop-shadow-[0_6px_10px_rgba(0,0,0,.6)]">
+              <span className="block skew-x-12 text-[13px] font-black italic tabular-nums text-[#1a1405]">−{percent} %</span>
+            </span>
+          )}
         </span>
         <span className="relative flex w-full flex-1 flex-col px-5 pb-5 pt-1">
           <span className="block truncate text-[19px] font-extrabold uppercase tracking-[.02em] text-white">{bundle.name}</span>
@@ -221,8 +233,7 @@ export function BundleSection({ bundles, listings }: { bundles: ShopBundle[]; li
       <div className="pointer-events-none absolute -bottom-28 right-0 h-72 w-96 rounded-full bg-[#8fb36b]/12 blur-[100px]" />
       <div className="relative mb-5 flex flex-wrap items-end gap-3">
         <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-2 text-[11.5px] font-extrabold uppercase tracking-[.22em] text-[#ffd889]"><Glyph name="star" size={14} /> Komplett-Looks</p>
-          <h2 className="mt-1.5 text-[26px] font-bold tracking-tight text-white">Pakete</h2>
+          <h2 className="text-[26px] font-bold tracking-tight text-white">Pakete</h2>
           <p className="mt-1 max-w-[560px] text-[13.5px] text-white/65">Alles, was zusammenpasst, in einem Klick. Was du schon besitzt, zahlst du nicht.</p>
         </div>
       </div>
