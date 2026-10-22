@@ -95,10 +95,12 @@ export function RarityLabel({ rarity }: { rarity: Rarity }) {
  * An amount as coins: platinum, gold, silver and bronze (each 100 of the one below), zero tiers left out. Plain
  * inline text, so the numbers sit on the surrounding text's baseline and each coin is centred on them (the usual
  * icon-in-text offset); it breaks only between coins, or never with `nowrap` (table cells, pills, price rows).
+ * `max` shows only the highest coins (e.g. 2 in the header pill); the tooltip keeps the exact amount.
  */
-export function Bernis({ amount, className = '', large = false, nowrap = false }: { amount: number; className?: string; large?: boolean; nowrap?: boolean }) {
-  const parts = splitCoins(amount);
-  const label = `${num(amount)} ${CURRENCY.name}: ${parts.map(({ tier, count }) => `${count} ${COIN_TIERS.find((t) => t.tier === tier)!.label}`).join(', ')}`;
+export function Bernis({ amount, className = '', large = false, nowrap = false, max }: { amount: number; className?: string; large?: boolean; nowrap?: boolean; max?: number }) {
+  const all = splitCoins(amount);
+  const parts = max ? all.slice(0, max) : all;
+  const label = `${num(amount)} ${CURRENCY.name}: ${all.map(({ tier, count }) => `${count} ${COIN_TIERS.find((t) => t.tier === tier)!.label}`).join(', ')}`;
   // Lowered so the coin's centre meets the middle of the digits (Inter digits are 0.738em tall).
   const coin = large ? 'h-[1.1em] w-[1.1em] align-[-0.181em]' : 'h-[1.05em] w-[1.05em] align-[-0.156em]';
   return (
@@ -113,6 +115,31 @@ export function Bernis({ amount, className = '', large = false, nowrap = false }
         </Fragment>
       ))}
     </span>
+  );
+}
+
+/**
+ * The balance as little coin piles, one per metal: a layer per ten coins (at most ten), each layer nudged a little
+ * so it reads as a pile; the count sits below.
+ */
+export function CoinStacks({ amount, className = '' }: { amount: number; className?: string }) {
+  return (
+    <div aria-hidden="true" className={`flex items-end gap-3 ${className}`}>
+      {splitCoins(amount).map(({ tier, count }) => {
+        const layers = Math.max(1, Math.min(10, Math.ceil(count / 10)));
+        return (
+          <div key={tier} className="flex flex-col items-center gap-1">
+            <div className="relative w-7" style={{ height: 26 + (layers - 1) * 5 }}>
+              {Array.from({ length: layers }, (_, i) => (
+                <CoinIcon key={i} tier={tier} className="absolute h-7 w-7 drop-shadow-[0_2px_2px_rgba(0,0,0,.35)]"
+                  style={{ bottom: i * 5, left: (i % 3 === 1 ? 1.5 : i % 3 === 2 ? -1 : 0) }} />
+              ))}
+            </div>
+            <span className="text-[11px] font-medium tabular-nums text-mute">{count}</span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

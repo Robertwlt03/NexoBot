@@ -16,7 +16,7 @@ import { Card, PageHeader, SaveBar, Select, SwitchRow, TextArea } from '../compo
 import {
   cardSubject, countdown, equipItem, isEquipped, num, reducedMotion, resolveCosmetics, unequipItem, useCountUp, useDraft, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
-import { Glyph, ItemVisual, Bernis, RARITY_CLASS } from './visuals';
+import { Glyph, ItemVisual, Bernis, CoinStacks, RARITY_CLASS } from './visuals';
 
 const STREAK_DAYS = DAILY_BONUS.maxStreakBonus / DAILY_BONUS.perStreakDay;
 
@@ -30,7 +30,10 @@ function WalletCard() {
         <span className="text-[13px] text-mute">Kontostand</span>
         <Link to="/me/verlauf" className="arrow-btn hover:no-underline" aria-label="Verlauf"><span className="inline-block rotate-[135deg]"><Icon name="arrowLeft" size={14} /></span></Link>
       </div>
-      <div className="mt-3 text-[36px] font-light leading-none tracking-[-0.03em] text-ink"><Bernis amount={shown} large /></div>
+      <div className="mt-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+        <div className="text-[36px] font-light leading-none tracking-[-0.03em] text-ink"><Bernis amount={shown} large nowrap /></div>
+        <CoinStacks amount={me.wallet.balance} />
+      </div>
       <p className="mt-2 text-[12.5px] text-faint">Insgesamt verdient: <Bernis amount={me.wallet.lifetimeEarned} nowrap /></p>
       <div className="mt-4">
         <div className="flex justify-between text-[12px] text-mute"><span>Heute aus Level & Minispielen</span><span className="text-right"><Bernis amount={todayEarned} nowrap /> von <Bernis amount={dailyCap} nowrap /></span></div>

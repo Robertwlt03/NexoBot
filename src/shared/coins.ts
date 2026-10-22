@@ -24,9 +24,29 @@ export function splitCoins(amount: number): { tier: CoinTier; count: number }[] 
   return parts.length ? parts : [{ tier: 'bronze', count: 0 }];
 }
 
+/**
+ * Price after `percent` off, rounded down to the coarsest step (full silver, then 10 bronze) that stays within 5 %
+ * of the exact price, so shop prices read cleanly (⚪ 17 instead of ⚪ 17 🟤 60) without changing the deal much;
+ * rounding down keeps the discount at least as big as announced.
+ */
+export function discounted(price: number, percent: number): number {
+  const raw = Math.floor((price * (100 - percent)) / 100);
+  for (const step of [100, 10]) {
+    const rounded = Math.floor(raw / step) * step;
+    if (rounded > 0 && raw - rounded <= raw * 0.05) return rounded;
+  }
+  return raw;
+}
+
+/** Discord emoji per tier once the bot has its coin emojis (services/cosmetics/coinEmojis.ts); unicode until then. */
+const coinEmojis: Partial<Record<CoinTier, string>> = {};
+export function setCoinEmojis(emojis: Partial<Record<CoinTier, string>>): void {
+  Object.assign(coinEmojis, emojis);
+}
+
 /** Discord text form, e.g. "🟡 1 ⚪ 28" (negative amounts get a minus in front). */
 export function formatCoins(amount: number): string {
-  const text = splitCoins(amount).map(({ tier, count }) => `${COIN_TIERS.find((t) => t.tier === tier)!.emoji} ${count}`).join(' ');
+  const text = splitCoins(amount).map(({ tier, count }) => `${coinEmojis[tier] ?? COIN_TIERS.find((t) => t.tier === tier)!.emoji} ${count}`).join(' ');
   return amount < 0 ? `−${text}` : text;
 }
 

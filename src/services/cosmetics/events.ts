@@ -1,6 +1,7 @@
 // Shop events: the built-in calendar (computed per year in Europe/Berlin) plus the owner's custom events, stored in
 // shop_events. Auto events are stored only once the owner toggles them (row kind 'auto' = override of `active`).
 
+import { discounted } from '../../shared/coins.js';
 import { randomBytes } from 'node:crypto';
 import { COSMETIC_SLOTS, type CosmeticItem, type CosmeticSlot } from '../../shared/cosmetics.js';
 import type { ShopEvent } from '../../web/dto/profile.js';
@@ -92,7 +93,7 @@ export function priceFor(item: CosmeticItem, running: ShopEvent[]): PriceInfo {
     if (event.discount > 0 && (event.slots === null || event.slots.includes(item.slot)) && (!best || event.discount > best.discount)) best = event;
   }
   if (!best) return { finalPrice: item.price, discount: 0, eventId: ownEvent };
-  return { finalPrice: Math.round((item.price * (100 - best.discount)) / 100), discount: best.discount, eventId: best.id };
+  return { finalPrice: discounted(item.price, best.discount), discount: best.discount, eventId: best.id };
 }
 
 /** Event-only items can be bought while their event runs. */

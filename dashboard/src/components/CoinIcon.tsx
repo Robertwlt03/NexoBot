@@ -1,6 +1,7 @@
 // A Bernis coin (platinum, gold, silver or bronze): an octagonal token with the amber drop cut in, the same
 // geometry the cards draw (src/shared/coins.ts).
 import { useId } from 'react';
+import type { CSSProperties } from 'react';
 import { AMBER_DROP, amberSvgPath } from '../../../src/shared/amber';
 import { COIN, COIN_COLORS, octagon, type CoinTier } from '../../../src/shared/coins';
 
@@ -11,12 +12,12 @@ const FIELD = points(COIN.field);
 const DROP = amberSvgPath(AMBER_DROP);
 
 /** Without `size` the coin is sized by CSS (e.g. h-[1em] w-[1em] to follow the text). */
-export function CoinIcon({ tier, size, className = '', title }: { tier: CoinTier; size?: number; className?: string; title?: string }) {
+export function CoinIcon({ tier, size, className = '', title, style }: { tier: CoinTier; size?: number; className?: string; title?: string; style?: CSSProperties }) {
   const id = useId();
   const c = COIN_COLORS[tier];
   const { drop, depth } = COIN;
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${COIN.box} ${COIN.box}`} className={`inline-block shrink-0 ${className}`}
+    <svg width={size} height={size} viewBox={`0 0 ${COIN.box} ${COIN.box}`} className={`inline-block shrink-0 ${className}`} style={style}
       role={title ? 'img' : undefined} aria-label={title} aria-hidden={title ? undefined : true}>
       <defs>
         <linearGradient id={`${id}-bevel`} x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">

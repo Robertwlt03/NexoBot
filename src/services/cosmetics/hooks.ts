@@ -3,10 +3,11 @@
 
 import { randomInt } from 'node:crypto';
 import cron from 'node-cron';
-import type { Client, EmbedBuilder } from 'discord.js';
+import { Events, type Client, type EmbedBuilder } from 'discord.js';
 import { formatCoins } from '../../shared/coins.js';
 import { logger } from '../../utils/logger.js';
 import { addActivity, startActivityTracker } from './activity.js';
+import { ensureCoinEmojis } from './coinEmojis.js';
 import { syncAchievements } from './achievements.js';
 import { seedCatalog } from './catalog.js';
 import { getEconomyConfig, levelReward } from './config.js';
@@ -105,6 +106,9 @@ export async function startCosmetics(client: Client): Promise<void> {
     logger.error('Berni-Katalog konnte nicht angelegt werden:', error);
   }
   startActivityTracker();
+  // Coin emojis for bot messages; needs the application, so after login.
+  if (client.isReady()) void ensureCoinEmojis(client);
+  else client.once(Events.ClientReady, (ready) => { void ensureCoinEmojis(ready); });
   cron.schedule('5 0 1-3 * *', async () => {
     try {
       await runMonthlyPayout(client);
