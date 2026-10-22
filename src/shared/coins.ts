@@ -1,9 +1,9 @@
 // Bernis as coins: every amount is stored in bronze and shown in platinum, gold, silver and bronze (100 bronze =
-// 1 silver, 100 silver = 1 gold, 100 gold = 1 platinum), each coin with the amber drop engraved. One geometry for every surface: the dashboard
+// 1 silver, 100 silver = 1 gold, 100 gold = 1 platinum), each an octagonal token with the amber drop cut in. One geometry for every surface: the dashboard
 // draws it as SVG, the profile and level-up cards on canvas, Discord messages use the text form.
 // Import-free apart from the amber geometry (shared by the bot and the dashboard).
 
-import { AMBER_DROP, AMBER_LEAF, type AmberContext, type AmberPath } from './amber.js';
+import { AMBER_DROP, type AmberContext, type AmberPath } from './amber.js';
 
 export type CoinTier = 'platinum' | 'gold' | 'silver' | 'bronze';
 export const COIN_TIERS: readonly { tier: CoinTier; value: number; label: string; emoji: string }[] = [
@@ -30,20 +30,27 @@ export function formatCoins(amount: number): string {
   return amount < 0 ? `−${text}` : text;
 }
 
-/** Metal per tier: face light → deep, the rim, the engraved recess and the lit edge of the engraving. */
-export const COIN_COLORS: Record<CoinTier, { light: string; mid: string; deep: string; rim: string; recess: string; shine: string }> = {
+/** Metal per tier: the bevel light → deep, the rim, and the lit lower edge of the cut-in drop. */
+export const COIN_COLORS: Record<CoinTier, { light: string; mid: string; deep: string; rim: string; shine: string }> = {
   // Cooler and brighter than silver, with a blue-white sheen.
-  platinum: { light: '#FFFFFF', mid: '#C9D6E6', deep: '#5D7391', rim: '#3B4B63', recess: '#8EA3BE', shine: '#F2F8FF' },
-  gold: { light: '#FFF1B0', mid: '#F2C14E', deep: '#A8740F', rim: '#7A520A', recess: '#B88A2A', shine: '#FFF8DC' },
-  silver: { light: '#FFFFFF', mid: '#D3D8DF', deep: '#7E8794', rim: '#5A626D', recess: '#99A2AE', shine: '#FFFFFF' },
-  bronze: { light: '#F6C9A0', mid: '#C98A55', deep: '#7A4A24', rim: '#5A3418', recess: '#9C6438', shine: '#FCE2C8' },
+  platinum: { light: '#FFFFFF', mid: '#C9D6E6', deep: '#5D7391', rim: '#3B4B63', shine: '#F2F8FF' },
+  gold: { light: '#FFF1B0', mid: '#F2C14E', deep: '#A8740F', rim: '#7A520A', shine: '#FFF8DC' },
+  silver: { light: '#FFFFFF', mid: '#D3D8DF', deep: '#7E8794', rim: '#5A626D', shine: '#FFFFFF' },
+  bronze: { light: '#F6C9A0', mid: '#C98A55', deep: '#7A4A24', rim: '#5A3418', shine: '#FCE2C8' },
 };
 
-/** Geometry in a 24×24 box: rim radius, face radius and where the amber drop is engraved (scale + offset). */
-export const COIN = { box: 24, rim: 11.6, face: 9.7, drop: { k: 0.6, x: 4.8, y: 4.74 }, depth: 0.42 } as const;
+/**
+ * Octagonal token in a 24×24 box: outer rim, the bevel (lit diagonally) and the inner field, as circumradii; the
+ * amber drop is cut into the field (scale + offset) with a lit lower-right edge (`depth`).
+ */
+export const COIN = { box: 24, rim: 11.6, bevel: 10.44, field: 8.35, drop: { k: 0.5, x: 6, y: 5.95 }, depth: { x: 0.36, y: 0.48 } } as const;
 
-export function coinDetail(size: number): 'small' | 'full' {
-  return size < 22 ? 'small' : 'full';
+/** Corners of a regular octagon around (cx, cy) with circumradius r (flat top and sides). */
+export function octagon(cx: number, cy: number, r: number): [number, number][] {
+  return Array.from({ length: 8 }, (_, i) => {
+    const a = Math.PI / 8 + (i / 8) * Math.PI * 2;
+    return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+  });
 }
 
 // ---------- Canvas ----------
@@ -64,45 +71,39 @@ export function drawCoin(ctx: AmberContext, tier: CoinTier, cx: number, cy: numb
   const k = size / COIN.box;
   const ox = cx - size / 2;
   const oy = cy - size / 2;
-  const disc = (r: number) => { ctx.beginPath(); ctx.arc(cx, cy, r * k, 0, Math.PI * 2); };
+  const oct = (r: number) => {
+    ctx.beginPath();
+    octagon(cx, cy, r * k).forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+    ctx.closePath();
+  };
   ctx.save();
-  // Rim, then the face lit from the top left.
-  const rim = ctx.createRadialGradient(cx - 3 * k, cy - 4 * k, 0, cx, cy, COIN.rim * k);
-  rim.addColorStop(0, c.mid);
-  rim.addColorStop(1, c.rim);
-  disc(COIN.rim);
-  ctx.fillStyle = rim;
+  oct(COIN.rim);
+  ctx.fillStyle = c.rim;
   ctx.fill();
-  const face = ctx.createRadialGradient(cx - 3 * k, cy - 3.5 * k, 0, cx, cy, COIN.face * k * 1.15);
-  face.addColorStop(0, c.light);
-  face.addColorStop(0.55, c.mid);
-  face.addColorStop(1, c.deep);
-  disc(COIN.face);
-  ctx.fillStyle = face;
+  // The bevel catches the light diagonally, the field sits a little deeper.
+  const bevel = ctx.createLinearGradient(cx - 12 * k, cy - 12 * k, cx + 12 * k, cy + 12 * k);
+  bevel.addColorStop(0, c.light);
+  bevel.addColorStop(0.5, c.mid);
+  bevel.addColorStop(1, c.deep);
+  oct(COIN.bevel);
+  ctx.fillStyle = bevel;
   ctx.fill();
-  // Engraved drop: a lit lower-right edge, the recess shifted up-left over it, the leaf cut a little deeper.
+  const field = ctx.createRadialGradient(cx - 3 * k, cy - 3.5 * k, 0, cx, cy, COIN.field * k * 1.3);
+  field.addColorStop(0, c.mid);
+  field.addColorStop(1, c.deep);
+  oct(COIN.field);
+  ctx.fillStyle = field;
+  ctx.fill();
+  // The drop cut in: its lit lower-right edge, then the hole in the rim colour.
   const { drop, depth } = COIN;
   const [dx, dy, dk] = [ox + drop.x * k, oy + drop.y * k, drop.k * k];
-  trace(ctx, AMBER_DROP, dx + depth * k, dy + depth * k, dk);
+  trace(ctx, AMBER_DROP, dx + depth.x * k, dy + depth.y * k, dk);
   ctx.fillStyle = c.shine;
-  ctx.globalAlpha = 0.8;
+  ctx.globalAlpha = 0.7;
   ctx.fill();
   ctx.globalAlpha = 1;
   trace(ctx, AMBER_DROP, dx, dy, dk);
-  ctx.fillStyle = c.recess;
+  ctx.fillStyle = c.rim;
   ctx.fill();
-  if (coinDetail(size) === 'full') {
-    trace(ctx, AMBER_LEAF, dx, dy, dk);
-    ctx.fillStyle = c.deep;
-    ctx.globalAlpha = 0.55;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  }
-  disc(COIN.face);
-  ctx.strokeStyle = c.deep;
-  ctx.globalAlpha = 0.5;
-  ctx.lineWidth = Math.max(0.6, 0.5 * k);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
   ctx.restore();
 }
