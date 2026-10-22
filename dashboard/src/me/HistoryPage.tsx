@@ -15,7 +15,7 @@ export default function HistoryPage() {
       <Stats items={[
         { label: 'Kontostand', value: <Bernis amount={me.wallet.balance} /> },
         { label: 'Insgesamt verdient', value: <Bernis amount={me.wallet.lifetimeEarned} /> },
-        { label: 'Heute (Level & Minispiele)', value: `${num(me.wallet.todayEarned)} / ${num(me.wallet.dailyCap)}`, hint: 'Tageslimit; Ranglisten, Erfolge und Tagesbonus zählen nicht mit.' },
+        { label: 'Heute (Level & Minispiele)', value: <span className="inline-flex flex-wrap items-center gap-x-2"><Bernis amount={me.wallet.todayEarned} /> <span className="text-mute">/</span> <Bernis amount={me.wallet.dailyCap} /></span>, hint: 'Tageslimit; Ranglisten, Erfolge und Tagesbonus zählen nicht mit.' },
       ]} />
       <Card>
         {error && <Notice tone="danger">{error}</Notice>}
@@ -31,7 +31,7 @@ export default function HistoryPage() {
                     <div className="text-ink">{tx.label}</div>
                     <div className="faint tabular-nums">{formatDateTime(tx.createdAt)}{tx.guildName && ` · ${tx.guildName}`}</div>
                   </td>
-                  <td className={`whitespace-nowrap text-right font-medium tabular-nums ${tx.amount >= 0 ? 'text-pos' : 'text-neg'}`}>{tx.amount >= 0 ? '+' : '−'}{num(Math.abs(tx.amount))}</td>
+                  <td className={`whitespace-nowrap text-right font-medium tabular-nums ${tx.amount >= 0 ? 'text-pos' : 'text-neg'}`}><span className="inline-flex items-center justify-end gap-1">{tx.amount >= 0 ? '+' : '−'}<Bernis amount={Math.abs(tx.amount)} /></span></td>
                 </tr>
               ))}
             </tbody>

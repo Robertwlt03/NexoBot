@@ -325,6 +325,11 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 /* Shown/hidden with GSAP (ui.tsx); the shake runs when navigation is blocked by unsaved changes. */
 .save-bar { position: fixed; left: 50%; bottom: 22px; width: min(740px, calc(100% - 32px)); background: color-mix(in srgb, var(--bg-card) 88%, transparent); backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%); border: 1px solid var(--border-strong); border-radius: 18px; padding: 10px 12px 10px 18px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); z-index: 40; visibility: hidden; }
 .save-bar .msg { flex: 1; color: var(--text-strong); font-weight: 500; }
+/* Phones: the message on its own line, the buttons below it, right-aligned. */
+@media (max-width: 520px) {
+  .save-bar { flex-wrap: wrap; justify-content: flex-end; row-gap: 8px; padding: 12px 14px; }
+  .save-bar .msg { flex-basis: 100%; }
+}
 .save-bar.shake { border-color: rgba(248, 113, 113, .6); box-shadow: 0 0 0 3px rgba(248, 113, 113, .18), var(--shadow); }
 
 .toasts { position: fixed; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 60; }

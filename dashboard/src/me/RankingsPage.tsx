@@ -79,7 +79,7 @@ export default function RankingsPage() {
                     <td>{p.guildName}</td>
                     <td>{RANKING_LABELS[p.kind]}</td>
                     <td>#{p.rank}</td>
-                    <td className="text-right font-medium text-pos tabular-nums">+{num(p.amount)}</td>
+                    <td className="text-right font-medium text-pos"><span className="inline-flex items-center justify-end gap-1">+<Bernis amount={p.amount} /></span></td>
                   </tr>
                 ))}
               </tbody>

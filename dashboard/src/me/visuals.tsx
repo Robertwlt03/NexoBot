@@ -95,10 +95,11 @@ export function Bernis({ amount, className = '', large = false }: { amount: numb
   const parts = splitCoins(amount);
   const label = `${num(amount)} ${CURRENCY.name}: ${parts.map(({ tier, count }) => `${count} ${COIN_TIERS.find((t) => t.tier === tier)!.label}`).join(', ')}`;
   return (
-    <span title={label} aria-label={label} className={`inline-flex items-center gap-[0.5em] whitespace-nowrap tabular-nums ${className}`}>
+    // Wraps between coins (each coin stays with its count), so long amounts never run out of narrow tiles.
+    <span title={label} aria-label={label} className={`inline-flex max-w-full flex-wrap items-center gap-x-[0.5em] gap-y-[0.1em] tabular-nums ${className}`}>
       {amount < 0 && <span aria-hidden="true" className="-mr-[0.3em]">−</span>}
       {parts.map(({ tier, count }) => (
-        <span key={tier} aria-hidden="true" className="inline-flex items-center gap-[0.22em]">
+        <span key={tier} aria-hidden="true" className="inline-flex items-center gap-[0.22em] whitespace-nowrap">
           <CoinIcon tier={tier} className={large ? 'h-[1.1em] w-[1.1em]' : 'h-[1.05em] w-[1.05em]'} />{count}
         </span>
       ))}

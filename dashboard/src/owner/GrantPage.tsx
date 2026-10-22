@@ -47,7 +47,7 @@ export default function GrantPage() {
         </div>
         <Actions><button type="button" className="btn btn-primary" disabled={!valid || busy} onClick={grant}>{amount < 0 ? 'Abziehen' : 'Gutschreiben'}</button></Actions>
       </Card>
-      {last && <Notice>Gebucht: {last.amount > 0 ? '+' : '−'}{num(Math.abs(last.amount))} für <code>{last.userId}</code>. Neuer Kontostand: <Bernis amount={last.wallet.balance} />.</Notice>}
+      {last && <Notice>Gebucht: {last.amount > 0 ? '+' : '−'}<Bernis amount={Math.abs(last.amount)} /> für <code>{last.userId}</code>. Neuer Kontostand: <Bernis amount={last.wallet.balance} />.</Notice>}
       {dialog}
     </>
   );
