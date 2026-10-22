@@ -1,6 +1,6 @@
-// Coins flying between the page and the wallet pill whenever the balance changes: into the pill when you earn,
-// out of it when you spend, starting or ending where you last clicked (the buy or claim button). Reduced motion:
-// nothing flies, the number still counts.
+// Coins flying when the balance changes: into the wallet pill when you earn, starting where you last clicked (the
+// claim button); out of it when you spend, tossed up and dropping away below the pill (the buy button usually sat in
+// a dialog that is gone by then). Reduced motion: nothing flies, the number still counts.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import { createPortal } from 'react-dom';
@@ -29,7 +29,8 @@ export function useCoinFlight(balance: number, pill: RefObject<HTMLElement | nul
     if (!delta || !visible || reducedMotion()) return;
     const pillPoint = { x: box.left + box.width / 2, y: box.top + box.height / 2 };
     const fresh = lastPointer && Date.now() - lastPointer.at < 8000;
-    const page = fresh ? { x: lastPointer!.x, y: lastPointer!.y } : { x: window.innerWidth / 2, y: window.innerHeight * 0.6 };
+    const page = delta < 0 ? { x: pillPoint.x, y: pillPoint.y + 150 }
+      : fresh ? { x: lastPointer!.x, y: lastPointer!.y } : { x: window.innerWidth / 2, y: window.innerHeight * 0.6 };
     // Up to six coins in the metals of the amount, the biggest first.
     const tiers = splitCoins(delta).map((part) => part.tier);
     const coins = Array.from({ length: Math.min(6, 3 + tiers.length) }, (_, i) => tiers[i % tiers.length]);
@@ -72,7 +73,9 @@ export function CoinFlight({ flight, pill, onDone }: { flight: Flight | null; pi
     const tl = gsap.timeline({ onComplete: onDone });
     coins.forEach((coin, i) => {
       const spread = (i - (coins.length - 1) / 2) * 16;
-      const path = coinPath(flight.from, flight.to, spread, viewport);
+      // Spent coins scatter as they drop; earned ones all meet in the pill.
+      const to = flight.earning ? flight.to : { x: flight.to.x + spread * 3, y: flight.to.y };
+      const path = coinPath(flight.from, to, spread, viewport);
       const spin = (i % 2 ? -1 : 1) * 260;
       const progress = { t: 0 };
       gsap.set(coin, { x: path.start.x, y: path.start.y, scale: 0.5, opacity: 0 });
@@ -86,8 +89,11 @@ export function CoinFlight({ flight, pill, onDone }: { flight: Flight | null; pi
         },
       }, i * 0.07);
     });
-    // The pill gives a little bounce as the coins arrive (earning only).
-    if (flight.earning && pill.current) tl.to(pill.current, { scale: 1.12, duration: 0.12, yoyo: true, repeat: 1, ease: 'power2.out' }, '>-0.15');
+    // The pill bounces as coins arrive, or gives a little squeeze as they leave.
+    if (pill.current) {
+      if (flight.earning) tl.to(pill.current, { scale: 1.12, duration: 0.12, yoyo: true, repeat: 1, ease: 'power2.out' }, '>-0.15');
+      else tl.to(pill.current, { scale: 0.9, duration: 0.1, yoyo: true, repeat: 1, ease: 'power2.out' }, 0);
+    }
     return () => {
       tl.kill();
       if (pill.current) gsap.set(pill.current, { scale: 1 });

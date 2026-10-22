@@ -26,5 +26,13 @@ test('coin flights stay on screen and hit the pill', () => {
         }
       }
     }
+    // Spending: tossed out of the pill, scattering as they drop below it.
+    for (const spread of [-40, 0, 40]) {
+      const path = coinPath(pill, { x: pill.x + spread * 3, y: pill.y + 150 }, spread, { w, h });
+      for (let i = 0; i <= 50; i++) {
+        const p = path.at(i / 50);
+        assert.ok(p.x >= 0 && p.x <= w && p.y >= 0 && p.y <= h, `${name}: spent coin off screen at ${JSON.stringify(p)}`);
+      }
+    }
   }
 });
