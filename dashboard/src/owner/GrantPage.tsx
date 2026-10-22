@@ -41,7 +41,7 @@ export default function GrantPage() {
               hint={user && <button type="button" className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] text-[12.5px] text-accent" onClick={() => setUserId(user.id)}>Meine ID einsetzen</button>}>
               <TextInput value={userId} onChange={(v) => setUserId(v.trim())} placeholder="401234567890123456" maxLength={20} />
             </Field>
-            <Field label="Betrag" hint="Negativ zum Abziehen."><NumberInput value={amount} onChange={setAmount} step={50} /></Field>
+            <Field label="Betrag (in Bronze)" hint={<>Entspricht <Bernis amount={amount} nowrap />. Negativ zum Abziehen.</>}><NumberInput value={amount} onChange={setAmount} step={50} /></Field>
           </div>
           <Field label="Notiz" hint="Pflicht – steht im Verlauf der Person."><TextInput value={note} onChange={setNote} maxLength={100} placeholder="Ausgleich für Bug im Shop" /></Field>
         </div>

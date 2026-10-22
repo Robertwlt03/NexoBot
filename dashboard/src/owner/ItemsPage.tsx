@@ -229,7 +229,7 @@ function ItemEditor({ initial, isNew, events, onClose, onSaved }: { initial: Cos
           <Field label="Beschreibung"><TextArea value={item.description} onChange={(description) => set({ description })} maxLength={140} rows={2} /></Field>
           <div className="grid-2">
             <Field label="Seltenheit"><Select value={item.rarity} onChange={(rarity) => set({ rarity })} options={RARITIES.map((r) => ({ value: r, label: RARITY_LABELS[r] }))} /></Field>
-            <Field label="Preis (in Bronze)" hint={`Üblich: ${num(band[0])}–${num(band[1])} · 100 Bronze = 1 Silber, 100 Silber = 1 Gold`}><NumberInput value={item.price} onChange={(price) => set({ price })} min={0} step={50} /></Field>
+            <Field label="Preis (in Bronze)" hint={<>Entspricht <Bernis amount={item.price} nowrap />. Üblich für diese Seltenheit: <Bernis amount={band[0]} nowrap /> bis <Bernis amount={band[1]} nowrap />.</>}><NumberInput value={item.price} onChange={(price) => set({ price })} min={0} step={50} /></Field>
             <Field label="Erhältlich über">
               <Select value={item.availability} onChange={(availability) => set({ availability, eventId: availability === 'event' ? item.eventId ?? events[0]?.id ?? null : null })} options={opts(AVAILABILITY_LABELS)} />
             </Field>

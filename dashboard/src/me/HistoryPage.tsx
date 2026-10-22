@@ -11,13 +11,13 @@ export default function HistoryPage() {
   const { data, error, loading } = useApi<TransactionPage>(`/me/transactions?page=${page}`);
   return (
     <>
-      <PageHeader kicker="Mein Profil" title="Verlauf" description="Jede Bewegung auf deinem Berni-Konto: Einnahmen aus Level-ups, Minispielen und Ranglisten, Käufe und Geschenke." />
+      <PageHeader kicker="Mein Profil" title="Verlauf" description="Jede Bewegung auf deinem Berni-Konto: Einnahmen, Käufe und Geschenke. Bernis zählen in Münzen: 100 Bronze sind 1 Silber, 100 Silber 1 Gold, 100 Gold 1 Platin." />
       <Stats items={[
         { label: 'Kontostand', value: <Bernis amount={me.wallet.balance} /> },
         { label: 'Insgesamt verdient', value: <Bernis amount={me.wallet.lifetimeEarned} /> },
         {
           label: 'Heute verdient', value: <Bernis amount={me.wallet.todayEarned} />,
-          hint: <span className="inline-flex flex-wrap items-center gap-x-1">aus Level & Minispielen, höchstens <Bernis amount={me.wallet.dailyCap} /> am Tag</span>,
+          hint: <>aus Level & Minispielen, höchstens <Bernis amount={me.wallet.dailyCap} nowrap /> am Tag</>,
         },
       ]} />
       <Card>
@@ -34,7 +34,7 @@ export default function HistoryPage() {
                     <div className="text-ink">{tx.label}</div>
                     <div className="faint tabular-nums">{formatDateTime(tx.createdAt)}{tx.guildName && ` · ${tx.guildName}`}</div>
                   </td>
-                  <td className={`whitespace-nowrap text-right font-medium tabular-nums ${tx.amount >= 0 ? 'text-pos' : 'text-neg'}`}><span className="inline-flex items-center justify-end gap-1">{tx.amount >= 0 ? '+' : '−'}<Bernis amount={Math.abs(tx.amount)} nowrap /></span></td>
+                  <td className={`whitespace-nowrap text-right font-medium tabular-nums ${tx.amount >= 0 ? 'text-pos' : 'text-neg'}`}><span className="whitespace-nowrap">{tx.amount >= 0 ? '+' : '−'} <Bernis amount={Math.abs(tx.amount)} nowrap /></span></td>
                 </tr>
               ))}
             </tbody>

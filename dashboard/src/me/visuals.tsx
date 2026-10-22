@@ -1,4 +1,5 @@
 // Item tiles (painted by the card renderer, see ItemPreviewCanvas), the member-area icons and currency helpers.
+import { Fragment } from 'react';
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { CURRENCY, RARITY_LABELS, SLOT_LABELS } from '../../../src/shared/cosmetics';
 import { CoinIcon } from '../components/CoinIcon';
@@ -91,30 +92,34 @@ export function RarityLabel({ rarity }: { rarity: Rarity }) {
 
 /** `large` shows the full amber drop (vein, bubble) for big hero numbers. */
 /**
- * An amount as coins: platinum, gold, silver and bronze (each 100 of the one below), zero tiers left out. Flex
- * siblings never squeeze it; it only wraps (between coins) when it is wider than its whole parent, or never with
- * `nowrap` (table cells, pills, price rows).
+ * An amount as coins: platinum, gold, silver and bronze (each 100 of the one below), zero tiers left out. Plain
+ * inline text, so the numbers sit on the surrounding text's baseline and each coin is centred on them (the usual
+ * icon-in-text offset); it breaks only between coins, or never with `nowrap` (table cells, pills, price rows).
  */
 export function Bernis({ amount, className = '', large = false, nowrap = false }: { amount: number; className?: string; large?: boolean; nowrap?: boolean }) {
   const parts = splitCoins(amount);
   const label = `${num(amount)} ${CURRENCY.name}: ${parts.map(({ tier, count }) => `${count} ${COIN_TIERS.find((t) => t.tier === tier)!.label}`).join(', ')}`;
+  // Lowered so the coin's centre meets the middle of the digits (Inter digits are 0.738em tall).
+  const coin = large ? 'h-[1.1em] w-[1.1em] align-[-0.181em]' : 'h-[1.05em] w-[1.05em] align-[-0.156em]';
   return (
-    <span title={label} aria-label={label}
-      className={`inline-flex max-w-full shrink-0 items-center gap-x-[0.5em] gap-y-[0.1em] tabular-nums ${nowrap ? 'flex-nowrap' : 'flex-wrap'} ${className}`}>
-      {amount < 0 && <span aria-hidden="true" className="-mr-[0.3em]">−</span>}
-      {parts.map(({ tier, count }) => (
-        <span key={tier} aria-hidden="true" className="inline-flex items-center gap-[0.22em] whitespace-nowrap">
-          <CoinIcon tier={tier} className={large ? 'h-[1.1em] w-[1.1em]' : 'h-[1.05em] w-[1.05em]'} />{count}
-        </span>
+    <span title={label} aria-label={label} className={`tabular-nums ${nowrap ? 'whitespace-nowrap' : ''} ${className}`}>
+      {amount < 0 && <span aria-hidden="true">−</span>}
+      {parts.map(({ tier, count }, index) => (
+        <Fragment key={tier}>
+          {index > 0 && ' '}
+          <span aria-hidden="true" className={`whitespace-nowrap ${index > 0 ? 'ml-[0.25em]' : ''}`}>
+            <CoinIcon tier={tier} className={`mr-[0.22em] ${coin}`} />{count}
+          </span>
+        </Fragment>
       ))}
     </span>
   );
 }
 
-/** A former price, struck through by hand: text-decoration does not reach into the inline-flex coin row. */
+/** A former price, struck through by hand: text-decoration does not reach across the coin icons. */
 export function StruckBernis({ amount, className = '' }: { amount: number; className?: string }) {
   return (
-    <s className={`relative inline-flex no-underline ${className}`}>
+    <s className={`relative inline-block no-underline ${className}`}>
       <span className="sr-only">statt </span><Bernis amount={amount} nowrap className="opacity-80" />
       <span aria-hidden="true" className="absolute inset-x-[-2px] top-1/2 h-px -rotate-6 bg-current" />
     </s>
