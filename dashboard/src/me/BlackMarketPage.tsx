@@ -86,7 +86,7 @@ export default function BlackMarketPage() {
           <div className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-rose-600/20 blur-[110px]" />
           <div className="pointer-events-none absolute -bottom-40 left-10 h-72 w-72 rounded-full bg-violet-700/15 blur-[110px]" />
           <div className="relative flex flex-wrap items-end gap-6">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-[1_1_300px]">
               <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[.24em] text-rose-300">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-400 shadow-[0_0_10px_#fb7185]" /> Nur diese Woche
               </p>

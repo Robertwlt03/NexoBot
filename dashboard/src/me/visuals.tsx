@@ -90,13 +90,17 @@ export function RarityLabel({ rarity }: { rarity: Rarity }) {
 }
 
 /** `large` shows the full amber drop (vein, bubble) for big hero numbers. */
-/** An amount as coins: platinum, gold, silver and bronze (each 100 of the one below), zero tiers left out. */
-export function Bernis({ amount, className = '', large = false }: { amount: number; className?: string; large?: boolean }) {
+/**
+ * An amount as coins: platinum, gold, silver and bronze (each 100 of the one below), zero tiers left out. Flex
+ * siblings never squeeze it; it only wraps (between coins) when it is wider than its whole parent, or never with
+ * `nowrap` (table cells, pills, price rows).
+ */
+export function Bernis({ amount, className = '', large = false, nowrap = false }: { amount: number; className?: string; large?: boolean; nowrap?: boolean }) {
   const parts = splitCoins(amount);
   const label = `${num(amount)} ${CURRENCY.name}: ${parts.map(({ tier, count }) => `${count} ${COIN_TIERS.find((t) => t.tier === tier)!.label}`).join(', ')}`;
   return (
-    // Wraps between coins (each coin stays with its count), so long amounts never run out of narrow tiles.
-    <span title={label} aria-label={label} className={`inline-flex max-w-full flex-wrap items-center gap-x-[0.5em] gap-y-[0.1em] tabular-nums ${className}`}>
+    <span title={label} aria-label={label}
+      className={`inline-flex max-w-full shrink-0 items-center gap-x-[0.5em] gap-y-[0.1em] tabular-nums ${nowrap ? 'flex-nowrap' : 'flex-wrap'} ${className}`}>
       {amount < 0 && <span aria-hidden="true" className="-mr-[0.3em]">−</span>}
       {parts.map(({ tier, count }) => (
         <span key={tier} aria-hidden="true" className="inline-flex items-center gap-[0.22em] whitespace-nowrap">
@@ -107,18 +111,22 @@ export function Bernis({ amount, className = '', large = false }: { amount: numb
   );
 }
 
-/** Price with the base price struck through while an event discount applies. */
+/** A former price, struck through by hand: text-decoration does not reach into the inline-flex coin row. */
+export function StruckBernis({ amount, className = '' }: { amount: number; className?: string }) {
+  return (
+    <s className={`relative inline-flex no-underline ${className}`}>
+      <span className="sr-only">statt </span><Bernis amount={amount} nowrap className="opacity-80" />
+      <span aria-hidden="true" className="absolute inset-x-[-2px] top-1/2 h-px -rotate-6 bg-current" />
+    </s>
+  );
+}
+
+/** Price with the base price struck through while an event discount applies (moves below when there is no room). */
 export function Price({ price, finalPrice, className = '' }: { price: number; finalPrice: number; className?: string }) {
   return (
-    <span className={`inline-flex items-baseline gap-2 ${className}`}>
-      <Bernis amount={finalPrice} className="font-medium text-ink" />
-      {/* Struck through by hand: text-decoration does not reach into the inline-flex coin row. */}
-      {finalPrice < price && (
-        <s className="relative text-[12px] text-faint no-underline">
-          <span className="sr-only">statt </span><Bernis amount={price} className="opacity-80" />
-          <span aria-hidden="true" className="absolute inset-x-[-2px] top-1/2 h-px -rotate-6 bg-current" />
-        </s>
-      )}
+    <span className={`inline-flex flex-wrap items-baseline gap-x-2 ${className}`}>
+      <Bernis amount={finalPrice} nowrap className="font-medium text-ink" />
+      {finalPrice < price && <StruckBernis amount={price} className="text-[12px] text-faint" />}
     </span>
   );
 }

@@ -42,7 +42,7 @@ function WalletPill({ balance }: { balance: number }) {
   const shown = useCountUp(balance);
   return (
     <span title="Dein Kontostand" className="inline-flex items-center gap-1.5 rounded-full border border-white/[.08] bg-white/[.04] px-3 py-1 text-[13px] font-medium text-ink">
-      <Bernis amount={shown} />
+      <Bernis amount={shown} nowrap />
     </span>
   );
 }

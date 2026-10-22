@@ -33,7 +33,7 @@ function WalletCard() {
       <div className="mt-3 text-[36px] font-light leading-none tracking-[-0.03em] text-ink"><Bernis amount={shown} large /></div>
       <p className="mt-2 flex flex-wrap items-center gap-x-1.5 text-[12.5px] text-faint">Insgesamt verdient: <Bernis amount={me.wallet.lifetimeEarned} /></p>
       <div className="mt-4">
-        <div className="flex justify-between text-[12px] text-mute"><span>Heute aus Level & Minispielen</span><span className="inline-flex flex-wrap items-center justify-end gap-x-1.5"><Bernis amount={todayEarned} /> / <Bernis amount={dailyCap} /></span></div>
+        <div className="flex justify-between text-[12px] text-mute"><span>Heute aus Level & Minispielen</span><span className="inline-flex flex-wrap items-center justify-end gap-x-1.5"><Bernis amount={todayEarned} /> von <Bernis amount={dailyCap} /></span></div>
         <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[.06]">
           <div className="h-full rounded-full bg-white/50" style={{ width: `${Math.min(100, (todayEarned / Math.max(dailyCap, 1)) * 100)}%` }} />
         </div>

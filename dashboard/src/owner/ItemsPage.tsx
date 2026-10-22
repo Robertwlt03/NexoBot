@@ -310,7 +310,7 @@ export default function ItemsPage() {
                 </td>
                 <td className="whitespace-nowrap">{SLOT_LABELS[item.slot]}</td>
                 <td><RarityLabel rarity={item.rarity} /></td>
-                <td className="text-right">{item.price ? <Bernis amount={item.price} /> : <span className="text-faint">–</span>}</td>
+                <td className="text-right">{item.price ? <Bernis amount={item.price} nowrap /> : <span className="text-faint">–</span>}</td>
                 <td className="whitespace-nowrap">{AVAILABILITY_LABELS[item.availability]}{item.eventId && <div className="faint">{events.find((e) => e.id === item.eventId)?.name ?? item.eventId}</div>}</td>
                 <td>{item.active ? <span className="badge badge-on">Aktiv</span> : <span className="badge badge-off">Inaktiv</span>}</td>
                 <td className="whitespace-nowrap text-right">
