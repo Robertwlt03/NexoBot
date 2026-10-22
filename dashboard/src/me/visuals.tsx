@@ -90,7 +90,7 @@ export function RarityLabel({ rarity }: { rarity: Rarity }) {
 }
 
 /** `large` shows the full amber drop (vein, bubble) for big hero numbers. */
-/** An amount as coins: gold, silver and bronze (100 bronze = 1 silver, 100 silver = 1 gold), zero tiers left out. */
+/** An amount as coins: platinum, gold, silver and bronze (each 100 of the one below), zero tiers left out. */
 export function Bernis({ amount, className = '', large = false }: { amount: number; className?: string; large?: boolean }) {
   const parts = splitCoins(amount);
   const label = `${num(amount)} ${CURRENCY.name}: ${parts.map(({ tier, count }) => `${count} ${COIN_TIERS.find((t) => t.tier === tier)!.label}`).join(', ')}`;

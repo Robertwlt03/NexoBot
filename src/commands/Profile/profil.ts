@@ -9,7 +9,7 @@ import { publicDashboardUrl } from '../../web/dashboard.js';
 import { CURRENCY } from '../../shared/cosmetics.js';
 import { formatCoins } from '../../shared/coins.js';
 
-const COIN_TEXT = '🟤 Bronze · ⚪ Silber (100 Bronze) · 🟡 Gold (100 Silber)';
+const COIN_TEXT = '🟤 Bronze · ⚪ Silber (100 Bronze) · 🟡 Gold (100 Silber) · 💠 Platin (100 Gold)';
 import { formatNumber } from '../../shared/profileCard.js';
 import { getBalance } from '../../services/cosmetics/store.js';
 import { canAttachFiles, loadProfileCardData, profileCardAttachment } from '../../services/profileCardRenderer.js';

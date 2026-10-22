@@ -44,8 +44,8 @@ function boxes(layout: (typeof PROFILE_LAYOUTS)[number], spot: StickerSpot | nul
   list.push(rect('title', span(t.maxWidth), t.titleY - 15, t.maxWidth, 20));
   list.push(rect('bio', span(t.maxWidth), t.bioY - 14, t.maxWidth, 19));
   const s = g.stats;
-  // Widest realistic values: level "999", rank "#12345", balance as coins "🟡 123 ⚪ 45 🟤 67".
-  const statWidth = (key: string, size: number) => ({ level: 2.4, rank: 4.4, balance: 8 }[key] ?? 6) * size;
+  // Widest realistic values: level "999", rank "#12345", balance as coins "💠 1 🟡 23 ⚪ 45 🟤 67".
+  const statWidth = (key: string, size: number) => ({ level: 2.4, rank: 4.4, balance: 8.8 }[key] ?? 6) * size;
   if (s.style === 'stacked') {
     for (const item of s.items) {
       const w = statWidth(item.key, item.size);

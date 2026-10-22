@@ -1,18 +1,19 @@
-// Bernis as coins: every amount is stored in bronze and shown in gold, silver and bronze (100 bronze = 1 silver,
-// 100 silver = 1 gold), each coin with the amber drop engraved. One geometry for every surface: the dashboard
+// Bernis as coins: every amount is stored in bronze and shown in platinum, gold, silver and bronze (100 bronze =
+// 1 silver, 100 silver = 1 gold, 100 gold = 1 platinum), each coin with the amber drop engraved. One geometry for every surface: the dashboard
 // draws it as SVG, the profile and level-up cards on canvas, Discord messages use the text form.
 // Import-free apart from the amber geometry (shared by the bot and the dashboard).
 
 import { AMBER_DROP, AMBER_LEAF, type AmberContext, type AmberPath } from './amber.js';
 
-export type CoinTier = 'gold' | 'silver' | 'bronze';
+export type CoinTier = 'platinum' | 'gold' | 'silver' | 'bronze';
 export const COIN_TIERS: readonly { tier: CoinTier; value: number; label: string; emoji: string }[] = [
+  { tier: 'platinum', value: 1_000_000, label: 'Platin', emoji: '💠' },
   { tier: 'gold', value: 10_000, label: 'Gold', emoji: '🟡' },
   { tier: 'silver', value: 100, label: 'Silber', emoji: '⚪' },
   { tier: 'bronze', value: 1, label: 'Bronze', emoji: '🟤' },
 ];
 
-/** Gold, silver and bronze in an amount (absolute value); zero tiers are left out, 0 is "0 bronze". */
+/** Platinum, gold, silver and bronze in an amount (absolute value); zero tiers are left out, 0 is "0 bronze". */
 export function splitCoins(amount: number): { tier: CoinTier; count: number }[] {
   let rest = Math.floor(Math.abs(amount));
   const parts = COIN_TIERS.map(({ tier, value }) => {
@@ -31,6 +32,8 @@ export function formatCoins(amount: number): string {
 
 /** Metal per tier: face light → deep, the rim, the engraved recess and the lit edge of the engraving. */
 export const COIN_COLORS: Record<CoinTier, { light: string; mid: string; deep: string; rim: string; recess: string; shine: string }> = {
+  // Cooler and brighter than silver, with a blue-white sheen.
+  platinum: { light: '#FFFFFF', mid: '#C9D6E6', deep: '#5D7391', rim: '#3B4B63', recess: '#8EA3BE', shine: '#F2F8FF' },
   gold: { light: '#FFF1B0', mid: '#F2C14E', deep: '#A8740F', rim: '#7A520A', recess: '#B88A2A', shine: '#FFF8DC' },
   silver: { light: '#FFFFFF', mid: '#D3D8DF', deep: '#7E8794', rim: '#5A626D', recess: '#99A2AE', shine: '#FFFFFF' },
   bronze: { light: '#F6C9A0', mid: '#C98A55', deep: '#7A4A24', rim: '#5A3418', recess: '#9C6438', shine: '#FCE2C8' },
