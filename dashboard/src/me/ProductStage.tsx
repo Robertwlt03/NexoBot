@@ -45,7 +45,7 @@ function ChatPreview({ items, surface }: { items: CosmeticItem[]; surface: Surfa
         </div>
       )}
       <div className="flex gap-3.5">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#1e1f22]"><NexoLogo className="w-8" animated={false} /></span>
+        <NexoLogo className="h-10 w-10 shrink-0" animated={false} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className="font-semibold text-[#f2f3f5]">Nexo</span>

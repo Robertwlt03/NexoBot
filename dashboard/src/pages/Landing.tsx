@@ -172,7 +172,7 @@ export function Landing() {
 
           {/* Discord preview */}
           <div className="relative mx-auto mt-20 w-full max-w-md lg:mr-0 lg:mt-0">
-            <NexoLogo className="js-robot js-intro absolute -right-4 -top-28 z-20 w-44 drop-shadow-[0_20px_40px_rgba(124,92,255,.45)] sm:w-52" followPointer />
+            <NexoLogo className="js-robot js-intro absolute -right-4 -top-36 z-20 w-40 drop-shadow-[0_22px_28px_rgba(0,0,0,.55)] sm:-top-40 sm:w-44" followPointer />
             <div className="js-chat js-intro relative z-10 overflow-hidden rounded-2xl border border-white/10 bg-dc-main shadow-[0_40px_80px_-30px_rgba(0,0,0,.8)]">
               <div className="flex items-center gap-2 border-b border-black/30 px-4 py-3 text-sm font-semibold text-white">
                 <span className="text-dc-muted"><Icon name="hash" size={18} /></span> willkommen
@@ -301,7 +301,7 @@ function ChatMessage({ bot, name, initial, color, children }: { bot?: boolean; n
   return (
     <div className="js-msg js-intro flex gap-3">
       {bot
-        ? <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1a1540]"><NexoLogo className="w-8" animated={false} /></span>
+        ? <NexoLogo className="h-10 w-10 shrink-0" animated={false} />
         : <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-semibold text-white ${color}`}>{initial}</span>}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 text-sm font-semibold text-white">
