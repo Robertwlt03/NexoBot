@@ -39,25 +39,59 @@ export function useCoinFlight(balance: number, pill: RefObject<HTMLElement | nul
   return { flight, done };
 }
 
+interface Point { x: number; y: number }
+
+/**
+ * One coin's flight as a quadratic Bézier: from `from` (fanned out by `spread`) to `to`, bulging upwards like a
+ * toss. The control point is clamped inside the viewport, and since a Bézier stays within its control points, the
+ * whole flight stays on screen (the pill sits right at the top, where a plain "up and over" would leave it).
+ */
+export function coinPath(from: Point, to: Point, spread: number, viewport: { w: number; h: number }) {
+  const margin = 16;
+  const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+  const start = { x: clamp(from.x + spread, margin, viewport.w - margin), y: clamp(from.y, margin, viewport.h - margin) };
+  const end = { x: clamp(to.x, margin, viewport.w - margin), y: clamp(to.y, margin, viewport.h - margin) };
+  const lift = Math.min(180, Math.hypot(end.x - start.x, end.y - start.y) * 0.35 + 40);
+  const control = {
+    x: clamp((start.x + end.x) / 2 + spread * 2, margin, viewport.w - margin),
+    y: clamp(Math.min(start.y, end.y) - lift, margin, viewport.h - margin),
+  };
+  const at = (t: number): Point => ({
+    x: (1 - t) ** 2 * start.x + 2 * (1 - t) * t * control.x + t ** 2 * end.x,
+    y: (1 - t) ** 2 * start.y + 2 * (1 - t) * t * control.y + t ** 2 * end.y,
+  });
+  return { start, end, control, at };
+}
+
 export function CoinFlight({ flight, pill, onDone }: { flight: Flight | null; pill: RefObject<HTMLElement | null>; onDone: () => void }) {
   const layer = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     if (!flight || !layer.current) return;
-    const coins = layer.current.querySelectorAll<HTMLElement>('.js-flying-coin');
+    const coins = [...layer.current.querySelectorAll<HTMLElement>('.js-flying-coin')];
+    const viewport = { w: window.innerWidth, h: window.innerHeight };
     const tl = gsap.timeline({ onComplete: onDone });
     coins.forEach((coin, i) => {
-      const spread = (i - (coins.length - 1) / 2) * 14;
-      const lift = Math.min(160, Math.abs(flight.to.x - flight.from.x) * 0.25 + 60);
-      tl.fromTo(coin, { x: flight.from.x + spread, y: flight.from.y, scale: 0.4, opacity: 0, rotation: -40 },
-        { keyframes: [
-          { x: (flight.from.x + flight.to.x) / 2 + spread, y: Math.min(flight.from.y, flight.to.y) - lift, scale: 1.1, opacity: 1, rotation: 0, duration: 0.35, ease: 'power2.out' },
-          { x: flight.to.x, y: flight.to.y, scale: 0.55, opacity: 0.9, rotation: 30, duration: 0.4, ease: 'power2.in' },
-          { opacity: 0, duration: 0.08 },
-        ] }, i * 0.06);
+      const spread = (i - (coins.length - 1) / 2) * 16;
+      const path = coinPath(flight.from, flight.to, spread, viewport);
+      const spin = (i % 2 ? -1 : 1) * 260;
+      const progress = { t: 0 };
+      gsap.set(coin, { x: path.start.x, y: path.start.y, scale: 0.5, opacity: 0 });
+      // One smooth tween along the curve: grows towards the middle, shrinks into the pill, fades in and out.
+      tl.to(progress, {
+        t: 1, duration: 0.8, ease: 'power1.inOut',
+        onUpdate: () => {
+          const { t } = progress;
+          const p = path.at(t);
+          gsap.set(coin, { x: p.x, y: p.y, rotation: spin * t, scale: 0.55 + Math.sin(Math.PI * t) * 0.6, opacity: Math.min(1, t * 6, (1 - t) * 6) });
+        },
+      }, i * 0.07);
     });
-    // The pill gives a little bounce when the last coin lands (earning only).
-    if (flight.earning && pill.current) tl.fromTo(pill.current, { scale: 1 }, { scale: 1.12, duration: 0.12, yoyo: true, repeat: 1, ease: 'power2.out' }, '>-0.1');
-    return () => { tl.kill(); };
+    // The pill gives a little bounce as the coins arrive (earning only).
+    if (flight.earning && pill.current) tl.to(pill.current, { scale: 1.12, duration: 0.12, yoyo: true, repeat: 1, ease: 'power2.out' }, '>-0.15');
+    return () => {
+      tl.kill();
+      if (pill.current) gsap.set(pill.current, { scale: 1 });
+    };
     // Runs once per flight; onDone and pill are stable.
   }, [flight?.id]);
   if (!flight) return null;
