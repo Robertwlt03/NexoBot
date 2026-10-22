@@ -1,7 +1,8 @@
 // Item tiles (painted by the card renderer, see ItemPreviewCanvas), the member-area icons and currency helpers.
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { CURRENCY, RARITY_LABELS, SLOT_LABELS } from '../../../src/shared/cosmetics';
-import { AmberIcon } from '../components/AmberIcon';
+import { CoinIcon } from '../components/CoinIcon';
+import { COIN_TIERS, splitCoins } from '../../../src/shared/coins';
 import { ItemPreviewCanvas } from '../components/ProfileCardPreview';
 import type {
   BackgroundData, BadgeGlyph, CosmeticItem, LevelupData, Rarity,
@@ -89,10 +90,18 @@ export function RarityLabel({ rarity }: { rarity: Rarity }) {
 }
 
 /** `large` shows the full amber drop (vein, bubble) for big hero numbers. */
+/** An amount as coins: gold, silver and bronze (100 bronze = 1 silver, 100 silver = 1 gold), zero tiers left out. */
 export function Bernis({ amount, className = '', large = false }: { amount: number; className?: string; large?: boolean }) {
+  const parts = splitCoins(amount);
+  const label = `${num(amount)} ${CURRENCY.name}: ${parts.map(({ tier, count }) => `${count} ${COIN_TIERS.find((t) => t.tier === tier)!.label}`).join(', ')}`;
   return (
-    <span className={`inline-flex items-center gap-[0.3em] whitespace-nowrap tabular-nums ${className}`}>
-      <AmberIcon className={large ? 'h-[1.15em] w-[1.15em]' : 'h-[1.05em] w-[1.05em]'} detail={large ? 'full' : 'small'} title={CURRENCY.name} />{num(amount)}
+    <span title={label} aria-label={label} className={`inline-flex items-center gap-[0.5em] whitespace-nowrap tabular-nums ${className}`}>
+      {amount < 0 && <span aria-hidden="true" className="-mr-[0.3em]">−</span>}
+      {parts.map(({ tier, count }) => (
+        <span key={tier} aria-hidden="true" className="inline-flex items-center gap-[0.22em]">
+          <CoinIcon tier={tier} className={large ? 'h-[1.1em] w-[1.1em]' : 'h-[1.05em] w-[1.05em]'} />{count}
+        </span>
+      ))}
     </span>
   );
 }
@@ -102,7 +111,13 @@ export function Price({ price, finalPrice, className = '' }: { price: number; fi
   return (
     <span className={`inline-flex items-baseline gap-2 ${className}`}>
       <Bernis amount={finalPrice} className="font-medium text-ink" />
-      {finalPrice < price && <s className="text-[12px] text-faint">{num(price)}</s>}
+      {/* Struck through by hand: text-decoration does not reach into the inline-flex coin row. */}
+      {finalPrice < price && (
+        <s className="relative text-[12px] text-faint no-underline">
+          <span className="sr-only">statt </span><Bernis amount={price} className="opacity-80" />
+          <span aria-hidden="true" className="absolute inset-x-[-2px] top-1/2 h-px -rotate-6 bg-current" />
+        </s>
+      )}
     </span>
   );
 }

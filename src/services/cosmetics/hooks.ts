@@ -5,6 +5,7 @@ import { randomInt } from 'node:crypto';
 import cron from 'node-cron';
 import type { Client, EmbedBuilder } from 'discord.js';
 import { CURRENCY } from '../../shared/cosmetics.js';
+import { formatCoins } from '../../shared/coins.js';
 import { logger } from '../../utils/logger.js';
 import { addActivity, startActivityTracker } from './activity.js';
 import { syncAchievements } from './achievements.js';
@@ -59,7 +60,7 @@ export async function rewardMinigame(embed: EmbedBuilder, user: { id: string; bo
     return 0;
   });
   const granted = await Promise.race([work, new Promise<number>((resolve) => { setTimeout(() => resolve(0), REPLY_WAIT_MS).unref(); })]);
-  if (granted > 0) appendLine(embed, `+${granted} ${CURRENCY.symbol} ${CURRENCY.name}`);
+  if (granted > 0) appendLine(embed, `+${formatCoins(granted)} ${CURRENCY.name}`);
 }
 
 /** XP from messages: monthly activity score and, on level-ups, Bernis (daily cap applies). Callers skip bots. */

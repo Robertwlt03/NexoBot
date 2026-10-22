@@ -3,6 +3,7 @@
 
 import type { Client, Guild } from 'discord.js';
 import { CURRENCY, RANKING_KINDS, RANKING_LABELS, type RankingKind } from '../../shared/cosmetics.js';
+import { formatCoins } from '../../shared/coins.js';
 import type { GuildRanking, RankingEntry, RankingsResponse } from '../../web/dto/profile.js';
 import { logger } from '../../utils/logger.js';
 import { RANKING_ITEMS } from './catalog.js';
@@ -187,7 +188,7 @@ export async function runMonthlyPayout(client: Client, month: string = monthStar
   for (const payout of paid) byUser.set(payout.userId, [...(byUser.get(payout.userId) ?? []), payout]);
   for (const [userId, payouts] of byUser) {
     await syncAchievements(userId);
-    const lines = payouts.map((payout) => `• Platz ${payout.rank} in „${RANKING_LABELS[payout.kind]}“ auf **${client.guilds.cache.get(payout.guildId)?.name ?? 'einem Server'}**: +${payout.amount} ${CURRENCY.symbol}`);
+    const lines = payouts.map((payout) => `• Platz ${payout.rank} in „${RANKING_LABELS[payout.kind]}“ auf **${client.guilds.cache.get(payout.guildId)?.name ?? 'einem Server'}**: +${formatCoins(payout.amount)}`);
     await client.users.send(userId, `🏆 Glückwunsch zu deinem Monatsranking (${monthLabel(month)})!\n${lines.join('\n')}\nDie ${CURRENCY.name} liegen schon in deinem Profil.`)
       .catch(() => undefined);
   }
