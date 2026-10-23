@@ -33,7 +33,10 @@ export interface MeProfileResponse {
   /** Growth stage of the companion (1–3) and the days chatted it comes from. */
   petStage: number;
   chatDays: number;
+  /** Public profile link /dashboard/p/<id> with a Discord link preview (opt-in). */
+  shareProfile: boolean;
 }
+/** PUT /me/share { enabled } → { enabled } */
 /** PUT /me/reminders { enabled } → { enabled } */
 /** PUT /me/profile — body: UserProfileSettings; every equipped item must be owned (403 otherwise). Returns MeProfileResponse. */
 

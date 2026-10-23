@@ -22,6 +22,7 @@ import { userRankings } from '../../services/cosmetics/rankings.js';
 import { getDailyQuests } from '../../services/cosmetics/quests.js';
 import { readReminders, writeReminders } from '../../services/cosmetics/reminders.js';
 import { communityGoals } from '../../services/cosmetics/community.js';
+import { readShareProfile, writeShareProfile } from '../publicProfile.js';
 import { addSeasonPoints, getSeason } from '../../services/cosmetics/season.js';
 import { SEASON_POINTS } from '../../shared/season.js';
 import { petStage } from '../../shared/pets.js';
@@ -42,12 +43,13 @@ async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[
 }
 
 async function profileResponse(client: NexoClient, userId: string): Promise<MeProfileResponse> {
-  const [wallet, profile, inventory, levelList, daily, quests, reminders, chatDays] = await Promise.all([
+  const [wallet, profile, inventory, levelList, daily, quests, reminders, chatDays, shareProfile] = await Promise.all([
     walletSummary(userId), readProfileSettings(userId), ownedItems(userId), levels(client, userId), getDailyState(userId),
     getDailyQuests(userId, pendingQuestCounts(userId)), readReminders(userId),
     requirePool().query<{ value: string }>(`SELECT value FROM ${T.user_stats} WHERE user_id = $1 AND stat = 'chat_days'`, [userId]).then((r) => Number(r.rows[0]?.value ?? 0)),
+    readShareProfile(userId),
   ]);
-  return { isOwner: isBotOwner(userId), wallet, profile, inventory, levels: levelList, daily, quests, reminders, petStage: petStage(chatDays), chatDays };
+  return { isOwner: isBotOwner(userId), wallet, profile, inventory, levels: levelList, daily, quests, reminders, petStage: petStage(chatDays), chatDays, shareProfile };
 }
 
 export function meRouter(client: NexoClient): Router {
@@ -104,6 +106,12 @@ export function meRouter(client: NexoClient): Router {
 
   router.get('/season', async (_req, res) => {
     res.json(await getSeason(locals(res).session.userId));
+  });
+
+  router.put('/share', async (req, res) => {
+    const { enabled } = body(req.body);
+    if (typeof enabled !== 'boolean') throw badRequest('enabled: true oder false erwartet.');
+    res.json({ enabled: await writeShareProfile(locals(res).session.userId, enabled) });
   });
 
   router.put('/reminders', async (req, res) => {

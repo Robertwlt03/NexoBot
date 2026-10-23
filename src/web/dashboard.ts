@@ -25,6 +25,7 @@ import { ownerRouter } from './modules/owner.js';
 import { HttpError, isHiddenChannel } from './http.js';
 import { ErrorTypes, NexoBotError } from '../utils/errorHandler.js';
 import type { ErrorType } from '../utils/errorHandler.js';
+import { publicProfileRouter } from './publicProfile.js';
 
 const CLIENT_ERRORS: ErrorType[] = [ErrorTypes.VALIDATION, ErrorTypes.USER_INPUT, ErrorTypes.CONFIGURATION, ErrorTypes.PERMISSION, ErrorTypes.RATE_LIMIT];
 
@@ -309,6 +310,8 @@ export function createDashboardRouter(client: NexoClient): Router {
   api.use('/guilds/:guildId', guildRouter);
   api.use((_req, res) => sendError(res, 404, 'Unbekannter API-Pfad.'));
   router.use('/api', api);
+  // Public, opt-in profile pages for link previews in Discord (no login).
+  router.use('/p', publicProfileRouter(client, `${config.baseUrl}/dashboard`));
 
   // ---------- Frontend ----------
   if (staticDir) {

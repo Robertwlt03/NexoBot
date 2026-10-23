@@ -10,7 +10,7 @@ import { PET_STAGE_NAMES } from '../../../src/shared/pets';
 import { PROFILE_CARD_HEIGHT, PROFILE_CARD_WIDTH, drawSticker, profileGeometry, stickerPoint, stickerRadius } from '../../../src/shared/profileCard';
 import type { CosmeticItem, CosmeticSlot, ResolvedCosmetics, StickerData, StickerSpot, UserProfileSettings } from '../../../src/shared/cosmetics';
 import type { DailyClaimResult, MeProfileResponse, QuestsResponse } from '../../../src/web/dto/profile';
-import { api, useUser } from '../api';
+import { api, useToast, useUser } from '../api';
 import { LevelUpPreview, ProfileCardPreview } from '../components/ProfileCardPreview';
 import { Icon } from '../icons';
 import { Card, PageHeader, SaveBar, Select, Switch, SwitchRow, TextArea } from '../components/ui';
@@ -180,6 +180,38 @@ function QuestsCard() {
       </div>
       <p className="mt-2 text-[11.5px] text-faint">Zählt auf allen Servern mit Nexo. Fertige Aufgaben zahlen sich von selbst aus.</p>
     </section>
+  );
+}
+
+/** Opt-in public profile link; posted in Discord it unfurls into the card with level and season. */
+function ShareProfile() {
+  const { me, setMe } = useMe();
+  const user = useUser();
+  const toast = useToast();
+  const { run, busy } = useMutation();
+  const link = `${window.location.origin}/dashboard/p/${user?.id ?? ''}`;
+  const toggle = async (enabled: boolean) => {
+    if (await run<{ enabled: boolean }>('/me/share', 'PUT', { enabled }, enabled ? 'Profil-Link ist an.' : 'Profil-Link ist aus.')) setMe((prev) => ({ ...prev, shareProfile: enabled }));
+  };
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      toast('Link kopiert – füg ihn in Discord ein.');
+    } catch {
+      toast('Kopieren ging nicht – markier den Link und kopier ihn selbst.', true);
+    }
+  };
+  return (
+    <>
+      <SwitchRow title="Profil-Link teilen" description="Ein öffentlicher Link zu deiner Profilkarte. In Discord gepostet, zeigt er Karte, Level und Saison als Vorschau."
+        checked={me.shareProfile} disabled={busy} onChange={toggle} />
+      {me.shareProfile && (
+        <div className="flex flex-wrap gap-2">
+          <input readOnly value={link} aria-label="Dein Profil-Link" className="input min-w-0 flex-[1_1_220px] font-mono text-[12.5px]" onFocus={(event) => event.currentTarget.select()} />
+          <button type="button" className="btn btn-secondary" onClick={copy}>Kopieren</button>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -441,6 +473,7 @@ export default function ProfilePage() {
               <TextArea value={value.bio} onChange={(bio) => form.setDraft({ ...value, bio })} maxLength={MAX_BIO_LENGTH} rows={3} placeholder="Was sollen andere über dich wissen?" />
               <SwitchRow title="Auf Willkommenskarten zeigen" description="Server, die Mitglieder-Styles erlauben, zeigen deinen Rahmen und deine Farben auf der Willkommenskarte."
                 checked={value.showOnWelcome} onChange={(showOnWelcome) => form.setDraft({ ...value, showOnWelcome })} />
+              <ShareProfile />
             </div>
           </Card>
           <Card title="Level-up-Nachricht" description="So meldet Nexo deinen nächsten Aufstieg.">
