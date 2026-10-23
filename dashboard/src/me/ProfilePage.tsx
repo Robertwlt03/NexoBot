@@ -9,7 +9,7 @@ import { COSMETIC_SLOTS, DAILY_BONUS, STREAK_SHIELD, MAX_BIO_LENGTH, MAX_EQUIPPE
 import { PET_STAGE_NAMES } from '../../../src/shared/pets';
 import { PROFILE_CARD_HEIGHT, PROFILE_CARD_WIDTH, drawSticker, profileGeometry, stickerPoint, stickerRadius } from '../../../src/shared/profileCard';
 import type { CosmeticItem, CosmeticSlot, ResolvedCosmetics, StickerData, StickerSpot, UserProfileSettings } from '../../../src/shared/cosmetics';
-import type { DailyClaimResult, MeProfileResponse, QuestsResponse } from '../../../src/web/dto/profile';
+import type { DailyClaimResult, LinkedRoleValues, MeProfileResponse, QuestsResponse } from '../../../src/web/dto/profile';
 import { api, useToast, useUser } from '../api';
 import { LevelUpPreview, ProfileCardPreview } from '../components/ProfileCardPreview';
 import { Icon } from '../icons';
@@ -212,6 +212,45 @@ function ShareProfile() {
         </div>
       )}
     </>
+  );
+}
+
+const ROLE_VALUES: { key: keyof LinkedRoleValues; label: string }[] = [
+  { key: 'level', label: 'Höchstes Level' }, { key: 'season_tier', label: 'Saison-Stufe' }, { key: 'achievements', label: 'Erfolge' },
+  { key: 'chat_days', label: 'Chat-Tage' }, { key: 'bernis', label: 'Verdiente Bernis' },
+];
+
+/** Linked Roles: servers hand out roles by these values once the member linked Nexo in Discord. */
+function LinkedRoleCard() {
+  const { me, setMe } = useMe();
+  const { run, busy } = useMutation();
+  const { linked, values } = me.linkedRole;
+  const apply = (result: { linkedRole: MeProfileResponse['linkedRole'] } | null) => { if (result) setMe((prev) => ({ ...prev, linkedRole: result.linkedRole })); };
+  return (
+    <Card title="Verknüpfte Rollen" description="Server können dir Rollen geben, wenn du bestimmte Nexo-Werte erreichst – etwa ab Level 10 oder Saison-Stufe 5.">
+      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        {ROLE_VALUES.map(({ key, label }) => (
+          <div key={key} className="flex flex-col-reverse rounded-xl border border-white/[.06] bg-white/[.02] px-3 py-2">
+            <dt className="text-[12px] text-mute">{label}</dt>
+            <dd className="m-0 text-[18px] font-medium text-ink">{key === 'bernis' ? <Bernis amount={values.bernis} nowrap /> : num(values[key])}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        {linked ? (
+          <>
+            <span className="badge badge-on">Mit Discord verknüpft</span>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={async () => apply(await run('/me/linked-role/sync', 'POST', undefined, 'Werte an Discord übertragen.'))}>Jetzt aktualisieren</button>
+            <button type="button" className="btn btn-ghost btn-sm text-neg" disabled={busy} onClick={async () => apply(await run('/me/linked-role', 'DELETE', undefined, 'Verknüpfung getrennt.'))}>Trennen</button>
+          </>
+        ) : (
+          <a href="/dashboard/linked-role" className="btn btn-primary hover:no-underline">Mit Discord verknüpfen</a>
+        )}
+      </div>
+      <p className="mt-3 text-[12px] text-faint">
+        {linked ? 'Nexo überträgt deine Werte stündlich. Trennen entfernt auch die Rollen, die davon abhängen.' : 'Du verknüpfst einmal, danach hält Nexo die Werte stündlich aktuell. Du kannst es jederzeit wieder trennen.'}
+      </p>
+    </Card>
   );
 }
 
@@ -480,6 +519,7 @@ export default function ProfilePage() {
             <LevelUpPreview subject={subject} cosmetics={cosmetics} level={subject.level + 1} reward={levelUpReward(subject.level + 1)} />
           </Card>
         </div>
+        <div className="mt-4"><LinkedRoleCard /></div>
       </div>
       <SaveBar dirty={form.dirty} saving={form.saving} onSave={form.save} onReset={form.reset} />
     </>

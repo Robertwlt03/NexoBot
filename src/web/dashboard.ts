@@ -11,9 +11,10 @@ import type { NexoClient } from '../types/index.js';
 import { getEnv } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import {
-  authorizeUrl, exchangeCode, fetchUser, fetchUserGuilds, guildIconUrl, revokeToken, userAvatarUrl,
+  authorizeUrl, exchangeCode, exchangeCodeForTokens, fetchUser, fetchUserGuilds, guildIconUrl, linkedRoleAuthorizeUrl, revokeToken, userAvatarUrl,
   type OAuthConfig,
 } from './discordOAuth.js';
+import { completeLink, type LinkedRolesConfig } from '../services/cosmetics/linkedRoles.js';
 import {
   SESSION_COOKIE, SESSION_TTL_SECONDS, STATE_COOKIE, deleteSession, loadSession, randomToken,
   readSignedCookie, saveSession, setCookie, setSignedCookie, type DashboardSession,
@@ -87,6 +88,22 @@ async function waitForGuild(client: NexoClient, guildId: string): Promise<boolea
   return client.guilds.cache.has(guildId);
 }
 
+/** OAuth credentials for the linked-roles sync (null when the dashboard is not configured). */
+export function linkedRolesConfig(): LinkedRolesConfig | null {
+  const config = readConfig();
+  return config ? { clientId: config.clientId, clientSecret: config.clientSecret, sessionSecret: config.sessionSecret } : null;
+}
+
+/** Small standalone page for the end of the linked-roles flow (it opens from Discord, outside the dashboard app). */
+function linkedRolePage(title: string, text: string, ok: boolean): string {
+  const color = ok ? '#8FB36B' : '#F59E0B';
+  return `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Nexo · ${title}</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#16130f;color:#efe8dd;font-family:system-ui,sans-serif;padding:16px}
+main{max-width:440px;border:1px solid #ffffff14;border-left:4px solid ${color};border-radius:18px;background:#211c17;padding:24px 26px}
+h1{font-size:22px;margin:0 0 10px}p{margin:0 0 10px;line-height:1.5;color:#cfc4b6}a{color:${color}}</style></head>
+<body><main><h1>${title}</h1><p>${text}</p><p><a href="/dashboard/me">Zu deinem Nexo-Profil</a></p></main></body></html>`;
+}
+
 /** Public dashboard address for links in Discord (help, etc.), or null when the dashboard is off. */
 export function publicDashboardUrl(): string | null {
   const config = readConfig();
@@ -146,11 +163,35 @@ export function createDashboardRouter(client: NexoClient): Router {
     res.redirect(authorizeUrl(config, state, { guildId }));
   });
 
+  // Linked Roles verification URL (set it in the Developer Portal): Discord sends members here from the role settings.
+  router.get('/linked-role', (_req, res) => {
+    const state = `lr.${randomToken()}`;
+    setSignedCookie(res, STATE_COOKIE, state, config.sessionSecret, { maxAgeSeconds: 600, secure: config.secureCookies });
+    res.redirect(linkedRoleAuthorizeUrl(config, state));
+  });
+
   router.get('/auth/callback', async (req, res) => {
     const code = typeof req.query.code === 'string' ? req.query.code : null;
     const state = typeof req.query.state === 'string' ? req.query.state : null;
     const expectedState = readSignedCookie(req, STATE_COOKIE, config.sessionSecret);
     setCookie(res, STATE_COOKIE, '', { maxAgeSeconds: 0, secure: config.secureCookies });
+
+    // Same redirect URI as the login; the state prefix marks the linked-roles flow.
+    if (state?.startsWith('lr.')) {
+      if (!code || state !== expectedState) {
+        return res.status(400).type('html').send(linkedRolePage('Das hat nicht geklappt', 'Der Link ist abgelaufen. Starte die Verknüpfung in Discord einfach noch einmal.', false));
+      }
+      try {
+        const token = await exchangeCodeForTokens(config, code);
+        const user = await fetchUser(token.access_token);
+        await completeLink(linkedRolesConfig()!, user.id, token);
+        logger.info('Linked role connected', { userId: user.id });
+        return res.type('html').send(linkedRolePage('Verknüpft!', 'Deine Nexo-Werte sind jetzt mit Discord verbunden. Schließ dieses Fenster – in Discord bekommst du die passenden Rollen, sobald du die Bedingungen erfüllst. Nexo hält die Werte stündlich aktuell.', true));
+      } catch (error) {
+        logger.warn('Linked role connection failed:', error);
+        return res.status(500).type('html').send(linkedRolePage('Das hat nicht geklappt', 'Discord hat die Verknüpfung nicht bestätigt. Versuch es in ein paar Minuten noch einmal.', false));
+      }
+    }
 
     if (!code || !state || state !== expectedState) {
       return res.redirect('/dashboard/?error=login');

@@ -48,6 +48,7 @@ export default {
       .setName('jahr')
       .setDescription('Dein Nexo-Jahr: deine Zahlen als Karte zum Teilen')
       .addIntegerOption((option) => option.setName('jahr').setDescription('Welches Jahr (Standard: das aktuelle)').setMinValue(2024).setMaxValue(2100)))
+    .addSubcommand((sub) => sub.setName('rollen').setDescription('Verknüpfte Rollen: Server-Rollen für dein Level, deine Saison-Stufe und mehr'))
     .addSubcommand((sub) => sub.setName('aufgaben').setDescription('Deine drei Tagesaufgaben und wie weit du bist'))
     .addSubcommand((sub) => sub
       .setName('erinnerung')
@@ -103,6 +104,20 @@ export default {
         ...nexoMessage(nexoCard({ kicker: 'Dein Nexo-Jahr', title: `${member.displayName} · ${year}`, accent: ACCENTS.gold, blocks, footer: `Deins sehen: ${cmd('profil jahr')}` })),
         files: card ? [card] : [],
       });
+      return;
+    }
+
+    if (subcommand === 'rollen') {
+      const verify = publicDashboardUrl();
+      await reply(nexoCard({
+        kicker: 'Verknüpfte Rollen', title: 'Rollen für deine Nexo-Werte',
+        blocks: [
+          { text: 'Server können Rollen vergeben, wenn du bestimmte Nexo-Werte erreichst: **höchstes Level, Saison-Stufe, Erfolge, Chat-Tage** und **verdiente Bernis**.' },
+          { text: '**So geht’s:** Verknüpfe Nexo einmal mit deinem Discord-Konto. Danach siehst du in den Server-Rollen, welche du schon erfüllst, und Nexo hält deine Werte stündlich aktuell.' },
+          { text: '-# Für Admins: Servereinstellungen → Rollen → Rolle wählen → Links → Anforderung hinzufügen → Nexo.' },
+          { buttons: verify ? [new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel('Mit Discord verknüpfen').setURL(`${verify}/linked-role`)] : [] },
+        ],
+      }));
       return;
     }
 

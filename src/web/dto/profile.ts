@@ -35,7 +35,11 @@ export interface MeProfileResponse {
   chatDays: number;
   /** Public profile link /dashboard/p/<id> with a Discord link preview (opt-in). */
   shareProfile: boolean;
+  /** Linked Roles: whether the member linked Nexo, and the values servers can require. */
+  linkedRole: { linked: boolean; values: LinkedRoleValues };
 }
+export interface LinkedRoleValues { level: number; season_tier: number; achievements: number; chat_days: number; bernis: number }
+/** POST /me/linked-role/sync → { linkedRole }; DELETE /me/linked-role → { linkedRole } */
 /** PUT /me/share { enabled } → { enabled } */
 /** PUT /me/reminders { enabled } → { enabled } */
 /** PUT /me/profile — body: UserProfileSettings; every equipped item must be owned (403 otherwise). Returns MeProfileResponse. */

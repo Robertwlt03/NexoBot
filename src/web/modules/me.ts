@@ -23,6 +23,8 @@ import { getDailyQuests } from '../../services/cosmetics/quests.js';
 import { readReminders, writeReminders } from '../../services/cosmetics/reminders.js';
 import { communityGoals } from '../../services/cosmetics/community.js';
 import { readShareProfile, writeShareProfile } from '../publicProfile.js';
+import { isLinked, pushRoleConnection, roleValues, unlink } from '../../services/cosmetics/linkedRoles.js';
+import { linkedRolesConfig } from '../dashboard.js';
 import { addSeasonPoints, getSeason } from '../../services/cosmetics/season.js';
 import { SEASON_POINTS } from '../../shared/season.js';
 import { petStage } from '../../shared/pets.js';
@@ -43,13 +45,19 @@ async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[
 }
 
 async function profileResponse(client: NexoClient, userId: string): Promise<MeProfileResponse> {
-  const [wallet, profile, inventory, levelList, daily, quests, reminders, chatDays, shareProfile] = await Promise.all([
+  const [wallet, profile, inventory, levelList, daily, quests, reminders, chatDays, shareProfile, linkedRole] = await Promise.all([
     walletSummary(userId), readProfileSettings(userId), ownedItems(userId), levels(client, userId), getDailyState(userId),
     getDailyQuests(userId, pendingQuestCounts(userId)), readReminders(userId),
     requirePool().query<{ value: string }>(`SELECT value FROM ${T.user_stats} WHERE user_id = $1 AND stat = 'chat_days'`, [userId]).then((r) => Number(r.rows[0]?.value ?? 0)),
     readShareProfile(userId),
+    linkedRoleState(userId),
   ]);
-  return { isOwner: isBotOwner(userId), wallet, profile, inventory, levels: levelList, daily, quests, reminders, petStage: petStage(chatDays), chatDays, shareProfile };
+  return { isOwner: isBotOwner(userId), wallet, profile, inventory, levels: levelList, daily, quests, reminders, petStage: petStage(chatDays), chatDays, shareProfile, linkedRole };
+}
+
+async function linkedRoleState(userId: string) {
+  const [linked, values] = await Promise.all([isLinked(userId), roleValues(userId)]);
+  return { linked, values };
 }
 
 export function meRouter(client: NexoClient): Router {
@@ -106,6 +114,21 @@ export function meRouter(client: NexoClient): Router {
 
   router.get('/season', async (_req, res) => {
     res.json(await getSeason(locals(res).session.userId));
+  });
+
+  // Linked Roles: push the current values now, or remove the connection.
+  router.post('/linked-role/sync', async (_req, res) => {
+    const { userId } = locals(res).session;
+    const config = linkedRolesConfig();
+    if (!config) throw new HttpError(503, 'Linked Roles sind auf diesem Bot nicht eingerichtet.');
+    if (await pushRoleConnection(config, userId, true) === 'unlinked') throw new HttpError(409, 'Die Verknüpfung besteht nicht mehr – verbinde Nexo in Discord neu.');
+    res.json({ linkedRole: await linkedRoleState(userId) });
+  });
+  router.delete('/linked-role', async (_req, res) => {
+    const { userId } = locals(res).session;
+    const config = linkedRolesConfig();
+    if (config) await unlink(config, userId);
+    res.json({ linkedRole: await linkedRoleState(userId) });
   });
 
   router.put('/share', async (req, res) => {
