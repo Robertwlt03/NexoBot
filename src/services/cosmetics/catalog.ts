@@ -2,7 +2,7 @@
 // shop_items storage with a short in-memory cache for the card renderer.
 
 import {
-  BACKGROUND_SCENES, BADGE_GLYPHS, CARD_LAYOUTS, COSMETIC_SLOTS, FRAME_STYLES, RARITIES, STICKER_SPOTS, XP_BAR_STYLES,
+  BACKGROUND_SCENES, BADGE_GLYPHS, CARD_LAYOUTS, COSMETIC_SLOTS, FRAME_STYLES, PET_SPECIES, RARITIES, STICKER_SPOTS, XP_BAR_STYLES,
   type BackgroundScene, type BadgeGlyph, type CosmeticItem, type CosmeticSlot, type ItemAvailability, type Rarity, type SlotData,
 } from '../../shared/cosmetics.js';
 import { HttpError, badRequest, body, bool, hexColor, int, str } from '../../web/http.js';
@@ -354,6 +354,14 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('levelup', 'lvl-forest-clearing', 'epic', 2400, 'Waldlichtung', 'Ein Aufstieg im grünen Licht.', { style: 'classic', color: '#8FB36B' }),
   item('sticker', 'sticker-acorn', 'rare', 900, 'Eichel-Sticker', 'Eine Eichel für die Ecke.', { glyph: 'acorn', color: '#C98A4B', corner: 'br' }),
   item('sticker', 'sticker-toadstool', 'rare', 1000, 'Pilz-Sticker', 'Ein Fliegenpilz für die Ecke.', { glyph: 'mushroom', color: '#E2574C', corner: 'tr' }),
+  // ---------- Begleiter (sitzen am Avatar und wachsen mit den Chat-Tagen) ----------
+  item('pet', 'pet-fox', 'rare', 1200, 'Fuchs', 'Schlau, flauschig und immer an deiner Seite.', { species: 'fox', color: '#E8833A' }),
+  item('pet', 'pet-owl', 'rare', 1200, 'Eule', 'Hält nachts Wache, wenn du noch chattest.', { species: 'owl', color: '#9C7A5B' }),
+  item('pet', 'pet-cat', 'epic', 2000, 'Katze', 'Sitzt auf deiner Karte, als gehöre sie ihr.', { species: 'cat', color: '#8E95A3' }),
+  item('pet', 'pet-cat-ginger', 'epic', 2200, 'Rote Katze', 'Ein getigerter Kater mit viel Meinung.', { species: 'cat', color: '#E59A4F' }),
+  item('pet', 'pet-axolotl', 'epic', 2400, 'Axolotl', 'Lächelt immer. Wirklich immer.', { species: 'axolotl', color: '#F7A1C4' }),
+  item('pet', 'pet-dragon', 'legendary', 6000, 'Drache', 'Klein, aber mit Flügeln. Und er wächst.', { species: 'dragon', color: '#4FB477' }),
+  item('pet', 'pet-dragon-night', 'mythic', 12000, 'Nachtdrache', 'Aus der Black-Market-Höhle: ein Drache in Mitternachtsblau.', { species: 'dragon', color: '#4B5BD6' }, BM),
 
   // ---------- Spielwelten: Genre-Hommagen als eigene Motive (keine Marken, Figuren oder Namen echter Spiele) ----------
   item('background', 'bg-pixel-quest', 'epic', 2800, 'Pixelabenteuer', 'Retro-Jump-and-Run: Pixelsonne über gestuften Bergen.', scene('pixel', ['#3B2A6B', '#E86F5B', '#FFD166', '#2E7D4F'])),
@@ -457,6 +465,7 @@ export function parseSlotData(slot: CosmeticSlot, input: unknown): SlotData[Cosm
       color: hexColor(d.color, 'Farbe'),
       corner: oneOf(d.corner, STICKER_SPOTS, 'Ecke'),
     };
+    case 'pet': return { species: oneOf(d.species, PET_SPECIES, 'Tier'), color: hexColor(d.color, 'Farbe') };
   }
 }
 

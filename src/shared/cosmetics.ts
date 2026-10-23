@@ -33,6 +33,9 @@ export const FRAME_STYLES = ['solid', 'gradient', 'glow', 'double', 'dashed', 'n
 export interface FrameData { style: (typeof FRAME_STYLES)[number]; colors: string[]; width: number }
 /** Badge glyph: one of BADGE_GLYPHS (drawn as vector shapes by the renderer, no emoji fonts needed). */
 export interface BadgeData { glyph: BadgeGlyph; color: string }
+export const PET_SPECIES = ['fox', 'owl', 'cat', 'axolotl', 'dragon'] as const;
+/** A companion on the profile card (shared/pets.ts draws it). */
+export interface PetData { species: (typeof PET_SPECIES)[number]; color: string }
 export interface TitleData { text: string; color: string }
 export const XP_BAR_STYLES = ['solid', 'gradient', 'striped', 'segmented', 'glow', 'pixel', 'wave', 'flame', 'vine', 'comet'] as const;
 export interface XpBarData { style: (typeof XP_BAR_STYLES)[number]; colors: string[] }
@@ -71,12 +74,13 @@ export interface SlotData {
   levelup: LevelupData;
   layout: LayoutData;
   sticker: StickerData;
+  pet: PetData;
 }
 export type CosmeticSlot = keyof SlotData;
-export const COSMETIC_SLOTS: CosmeticSlot[] = ['background', 'accent', 'nameStyle', 'frame', 'badge', 'title', 'xpBar', 'font', 'effect', 'levelup', 'layout', 'sticker'];
+export const COSMETIC_SLOTS: CosmeticSlot[] = ['background', 'accent', 'nameStyle', 'frame', 'badge', 'title', 'xpBar', 'font', 'effect', 'levelup', 'layout', 'sticker', 'pet'];
 export const SLOT_LABELS: Record<CosmeticSlot, string> = {
   background: 'Hintergrund', accent: 'Akzentfarbe', nameStyle: 'Namensfarbe', frame: 'Avatar-Rahmen', badge: 'Abzeichen',
-  title: 'Titel', xpBar: 'XP-Balken', font: 'Schrift', effect: 'Effekt', levelup: 'Level-up-Stil', layout: 'Kartenlayout', sticker: 'Sticker',
+  title: 'Titel', xpBar: 'XP-Balken', font: 'Schrift', effect: 'Effekt', levelup: 'Level-up-Stil', layout: 'Kartenlayout', sticker: 'Sticker', pet: 'Begleiter',
 };
 /** Up to this many badges can be equipped at once; every other slot holds one item. */
 export const MAX_EQUIPPED_BADGES = 3;
@@ -116,6 +120,7 @@ export interface EquippedCosmetics {
   levelup: string | null;
   layout: string | null;
   sticker: string | null;
+  pet: string | null;
 }
 
 export interface UserProfileSettings {
@@ -128,7 +133,7 @@ export interface UserProfileSettings {
 }
 
 export function emptyEquipped(): EquippedCosmetics {
-  return { background: null, accent: null, nameStyle: null, frame: null, badges: [], title: null, xpBar: null, font: null, effect: null, levelup: null, layout: null, sticker: null };
+  return { background: null, accent: null, nameStyle: null, frame: null, badges: [], title: null, xpBar: null, font: null, effect: null, levelup: null, layout: null, sticker: null, pet: null };
 }
 
 export function defaultProfileSettings(): UserProfileSettings {
@@ -149,6 +154,7 @@ export interface ResolvedCosmetics {
   levelup: LevelupData | null;
   layout: LayoutData | null;
   sticker: StickerData | null;
+  pet: PetData | null;
 }
 
 /** Everything the profile card needs besides the cosmetics. */
@@ -164,6 +170,8 @@ export interface ProfileCardSubject {
   rank: number | null;
   serverName: string | null;
   balance: number;
+  /** Growth of the companion (1–3, from the days the member chatted; shared/pets.ts). */
+  petStage?: number;
 }
 
 // ---------- Earning (defaults; the economy service may read overrides from the owner config) ----------

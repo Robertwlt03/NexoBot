@@ -3,7 +3,7 @@ import {
   BADGE_GLYPHS, COSMETIC_SLOTS, PRICE_BANDS, RARITIES, RARITY_LABELS, SLOT_LABELS, emptyEquipped,
 } from '../../../src/shared/cosmetics';
 import type {
-  BackgroundData, BackgroundScene, CosmeticItem, CosmeticSlot, EffectData, FontData, FrameData, ItemAvailability, LayoutData, LevelupData, Rarity, SlotData, StickerData, XpBarData,
+  BackgroundData, BackgroundScene, CosmeticItem, CosmeticSlot, EffectData, FontData, FrameData, ItemAvailability, LayoutData, LevelupData, PetData, Rarity, SlotData, StickerData, XpBarData,
 } from '../../../src/shared/cosmetics';
 import type { ShopEvent } from '../../../src/web/dto/profile';
 import { useApi, useUser } from '../api';
@@ -30,6 +30,7 @@ const FONT_LABELS: Record<FontData['font'], string> = { inter: 'Inter', unbounde
 const EFFECT_LABELS: Record<EffectData['effect'], string> = { sparkles: 'Funkeln', snow: 'Schnee', confetti: 'Konfetti', aurora: 'Polarlicht', scanlines: 'Scanlines', stardust: 'Sternenstaub', embers: 'Glut', hearts: 'Herzen', leaves: 'Fallendes Laub' };
 const LEVELUP_LABELS: Record<LevelupData['style'], string> = { classic: 'Klassisch', minimal: 'Minimal', neon: 'Neon', royal: 'Königlich', retro: 'Retro' };
 const LAYOUT_LABELS: Record<LayoutData['layout'], string> = { classic: 'Klassisch', compact: 'Kompakt', centered: 'Zentriert', split: 'Geteilt', banner: 'Banner', mirror: 'Gespiegelt', minimal: 'Minimal' };
+const PET_LABELS: Record<PetData['species'], string> = { fox: 'Fuchs', owl: 'Eule', cat: 'Katze', axolotl: 'Axolotl', dragon: 'Drache' };
 const CORNER_LABELS: Record<StickerData['corner'], string> = { tl: 'Oben links', tr: 'Oben rechts', bl: 'Unten links', br: 'Unten rechts', avatar: 'Auf dem Avatar' };
 
 const SLOT_DEFAULTS: { [S in CosmeticSlot]: SlotData[S] } = {
@@ -45,6 +46,7 @@ const SLOT_DEFAULTS: { [S in CosmeticSlot]: SlotData[S] } = {
   levelup: { style: 'classic', color: '#a99bff' },
   layout: { layout: 'centered' },
   sticker: { glyph: 'star', color: '#facc15', corner: 'tr' },
+  pet: { species: 'fox', color: '#E8833A' },
 };
 
 /** A new item of `slot`, keeping the shared fields of `from`. */
@@ -137,6 +139,13 @@ function DataEditor({ item, onChange }: { item: CosmeticItem; onChange: (item: C
         </div>
       );
     }
+    case 'pet':
+      return (
+        <div className="grid-2">
+          <Field label="Tier"><Select value={item.data.species} onChange={(species) => onChange({ ...item, data: { ...item.data, species } })} options={opts(PET_LABELS)} /></Field>
+          <Field label="Fellfarbe"><ColorInput value={item.data.color} onChange={(color) => onChange({ ...item, data: { ...item.data, color } })} /></Field>
+        </div>
+      );
     case 'title':
       return (
         <div className="grid-2">

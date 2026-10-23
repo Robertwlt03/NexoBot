@@ -30,6 +30,9 @@ export interface MeProfileResponse {
   quests: DailyQuests;
   /** DM reminder at 19:00 about the daily bonus and open quests (opt-in). */
   reminders: boolean;
+  /** Growth stage of the companion (1–3) and the days chatted it comes from. */
+  petStage: number;
+  chatDays: number;
 }
 /** PUT /me/reminders { enabled } → { enabled } */
 /** PUT /me/profile — body: UserProfileSettings; every equipped item must be owned (403 otherwise). Returns MeProfileResponse. */

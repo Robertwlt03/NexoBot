@@ -252,7 +252,7 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
 
 const SLOT_PLURAL: Record<CosmeticSlot, string> = {
   background: 'Hintergründe', accent: 'Akzentfarben', nameStyle: 'Namensfarben', frame: 'Avatar-Rahmen', badge: 'Abzeichen', title: 'Titel',
-  xpBar: 'XP-Balken', font: 'Schriften', effect: 'Effekte', levelup: 'Level-up-Stile', layout: 'Kartenlayouts', sticker: 'Sticker',
+  xpBar: 'XP-Balken', font: 'Schriften', effect: 'Effekte', levelup: 'Level-up-Stile', layout: 'Kartenlayouts', sticker: 'Sticker', pet: 'Begleiter',
 };
 
 type Sort = 'new' | 'price-asc' | 'price-desc';
@@ -460,5 +460,6 @@ const WHERE_IT_SHOWS: Record<CosmeticSlot, string> = {
   frame: 'deiner Profilkarte und Willkommenskarten', badge: 'deiner Profilkarte (bis zu 3 Abzeichen)', title: 'deiner Profilkarte (/profil)',
   xpBar: 'deiner Profilkarte (/profil)', font: 'deiner Profilkarte (/profil)', effect: 'deiner Profilkarte (/profil)',
   levelup: 'deinen Level-up-Nachrichten', layout: 'deiner Profilkarte (/profil)', sticker: 'deiner Profilkarte (/profil)',
+  pet: 'deiner Profilkarte – er sitzt an deinem Avatar und wächst mit deinen Chat-Tagen',
 };
 

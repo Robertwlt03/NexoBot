@@ -24,6 +24,7 @@ import { readReminders, writeReminders } from '../../services/cosmetics/reminder
 import { communityGoals } from '../../services/cosmetics/community.js';
 import { addSeasonPoints, getSeason } from '../../services/cosmetics/season.js';
 import { SEASON_POINTS } from '../../shared/season.js';
+import { petStage } from '../../shared/pets.js';
 import { pendingCommunity, pendingQuestCounts } from '../../services/cosmetics/activity.js';
 
 async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[]> {
@@ -41,11 +42,12 @@ async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[
 }
 
 async function profileResponse(client: NexoClient, userId: string): Promise<MeProfileResponse> {
-  const [wallet, profile, inventory, levelList, daily, quests, reminders] = await Promise.all([
+  const [wallet, profile, inventory, levelList, daily, quests, reminders, chatDays] = await Promise.all([
     walletSummary(userId), readProfileSettings(userId), ownedItems(userId), levels(client, userId), getDailyState(userId),
     getDailyQuests(userId, pendingQuestCounts(userId)), readReminders(userId),
+    requirePool().query<{ value: string }>(`SELECT value FROM ${T.user_stats} WHERE user_id = $1 AND stat = 'chat_days'`, [userId]).then((r) => Number(r.rows[0]?.value ?? 0)),
   ]);
-  return { isOwner: isBotOwner(userId), wallet, profile, inventory, levels: levelList, daily, quests, reminders };
+  return { isOwner: isBotOwner(userId), wallet, profile, inventory, levels: levelList, daily, quests, reminders, petStage: petStage(chatDays), chatDays };
 }
 
 export function meRouter(client: NexoClient): Router {

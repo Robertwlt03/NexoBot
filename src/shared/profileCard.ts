@@ -3,6 +3,7 @@
 // Randomness (patterns, effects) is seeded by the member's name, so preview == bot.
 
 import { drawCoin, splitCoins, type CoinTier } from './coins.js';
+import { drawPet, petPoint } from './pets.js';
 import type {
   BackgroundData, BackgroundScene, BadgeData, BadgeGlyph, CosmeticItem, EffectData, FrameData, LayoutData, LevelupData, NameStyleData, PatternKind,
   ProfileCardSubject, ResolvedCosmetics, StickerData, XpBarData,
@@ -2248,6 +2249,7 @@ export function renderItemPreview<I extends ProfileImage>(
       break;
     case 'badge': zoomAt(2.2); drawBadges(ctx, [item.data], BADGE_SIZE / 2, -BADGE_SIZE / 2); break;
     case 'sticker': zoomAt(2.2); drawSticker(ctx, item.data, 0, 0); break;
+    case 'pet': drawPet(ctx, item.data, w / 2, h / 2 - 6, h * 0.36, 2); break;
     case 'xpBar': drawXpBar(ctx, { x: w * 0.12, y: h / 2 - 10, w: w * 0.76, h: 20 }, 0.66, item.data, accent); break;
     case 'nameStyle': drawName(ctx, subject.name, w / 2, h / 2 + 14, 'center', 44, 'inter', item.data, w * 0.86); break;
     case 'font': drawName(ctx, subject.name, w / 2, h / 2 + 14, 'center', 44, item.data.font, null, w * 0.86); break;
@@ -2262,7 +2264,7 @@ export function renderItemPreview<I extends ProfileImage>(
         level: 12, xp: 860, xpNeeded: 1370, rank: 3, serverName: 'Nexo', balance: 1250,
       }, {
         background: null, accent: null, nameStyle: null, frame: null, badges: [{ glyph: 'star', color: '#F5C451' }], title: null,
-        xpBar: null, font: null, effect: null, levelup: null, layout: item.data, sticker: null,
+        xpBar: null, font: null, effect: null, levelup: null, layout: item.data, sticker: null, pet: null,
       }, assets);
       break;
     }
@@ -2305,6 +2307,11 @@ export function renderProfileCard<I extends ProfileImage>(
   }
 
   drawAvatar(ctx, assets.avatar, g.avatar, cosmetics.frame, accent, subject.name);
+  if (cosmetics.pet) {
+    const stage = subject.petStage ?? 1;
+    const at = petPoint(g.avatar, stage);
+    drawPet(ctx, cosmetics.pet, at.x, at.y, at.size, stage);
+  }
 
   const badgeRight = badgeRowRight(g, sticker);
   const badgeWidth = drawBadges(ctx, cosmetics.badges, badgeRight, g.badges.top);

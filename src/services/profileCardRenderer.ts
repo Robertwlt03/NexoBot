@@ -8,7 +8,7 @@ import type { ProfileCardSubject, ResolvedCosmetics } from '../shared/cosmetics.
 import {
   LEVELUP_CARD_HEIGHT, LEVELUP_CARD_WIDTH, PROFILE_CARD_HEIGHT, PROFILE_CARD_WIDTH, renderLevelUpCard, renderProfileCard,
 } from '../shared/profileCard.js';
-import { getBalance, getProfileSettings, getResolvedCosmetics } from './cosmetics/store.js';
+import { getBalance, getPetStage, getProfileSettings, getResolvedCosmetics } from './cosmetics/store.js';
 import { getLeaderboard, getUserLevelData, getXpForLevel } from './leveling/leveling.js';
 import { loadRemoteImage } from './welcomeCardRenderer.js';
 import { logger } from '../utils/logger.js';
@@ -42,12 +42,13 @@ async function findRank(client: NexoClient, guildId: string, userId: string): Pr
 
 /** Everything the cards need for `member` on its server (level data, rank, global cosmetics and wallet). */
 export async function loadProfileCardData(client: NexoClient, member: GuildMember, withRank = true): Promise<{ subject: ProfileCardSubject; cosmetics: ResolvedCosmetics }> {
-  const [levelData, settings, cosmetics, balance, rank] = await Promise.all([
+  const [levelData, settings, cosmetics, balance, rank, stage] = await Promise.all([
     getUserLevelData(client, member.guild.id, member.id),
     getProfileSettings(member.id),
     getResolvedCosmetics(member.id),
     getBalance(member.id),
     withRank ? findRank(client, member.guild.id, member.id) : Promise.resolve(null),
+    getPetStage(member.id),
   ]);
   return {
     cosmetics,
@@ -63,6 +64,7 @@ export async function loadProfileCardData(client: NexoClient, member: GuildMembe
       rank,
       serverName: member.guild.name,
       balance,
+      petStage: stage,
     },
   };
 }

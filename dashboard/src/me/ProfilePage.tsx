@@ -6,6 +6,7 @@ import { Draggable } from 'gsap/Draggable';
 import { InertiaPlugin } from 'gsap/InertiaPlugin';
 import { useGSAP } from '@gsap/react';
 import { COSMETIC_SLOTS, DAILY_BONUS, STREAK_SHIELD, MAX_BIO_LENGTH, MAX_EQUIPPED_BADGES, SLOT_LABELS, STICKER_SPOTS, levelUpReward } from '../../../src/shared/cosmetics';
+import { PET_STAGE_NAMES } from '../../../src/shared/pets';
 import { PROFILE_CARD_HEIGHT, PROFILE_CARD_WIDTH, drawSticker, profileGeometry, stickerPoint, stickerRadius } from '../../../src/shared/profileCard';
 import type { CosmeticItem, CosmeticSlot, ResolvedCosmetics, StickerData, StickerSpot, UserProfileSettings } from '../../../src/shared/cosmetics';
 import type { DailyClaimResult, MeProfileResponse, QuestsResponse } from '../../../src/web/dto/profile';
@@ -222,6 +223,7 @@ function SlotEditor({ value, onChange }: { value: UserProfileSettings; onChange:
             <div className="pt-1">
               <div className="text-[14px] font-medium text-ink">{SLOT_LABELS[slot]}</div>
               {slot === 'badge' && <div className="text-[12px] text-faint">{value.equipped.badges.length} / {MAX_EQUIPPED_BADGES} angelegt</div>}
+              {slot === 'pet' && <div className="text-[12px] text-faint" title="Wächst mit den Tagen, an denen du chattest: ab 7 und ab 30 Tagen.">{PET_STAGE_NAMES[me.petStage - 1]} · {me.chatDays} Chat-Tage</div>}
             </div>
             <div className="flex gap-2 overflow-x-auto pb-1">
               <SlotTile selected={isDefault} onClick={() => clear(slot)} title={slot === 'badge' ? 'Keine' : 'Standard'}>
