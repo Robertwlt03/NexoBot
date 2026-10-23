@@ -3,10 +3,11 @@
 // user_profiles.settings.reminders; a member whose DMs are closed is switched off so we stop trying.
 
 import cron from 'node-cron';
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, type Client } from 'discord.js';
+import { ButtonBuilder, ButtonStyle, type Client } from 'discord.js';
 import { formatCoins } from '../../shared/coins.js';
 import { logger } from '../../utils/logger.js';
-import { createEmbed } from '../../utils/embeds.js';
+import { nexoCard, nexoMessage } from '../../utils/nexoMessage.js';
+import { cmd } from '../../utils/commandMention.js';
 import { publicDashboardUrl } from '../../web/dashboard.js';
 import { getEconomyConfig } from './config.js';
 import { T, cosmeticsPool, requirePool } from './db.js';
@@ -65,10 +66,14 @@ export async function sendReminders(client: Client): Promise<number> {
       const lines = reminderLines(daily, quests.filter((quest) => !quest.done));
       if (!lines) continue;
       const user = await client.users.fetch(row.user_id);
-      await user.send({
-        embeds: [createEmbed({ title: 'Kurze Erinnerung von Nexo', description: `${lines.join('\n')}\n\n-# Ausschalten: /profil erinnerung oder im Dashboard beim Tagesbonus.` })],
-        components: url ? [new ActionRowBuilder<ButtonBuilder>().addComponents(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel('Zum Tagesbonus').setURL(`${url}/me`))] : [],
-      });
+      await user.send(nexoMessage(nexoCard({
+        kicker: 'Erinnerung', title: 'Kurz vor Feierabend',
+        blocks: [
+          { text: lines.join('\n') },
+          { buttons: url ? [new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel('Zum Tagesbonus').setURL(`${url}/me`)] : [] },
+        ],
+        footer: `Ausschalten: ${cmd('profil erinnerung')} oder im Dashboard beim Tagesbonus`,
+      })));
       sent += 1;
       await new Promise((resolve) => { setTimeout(resolve, 250); });
     } catch (error) {

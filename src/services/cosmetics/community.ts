@@ -9,7 +9,8 @@ import { ChannelType, PermissionFlagsBits } from 'discord.js';
 import { formatCoins } from '../../shared/coins.js';
 import type { CommunityGoal, ShopEvent } from '../../web/dto/profile.js';
 import { logger } from '../../utils/logger.js';
-import { createEmbed } from '../../utils/embeds.js';
+import { ACCENTS, nexoCard, nexoMessage } from '../../utils/nexoMessage.js';
+import { cmd } from '../../utils/commandMention.js';
 import { T, cosmeticsPool, requirePool, withTx } from './db.js';
 import { loadStoredEvents, runningEvents } from './events.js';
 import { berlinDay, shiftDay } from './time.js';
@@ -86,11 +87,12 @@ async function announce(guildId: string, event: ShopEvent, target: number, paid:
   const channel = guild?.systemChannel;
   const me = guild?.members.me;
   if (!channel || channel.type !== ChannelType.GuildText || !me || !channel.permissionsFor(me).has([PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks])) return;
-  await channel.send({ embeds: [createEmbed({
-    title: `🎉 Gemeinschaftsziel geschafft: ${event.name}`,
-    description: `Zusammen habt ihr **${target.toLocaleString('de-DE')} Nachrichten** geschrieben! ${paid} ${paid === 1 ? 'Mitglied bekommt' : 'Mitglieder bekommen'} je ${formatCoins(COMMUNITY_REWARD)}.\n`
-      + `Wer bis zum Event-Ende noch ${COMMUNITY_MINIMUM} Nachrichten schreibt, bekommt die Belohnung auch.`,
-  })] }).catch(() => undefined);
+  await channel.send(nexoMessage(nexoCard({
+    kicker: `Gemeinschaftsziel · ${event.name}`, title: '🎉 Geschafft!', accent: ACCENTS.gold,
+    blocks: [{ text: `Zusammen habt ihr **${target.toLocaleString('de-DE')} Nachrichten** geschrieben! ${paid} ${paid === 1 ? 'Mitglied bekommt' : 'Mitglieder bekommen'} je ${formatCoins(COMMUNITY_REWARD)}.\n`
+      + `Wer bis zum Event-Ende noch ${COMMUNITY_MINIMUM} Nachrichten schreibt, bekommt die Belohnung auch.` }],
+    footer: `Dein Stand: ${cmd('profil aufgaben')}`,
+  }))).catch(() => undefined);
 }
 
 /** Pays everyone who helped once a touched goal is reached (called after each activity flush). Never throws. */

@@ -40,13 +40,14 @@ function appendLine(embed: EmbedBuilder, line: string): void {
 
 /**
  * Successful mini game: a small random Berni reward (daily cap applies) plus one monthly ranking point, and
- * "+N 🟠 Bernis" appended to the reply embed when the reward arrives in time.
+ * "+N 🟠 Bernis" appended to the reply embed when the reward arrives in time. Returns what arrived in time (callers
+ * without an embed show it themselves).
  */
-export async function rewardMinigame(embed: EmbedBuilder, user: { id: string; bot: boolean }, guildId: string | null, game: MinigameId): Promise<void> {
-  if (user.bot || !cosmeticsPool()) return;
+export async function rewardMinigame(embed: EmbedBuilder | null, user: { id: string; bot: boolean }, guildId: string | null, game: MinigameId): Promise<number> {
+  if (user.bot || !cosmeticsPool()) return 0;
   const key = `${user.id}|${game}`;
   const now = Date.now();
-  if (now - (lastReward.get(key) ?? 0) < REWARD_COOLDOWN_MS) return;
+  if (now - (lastReward.get(key) ?? 0) < REWARD_COOLDOWN_MS) return 0;
   lastReward.set(key, now);
   addActivity(user.id, `game_${game}`);
   if (lastReward.size > 5000) {
@@ -66,7 +67,8 @@ export async function rewardMinigame(embed: EmbedBuilder, user: { id: string; bo
     return 0;
   });
   const granted = await Promise.race([work, new Promise<number>((resolve) => { setTimeout(() => resolve(0), REPLY_WAIT_MS).unref(); })]);
-  if (granted > 0) appendLine(embed, `+ ${formatCoins(granted)}`);
+  if (granted > 0 && embed) appendLine(embed, `+ ${formatCoins(granted)}`);
+  return granted;
 }
 
 /** XP from messages: monthly activity score and, on level-ups, Bernis (daily cap applies). Callers skip bots. */

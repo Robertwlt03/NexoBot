@@ -7,7 +7,7 @@ import {
   type ButtonInteraction, type ChatInputCommandInteraction, type Message, type User,
 } from 'discord.js';
 import type { Command } from '../../../types/index.js';
-import { createEmbed } from '../../../utils/embeds.js';
+import { ACCENTS, nexoCard, nexoMessage } from '../../../utils/nexoMessage.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import { logger } from '../../../utils/logger.js';
 import { formatCoins } from '../../../shared/coins.js';
@@ -68,7 +68,8 @@ export default {
     const stake = cosmeticsPool() ? interaction.options.getInteger('einsatz') ?? 0 : 0;
     const name = GAME_NAMES[kind];
 
-    const refuse = (text: string) => InteractionHelper.safeReply(interaction, { embeds: [createEmbed({ title: `🎲 ${name}`, description: text, color: 'warning' })], flags: MessageFlags.Ephemeral });
+    const card = (text: string, accent?: number) => nexoCard({ kicker: 'Spiel gegen andere', title: `🎲 ${name}`, accent, blocks: [{ text }] });
+    const refuse = (text: string) => InteractionHelper.safeReply(interaction, nexoMessage(card(text, ACCENTS.warn), { ephemeral: true }));
     if (p2.id === p1.id) return void await refuse('Gegen dich selbst macht das keinen Spaß – fordere jemand anderen heraus.');
     if (p2.bot) return void await refuse('Bots spielen nicht mit. Fordere eine echte Person heraus.');
     if (stake > 0) {
@@ -80,9 +81,9 @@ export default {
     const id = `spiel_${interaction.id}`;
     const stakeText = stake > 0 ? `\nEinsatz: **${formatCoins(stake)}** – der Verlierer zahlt ihn dem Gewinner.` : '';
     await InteractionHelper.safeReply(interaction, {
-      content: `<@${p2.id}>`,
-      embeds: [createEmbed({ title: `🎲 ${name}`, description: `**${p1.username}** fordert dich heraus!${stakeText}\n\nNimmst du an?` })],
-      components: rows([button(`${id}_accept`, 'Annehmen', ButtonStyle.Success), button(`${id}_decline`, 'Ablehnen', ButtonStyle.Danger)], 2),
+      ...nexoMessage(card(`<@${p2.id}>, **${p1.username}** fordert dich heraus!${stakeText}\n\nNimmst du an?`), {
+        rows: rows([button(`${id}_accept`, 'Annehmen', ButtonStyle.Success), button(`${id}_decline`, 'Ablehnen', ButtonStyle.Danger)], 2),
+      }),
       allowedMentions: { users: [p2.id] },
     });
     const message = await interaction.fetchReply() as Message;
@@ -124,7 +125,10 @@ export default {
 
     const view = (status: string) => {
       const board = boardView();
-      return { content: '', embeds: [createEmbed({ title: `🎲 ${name}`, description: `${board.description}\n\n${status}${stakeText}` })], components: board.components };
+      return nexoMessage(nexoCard({
+        kicker: 'Spiel gegen andere', title: `🎲 ${name}`, accent: finished ? ACCENTS.gold : undefined,
+        blocks: [{ text: board.description }, { separator: true }, { text: `${status}${stakeText}` }],
+      }), { rows: board.components });
     };
     const turnText = () => `Am Zug: **${players[turn].username}**`;
 
@@ -143,12 +147,12 @@ export default {
           logger.warn('Spiel-Einsatz konnte nicht überwiesen werden:', (error as Error).message);
         }
       }
-      const payload = view(status);
       if (winner) {
-        await rewardMinigame(payload.embeds[0], winner, interaction.guildId, 'duel');
+        const granted = await rewardMinigame(null, winner, interaction.guildId, 'duel');
+        if (granted > 0) status += `\n+ ${formatCoins(granted)} für ${winner.username}`;
         void addSeasonPoints(winner.id, SEASON_POINTS.duelWin);
       }
-      await message.edit(payload).catch(() => undefined);
+      await message.edit(view(status)).catch(() => undefined);
     };
 
     const nextQuestion = async (i: ButtonInteraction | null) => {
@@ -177,7 +181,7 @@ export default {
           if (action === 'decline' && player) {
             finished = true;
             collector.stop('declined');
-            await i.update({ content: '', embeds: [createEmbed({ title: `🎲 ${name}`, description: player === 2 ? `${p2.username} hat abgelehnt.` : `${p1.username} hat die Herausforderung zurückgezogen.`, color: 'warning' })], components: [] });
+            await i.update(nexoMessage(card(player === 2 ? `${p2.username} hat abgelehnt.` : `${p1.username} hat die Herausforderung zurückgezogen.`, ACCENTS.calm)));
             return;
           }
           if (action !== 'accept' || player !== 2) {
@@ -256,7 +260,7 @@ export default {
       if (finished || reason === 'finished' || reason === 'declined') return;
       finished = true;
       const text = started ? '⏱️ Zu lange keine Antwort – das Spiel ist beendet, niemand zahlt etwas.' : '⏱️ Die Herausforderung ist abgelaufen.';
-      await message.edit({ content: '', embeds: [createEmbed({ title: `🎲 ${name}`, description: text, color: 'warning' })], components: [] }).catch(() => undefined);
+      await message.edit(nexoMessage(card(text, ACCENTS.calm))).catch(() => undefined);
     });
   },
 } satisfies Command;

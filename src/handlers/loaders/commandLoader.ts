@@ -7,6 +7,7 @@ import type { RESTPostAPIChatInputApplicationCommandsJSONBody } from 'discord.js
 import { logger } from '../../utils/logger.js';
 import botConfig from '../../config/bot.js';
 import type { Command, NexoClient } from '../../types/index.js';
+import { setCommandIds } from '../../utils/commandMention.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -292,7 +293,7 @@ async function registerGlobalCommands(
     }
 
     logger.info(`Registering ${commandsToRegister.length} global commands...`);
-    await client.rest.put(`/applications/${clientId}/commands`, { body: commandsToRegister });
+    setCommandIds(await client.rest.put(`/applications/${clientId}/commands`, { body: commandsToRegister }));
     logger.info(`Successfully registered ${commandsToRegister.length} global commands`);
     logger.info('Global commands may take up to an hour to appear in all servers on first deploy');
 }
