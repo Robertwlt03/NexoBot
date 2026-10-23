@@ -20,6 +20,7 @@ import { blackMarketResponse, gift, ownedItems, purchase, purchaseBundle, shopRe
 import { listAchievements, syncAchievements } from '../../services/cosmetics/achievements.js';
 import { userRankings } from '../../services/cosmetics/rankings.js';
 import { getDailyQuests } from '../../services/cosmetics/quests.js';
+import { readReminders, writeReminders } from '../../services/cosmetics/reminders.js';
 import { pendingQuestCounts } from '../../services/cosmetics/activity.js';
 
 async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[]> {
@@ -37,11 +38,11 @@ async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[
 }
 
 async function profileResponse(client: NexoClient, userId: string): Promise<MeProfileResponse> {
-  const [wallet, profile, inventory, levelList, daily, quests] = await Promise.all([
+  const [wallet, profile, inventory, levelList, daily, quests, reminders] = await Promise.all([
     walletSummary(userId), readProfileSettings(userId), ownedItems(userId), levels(client, userId), getDailyState(userId),
-    getDailyQuests(userId, pendingQuestCounts(userId)),
+    getDailyQuests(userId, pendingQuestCounts(userId)), readReminders(userId),
   ]);
-  return { isOwner: isBotOwner(userId), wallet, profile, inventory, levels: levelList, daily, quests };
+  return { isOwner: isBotOwner(userId), wallet, profile, inventory, levels: levelList, daily, quests, reminders };
 }
 
 export function meRouter(client: NexoClient): Router {
@@ -75,6 +76,12 @@ export function meRouter(client: NexoClient): Router {
     await syncAchievements(userId);
     const result: DailyClaimResult = { claimed, wallet: await walletSummary(userId), daily: await getDailyState(userId) };
     res.json(result);
+  });
+
+  router.put('/reminders', async (req, res) => {
+    const { enabled } = body(req.body);
+    if (typeof enabled !== 'boolean') throw badRequest('enabled: true oder false erwartet.');
+    res.json({ enabled: await writeReminders(locals(res).session.userId, enabled) });
   });
 
   // Polled by the dashboard while the profile page is open: quest progress and the wallet (quests pay on their own).

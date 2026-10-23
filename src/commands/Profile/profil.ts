@@ -13,6 +13,7 @@ const COIN_TEXT = '🟤 Bronze · ⚪ Silber (100 Bronze) · 🟡 Gold (100 Silb
 import { formatNumber } from '../../shared/profileCard.js';
 import { getBalance } from '../../services/cosmetics/store.js';
 import { getDailyQuests } from '../../services/cosmetics/quests.js';
+import { writeReminders } from '../../services/cosmetics/reminders.js';
 import { pendingQuestCounts } from '../../services/cosmetics/activity.js';
 import { canAttachFiles, loadProfileCardData, profileCardAttachment } from '../../services/profileCardRenderer.js';
 
@@ -40,6 +41,10 @@ export default {
     .addSubcommand((sub) => sub.setName('bernis').setDescription('Zeigt deinen Bernis-Kontostand'))
     .addSubcommand((sub) => sub.setName('shop').setDescription('Öffnet den Profil-Shop im Dashboard'))
     .addSubcommand((sub) => sub.setName('aufgaben').setDescription('Deine drei Tagesaufgaben und wie weit du bist'))
+    .addSubcommand((sub) => sub
+      .setName('erinnerung')
+      .setDescription('Erinnerung per DM um 19 Uhr an Tagesbonus und offene Aufgaben')
+      .addBooleanOption((option) => option.setName('an').setDescription('Erinnerung einschalten (true) oder ausschalten (false)').setRequired(true)))
     .setDMPermission(false),
 
   async execute(interaction, _guildConfig, client) {
@@ -51,6 +56,17 @@ export default {
       await InteractionHelper.safeReply(interaction, {
         embeds: [createEmbed({ title: `${CURRENCY.symbol} Deine ${CURRENCY.name}`, description: `Du hast **${formatCoins(balance)}** (${formatNumber(balance)} ${balance === 1 ? CURRENCY.singular : CURRENCY.name}).\n\n${COIN_TEXT}\n${EARN_TEXT}` })],
         components: url ? [shopRow(url)] : [],
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    if (subcommand === 'erinnerung') {
+      const on = await writeReminders(interaction.user.id, interaction.options.getBoolean('an', true));
+      await InteractionHelper.safeReply(interaction, {
+        embeds: [createEmbed({ title: on ? '🔔 Erinnerung an' : '🔕 Erinnerung aus', description: on
+          ? 'Ich schreibe dir um 19 Uhr eine DM, wenn dein Tagesbonus noch wartet oder Tagesaufgaben offen sind. Deine DMs müssen für Nexo offen sein.'
+          : 'Keine Erinnerungen mehr. Einschalten kannst du sie jederzeit wieder mit /profil erinnerung.' })],
         flags: MessageFlags.Ephemeral,
       });
       return;

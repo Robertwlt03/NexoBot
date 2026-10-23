@@ -28,7 +28,10 @@ export interface MeProfileResponse {
   levels: ProfileLevel[];
   daily: DailyBonusState;
   quests: DailyQuests;
+  /** DM reminder at 19:00 about the daily bonus and open quests (opt-in). */
+  reminders: boolean;
 }
+/** PUT /me/reminders { enabled } → { enabled } */
 /** PUT /me/profile — body: UserProfileSettings; every equipped item must be owned (403 otherwise). Returns MeProfileResponse. */
 
 export interface DailyBonusState { available: boolean; streak: number; nextAmount: number; nextAt: string | null }

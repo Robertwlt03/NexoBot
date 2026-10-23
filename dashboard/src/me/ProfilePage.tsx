@@ -12,7 +12,7 @@ import type { DailyClaimResult, MeProfileResponse, QuestsResponse } from '../../
 import { api, useUser } from '../api';
 import { LevelUpPreview, ProfileCardPreview } from '../components/ProfileCardPreview';
 import { Icon } from '../icons';
-import { Card, PageHeader, SaveBar, Select, SwitchRow, TextArea } from '../components/ui';
+import { Card, PageHeader, SaveBar, Select, Switch, SwitchRow, TextArea } from '../components/ui';
 import {
   cardSubject, countdown, equipItem, isEquipped, num, reducedMotion, resolveCosmetics, unequipItem, useCountUp, useDraft, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
@@ -50,6 +50,7 @@ function DailyCard() {
   const { me, setMe } = useMe();
   const updateWallet = useWalletUpdate();
   const { run, busy } = useMutation();
+  const { run: toggleReminders, busy: reminderBusy } = useMutation();
   const now = useNow();
   const [gain, setGain] = useState<number | null>(null);
   const root = useRef<HTMLElement>(null);
@@ -90,6 +91,11 @@ function DailyCard() {
         {daily.available
           ? <button type="button" className="btn btn-primary w-full" disabled={busy} onClick={claim}>{busy ? 'Einen Moment …' : 'Bonus abholen'}</button>
           : <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-center text-[13px] text-body">Nächster Bonus in <span className="tabular-nums text-ink">{daily.nextAt ? countdown(daily.nextAt, now) : 'Kürze'}</span></div>}
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-3 text-[12.5px] text-[var(--accent-text-muted)]">
+        <span>Um 19 Uhr per DM erinnern, wenn noch etwas offen ist</span>
+        <Switch checked={me.reminders} label="Erinnerung per DM" disabled={reminderBusy}
+          onChange={async (enabled) => { if (await toggleReminders<{ enabled: boolean }>('/me/reminders', 'PUT', { enabled }, enabled ? 'Erinnerung an.' : 'Erinnerung aus.')) setMe((prev) => ({ ...prev, reminders: enabled })); }} />
       </div>
     </section>
   );
