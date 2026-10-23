@@ -10,6 +10,8 @@ import type { ActivityCounter } from './activity.js';
 import { T, cosmeticsPool, requirePool, withTx } from './db.js';
 import { berlinDay, nextBerlinMidnight, shiftDay } from './time.js';
 import { earnTx } from './wallet.js';
+import { addSeasonPoints } from './season.js';
+import { SEASON_POINTS } from '../../shared/season.js';
 
 interface QuestDef { id: string; label: string; counters: ActivityCounter[]; target: number; reward: number }
 
@@ -93,7 +95,7 @@ export async function syncQuests(userId: string): Promise<string[]> {
     const due = quests.filter((quest) => quest.done && !paid.has(quest.id));
     if (due.length === 0) return [];
     const allDone = quests.every((quest) => quest.done) && !paid.has('all');
-    return await withTx(async (client) => {
+    const newly = await withTx(async (client) => {
       const newly: string[] = [];
       for (const quest of [...due, ...(allDone ? [{ id: 'all', label: 'Alle Tagesaufgaben', reward: QUEST_BONUS }] : [])]) {
         // The marker row makes paying idempotent across overlapping flushes.
@@ -112,6 +114,8 @@ export async function syncQuests(userId: string): Promise<string[]> {
       }
       return newly;
     });
+    await addSeasonPoints(userId, newly.reduce((sum, id) => sum + (id === 'all' ? SEASON_POINTS.allQuests : SEASON_POINTS.quest), 0));
+    return newly;
   } catch (error) {
     logger.warn('Tagesaufgaben konnten nicht geprüft werden:', (error as Error).message);
     return [];

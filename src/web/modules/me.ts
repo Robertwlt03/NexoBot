@@ -22,6 +22,8 @@ import { userRankings } from '../../services/cosmetics/rankings.js';
 import { getDailyQuests } from '../../services/cosmetics/quests.js';
 import { readReminders, writeReminders } from '../../services/cosmetics/reminders.js';
 import { communityGoals } from '../../services/cosmetics/community.js';
+import { addSeasonPoints, getSeason } from '../../services/cosmetics/season.js';
+import { SEASON_POINTS } from '../../shared/season.js';
 import { pendingCommunity, pendingQuestCounts } from '../../services/cosmetics/activity.js';
 
 async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[]> {
@@ -74,6 +76,7 @@ export function meRouter(client: NexoClient): Router {
   router.post('/daily', async (_req, res) => {
     const { userId } = locals(res).session;
     const { claimed } = await claimDaily(userId);
+    await addSeasonPoints(userId, SEASON_POINTS.daily);
     await syncAchievements(userId);
     const result: DailyClaimResult = { claimed, wallet: await walletSummary(userId), daily: await getDailyState(userId) };
     res.json(result);
@@ -95,6 +98,10 @@ export function meRouter(client: NexoClient): Router {
     });
     const result: CommunityResponse = { goals: await communityGoals(userId, guilds, pendingCommunity(userId)) };
     res.json(result);
+  });
+
+  router.get('/season', async (_req, res) => {
+    res.json(await getSeason(locals(res).session.userId));
   });
 
   router.put('/reminders', async (req, res) => {

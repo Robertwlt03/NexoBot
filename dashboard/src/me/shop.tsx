@@ -28,6 +28,7 @@ export type ShopVariant = 'shop' | 'blackmarket';
 const NOT_FOR_SALE: Partial<Record<CosmeticItem['availability'], string>> = {
   achievement: 'Gibt es nur über Erfolge',
   ranking: 'Gibt es nur über die Monatsranglisten',
+  season: 'Gibt es nur über den Saisonpfad',
 };
 const forSale = (item: CosmeticItem) => item.price > 0 && !NOT_FOR_SALE[item.availability];
 

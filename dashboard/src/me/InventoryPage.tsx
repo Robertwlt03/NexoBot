@@ -8,7 +8,7 @@ import { equipItem, formatDate, isEquipped, num, unequipItem, useEquip, useMe } 
 import { ItemVisual, RARITY_CLASS, RarityLabel } from './visuals';
 
 const SOURCE_LABELS: Record<OwnedItem['source'], string> = {
-  purchase: 'Gekauft', gift: 'Geschenkt bekommen', achievement: 'Erfolg', ranking: 'Rangliste', event: 'Event', owner: 'Vom Nexo-Team',
+  purchase: 'Gekauft', gift: 'Geschenkt bekommen', achievement: 'Erfolg', ranking: 'Rangliste', event: 'Event', owner: 'Vom Nexo-Team', season: 'Saisonpfad',
 };
 
 export default function InventoryPage() {

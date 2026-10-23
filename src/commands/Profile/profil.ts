@@ -15,6 +15,7 @@ import { getBalance } from '../../services/cosmetics/store.js';
 import { getDailyQuests } from '../../services/cosmetics/quests.js';
 import { writeReminders } from '../../services/cosmetics/reminders.js';
 import { communityGoals } from '../../services/cosmetics/community.js';
+import { getSeason } from '../../services/cosmetics/season.js';
 import { pendingCommunity, pendingQuestCounts } from '../../services/cosmetics/activity.js';
 import { canAttachFiles, loadProfileCardData, profileCardAttachment } from '../../services/profileCardRenderer.js';
 
@@ -85,6 +86,10 @@ export default {
         lines.push('', `🤝 **Gemeinschaftsziel ${goal.eventName}:** ${goal.progress.toLocaleString('de-DE')} von ${goal.target.toLocaleString('de-DE')} Nachrichten auf diesem Server (du: ${goal.mine}). `
           + (goal.paid ? 'Belohnung bekommen ✅' : `Ab ${goal.minimum} eigenen Nachrichten gibt es ${formatCoins(goal.reward)}, wenn ihr es schafft.`));
       }
+      const season = await getSeason(interaction.user.id);
+      const nextTier = season.tiers[season.tier];
+      lines.push('', `🏆 **Saison ${season.name}:** Stufe ${season.tier} von ${season.tiers.length} · ${season.points} Punkte`
+        + (nextTier ? ` (noch ${nextTier.points - season.points} bis Stufe ${season.tier + 1})` : ' – Pfad komplett!'));
       lines.push('', bonus.done ? `🎁 Bonus für alle drei kassiert: ${formatCoins(bonus.reward)}` : `🎁 Alle drei geschafft: ${formatCoins(bonus.reward)} extra`);
       lines.push(`Neue Aufgaben <t:${Math.floor(Date.parse(resetsAt) / 1000)}:R>. Zählt auf allen Servern mit Nexo, fertige Aufgaben zahlen sich von selbst aus.`);
       await InteractionHelper.safeReply(interaction, {

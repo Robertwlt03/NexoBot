@@ -12,6 +12,8 @@ import { syncAchievements } from './achievements.js';
 import { seedCatalog } from './catalog.js';
 import { startReminders } from './reminders.js';
 import { setCommunityClient } from './community.js';
+import { addSeasonPoints, ensureSeasonItems } from './season.js';
+import { SEASON_POINTS } from '../../shared/season.js';
 import { getEconomyConfig, levelReward } from './config.js';
 import { cosmeticsPool } from './db.js';
 import { recordMinigamePoints, recordXpGain, runMonthlyPayout } from './rankings.js';
@@ -55,6 +57,7 @@ export async function rewardMinigame(embed: EmbedBuilder, user: { id: string; bo
     if (guildId) await recordMinigamePoints(guildId, user.id);
     const amount = minigameReward.max > 0 ? randomInt(minigameReward.min, minigameReward.max + 1) : 0;
     const granted = amount > 0 ? await earn(user.id, amount, 'minigame', `Minispiel: ${GAME_LABELS[game]}`, guildId, { capped: true }) : 0;
+    void addSeasonPoints(user.id, SEASON_POINTS.minigame);
     void syncAchievements(user.id);
     return granted;
   })().catch((error: unknown) => {
@@ -76,6 +79,7 @@ export async function onXpGained(guild: { id: string; name: string }, userId: st
     let amount = 0;
     for (let level = fromLevel + 1; level <= toLevel; level += 1) amount += levelReward(config, level);
     const credited = await earn(userId, amount, 'level_up', `Level ${toLevel} auf ${guild.name}`, guild.id, { capped: true });
+    await addSeasonPoints(userId, SEASON_POINTS.levelUp * (toLevel - fromLevel));
     await syncAchievements(userId);
     return credited;
   } catch (error) {
@@ -108,6 +112,7 @@ export async function startCosmetics(client: Client): Promise<void> {
     logger.error('Berni-Katalog konnte nicht angelegt werden:', error);
   }
   startActivityTracker();
+  await ensureSeasonItems().catch((error: unknown) => logger.warn('Saison-Items konnten nicht angelegt werden:', (error as Error).message));
   setCommunityClient(client);
   startReminders(client);
   // Coin emojis for bot messages; needs the application, so after login.

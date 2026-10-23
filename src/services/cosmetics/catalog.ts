@@ -412,7 +412,7 @@ export const BUNDLES: BundleDef[] = [
 
 // ---------- Owner input validation ----------
 
-const AVAILABILITIES: ItemAvailability[] = ['shop', 'blackmarket', 'event', 'achievement', 'ranking'];
+const AVAILABILITIES: ItemAvailability[] = ['shop', 'blackmarket', 'event', 'achievement', 'ranking', 'season'];
 
 function oneOf<V extends string>(value: unknown, list: readonly V[], field: string): V {
   if (!list.includes(value as V)) throw badRequest(`${field}: einer von ${list.join(', ')} erwartet.`);

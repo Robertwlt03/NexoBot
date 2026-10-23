@@ -14,7 +14,7 @@ export interface WalletSummary {
   dailyCap: number;
 }
 
-export interface OwnedItem { itemId: string; acquiredAt: string; source: 'purchase' | 'gift' | 'achievement' | 'ranking' | 'event' | 'owner' }
+export interface OwnedItem { itemId: string; acquiredAt: string; source: 'purchase' | 'gift' | 'achievement' | 'ranking' | 'event' | 'owner' | 'season' }
 
 export interface ProfileLevel { guildId: string; guildName: string; level: number; xp: number; xpNeeded: number; rank: number | null }
 
@@ -56,6 +56,13 @@ export interface CommunityGoal {
 }
 /** GET /me/community → { goals: CommunityGoal[] } */
 export interface CommunityResponse { goals: CommunityGoal[] }
+/** GET /me/season: this month's season path. */
+export interface SeasonResponse {
+  /** YYYY-MM and its German name ("Oktober 2026"). */
+  season: string; name: string; endsAt: string;
+  points: number; tier: number;
+  tiers: { points: number; bernis: number; item: 'badge' | 'title' | null; itemId: string | null }[];
+}
 /** GET /me/quests */
 export interface QuestsResponse { quests: DailyQuests; wallet: WalletSummary }
 

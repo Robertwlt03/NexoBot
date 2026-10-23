@@ -14,6 +14,8 @@ import { T, cosmeticsPool, requirePool, withTx } from './db.js';
 import { loadStoredEvents, runningEvents } from './events.js';
 import { berlinDay, shiftDay } from './time.js';
 import { earnTx } from './wallet.js';
+import { addSeasonPoints } from './season.js';
+import { SEASON_POINTS } from '../../shared/season.js';
 
 export const COMMUNITY_REWARD = 150;
 export const COMMUNITY_MINIMUM = 5;
@@ -121,7 +123,10 @@ export async function syncCommunity(stats: Iterable<string>): Promise<void> {
           );
           return true;
         });
-        if (done) paid += 1;
+        if (done) {
+          paid += 1;
+          await addSeasonPoints(userId, SEASON_POINTS.community);
+        }
       }
       if (first && paid) await announce(guildId, event, target, paid);
     } catch (error) {

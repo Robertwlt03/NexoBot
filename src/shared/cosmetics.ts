@@ -16,7 +16,7 @@ export const PRICE_BANDS: Record<Rarity, [number, number]> = {
 };
 
 /** Where an item can be obtained. */
-export type ItemAvailability = 'shop' | 'blackmarket' | 'event' | 'achievement' | 'ranking';
+export type ItemAvailability = 'shop' | 'blackmarket' | 'event' | 'achievement' | 'ranking' | 'season';
 
 // ---------- Item data per slot ----------
 

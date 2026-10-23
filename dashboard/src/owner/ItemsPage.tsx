@@ -20,7 +20,7 @@ import { ItemVisual, Bernis, RarityLabel } from '../me/visuals';
 
 const opts = <T extends string>(labels: Record<T, string>) => (Object.keys(labels) as T[]).map((value) => ({ value, label: labels[value] }));
 
-export const AVAILABILITY_LABELS: Record<ItemAvailability, string> = { shop: 'Shop', blackmarket: 'Black Market', event: 'Event', achievement: 'Erfolg', ranking: 'Rangliste' };
+export const AVAILABILITY_LABELS: Record<ItemAvailability, string> = { shop: 'Shop', blackmarket: 'Black Market', event: 'Event', achievement: 'Erfolg', ranking: 'Rangliste', season: 'Saisonpfad' };
 const KIND_LABELS: Record<BackgroundData['kind'], string> = { solid: 'Einfarbig', gradient: 'Verlauf', pattern: 'Muster', aurora: 'Polarlicht', mesh: 'Mesh', scene: 'Szene (illustriert)' };
 const SCENE_LABELS: Record<BackgroundScene, string> = { pixel: 'Pixelabenteuer', 'neon-city': 'Neonstadt', 'moon-ninja': 'Mondschein-Ninja', dungeon: 'Kerker', orbital: 'Orbitalstation', 'pirate-cove': 'Piratenbucht' };
 const PATTERN_LABELS: Record<BackgroundData['pattern'], string> = { none: 'Keins', dots: 'Punkte', grid: 'Raster', waves: 'Wellen', stars: 'Sterne', hex: 'Waben', diagonal: 'Diagonal', circuit: 'Platine' };

@@ -22,6 +22,7 @@ const MEMBER_PAGES = [
   ['/me/verlauf', lazy(() => import('./me/HistoryPage'))],
   ['/me/ranglisten', lazy(() => import('./me/RankingsPage'))],
   ['/me/erfolge', lazy(() => import('./me/AchievementsPage'))],
+  ['/me/saison', lazy(() => import('./me/SeasonPage'))],
   ['/me/design', lazy(() => import('./me/DesignPage'))],
   ['/owner', lazy(() => import('./owner/OverviewPage'))],
   ['/owner/artikel', lazy(() => import('./owner/ItemsPage'))],

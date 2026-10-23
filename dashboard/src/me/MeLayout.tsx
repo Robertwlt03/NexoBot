@@ -30,6 +30,7 @@ const MEMBER_NAV: NavEntry[] = [
   { to: '/me/verlauf', label: 'Verlauf', icon: 'clock' },
   { to: '/me/ranglisten', label: 'Ranglisten', icon: 'trophy' },
   { to: '/me/erfolge', label: 'Erfolge', icon: 'medal' },
+  { to: '/me/saison', label: 'Saison', icon: 'star' },
   { to: '/me/design', label: 'Dashboard-Design', icon: 'palette' },
 ];
 const OWNER_NAV: NavEntry[] = [
