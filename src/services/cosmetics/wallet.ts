@@ -3,6 +3,7 @@
 
 import type pg from 'pg';
 import type { DailyBonusState, TransactionPage, WalletSummary, WalletTransaction } from '../../web/dto/profile.js';
+import { STREAK_SHIELD } from '../../shared/cosmetics.js';
 import { HttpError } from '../../web/http.js';
 import { T, requirePool, withTx, type Queryable } from './db.js';
 import { dailyBonusAmount, getEconomyConfig } from './config.js';
@@ -94,10 +95,15 @@ export async function walletSummary(userId: string, client: Queryable = requireP
 
 // ---------- Daily bonus ----------
 
-/** Daily bonus state from the stored streak and last claim day (Berlin days). A missed day resets the streak. */
-export function dailyState(lastClaim: string | null, storedStreak: number, today: string, config: EconomyConfig, now: Date = new Date()): DailyBonusState & { claimStreak: number } {
+/**
+ * Daily bonus state from the stored streak and last claim day (Berlin days). Missed days end the streak unless
+ * there are enough streak shields to bridge them (one per missed day, used up on the next claim).
+ */
+export function dailyState(lastClaim: string | null, storedStreak: number, today: string, config: EconomyConfig, now: Date = new Date(), shields = 0): DailyBonusState & { claimStreak: number } {
   const claimedToday = lastClaim === today;
-  const continues = lastClaim === shiftDay(today, -1);
+  const missed = lastClaim && !claimedToday ? Math.round((Date.parse(today) - Date.parse(lastClaim)) / 86_400_000) - 1 : 0;
+  const saving = missed >= 1 && missed <= shields ? missed : 0;
+  const continues = lastClaim === shiftDay(today, -1) || saving > 0;
   const streak = claimedToday || continues ? storedStreak : 0;
   const claimStreak = claimedToday ? storedStreak + 1 : streak + 1;
   return {
@@ -105,13 +111,40 @@ export function dailyState(lastClaim: string | null, storedStreak: number, today
     streak,
     nextAmount: dailyBonusAmount(config, claimStreak),
     nextAt: claimedToday ? nextBerlinMidnight(now).toISOString() : null,
+    shields,
+    saving,
     claimStreak,
   };
 }
 
+const SHIELD_STAT = 'streak_shields';
+
+async function readShields(client: Queryable, userId: string): Promise<number> {
+  const result = await client.query<{ value: string }>(`SELECT value FROM ${T.user_stats} WHERE user_id = $1 AND stat = $2`, [userId, SHIELD_STAT]);
+  return Number(result.rows[0]?.value ?? 0);
+}
+
+async function setShields(client: Queryable, userId: string, value: number): Promise<void> {
+  await client.query(
+    `INSERT INTO ${T.user_stats} (user_id, stat, value) VALUES ($1, $2, $3) ON CONFLICT (user_id, stat) DO UPDATE SET value = EXCLUDED.value`,
+    [userId, SHIELD_STAT, value],
+  );
+}
+
+/** Buys one streak shield (at most STREAK_SHIELD.max held). */
+export async function buyStreakShield(userId: string): Promise<void> {
+  await withTx(async (client) => {
+    await lockWallet(client, userId);
+    const shields = await readShields(client, userId);
+    if (shields >= STREAK_SHIELD.max) throw new HttpError(409, `Du hast schon ${STREAK_SHIELD.max} Serien-Schutz – mehr passen nicht in die Tasche.`);
+    await spendTx(client, userId, STREAK_SHIELD.price, 'shield', 'Serien-Schutz gekauft');
+    await setShields(client, userId, shields + 1);
+  });
+}
+
 export async function getDailyState(userId: string): Promise<DailyBonusState> {
-  const [wallet, config] = await Promise.all([readWallet(requirePool(), userId), getEconomyConfig()]);
-  const { claimStreak: _unused, ...state } = dailyState(wallet?.last_daily_claim ?? null, wallet?.daily_streak ?? 0, berlinDay(), config);
+  const [wallet, config, shields] = await Promise.all([readWallet(requirePool(), userId), getEconomyConfig(), readShields(requirePool(), userId)]);
+  const { claimStreak: _unused, ...state } = dailyState(wallet?.last_daily_claim ?? null, wallet?.daily_streak ?? 0, berlinDay(), config, new Date(), shields);
   return state;
 }
 
@@ -121,8 +154,10 @@ export async function claimDaily(userId: string): Promise<{ claimed: number; str
   return withTx(async (client) => {
     const wallet = await lockWallet(client, userId);
     const today = berlinDay();
-    const state = dailyState(wallet.last_daily_claim, wallet.daily_streak, today, config);
+    const shields = await readShields(client, userId);
+    const state = dailyState(wallet.last_daily_claim, wallet.daily_streak, today, config, new Date(), shields);
     if (!state.available) throw new HttpError(409, 'Du hast deinen Tagesbonus heute schon abgeholt.');
+    if (state.saving > 0) await setShields(client, userId, shields - state.saving);
     await client.query(
       `UPDATE ${T.user_wallets} SET balance = balance + $2, lifetime_earned = lifetime_earned + $2, daily_streak = $3,
          last_daily_claim = $4::date, updated_at = NOW() WHERE user_id = $1`,

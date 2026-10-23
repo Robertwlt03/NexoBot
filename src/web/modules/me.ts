@@ -15,7 +15,7 @@ import { getXpForLevel } from '../../services/leveling/leveling.js';
 import { NO_DB_MESSAGE, T, cosmeticsPool, isSnowflake, requirePool } from '../../services/cosmetics/db.js';
 import { loadCatalog } from '../../services/cosmetics/catalog.js';
 import { parseProfileSettings, readDashboardTheme, readProfileSettings, writeDashboardTheme, writeProfileSettings } from '../../services/cosmetics/profile.js';
-import { claimDaily, getDailyState, listTransactions, walletSummary } from '../../services/cosmetics/wallet.js';
+import { buyStreakShield, claimDaily, getDailyState, listTransactions, walletSummary } from '../../services/cosmetics/wallet.js';
 import { blackMarketResponse, gift, ownedItems, purchase, purchaseBundle, shopResponse } from '../../services/cosmetics/shop.js';
 import { listAchievements, syncAchievements } from '../../services/cosmetics/achievements.js';
 import { userRankings } from '../../services/cosmetics/rankings.js';
@@ -76,6 +76,12 @@ export function meRouter(client: NexoClient): Router {
     await syncAchievements(userId);
     const result: DailyClaimResult = { claimed, wallet: await walletSummary(userId), daily: await getDailyState(userId) };
     res.json(result);
+  });
+
+  router.post('/daily/shield', async (_req, res) => {
+    const { userId } = locals(res).session;
+    await buyStreakShield(userId);
+    res.json({ wallet: await walletSummary(userId), daily: await getDailyState(userId) });
   });
 
   router.put('/reminders', async (req, res) => {

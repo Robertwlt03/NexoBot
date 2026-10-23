@@ -31,10 +31,10 @@ export async function writeReminders(userId: string, on: boolean): Promise<boole
 }
 
 /** The reminder text, or null when there is nothing left to do today. Pure, for tests. */
-export function reminderLines(daily: { available: boolean; streak: number; nextAmount: number }, openQuests: { label: string }[]): string[] | null {
+export function reminderLines(daily: { available: boolean; streak: number; nextAmount: number; shields?: number }, openQuests: { label: string }[]): string[] | null {
   const lines: string[] = [];
   if (daily.available) {
-    lines.push(daily.streak >= 2
+    lines.push(daily.streak >= 2 && !daily.shields
       ? `🔥 Deine Serie von **${daily.streak} Tagen** endet um Mitternacht – hol dir heute noch deinen Tagesbonus (${formatCoins(daily.nextAmount)}).`
       : `🎁 Dein Tagesbonus wartet: ${formatCoins(daily.nextAmount)}.`);
   }
@@ -46,9 +46,10 @@ export async function sendReminders(client: Client): Promise<number> {
   const pool = cosmeticsPool();
   if (!pool) return 0;
   const [result, config] = await Promise.all([
-    pool.query<{ user_id: string; daily_streak: number | null; last_daily_claim: string | null }>(
-      `SELECT p.user_id, w.daily_streak, to_char(w.last_daily_claim, 'YYYY-MM-DD') AS last_daily_claim
+    pool.query<{ user_id: string; daily_streak: number | null; last_daily_claim: string | null; shields: string | null }>(
+      `SELECT p.user_id, w.daily_streak, to_char(w.last_daily_claim, 'YYYY-MM-DD') AS last_daily_claim, s.value AS shields
        FROM ${T.user_profiles} p LEFT JOIN ${T.user_wallets} w ON w.user_id = p.user_id
+       LEFT JOIN ${T.user_stats} s ON s.user_id = p.user_id AND s.stat = 'streak_shields'
        WHERE p.settings->>'reminders' = 'true'`,
     ),
     getEconomyConfig(),
@@ -59,7 +60,7 @@ export async function sendReminders(client: Client): Promise<number> {
   // ponytail: sequential DMs with a short pause; fine for hundreds of opt-ins, queue them if it ever gets thousands.
   for (const row of result.rows) {
     try {
-      const daily = dailyState(row.last_daily_claim, row.daily_streak ?? 0, today, config);
+      const daily = dailyState(row.last_daily_claim, row.daily_streak ?? 0, today, config, new Date(), Number(row.shields ?? 0));
       const { quests } = await getDailyQuests(row.user_id);
       const lines = reminderLines(daily, quests.filter((quest) => !quest.done));
       if (!lines) continue;

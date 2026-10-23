@@ -5,7 +5,7 @@ import gsap from 'gsap';
 import { Draggable } from 'gsap/Draggable';
 import { InertiaPlugin } from 'gsap/InertiaPlugin';
 import { useGSAP } from '@gsap/react';
-import { COSMETIC_SLOTS, DAILY_BONUS, MAX_BIO_LENGTH, MAX_EQUIPPED_BADGES, SLOT_LABELS, STICKER_SPOTS, levelUpReward } from '../../../src/shared/cosmetics';
+import { COSMETIC_SLOTS, DAILY_BONUS, STREAK_SHIELD, MAX_BIO_LENGTH, MAX_EQUIPPED_BADGES, SLOT_LABELS, STICKER_SPOTS, levelUpReward } from '../../../src/shared/cosmetics';
 import { PROFILE_CARD_HEIGHT, PROFILE_CARD_WIDTH, drawSticker, profileGeometry, stickerPoint, stickerRadius } from '../../../src/shared/profileCard';
 import type { CosmeticItem, CosmeticSlot, ResolvedCosmetics, StickerData, StickerSpot, UserProfileSettings } from '../../../src/shared/cosmetics';
 import type { DailyClaimResult, MeProfileResponse, QuestsResponse } from '../../../src/web/dto/profile';
@@ -51,6 +51,13 @@ function DailyCard() {
   const updateWallet = useWalletUpdate();
   const { run, busy } = useMutation();
   const { run: toggleReminders, busy: reminderBusy } = useMutation();
+  const { run: runShield, busy: shieldBusy } = useMutation();
+  const buyShield = async () => {
+    const result = await runShield<Pick<DailyClaimResult, 'wallet' | 'daily'>>('/me/daily/shield', 'POST', undefined, 'Serien-Schutz gekauft.');
+    if (!result) return;
+    updateWallet(result.wallet);
+    setMe((prev) => ({ ...prev, daily: result.daily }));
+  };
   const now = useNow();
   const [gain, setGain] = useState<number | null>(null);
   const root = useRef<HTMLElement>(null);
@@ -87,6 +94,24 @@ function DailyCard() {
         ))}
       </div>
       <p className="mt-2 text-[12px] text-[var(--accent-text-muted)]">+{DAILY_BONUS.perStreakDay} pro Tag in Folge, bis +{DAILY_BONUS.maxStreakBonus}</p>
+      {daily.available && daily.saving > 0 && (
+        <p className="mt-3 flex items-start gap-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-[12.5px] text-ink">
+          <Glyph name="shield" size={16} /> Dein Serien-Schutz rettet deine Serie: {daily.saving === 1 ? 'ein verpasster Tag wird' : `${daily.saving} verpasste Tage werden`} überbrückt.
+        </p>
+      )}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-[12.5px] text-[var(--accent-text-muted)]">
+        <span className="flex items-center gap-1.5" title="Jeder Serien-Schutz überbrückt einen verpassten Tag.">
+          {Array.from({ length: STREAK_SHIELD.max }, (_, i) => (
+            <span key={i} className={i < daily.shields ? 'text-ink' : 'opacity-35'}><Glyph name="shield" size={16} /></span>
+          ))}
+          Serien-Schutz {daily.shields} von {STREAK_SHIELD.max}
+        </span>
+        {daily.shields < STREAK_SHIELD.max && (
+          <button type="button" className="btn btn-secondary btn-sm" disabled={shieldBusy || me.wallet.balance < STREAK_SHIELD.price} onClick={buyShield}>
+            Kaufen für <Bernis amount={STREAK_SHIELD.price} nowrap />
+          </button>
+        )}
+      </div>
       <div className="mt-4">
         {daily.available
           ? <button type="button" className="btn btn-primary w-full" disabled={busy} onClick={claim}>{busy ? 'Einen Moment …' : 'Bonus abholen'}</button>

@@ -185,5 +185,7 @@ export type RankingKind = (typeof RANKING_KINDS)[number];
 export const RANKING_LABELS: Record<RankingKind, string> = { minigames: 'Minispiele', activity: 'Aktivität' };
 /** Daily bonus: base plus streak bonus per consecutive day (capped). */
 export const DAILY_BONUS = { base: 25, perStreakDay: 5, maxStreakBonus: 50 } as const;
+/** Streak shield: each one bridges one missed day of the daily bonus streak; you can hold `max`. */
+export const STREAK_SHIELD = { price: 250, max: 2 } as const;
 /** Black market: number of items per weekly rotation (rotates Monday 00:00 Europe/Berlin). */
 export const BLACK_MARKET_SIZE = 6;

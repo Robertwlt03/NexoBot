@@ -34,7 +34,12 @@ export interface MeProfileResponse {
 /** PUT /me/reminders { enabled } → { enabled } */
 /** PUT /me/profile — body: UserProfileSettings; every equipped item must be owned (403 otherwise). Returns MeProfileResponse. */
 
-export interface DailyBonusState { available: boolean; streak: number; nextAmount: number; nextAt: string | null }
+export interface DailyBonusState {
+  available: boolean; streak: number; nextAmount: number; nextAt: string | null;
+  /** Streak shields held, and how many the next claim uses to bridge missed days (0 = none missed). */
+  shields: number; saving: number;
+}
+/** POST /me/daily/shield → { wallet: WalletSummary; daily: DailyBonusState } (buys one streak shield). */
 /** POST /me/daily → { claimed: number; wallet: WalletSummary; daily: DailyBonusState } */
 export interface DailyClaimResult { claimed: number; wallet: WalletSummary; daily: DailyBonusState }
 

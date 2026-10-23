@@ -126,6 +126,18 @@ test('weeks start Monday 00:00 Berlin, months follow Berlin time', () => {
   assert.equal(berlinDay(new Date('2026-12-31T23:30:00Z')), '2027-01-01');
 });
 
+test('streak shields bridge missed days, one each, and only when there are enough', () => {
+  const today = '2026-10-18';
+  const now = new Date('2026-10-18T10:00:00Z');
+  const one = dailyState('2026-10-16', 9, today, config, now, 1);
+  assert.deepEqual([one.streak, one.claimStreak, one.saving], [9, 10, 1]);
+  const short = dailyState('2026-10-15', 9, today, config, now, 1);
+  assert.deepEqual([short.streak, short.saving], [0, 0]);
+  const two = dailyState('2026-10-15', 9, today, config, now, 2);
+  assert.deepEqual([two.streak, two.saving], [9, 2]);
+  assert.equal(dailyState('2026-10-17', 3, today, config, now, 2).saving, 0, 'no shield used without a missed day');
+});
+
 test('daily bonus streak grows, caps and resets after a missed day', () => {
   const today = '2026-10-18';
   const first = dailyState(null, 0, today, config);
