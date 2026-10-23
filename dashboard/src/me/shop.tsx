@@ -21,6 +21,7 @@ import { BundleSection } from './bundles';
 import { Celebration } from './Celebration';
 import { EVENT_THEMES, EventBackdrop, SCENE_ROOM, eventTheme } from './EventScene';
 import { Icon } from '../icons';
+import { CommunityGoals } from './CommunityGoals';
 
 export type ShopVariant = 'shop' | 'blackmarket';
 
@@ -218,6 +219,7 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
           </div>
         </div>
       </section>
+      {event && <CommunityGoals />}
       <section className="mt-8">
         <h2 className="mb-3.5 text-[19px] font-semibold tracking-tight">{event ? `Highlights aus „${event.name}“` : 'Empfohlen'}</h2>
         {/* Bento: one 2×2 feature tile, four regular ones. */}

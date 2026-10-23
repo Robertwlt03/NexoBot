@@ -6,6 +6,7 @@ import type { Message } from 'discord.js';
 import { logger } from '../../utils/logger.js';
 import { syncAchievements } from './achievements.js';
 import { QUEST_COUNTERS, dailyStat, purgeOldQuestStats, syncQuests } from './quests.js';
+import { communityStatsFor, syncCommunity } from './community.js';
 import { T, cosmeticsPool } from './db.js';
 import { berlinDay, berlinParts } from './time.js';
 
@@ -14,7 +15,7 @@ export const GAME_IDS = ['work', 'fish', 'mine', 'gamble', 'crime', 'rob', 'beg'
 /** Counters that only ever grow by the amounts recorded here. */
 export const ACTIVITY_COUNTERS = [
   'messages', 'msg_night', 'msg_early', 'msg_midnight', 'msg_leet', 'msg_weekend', 'msg_morning', 'msg_reply', 'msg_question',
-  'msg_long', 'msg_media', 'msg_emoji', 'msg_link', 'msg_caps', 'reactions', 'voice_ms', 'commands', 'counting', 'quest_days',
+  'msg_long', 'msg_media', 'msg_emoji', 'msg_link', 'msg_caps', 'reactions', 'voice_ms', 'commands', 'counting', 'quest_days', 'community_goals',
   ...GAME_IDS.map((game) => `game_${game}` as const),
 ] as const;
 export type ActivityCounter = (typeof ACTIVITY_COUNTERS)[number];
@@ -40,6 +41,11 @@ export function addActivity(userId: string, stat: ActivityCounter, amount = 1): 
   if (!cosmeticsPool() || amount <= 0) return;
   bump(userId, stat, amount);
   if (QUEST_COUNTERS.has(stat)) bump(userId, dailyStat(berlinDay(), stat), amount);
+}
+
+/** Community goal messages of a user that are not written yet. */
+export function pendingCommunity(userId: string): Map<string, number> {
+  return new Map([...(pending.get(userId) ?? [])].filter(([stat]) => stat.startsWith('ev:')));
 }
 
 /** Today's quest counts of a user that are not written yet (so the dashboard shows them right away). */
@@ -82,6 +88,7 @@ export function recordMessageActivity(message: Message): void {
   for (const stat of messageCounters(message.content, at, { reply: Boolean(message.reference?.messageId), media })) addActivity(message.author.id, stat);
   const { year, month, day } = berlinParts(at);
   chatDays.set(message.author.id, dayNumber(year, month, day));
+  if (message.guildId) for (const stat of communityStatsFor(message.guildId, message.createdTimestamp)) bump(message.author.id, stat, 1);
 }
 
 /** Next chat-streak values after chatting on `today` (pure, for tests). */
@@ -140,6 +147,7 @@ export async function flushActivity(): Promise<void> {
     await syncQuests(userId);
     await syncAchievements(userId);
   }
+  await syncCommunity([...batch.values()].flatMap((stats) => [...stats.keys()].filter((stat) => stat.startsWith('ev:'))));
   const today = berlinDay();
   if (purgedDay !== today) {
     purgedDay = today;

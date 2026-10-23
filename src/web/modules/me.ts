@@ -6,7 +6,7 @@ import type { Router } from 'express';
 import type { NexoClient } from '../../types/index.js';
 import type { CosmeticItem } from '../../shared/cosmetics.js';
 import type {
-  AchievementsResponse, DailyClaimResult, MeProfileResponse, ProfileLevel, QuestsResponse,
+  AchievementsResponse, CommunityResponse, DailyClaimResult, MeProfileResponse, ProfileLevel, QuestsResponse,
 } from '../dto/profile.js';
 import { locals, sendError } from '../dashboard.js';
 import { HttpError, badRequest, body } from '../http.js';
@@ -21,7 +21,8 @@ import { listAchievements, syncAchievements } from '../../services/cosmetics/ach
 import { userRankings } from '../../services/cosmetics/rankings.js';
 import { getDailyQuests } from '../../services/cosmetics/quests.js';
 import { readReminders, writeReminders } from '../../services/cosmetics/reminders.js';
-import { pendingQuestCounts } from '../../services/cosmetics/activity.js';
+import { communityGoals } from '../../services/cosmetics/community.js';
+import { pendingCommunity, pendingQuestCounts } from '../../services/cosmetics/activity.js';
 
 async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[]> {
   const result = await requirePool().query<{ guild_id: string; level: number; xp: string; rank: string }>(
@@ -82,6 +83,18 @@ export function meRouter(client: NexoClient): Router {
     const { userId } = locals(res).session;
     await buyStreakShield(userId);
     res.json({ wallet: await walletSummary(userId), daily: await getDailyState(userId) });
+  });
+
+  // Shared goals of the running events on the member's servers (servers where they have XP and Nexo is present).
+  router.get('/community', async (_req, res) => {
+    const { userId } = locals(res).session;
+    const rows = await requirePool().query<{ guild_id: string }>(`SELECT guild_id FROM ${T.user_levels} WHERE user_id = $1`, [userId]);
+    const guilds = rows.rows.flatMap((row) => {
+      const guild = client.guilds.cache.get(row.guild_id);
+      return guild ? [{ id: guild.id, name: guild.name, iconUrl: guild.iconURL({ size: 64 }) }] : [];
+    });
+    const result: CommunityResponse = { goals: await communityGoals(userId, guilds, pendingCommunity(userId)) };
+    res.json(result);
   });
 
   router.put('/reminders', async (req, res) => {

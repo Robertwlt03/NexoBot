@@ -46,6 +46,16 @@ export interface DailyClaimResult { claimed: number; wallet: WalletSummary; dail
 export interface DailyQuest { id: string; label: string; current: number; target: number; reward: number; done: boolean }
 /** Three tasks per Berlin day, paid automatically once done; all three pay `bonus.reward` on top. */
 export interface DailyQuests { quests: DailyQuest[]; bonus: { reward: number; done: boolean }; resetsAt: string }
+/** A server's shared goal during a running event (messages written there by everyone). */
+export interface CommunityGoal {
+  eventId: string; eventName: string; endsAt: string;
+  guildId: string; guildName: string; guildIconUrl: string | null;
+  progress: number; target: number;
+  /** The member's own messages towards it, the share needed for the reward, and whether it was paid. */
+  mine: number; minimum: number; reward: number; paid: boolean;
+}
+/** GET /me/community → { goals: CommunityGoal[] } */
+export interface CommunityResponse { goals: CommunityGoal[] }
 /** GET /me/quests */
 export interface QuestsResponse { quests: DailyQuests; wallet: WalletSummary }
 

@@ -14,7 +14,8 @@ import { formatNumber } from '../../shared/profileCard.js';
 import { getBalance } from '../../services/cosmetics/store.js';
 import { getDailyQuests } from '../../services/cosmetics/quests.js';
 import { writeReminders } from '../../services/cosmetics/reminders.js';
-import { pendingQuestCounts } from '../../services/cosmetics/activity.js';
+import { communityGoals } from '../../services/cosmetics/community.js';
+import { pendingCommunity, pendingQuestCounts } from '../../services/cosmetics/activity.js';
 import { canAttachFiles, loadProfileCardData, profileCardAttachment } from '../../services/profileCardRenderer.js';
 
 /** "Mein Profil" area of the dashboard (wallet, shop, profile editor). */
@@ -78,6 +79,12 @@ export default {
       const lines = quests.map((quest) => (quest.done
         ? `✅ ~~${quest.label}~~ · ${formatCoins(quest.reward)}`
         : `⬜ ${quest.label} · ${formatCoins(quest.reward)}\n${bar(quest.current, quest.target)} ${quest.current}/${quest.target}`));
+      const guild = interaction.guild!;
+      const goals = await communityGoals(interaction.user.id, [{ id: guild.id, name: guild.name, iconUrl: null }], pendingCommunity(interaction.user.id));
+      for (const goal of goals) {
+        lines.push('', `🤝 **Gemeinschaftsziel ${goal.eventName}:** ${goal.progress.toLocaleString('de-DE')} von ${goal.target.toLocaleString('de-DE')} Nachrichten auf diesem Server (du: ${goal.mine}). `
+          + (goal.paid ? 'Belohnung bekommen ✅' : `Ab ${goal.minimum} eigenen Nachrichten gibt es ${formatCoins(goal.reward)}, wenn ihr es schafft.`));
+      }
       lines.push('', bonus.done ? `🎁 Bonus für alle drei kassiert: ${formatCoins(bonus.reward)}` : `🎁 Alle drei geschafft: ${formatCoins(bonus.reward)} extra`);
       lines.push(`Neue Aufgaben <t:${Math.floor(Date.parse(resetsAt) / 1000)}:R>. Zählt auf allen Servern mit Nexo, fertige Aufgaben zahlen sich von selbst aus.`);
       await InteractionHelper.safeReply(interaction, {

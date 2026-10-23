@@ -11,6 +11,7 @@ import { ensureCoinEmojis } from './coinEmojis.js';
 import { syncAchievements } from './achievements.js';
 import { seedCatalog } from './catalog.js';
 import { startReminders } from './reminders.js';
+import { setCommunityClient } from './community.js';
 import { getEconomyConfig, levelReward } from './config.js';
 import { cosmeticsPool } from './db.js';
 import { recordMinigamePoints, recordXpGain, runMonthlyPayout } from './rankings.js';
@@ -107,6 +108,7 @@ export async function startCosmetics(client: Client): Promise<void> {
     logger.error('Berni-Katalog konnte nicht angelegt werden:', error);
   }
   startActivityTracker();
+  setCommunityClient(client);
   startReminders(client);
   // Coin emojis for bot messages; needs the application, so after login.
   if (client.isReady()) void ensureCoinEmojis(client);
