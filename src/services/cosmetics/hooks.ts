@@ -13,6 +13,7 @@ import { seedCatalog } from './catalog.js';
 import { startReminders } from './reminders.js';
 import { setCommunityClient } from './community.js';
 import { startBotProfiles } from './botProfile.js';
+import { startPresenceRotation } from './presence.js';
 import { addSeasonPoints, ensureSeasonItems } from './season.js';
 import { SEASON_POINTS } from '../../shared/season.js';
 import { getEconomyConfig, levelReward } from './config.js';
@@ -118,6 +119,7 @@ export async function startCosmetics(client: Client): Promise<void> {
   await ensureSeasonItems().catch((error: unknown) => logger.warn('Saison-Items konnten nicht angelegt werden:', (error as Error).message));
   setCommunityClient(client);
   startBotProfiles(client);
+  startPresenceRotation(client);
   startReminders(client);
   // Coin emojis for bot messages; needs the application, so after login.
   if (client.isReady()) void ensureCoinEmojis(client);
