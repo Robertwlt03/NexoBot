@@ -2566,3 +2566,79 @@ export function renderLevelUpCard<I extends ProfileImage>(
     ctx.restore();
   }
 }
+
+// ---------- Year review ("Dein Nexo-Jahr") ----------
+
+export const YEAR_CARD_WIDTH = 1024;
+export const YEAR_CARD_HEIGHT = 640;
+
+/** Six numbers and up to three highlight lines for one member and year. `coins` tiles show the value as coins. */
+export interface YearReview {
+  year: number;
+  tiles: { label: string; value: number; unit?: string; coins?: boolean }[];
+  highlights: string[];
+}
+
+/** A shareable card of the member's year with their own background, accent, frame and companion. */
+export function renderYearCard<I extends ProfileImage>(
+  context: ProfileContext<NoInfer<I>>, subject: ProfileCardSubject, cosmetics: ResolvedCosmetics, review: YearReview, assets: ProfileAssets<I>,
+): void {
+  const ctx: Ctx = context;
+  const YW = YEAR_CARD_WIDTH;
+  const YH = YEAR_CARD_HEIGHT;
+  const accent = cosmetics.accent?.color ?? DEFAULT_ACCENT;
+  const seed = seedFrom(subject.username || subject.name);
+  ctx.save();
+  roundedRect(ctx, 0, 0, YW, YH, RADIUS);
+  ctx.clip();
+  drawBackground(ctx, cosmetics.background, accent, YW, YH, seed);
+  // Calm the background down so the numbers read on any of them.
+  ctx.fillStyle = linearGradient(ctx, 180, 0, 0, YW, YH, ['rgba(9, 9, 12, 0.55)', 'rgba(9, 9, 12, 0.82)']);
+  ctx.fillRect(0, 0, YW, YH);
+
+  // The year, big and quiet, top right.
+  ctx.save();
+  ctx.font = font('unbounded', 700, 118);
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = withAlpha(accent, 0.28);
+  ctx.fillText(String(review.year), YW - 44, 160);
+  ctx.restore();
+
+  const avatar = { cx: 120, cy: 128, r: 64 };
+  drawAvatar(ctx, assets.avatar, avatar, cosmetics.frame, accent, subject.name);
+  if (cosmetics.pet) {
+    const at = petPoint(avatar, subject.petStage ?? 1);
+    drawPet(ctx, cosmetics.pet, at.x, at.y, at.size, subject.petStage ?? 1);
+  }
+  drawRuns(ctx, [{ text: 'DEIN NEXO-JAHR', font: font('inter', 700, 15), color: lighten(accent, 0.25) }], 216, 96, 'left');
+  drawName(ctx, subject.name, 216, 142, 'left', 40, cosmetics.font?.font ?? 'inter', cosmetics.nameStyle, 520);
+  drawRuns(ctx, [{ text: `So war ${review.year} mit Nexo`, font: font('inter', 400, 18), color: SOFT }], 216, 176, 'left');
+
+  // Six tiles, three per row.
+  const gap = 16;
+  const tileW = (YW - 96 - gap * 2) / 3;
+  const tileH = 118;
+  review.tiles.slice(0, 6).forEach((tile, i) => {
+    const x = 48 + (i % 3) * (tileW + gap);
+    const y = 236 + Math.floor(i / 3) * (tileH + gap);
+    roundedRect(ctx, x, y, tileW, tileH, 18);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.09)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    const runs: Run[] = tile.coins
+      ? coinRuns(tile.value, 30, TEXT)
+      : [{ text: formatNumber(tile.value), font: font('inter', 700, 40), color: TEXT, gap: tile.unit ? 8 : 0 }, ...(tile.unit ? [{ text: tile.unit, font: font('inter', 400, 20), color: MUTED }] : [])];
+    drawRuns(ctx, runs, x + 22, y + 62, 'left');
+    drawRuns(ctx, [{ text: tile.label, font: font('inter', 400, 16), color: MUTED }], x + 22, y + 94, 'left');
+  });
+
+  review.highlights.slice(0, 3).forEach((line, i) => {
+    const fitted = fitText(ctx, line, 'inter', 400, 18, 14, YW - 96 - 24);
+    drawGlyph(ctx, 'star', 56, 538 + i * 30 - 6, 14, accent);
+    drawRuns(ctx, [{ text: fitted.text, font: font('inter', 400, fitted.size), color: SOFT }], 74, 538 + i * 30, 'left');
+  });
+  ctx.restore();
+}

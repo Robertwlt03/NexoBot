@@ -17,7 +17,9 @@ import { writeReminders } from '../../services/cosmetics/reminders.js';
 import { communityGoals } from '../../services/cosmetics/community.js';
 import { getSeason } from '../../services/cosmetics/season.js';
 import { pendingCommunity, pendingQuestCounts } from '../../services/cosmetics/activity.js';
-import { canAttachFiles, loadProfileCardData, profileCardAttachment } from '../../services/profileCardRenderer.js';
+import { canAttachFiles, loadProfileCardData, profileCardAttachment, yearCardAttachment } from '../../services/profileCardRenderer.js';
+import { loadYearReview } from '../../services/cosmetics/yearReview.js';
+import { cosmeticsPool } from '../../services/cosmetics/db.js';
 
 /** "Mein Profil" area of the dashboard (wallet, shop, profile editor). */
 function shopUrl(): string | null {
@@ -42,6 +44,10 @@ export default {
       .addUserOption((option) => option.setName('nutzer').setDescription('Wessen Profil du sehen willst').setRequired(false)))
     .addSubcommand((sub) => sub.setName('bernis').setDescription('Zeigt deinen Bernis-Kontostand'))
     .addSubcommand((sub) => sub.setName('shop').setDescription('Öffnet den Profil-Shop im Dashboard'))
+    .addSubcommand((sub) => sub
+      .setName('jahr')
+      .setDescription('Dein Nexo-Jahr: deine Zahlen als Karte zum Teilen')
+      .addIntegerOption((option) => option.setName('jahr').setDescription('Welches Jahr (Standard: das aktuelle)').setMinValue(2024).setMaxValue(2100)))
     .addSubcommand((sub) => sub.setName('aufgaben').setDescription('Deine drei Tagesaufgaben und wie weit du bist'))
     .addSubcommand((sub) => sub
       .setName('erinnerung')
@@ -59,6 +65,30 @@ export default {
         embeds: [createEmbed({ title: `${CURRENCY.symbol} Deine ${CURRENCY.name}`, description: `Du hast **${formatCoins(balance)}** (${formatNumber(balance)} ${balance === 1 ? CURRENCY.singular : CURRENCY.name}).\n\n${COIN_TEXT}\n${EARN_TEXT}` })],
         components: url ? [shopRow(url)] : [],
         flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    if (subcommand === 'jahr') {
+      if (!cosmeticsPool()) {
+        await InteractionHelper.safeReply(interaction, { embeds: [createEmbed({ title: 'Dein Nexo-Jahr', description: 'Dafür braucht Nexo seine Datenbank – versuch es später noch einmal.', color: 'warning' })], flags: MessageFlags.Ephemeral });
+        return;
+      }
+      await InteractionHelper.safeDefer(interaction);
+      const year = interaction.options.getInteger('jahr') ?? Number(new Intl.DateTimeFormat('en', { timeZone: 'Europe/Berlin', year: 'numeric' }).format(new Date()));
+      const member = await interaction.guild!.members.fetch(interaction.user.id);
+      const review = await loadYearReview(interaction.user.id, year, (id) => client.guilds.cache.get(id)?.name ?? null);
+      const card = canAttachFiles(interaction) ? await yearCardAttachment(client, member, review) : null;
+      if (card) {
+        await InteractionHelper.safeEditReply(interaction, { content: `🎉 **${member.displayName}s Nexo-Jahr ${year}**`, files: [card] });
+        return;
+      }
+      await InteractionHelper.safeEditReply(interaction, {
+        embeds: [createEmbed({
+          title: `Dein Nexo-Jahr ${year}`,
+          fields: review.tiles.map((tile) => ({ name: tile.label, value: tile.coins ? formatCoins(tile.value) : `${formatNumber(tile.value)}${tile.unit ? ` ${tile.unit}` : ''}`, inline: true })),
+          description: review.highlights.map((line) => `⭐ ${line}`).join('\n') || null,
+        })],
       });
       return;
     }

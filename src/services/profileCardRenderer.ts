@@ -6,7 +6,8 @@ import { AttachmentBuilder, PermissionFlagsBits } from 'discord.js';
 import type { ChatInputCommandInteraction, GuildMember } from 'discord.js';
 import type { ProfileCardSubject, ResolvedCosmetics } from '../shared/cosmetics.js';
 import {
-  LEVELUP_CARD_HEIGHT, LEVELUP_CARD_WIDTH, PROFILE_CARD_HEIGHT, PROFILE_CARD_WIDTH, renderLevelUpCard, renderProfileCard,
+  LEVELUP_CARD_HEIGHT, LEVELUP_CARD_WIDTH, PROFILE_CARD_HEIGHT, PROFILE_CARD_WIDTH, YEAR_CARD_HEIGHT, YEAR_CARD_WIDTH, renderLevelUpCard, renderProfileCard,
+  renderYearCard, type YearReview,
 } from '../shared/profileCard.js';
 import { getBalance, getPetStage, getProfileSettings, getResolvedCosmetics } from './cosmetics/store.js';
 import { getLeaderboard, getUserLevelData, getXpForLevel } from './leveling/leveling.js';
@@ -28,6 +29,20 @@ export async function renderLevelUpCardPng(subject: ProfileCardSubject, cosmetic
   const canvas = createCanvas(LEVELUP_CARD_WIDTH, LEVELUP_CARD_HEIGHT);
   renderLevelUpCard(canvas.getContext('2d'), subject, cosmetics, level, reward, { avatar });
   return canvas.encode('png');
+}
+
+/** The year review card (/profil jahr) as attachment, or null when rendering fails. */
+export async function yearCardAttachment(client: NexoClient, member: GuildMember, review: YearReview): Promise<AttachmentBuilder | null> {
+  try {
+    const { subject, cosmetics } = await loadProfileCardData(client, member, false);
+    const avatar = subject.avatarUrl ? await loadRemoteImage(subject.avatarUrl) : null;
+    const canvas = createCanvas(YEAR_CARD_WIDTH, YEAR_CARD_HEIGHT);
+    renderYearCard(canvas.getContext('2d'), subject, cosmetics, review, { avatar });
+    return new AttachmentBuilder(await canvas.encode('png'), { name: `nexo-jahr-${review.year}.png` });
+  } catch (error) {
+    logger.warn(`Year card render failed for ${member.id}:`, error);
+    return null;
+  }
 }
 
 // ponytail: rank = position in the top 100 (same source as /rank leaderboard); members below that show "–".
