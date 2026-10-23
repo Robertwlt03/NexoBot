@@ -17,7 +17,7 @@ import { earn } from './wallet.js';
 
 const GAME_LABELS = {
   work: 'Arbeiten', fish: 'Angeln', mine: 'Bergbau', gamble: 'Glücksspiel', crime: 'Verbrechen', rob: 'Raub', beg: 'Betteln',
-  daily: 'Tägliche Belohnung', fight: 'Duell', flip: 'Münzwurf', roll: 'Würfeln',
+  daily: 'Tägliche Belohnung', fight: 'Duell', flip: 'Münzwurf', roll: 'Würfeln', duel: 'Spiel gegen andere',
 } as const;
 export type MinigameId = keyof typeof GAME_LABELS;
 

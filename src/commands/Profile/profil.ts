@@ -12,6 +12,8 @@ import { formatCoins } from '../../shared/coins.js';
 const COIN_TEXT = '🟤 Bronze · ⚪ Silber (100 Bronze) · 🟡 Gold (100 Silber) · 💠 Platin (100 Gold)';
 import { formatNumber } from '../../shared/profileCard.js';
 import { getBalance } from '../../services/cosmetics/store.js';
+import { getDailyQuests } from '../../services/cosmetics/quests.js';
+import { pendingQuestCounts } from '../../services/cosmetics/activity.js';
 import { canAttachFiles, loadProfileCardData, profileCardAttachment } from '../../services/profileCardRenderer.js';
 
 /** "Mein Profil" area of the dashboard (wallet, shop, profile editor). */
@@ -37,6 +39,7 @@ export default {
       .addUserOption((option) => option.setName('nutzer').setDescription('Wessen Profil du sehen willst').setRequired(false)))
     .addSubcommand((sub) => sub.setName('bernis').setDescription('Zeigt deinen Bernis-Kontostand'))
     .addSubcommand((sub) => sub.setName('shop').setDescription('Öffnet den Profil-Shop im Dashboard'))
+    .addSubcommand((sub) => sub.setName('aufgaben').setDescription('Deine drei Tagesaufgaben und wie weit du bist'))
     .setDMPermission(false),
 
   async execute(interaction, _guildConfig, client) {
@@ -47,6 +50,22 @@ export default {
       const balance = await getBalance(interaction.user.id);
       await InteractionHelper.safeReply(interaction, {
         embeds: [createEmbed({ title: `${CURRENCY.symbol} Deine ${CURRENCY.name}`, description: `Du hast **${formatCoins(balance)}** (${formatNumber(balance)} ${balance === 1 ? CURRENCY.singular : CURRENCY.name}).\n\n${COIN_TEXT}\n${EARN_TEXT}` })],
+        components: url ? [shopRow(url)] : [],
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    if (subcommand === 'aufgaben') {
+      const { quests, bonus, resetsAt } = await getDailyQuests(interaction.user.id, pendingQuestCounts(interaction.user.id));
+      const bar = (current: number, target: number) => '▰'.repeat(Math.round((current / target) * 8)) + '▱'.repeat(8 - Math.round((current / target) * 8));
+      const lines = quests.map((quest) => (quest.done
+        ? `✅ ~~${quest.label}~~ · ${formatCoins(quest.reward)}`
+        : `⬜ ${quest.label} · ${formatCoins(quest.reward)}\n${bar(quest.current, quest.target)} ${quest.current}/${quest.target}`));
+      lines.push('', bonus.done ? `🎁 Bonus für alle drei kassiert: ${formatCoins(bonus.reward)}` : `🎁 Alle drei geschafft: ${formatCoins(bonus.reward)} extra`);
+      lines.push(`Neue Aufgaben <t:${Math.floor(Date.parse(resetsAt) / 1000)}:R>. Zählt auf allen Servern mit Nexo, fertige Aufgaben zahlen sich von selbst aus.`);
+      await InteractionHelper.safeReply(interaction, {
+        embeds: [createEmbed({ title: '📋 Deine Tagesaufgaben', description: lines.join('\n') })],
         components: url ? [shopRow(url)] : [],
         flags: MessageFlags.Ephemeral,
       });

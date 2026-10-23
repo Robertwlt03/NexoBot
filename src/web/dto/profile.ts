@@ -27,12 +27,19 @@ export interface MeProfileResponse {
   /** The member's levels on servers where Nexo is present (for the card preview; highest first). */
   levels: ProfileLevel[];
   daily: DailyBonusState;
+  quests: DailyQuests;
 }
 /** PUT /me/profile — body: UserProfileSettings; every equipped item must be owned (403 otherwise). Returns MeProfileResponse. */
 
 export interface DailyBonusState { available: boolean; streak: number; nextAmount: number; nextAt: string | null }
 /** POST /me/daily → { claimed: number; wallet: WalletSummary; daily: DailyBonusState } */
 export interface DailyClaimResult { claimed: number; wallet: WalletSummary; daily: DailyBonusState }
+
+export interface DailyQuest { id: string; label: string; current: number; target: number; reward: number; done: boolean }
+/** Three tasks per Berlin day, paid automatically once done; all three pay `bonus.reward` on top. */
+export interface DailyQuests { quests: DailyQuest[]; bonus: { reward: number; done: boolean }; resetsAt: string }
+/** GET /me/quests */
+export interface QuestsResponse { quests: DailyQuests; wallet: WalletSummary }
 
 export interface ShopEvent {
   id: string;

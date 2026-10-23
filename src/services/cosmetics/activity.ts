@@ -5,15 +5,16 @@
 import type { Message } from 'discord.js';
 import { logger } from '../../utils/logger.js';
 import { syncAchievements } from './achievements.js';
+import { QUEST_COUNTERS, dailyStat, purgeOldQuestStats, syncQuests } from './quests.js';
 import { T, cosmeticsPool } from './db.js';
-import { berlinParts } from './time.js';
+import { berlinDay, berlinParts } from './time.js';
 
-export const GAME_IDS = ['work', 'fish', 'mine', 'gamble', 'crime', 'rob', 'beg', 'daily', 'fight', 'flip', 'roll'] as const;
+export const GAME_IDS = ['work', 'fish', 'mine', 'gamble', 'crime', 'rob', 'beg', 'daily', 'fight', 'flip', 'roll', 'duel'] as const;
 
 /** Counters that only ever grow by the amounts recorded here. */
 export const ACTIVITY_COUNTERS = [
   'messages', 'msg_night', 'msg_early', 'msg_midnight', 'msg_leet', 'msg_weekend', 'msg_morning', 'msg_reply', 'msg_question',
-  'msg_long', 'msg_media', 'msg_emoji', 'msg_link', 'msg_caps', 'reactions', 'voice_ms', 'commands', 'counting',
+  'msg_long', 'msg_media', 'msg_emoji', 'msg_link', 'msg_caps', 'reactions', 'voice_ms', 'commands', 'counting', 'quest_days',
   ...GAME_IDS.map((game) => `game_${game}` as const),
 ] as const;
 export type ActivityCounter = (typeof ACTIVITY_COUNTERS)[number];
@@ -24,15 +25,27 @@ const FLUSH_MS = 60_000;
 const MORNING_GREETING = /^(guten morgen|moin|morgen|gm|good morning)\b/i;
 const EMOJI = /\p{Extended_Pictographic}|<a?:\w+:\d+>/u;
 
-let pending = new Map<string, Map<ActivityCounter, number>>();
+/** Lifetime counters plus today's quest counters (`q:<day>:<counter>`) per user. */
+let pending = new Map<string, Map<string, number>>();
 /** Users who chatted, with the Berlin day number of their latest message since the last flush. */
 let chatDays = new Map<string, number>();
 
-export function addActivity(userId: string, stat: ActivityCounter, amount = 1): void {
-  if (!cosmeticsPool() || amount <= 0) return;
+function bump(userId: string, stat: string, amount: number): void {
   let stats = pending.get(userId);
   if (!stats) pending.set(userId, stats = new Map());
   stats.set(stat, (stats.get(stat) ?? 0) + amount);
+}
+
+export function addActivity(userId: string, stat: ActivityCounter, amount = 1): void {
+  if (!cosmeticsPool() || amount <= 0) return;
+  bump(userId, stat, amount);
+  if (QUEST_COUNTERS.has(stat)) bump(userId, dailyStat(berlinDay(), stat), amount);
+}
+
+/** Today's quest counts of a user that are not written yet (so the dashboard shows them right away). */
+export function pendingQuestCounts(userId: string, day = berlinDay()): Map<string, number> {
+  const prefix = dailyStat(day, '');
+  return new Map([...(pending.get(userId) ?? [])].filter(([stat]) => stat.startsWith(prefix)).map(([stat, value]) => [stat.slice(prefix.length), value]));
 }
 
 const dayNumber = (year: number, month: number, day: number) => Math.floor(Date.UTC(year, month - 1, day) / 86_400_000);
@@ -115,7 +128,7 @@ export async function flushActivity(): Promise<void> {
     }
   } catch (error) {
     // Put the counters back; the next flush retries. Chat days are only lost for this minute (same day = no change).
-    for (const [userId, stats] of batch) for (const [stat, value] of stats) addActivity(userId, stat, value);
+    for (const [userId, stats] of batch) for (const [stat, value] of stats) bump(userId, stat, value);
     for (const [userId, day] of days) if (!chatDays.has(userId)) chatDays.set(userId, day);
     logger.warn('Aktivitätszähler konnten nicht gespeichert werden (wird wiederholt):', (error as Error).message);
     flushing = false;
@@ -123,8 +136,18 @@ export async function flushActivity(): Promise<void> {
   }
   flushing = false;
   // ponytail: one sync per active user and minute, sequentially; batch the stat reads if the bot grows large.
-  for (const userId of new Set([...batch.keys(), ...days.keys()])) await syncAchievements(userId);
+  for (const userId of new Set([...batch.keys(), ...days.keys()])) {
+    await syncQuests(userId);
+    await syncAchievements(userId);
+  }
+  const today = berlinDay();
+  if (purgedDay !== today) {
+    purgedDay = today;
+    await purgeOldQuestStats().catch((error: unknown) => logger.warn('Alte Tagesaufgaben-Zähler konnten nicht gelöscht werden:', (error as Error).message));
+  }
 }
+
+let purgedDay: string | null = null;
 
 let timer: NodeJS.Timeout | null = null;
 

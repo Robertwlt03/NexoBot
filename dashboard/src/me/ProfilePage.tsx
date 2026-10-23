@@ -8,7 +8,7 @@ import { useGSAP } from '@gsap/react';
 import { COSMETIC_SLOTS, DAILY_BONUS, MAX_BIO_LENGTH, MAX_EQUIPPED_BADGES, SLOT_LABELS, STICKER_SPOTS, levelUpReward } from '../../../src/shared/cosmetics';
 import { PROFILE_CARD_HEIGHT, PROFILE_CARD_WIDTH, drawSticker, profileGeometry, stickerPoint, stickerRadius } from '../../../src/shared/profileCard';
 import type { CosmeticItem, CosmeticSlot, ResolvedCosmetics, StickerData, StickerSpot, UserProfileSettings } from '../../../src/shared/cosmetics';
-import type { DailyClaimResult, MeProfileResponse } from '../../../src/web/dto/profile';
+import type { DailyClaimResult, MeProfileResponse, QuestsResponse } from '../../../src/web/dto/profile';
 import { api, useUser } from '../api';
 import { LevelUpPreview, ProfileCardPreview } from '../components/ProfileCardPreview';
 import { Icon } from '../icons';
@@ -91,6 +91,62 @@ function DailyCard() {
           ? <button type="button" className="btn btn-primary w-full" disabled={busy} onClick={claim}>{busy ? 'Einen Moment …' : 'Bonus abholen'}</button>
           : <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-center text-[13px] text-body">Nächster Bonus in <span className="tabular-nums text-ink">{daily.nextAt ? countdown(daily.nextAt, now) : 'Kürze'}</span></div>}
       </div>
+    </section>
+  );
+}
+
+/** Today's three quests; polled once a minute while visible, since they pay out on their own. */
+function QuestsCard() {
+  const { me, setMe } = useMe();
+  const updateWallet = useWalletUpdate();
+  const now = useNow(30_000);
+  const { quests, bonus, resetsAt } = me.quests;
+  useEffect(() => {
+    const poll = async () => {
+      if (document.hidden) return;
+      const result = await api<QuestsResponse>('/me/quests').catch(() => null);
+      if (!result) return;
+      setMe((prev) => ({ ...prev, quests: result.quests }));
+      updateWallet(result.wallet);
+    };
+    const timer = window.setInterval(poll, 60_000);
+    return () => window.clearInterval(timer);
+  }, [setMe, updateWallet]);
+  const doneCount = quests.filter((quest) => quest.done).length;
+
+  return (
+    <section className="card !p-5 md:col-span-2 xl:col-span-1">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <span className="text-[13px] text-mute">Tagesaufgaben · {doneCount} von {quests.length}</span>
+        <span className="text-[12px] text-faint">Neue in <span className="tabular-nums">{countdown(resetsAt, now)}</span></span>
+      </div>
+      <ul className="mt-3 flex list-none flex-col gap-3 p-0">
+        {quests.map((quest) => (
+          <li key={quest.id}>
+            <div className="flex items-start gap-2.5">
+              <span className={`mt-px grid h-5 w-5 shrink-0 place-items-center rounded-full ${quest.done ? 'bg-pos text-canvas' : 'border border-white/20'}`}>
+                {quest.done && <Glyph name="check" size={12} />}
+              </span>
+              <span className={`min-w-0 flex-1 text-[13.5px] leading-snug ${quest.done ? 'text-mute' : 'text-ink'}`}>{quest.label}</span>
+              <span className="shrink-0 text-[12.5px] text-mute">+<Bernis amount={quest.reward} nowrap /></span>
+            </div>
+            {!quest.done && (
+              <div className="ml-[30px] mt-1.5 flex items-center gap-2">
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[.06]">
+                  <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${(quest.current / quest.target) * 100}%` }} />
+                </div>
+                <span className="text-[11.5px] tabular-nums text-faint">{quest.current} / {quest.target}</span>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div className={`mt-4 flex items-center gap-2 rounded-xl border px-3 py-2 text-[12.5px] ${bonus.done ? 'border-pos/30 bg-pos/10 text-ink' : 'border-white/[.06] bg-white/[.02] text-mute'}`}>
+        <Glyph name="gift" size={16} />
+        <span className="min-w-0 flex-1">{bonus.done ? 'Alle geschafft – Bonus kassiert!' : 'Alle drei geschafft:'}</span>
+        <span className="shrink-0">+<Bernis amount={bonus.reward} nowrap /></span>
+      </div>
+      <p className="mt-2 text-[11.5px] text-faint">Zählt auf allen Servern mit Nexo. Fertige Aufgaben zahlen sich von selbst aus.</p>
     </section>
   );
 }
@@ -338,6 +394,7 @@ export default function ProfilePage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-1 xl:content-start">
           <WalletCard />
           <DailyCard />
+          <QuestsCard />
         </div>
       </div>
 

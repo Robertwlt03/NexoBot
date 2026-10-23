@@ -6,7 +6,7 @@ import type { Router } from 'express';
 import type { NexoClient } from '../../types/index.js';
 import type { CosmeticItem } from '../../shared/cosmetics.js';
 import type {
-  AchievementsResponse, DailyClaimResult, MeProfileResponse, ProfileLevel,
+  AchievementsResponse, DailyClaimResult, MeProfileResponse, ProfileLevel, QuestsResponse,
 } from '../dto/profile.js';
 import { locals, sendError } from '../dashboard.js';
 import { HttpError, badRequest, body } from '../http.js';
@@ -19,6 +19,8 @@ import { claimDaily, getDailyState, listTransactions, walletSummary } from '../.
 import { blackMarketResponse, gift, ownedItems, purchase, purchaseBundle, shopResponse } from '../../services/cosmetics/shop.js';
 import { listAchievements, syncAchievements } from '../../services/cosmetics/achievements.js';
 import { userRankings } from '../../services/cosmetics/rankings.js';
+import { getDailyQuests } from '../../services/cosmetics/quests.js';
+import { pendingQuestCounts } from '../../services/cosmetics/activity.js';
 
 async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[]> {
   const result = await requirePool().query<{ guild_id: string; level: number; xp: string; rank: string }>(
@@ -35,10 +37,11 @@ async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[
 }
 
 async function profileResponse(client: NexoClient, userId: string): Promise<MeProfileResponse> {
-  const [wallet, profile, inventory, levelList, daily] = await Promise.all([
+  const [wallet, profile, inventory, levelList, daily, quests] = await Promise.all([
     walletSummary(userId), readProfileSettings(userId), ownedItems(userId), levels(client, userId), getDailyState(userId),
+    getDailyQuests(userId, pendingQuestCounts(userId)),
   ]);
-  return { isOwner: isBotOwner(userId), wallet, profile, inventory, levels: levelList, daily };
+  return { isOwner: isBotOwner(userId), wallet, profile, inventory, levels: levelList, daily, quests };
 }
 
 export function meRouter(client: NexoClient): Router {
@@ -71,6 +74,13 @@ export function meRouter(client: NexoClient): Router {
     const { claimed } = await claimDaily(userId);
     await syncAchievements(userId);
     const result: DailyClaimResult = { claimed, wallet: await walletSummary(userId), daily: await getDailyState(userId) };
+    res.json(result);
+  });
+
+  // Polled by the dashboard while the profile page is open: quest progress and the wallet (quests pay on their own).
+  router.get('/quests', async (_req, res) => {
+    const { userId } = locals(res).session;
+    const result: QuestsResponse = { quests: await getDailyQuests(userId, pendingQuestCounts(userId)), wallet: await walletSummary(userId) };
     res.json(result);
   });
 
