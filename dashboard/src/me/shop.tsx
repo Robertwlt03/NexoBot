@@ -208,7 +208,7 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
             <p className="mt-3 max-w-[480px] text-[14.5px] text-body">{event ? event.description : 'Die besten Stücke, die dir noch fehlen – rechts schon auf deiner Karte angelegt.'}</p>
             {event && (
               <div className="mt-5 flex max-w-[480px] items-center gap-4 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 backdrop-blur">
-                <span className="shrink-0 whitespace-nowrap text-[30px] font-light leading-none tracking-tight text-ink">−{event.discount} %</span>
+                <span className="shrink-0 whitespace-nowrap text-[24px] font-light leading-none tracking-tight text-ink @md:text-[30px]">−{event.discount} %</span>
                 <span className="min-w-0 text-[12.5px] leading-snug text-mute">auf {event.slots ? event.slots.map((sl) => SLOT_LABELS[sl]).join(', ') : 'alles'}<br />bis {formatDate(event.endsAt)}</span>
               </div>
             )}

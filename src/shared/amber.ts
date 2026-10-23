@@ -1,6 +1,5 @@
-// The Bernis currency icon: a drop of amber (fossil tree resin) with a leaf caught inside and a glint of light.
-// One geometry for every surface: the dashboard draws it as SVG, the profile and level-up cards on canvas.
-// Import-free (shared by the bot and the dashboard).
+// The amber drop (fossil tree resin with a leaf caught inside) that is engraved on every Bernis coin
+// (shared/coins.ts). Import-free (shared by the bot and the dashboard).
 
 /** Geometry is defined in a 24×24 box. */
 export const AMBER_BOX = 24;
@@ -56,16 +55,6 @@ export function amberSvgPath(path: AmberPath): string {
   return path.map((cmd) => cmd.join(' ')).join(' ');
 }
 
-/**
- * Detail by rendered size: tiny (< 12 px) = drop + leaf, small (< 24 px) = + glint, full = + vein and bubble.
- */
-export type AmberDetail = 'tiny' | 'small' | 'full';
-export function amberDetail(size: number): AmberDetail {
-  if (size < 12) return 'tiny';
-  if (size < 24) return 'small';
-  return 'full';
-}
-
 // ---------- Canvas ----------
 
 interface CanvasGradientLike { addColorStop(offset: number, color: string): void }
@@ -88,64 +77,5 @@ export interface AmberContext {
   fill(): void;
   stroke(): void;
   createRadialGradient(x0: number, y0: number, r0: number, x1: number, y1: number, r1: number): CanvasGradientLike;
-}
-
-function trace(ctx: AmberContext, path: AmberPath, ox: number, oy: number, k: number) {
-  ctx.beginPath();
-  for (const cmd of path) {
-    if (cmd[0] === 'M') ctx.moveTo(ox + cmd[1] * k, oy + cmd[2] * k);
-    else if (cmd[0] === 'L') ctx.lineTo(ox + cmd[1] * k, oy + cmd[2] * k);
-    else if (cmd[0] === 'C') ctx.bezierCurveTo(ox + cmd[1] * k, oy + cmd[2] * k, ox + cmd[3] * k, oy + cmd[4] * k, ox + cmd[5] * k, oy + cmd[6] * k);
-    else ctx.closePath();
-  }
-}
-
-/** Draws the amber drop centred on (cx, cy), `size` px tall; detail follows the size unless given. */
-export function drawAmber(ctx: AmberContext, cx: number, cy: number, size: number, detail: AmberDetail = amberDetail(size)) {
-  const k = size / AMBER_BOX;
-  const ox = cx - size / 2;
-  const oy = cy - size / 2;
-  ctx.save();
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-  const light = ctx.createRadialGradient(ox + AMBER_LIGHT.x * k, oy + AMBER_LIGHT.y * k, 0, ox + AMBER_LIGHT.x * k, oy + AMBER_LIGHT.y * k, AMBER_LIGHT.r * k);
-  light.addColorStop(0, AMBER_COLORS.light);
-  light.addColorStop(0.5, AMBER_COLORS.mid);
-  light.addColorStop(1, AMBER_COLORS.deep);
-  trace(ctx, AMBER_DROP, ox, oy, k);
-  ctx.fillStyle = light;
-  ctx.fill();
-
-  trace(ctx, AMBER_LEAF, ox, oy, k);
-  ctx.fillStyle = AMBER_COLORS.leaf;
-  ctx.globalAlpha = 0.6;
-  ctx.fill();
-  ctx.globalAlpha = 1;
-
-  if (detail === 'full') {
-    trace(ctx, AMBER_VEIN, ox, oy, k);
-    ctx.strokeStyle = AMBER_COLORS.vein;
-    ctx.globalAlpha = 0.45;
-    ctx.lineWidth = Math.max(0.5, 0.4 * k);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(ox + AMBER_BUBBLE.x * k, oy + AMBER_BUBBLE.y * k, AMBER_BUBBLE.r * k, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffffff';
-    ctx.globalAlpha = 0.55;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  }
-  if (detail !== 'tiny') {
-    trace(ctx, AMBER_GLINT, ox, oy, k);
-    ctx.fillStyle = '#ffffff';
-    ctx.globalAlpha = 0.55;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  }
-
-  trace(ctx, AMBER_DROP, ox, oy, k);
-  ctx.strokeStyle = AMBER_COLORS.outline;
-  ctx.lineWidth = Math.max(0.75, 0.6 * k);
-  ctx.stroke();
-  ctx.restore();
+  createLinearGradient(x0: number, y0: number, x1: number, y1: number): CanvasGradientLike;
 }

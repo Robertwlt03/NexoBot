@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { ShopListing } from '../../../src/web/dto/profile';
-import { AmberIcon } from '../components/AmberIcon';
+import { CoinIcon } from '../components/CoinIcon';
 import { PageHeader, Spinner } from '../components/ui';
 import { countdown, formatDate, useMe, useNow } from './api';
 import { ItemDetail, StoreCard } from './shop';
@@ -39,7 +39,7 @@ function RevealCard({ listing, revealed, owned, onReveal, onOpen }: {
           <span className="absolute inset-0 bg-[radial-gradient(70%_55%_at_50%_45%,color-mix(in_srgb,var(--tile)_35%,transparent),transparent_70%),repeating-linear-gradient(135deg,rgb(255_255_255/.035)_0_2px,transparent_2px_12px)]" />
           <span className="absolute inset-3 rounded-[12px] border border-[color-mix(in_srgb,var(--tile)_40%,transparent)]" />
           <span className="relative transition-transform duration-500 [backface-visibility:hidden] group-hover:scale-110 group-hover:-rotate-6">
-            <AmberIcon size={72} detail="full" />
+            <CoinIcon tier="gold" size={72} />
           </span>
           <span className="relative text-[11px] font-bold uppercase tracking-[.24em]" style={{ color: tint }}>Aufdecken</span>
         </button>
@@ -86,7 +86,7 @@ export default function BlackMarketPage() {
           <div className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-rose-600/20 blur-[110px]" />
           <div className="pointer-events-none absolute -bottom-40 left-10 h-72 w-72 rounded-full bg-violet-700/15 blur-[110px]" />
           <div className="relative flex flex-wrap items-end gap-6">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-[1_1_300px]">
               <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[.24em] text-rose-300">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-400 shadow-[0_0_10px_#fb7185]" /> Nur diese Woche
               </p>

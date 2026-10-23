@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { discounted } from '../src/shared/coins.js';
 import assert from 'node:assert/strict';
 import {
   COSMETIC_SLOTS, MAX_BIO_LENGTH, PRICE_BANDS, RARITIES, defaultProfileSettings, levelUpReward, type CosmeticItem,
@@ -75,6 +76,7 @@ test('discount resolution picks the best running event for the slot', () => {
   };
   const running = runningEvents(now, [custom]);
   assert.deepEqual(running.map((event) => event.id).sort(), ['custom-bg', 'summer-sale']);
+  // 900 at 50 % = 450: full silver would be 10 % off the deal, so it stays at 450.
   assert.deepEqual(priceFor(seed('bg-indigo-dusk'), running), { finalPrice: 450, discount: 50, eventId: 'custom-bg' });
   assert.deepEqual(priceFor(seed('frame-sapphire'), running), { finalPrice: 800, discount: 20, eventId: 'summer-sale' });
   // Black-market items never get discounts.
@@ -110,7 +112,7 @@ test('black-market discounts: 10–40 % per item and week, and never worse than 
   assert.ok(new Set(discounts).size > 2);
   assert.equal(blackMarketDiscount('2026-10-12', item.id), blackMarketDiscount('2026-10-12', item.id));
   const price = blackMarketPrice(item, '2026-10-12', []);
-  assert.equal(price.finalPrice, Math.round((item.price * (100 - price.discount)) / 100));
+  assert.equal(price.finalPrice, discounted(item.price, price.discount));
   const bigSale: ShopEvent = { id: 'sale', name: 'Sale', description: '', startsAt: '2026-10-01T00:00:00Z', endsAt: '2026-11-01T00:00:00Z', discount: 90, slots: null, kind: 'custom', active: true };
   assert.equal(blackMarketPrice(item, '2026-10-12', [bigSale]).discount, 90);
 });

@@ -2,7 +2,7 @@
 // bot (@napi-rs/canvas). Import-free apart from types, like welcomeCard.ts, so both sides draw the same pixels.
 // Randomness (patterns, effects) is seeded by the member's name, so preview == bot.
 
-import { drawAmber } from './amber.js';
+import { drawCoin, splitCoins, type CoinTier } from './coins.js';
 import type {
   BackgroundData, BackgroundScene, BadgeData, BadgeGlyph, CosmeticItem, EffectData, FrameData, LayoutData, LevelupData, NameStyleData, PatternKind,
   ProfileCardSubject, ResolvedCosmetics, StickerData, XpBarData,
@@ -1827,12 +1827,21 @@ function drawAvatar(ctx: Ctx, image: ProfileImage | null, { cx, cy, r }: Circle,
 
 // ---------- Text pieces ----------
 
-/** `amber` draws the Bernis currency icon (shared/amber.ts) instead of text or a badge glyph. */
-interface Run { text?: string; glyph?: BadgeGlyph; amber?: boolean; font: string; color: string; size?: number; gap?: number }
+/** `coin` draws a Bernis coin (shared/coins.ts) instead of text or a badge glyph. */
+interface Run { text?: string; glyph?: BadgeGlyph; coin?: CoinTier; font: string; color: string; size?: number; gap?: number }
+
+/** An amount as coin runs: coin, count, coin, count … (zero tiers left out). */
+function coinRuns(amount: number, size: number, color: string): Run[] {
+  const coin = Math.max(15, Math.round(size * 0.7));
+  return splitCoins(amount).flatMap(({ tier, count }, index, all): Run[] => [
+    { coin: tier, size: coin, color, font: '', gap: Math.round(size * 0.22) },
+    { text: String(count), font: font('inter', 700, size), color, gap: index < all.length - 1 ? Math.round(size * 0.5) : 0 },
+  ]);
+}
 
 function runWidths(ctx: Ctx, runs: Run[]): number[] {
   return runs.map((run) => {
-    if (run.glyph || run.amber) return (run.size ?? 16) + (run.gap ?? 6);
+    if (run.glyph || run.coin) return (run.size ?? 16) + (run.gap ?? 6);
     ctx.font = run.font;
     return ctx.measureText(run.text ?? '').width + (run.gap ?? 0);
   });
@@ -1847,9 +1856,9 @@ function drawRuns(ctx: Ctx, runs: Run[], x: number, y: number, align: 'left' | '
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   runs.forEach((run, index) => {
-    if (run.amber) {
+    if (run.coin) {
       const size = run.size ?? 16;
-      drawAmber(ctx, cursor + size / 2, y - size * 0.36, size * 1.15);
+      drawCoin(ctx, run.coin, cursor + size / 2, y - size * 0.36, size * 1.1);
     } else if (run.glyph) {
       const size = run.size ?? 16;
       drawGlyph(ctx, run.glyph, cursor + size / 2, y - size * 0.36, size, run.color);
@@ -1890,15 +1899,14 @@ function drawName(
 
 const STAT_LABELS: Record<StatKey, string> = { level: 'LEVEL', rank: 'RANG', balance: 'BERNIS' };
 
-function statValue(key: StatKey, subject: ProfileCardSubject): string {
+function statValue(key: Exclude<StatKey, 'balance'>, subject: ProfileCardSubject): string {
   if (key === 'level') return String(subject.level);
-  if (key === 'rank') return subject.rank ? `#${subject.rank}` : '–';
-  return formatNumber(subject.balance);
+  return subject.rank ? `#${subject.rank}` : '–';
 }
 
 function valueRuns(key: StatKey, subject: ProfileCardSubject, size: number, accent: string): Run[] {
-  const value = { text: statValue(key, subject), font: font('inter', 700, size), color: key === 'level' ? lighten(accent, 0.2) : TEXT };
-  return key === 'balance' ? [{ amber: true, size: Math.round(size * 0.66), color: accent, font: '', gap: Math.round(size * 0.36) }, value] : [value];
+  if (key === 'balance') return coinRuns(subject.balance, size, TEXT);
+  return [{ text: statValue(key, subject), font: font('inter', 700, size), color: key === 'level' ? lighten(accent, 0.2) : TEXT }];
 }
 
 function drawStats(ctx: Ctx, block: StatBlock, subject: ProfileCardSubject, accent: string) {
@@ -2526,9 +2534,8 @@ export function renderLevelUpCard<I extends ProfileImage>(
 
   if (reward > 0) {
     const runs: Run[] = [
-      { amber: true, size: 16, color: highlight, font: '', gap: 11 },
-      { text: `+${formatNumber(reward)}`, font: font('inter', 700, 16), color: TEXT, gap: 6 },
-      { text: 'Bernis', font: font('inter', 400, 16), color: SOFT },
+      { text: '+', font: font('inter', 700, 16), color: TEXT, gap: 6 },
+      ...coinRuns(reward, 16, TEXT),
     ];
     const pillW = measureRuns(ctx, runs) + 32;
     roundedRect(ctx, x, 168, pillW, 36, 18);

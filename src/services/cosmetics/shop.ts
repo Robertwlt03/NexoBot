@@ -1,6 +1,7 @@
 // Shop, black market, purchases and gifts. Purchases lock the buyer's wallet first, so concurrent buys of one user
 // run one after another; the inventory primary key keeps every item unique per user.
 
+import { discounted } from '../../shared/coins.js';
 import { randomInt } from 'node:crypto';
 import { COSMETIC_SLOTS, RARITIES, type CosmeticItem } from '../../shared/cosmetics.js';
 import type { BlackMarketResponse, OwnedItem, PurchaseResult, ShopBundle, ShopEvent, ShopListing, ShopResponse } from '../../web/dto/profile.js';
@@ -79,7 +80,7 @@ export function blackMarketDiscount(weekStart: string, itemId: string): number {
 /** Price on the black market: its weekly discount, or a running event's if that is better. */
 export function blackMarketPrice(entry: CosmeticItem, weekStart: string, running: ShopEvent[]): { finalPrice: number; discount: number; eventId: string | null } {
   const discount = blackMarketDiscount(weekStart, entry.id);
-  const own = { finalPrice: Math.round((entry.price * (100 - discount)) / 100), discount, eventId: null };
+  const own = { finalPrice: discounted(entry.price, discount), discount, eventId: null };
   const event = priceFor(entry, running);
   return event.finalPrice < own.finalPrice ? event : own;
 }

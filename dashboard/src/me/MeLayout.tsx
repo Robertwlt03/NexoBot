@@ -1,13 +1,13 @@
 // Shell of the member area (/me, any logged-in user) and the owner area (/owner, isOwner only).
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { MouseEvent } from 'react';
+import type { CSSProperties, MouseEvent } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import type { ApiGuildSummary } from '../../../src/web/apiTypes';
 import type { CosmeticItem } from '../../../src/shared/cosmetics';
 import type { BlackMarketResponse, MeProfileResponse, ShopResponse } from '../../../src/web/dto/profile';
-import { DirtyContext, useApi } from '../api';
+import { DirtyContext, useApi, useUser } from '../api';
 import { ServerRail, SideMenu, UserPanel } from '../components/Layout';
 import { PageBackdrop } from '../components/Backdrop';
 import { Notice, Spinner } from '../components/ui';
@@ -15,6 +15,9 @@ import { Icon } from '../icons';
 import { MeContext, reducedMotion, useCountUp } from './api';
 import type { MeContextValue } from './api';
 import { Bernis, GLYPHS, Glyph } from './visuals';
+import { CoinFlight, useCoinFlight, useCoinMilestone } from './CoinFlight';
+import { Celebration } from './Celebration';
+import { CoinIcon } from '../components/CoinIcon';
 import type { GlyphName } from './visuals';
 
 interface NavEntry { to: string; label: string; icon: GlyphName }
@@ -38,12 +41,29 @@ const OWNER_NAV: NavEntry[] = [
   { to: '/owner/einstellungen', label: 'Einstellungen', icon: 'sliders' },
 ];
 
+/** "Deine erste Goldmünze!" once the balance rises past a coin milestone (one instance for the whole layout). */
+function CoinMilestone({ balance }: { balance: number }) {
+  const user = useUser();
+  const { milestone, close } = useCoinMilestone(balance, user?.id);
+  if (!milestone) return null;
+  return (
+    <Celebration tint={milestone.tint} kicker="Neue Münze" title={milestone.title} text={milestone.text} onClose={close}
+      tile={<span className="game-tile-field grid aspect-square place-items-center rounded-[22px] ring-1 ring-white/10" style={{ '--tile': milestone.tint } as CSSProperties}><CoinIcon tier={milestone.tier} size={128} /></span>}
+      actions={<button type="button" className="btn btn-primary" onClick={close}>Weiter</button>} />
+  );
+}
+
 function WalletPill({ balance }: { balance: number }) {
   const shown = useCountUp(balance);
+  const pill = useRef<HTMLSpanElement>(null);
+  const { flight, done } = useCoinFlight(balance, pill);
   return (
-    <span title="Dein Kontostand" className="inline-flex items-center gap-1.5 rounded-full border border-white/[.08] bg-white/[.04] px-3 py-1 text-[13px] font-medium text-ink">
-      <Bernis amount={shown} />
-    </span>
+    <>
+      <span ref={pill} className="inline-flex items-center gap-1.5 rounded-full border border-white/[.08] bg-white/[.04] px-3 py-1 text-[13px] font-medium text-ink">
+        <Bernis amount={shown} nowrap max={2} />
+      </span>
+      <CoinFlight flight={flight} pill={pill} onDone={done} />
+    </>
   );
 }
 
@@ -136,6 +156,7 @@ export function MeLayout() {
           <span className="text-faint">/</span>
           <span className="truncate text-sm font-medium text-ink">{current?.label ?? 'Übersicht'}</span>
           {profile.data && <span className="ml-auto lg:hidden"><WalletPill balance={profile.data.wallet.balance} /></span>}
+          {profile.data && <CoinMilestone balance={profile.data.wallet.balance} />}
         </header>
         <div className="relative flex-1 overflow-y-auto px-4 pb-32 pt-9 md:px-10">
           <PageBackdrop art={current && GLYPHS[current.icon]} column={1100} />

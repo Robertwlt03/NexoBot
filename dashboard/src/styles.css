@@ -303,9 +303,10 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
 .table-wrap .table th:first-child, .table-wrap .table td:first-child { padding-left: 16px; }
 /* Number tiles: label first, big light number, small hint (delta) below. */
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 0 0 16px; }
-.stat { display: flex; flex-direction: column; background: var(--highlight), var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; box-shadow: var(--card-shadow, none); }
-.stat dt { order: 2; font-size: 30px; font-weight: 300; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--text-strong); line-height: 1.15; margin-top: 6px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 0 0 16px; }
+.stat { container-type: inline-size; display: flex; flex-direction: column; background: var(--highlight), var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; box-shadow: var(--card-shadow, none); }
+/* The number follows the tile width, so coin amounts stay on one line in narrow tiles. */
+.stat dt { order: 2; font-size: clamp(20px, 10.5cqi, 30px); font-weight: 300; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--text-strong); line-height: 1.15; margin-top: 6px; }
 .stat dd { order: 1; margin: 0; color: var(--text-muted); font-size: 13px; }
 .stat .stat-hint { order: 3; color: var(--text-faint); font-size: 12px; margin-top: 4px; }
 .actions-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
@@ -325,6 +326,11 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 /* Shown/hidden with GSAP (ui.tsx); the shake runs when navigation is blocked by unsaved changes. */
 .save-bar { position: fixed; left: 50%; bottom: 22px; width: min(740px, calc(100% - 32px)); background: color-mix(in srgb, var(--bg-card) 88%, transparent); backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%); border: 1px solid var(--border-strong); border-radius: 18px; padding: 10px 12px 10px 18px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); z-index: 40; visibility: hidden; }
 .save-bar .msg { flex: 1; color: var(--text-strong); font-weight: 500; }
+/* Phones: the message on its own line, the buttons below it, right-aligned. */
+@media (max-width: 520px) {
+  .save-bar { flex-wrap: wrap; justify-content: flex-end; row-gap: 8px; padding: 12px 14px; }
+  .save-bar .msg { flex-basis: 100%; }
+}
 .save-bar.shake { border-color: rgba(248, 113, 113, .6); box-shadow: 0 0 0 3px rgba(248, 113, 113, .18), var(--shadow); }
 
 .toasts { position: fixed; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 60; }

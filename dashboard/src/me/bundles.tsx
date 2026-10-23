@@ -11,7 +11,7 @@ import { equipItem, isEquipped, useEquip, useMe, useMutation, useWalletUpdate } 
 import { Celebration } from './Celebration';
 import { ProductDialog } from './ProductDialog';
 import { ProductStage, TryOnPreview } from './ProductStage';
-import { Bernis, Glyph, ItemVisual, Price, RARITY_TILE, RarityLabel } from './visuals';
+import { Bernis, Glyph, StruckBernis, ItemVisual, Price, RARITY_TILE, RarityLabel } from './visuals';
 
 /** The bundle's colour: its rarest item. */
 const tintOf = (items: CosmeticItem[]) =>
@@ -192,8 +192,8 @@ function BundleDetail({ bundle, parts, onClose }: { bundle: ShopBundle; parts: S
               <>
                 <div>
                   <div className="flex items-baseline gap-2 text-[26px] font-bold text-ink">
-                    <Bernis amount={bundle.price} large />
-                    {bundle.price < bundle.fullPrice && <span className="text-[15px] font-medium text-faint line-through"><Bernis amount={bundle.fullPrice} /></span>}
+                    <Bernis amount={bundle.price} large nowrap />
+                    {bundle.price < bundle.fullPrice && <StruckBernis amount={bundle.fullPrice} className="text-[15px] font-medium text-faint" />}
                   </div>
                   <p className="mt-1 text-[12.5px] text-faint">
                     {missing.length < parts.length ? `Du zahlst nur für die ${missing.length} Artikel, die dir noch fehlen. ` : 'Alle Artikel zum Preis von einzeln gekauft, in einem Schritt. '}

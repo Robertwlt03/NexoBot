@@ -229,7 +229,7 @@ function ItemEditor({ initial, isNew, events, onClose, onSaved }: { initial: Cos
           <Field label="Beschreibung"><TextArea value={item.description} onChange={(description) => set({ description })} maxLength={140} rows={2} /></Field>
           <div className="grid-2">
             <Field label="Seltenheit"><Select value={item.rarity} onChange={(rarity) => set({ rarity })} options={RARITIES.map((r) => ({ value: r, label: RARITY_LABELS[r] }))} /></Field>
-            <Field label="Preis (Bernis)" hint={`Üblich: ${num(band[0])}–${num(band[1])}`}><NumberInput value={item.price} onChange={(price) => set({ price })} min={0} step={50} /></Field>
+            <Field label="Preis (in Bronze)" hint={<>Entspricht <Bernis amount={item.price} nowrap />. Üblich für diese Seltenheit: <Bernis amount={band[0]} nowrap /> bis <Bernis amount={band[1]} nowrap />.</>}><NumberInput value={item.price} onChange={(price) => set({ price })} min={0} step={50} /></Field>
             <Field label="Erhältlich über">
               <Select value={item.availability} onChange={(availability) => set({ availability, eventId: availability === 'event' ? item.eventId ?? events[0]?.id ?? null : null })} options={opts(AVAILABILITY_LABELS)} />
             </Field>
@@ -310,7 +310,7 @@ export default function ItemsPage() {
                 </td>
                 <td className="whitespace-nowrap">{SLOT_LABELS[item.slot]}</td>
                 <td><RarityLabel rarity={item.rarity} /></td>
-                <td className="text-right">{item.price ? <Bernis amount={item.price} /> : <span className="text-faint">–</span>}</td>
+                <td className="text-right">{item.price ? <Bernis amount={item.price} nowrap /> : <span className="text-faint">–</span>}</td>
                 <td className="whitespace-nowrap">{AVAILABILITY_LABELS[item.availability]}{item.eventId && <div className="faint">{events.find((e) => e.id === item.eventId)?.name ?? item.eventId}</div>}</td>
                 <td>{item.active ? <span className="badge badge-on">Aktiv</span> : <span className="badge badge-off">Inaktiv</span>}</td>
                 <td className="whitespace-nowrap text-right">

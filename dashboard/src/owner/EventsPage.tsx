@@ -92,7 +92,7 @@ export default function EventsPage() {
 
   const row = (event: ShopEvent) => (
     <li key={event.id} className="list-item flex-wrap">
-      <div className="grow">
+      <div className="min-w-0 grow basis-[260px]">
         <div className="flex flex-wrap items-center gap-2"><span className="title">{event.name}</span>{status(event, now)}</div>
         <div className="faint mt-0.5">
           {formatDateTime(event.startsAt)} – {formatDateTime(event.endsAt)} · −{event.discount} % · {event.slots ? event.slots.map((s) => SLOT_LABELS[s]).join(', ') : 'alle Bereiche'}

@@ -7,6 +7,9 @@ import { createEmbed } from '../../utils/embeds.js';
 import { ErrorTypes, NexoBotError } from '../../utils/errorHandler.js';
 import { publicDashboardUrl } from '../../web/dashboard.js';
 import { CURRENCY } from '../../shared/cosmetics.js';
+import { formatCoins } from '../../shared/coins.js';
+
+const COIN_TEXT = '🟤 Bronze · ⚪ Silber (100 Bronze) · 🟡 Gold (100 Silber) · 💠 Platin (100 Gold)';
 import { formatNumber } from '../../shared/profileCard.js';
 import { getBalance } from '../../services/cosmetics/store.js';
 import { canAttachFiles, loadProfileCardData, profileCardAttachment } from '../../services/profileCardRenderer.js';
@@ -43,7 +46,7 @@ export default {
     if (subcommand === 'bernis') {
       const balance = await getBalance(interaction.user.id);
       await InteractionHelper.safeReply(interaction, {
-        embeds: [createEmbed({ title: `${CURRENCY.symbol} Deine ${CURRENCY.name}`, description: `Du hast **${formatNumber(balance)}** ${balance === 1 ? CURRENCY.singular : CURRENCY.name}.\n\n${EARN_TEXT}` })],
+        embeds: [createEmbed({ title: `${CURRENCY.symbol} Deine ${CURRENCY.name}`, description: `Du hast **${formatCoins(balance)}** (${formatNumber(balance)} ${balance === 1 ? CURRENCY.singular : CURRENCY.name}).\n\n${COIN_TEXT}\n${EARN_TEXT}` })],
         components: url ? [shopRow(url)] : [],
         flags: MessageFlags.Ephemeral,
       });
@@ -81,7 +84,7 @@ export default {
           { name: 'Level', value: String(subject.level), inline: true },
           { name: 'XP', value: `${formatNumber(subject.xp)} / ${formatNumber(subject.xpNeeded)}`, inline: true },
           { name: 'Rang', value: subject.rank ? `#${subject.rank}` : '–', inline: true },
-          { name: CURRENCY.name, value: formatNumber(subject.balance), inline: true },
+          { name: CURRENCY.name, value: formatCoins(subject.balance), inline: true },
         ],
       })],
     });
