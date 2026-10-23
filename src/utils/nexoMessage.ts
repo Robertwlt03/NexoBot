@@ -4,7 +4,7 @@
 
 import {
   ActionRowBuilder, ButtonBuilder, ContainerBuilder, MediaGalleryBuilder, MessageFlags, SectionBuilder, SeparatorBuilder,
-  SeparatorSpacingSize, TextDisplayBuilder, ThumbnailBuilder,
+  SeparatorSpacingSize, TextDisplayBuilder, ThumbnailBuilder, type MessageActionRowComponentBuilder,
 } from 'discord.js';
 
 /** Moss green of the Nexo look (the dashboard's and the profile card's default accent). */
@@ -60,7 +60,7 @@ export function nexoCard({ kicker, title, accent = NEXO_ACCENT, blocks, footer }
 }
 
 /** Message payload for one or more V2 containers (plus loose button rows below them). */
-export function nexoMessage(containers: ContainerBuilder | ContainerBuilder[], options: { ephemeral?: boolean; rows?: ActionRowBuilder<ButtonBuilder>[] } = {}) {
+export function nexoMessage(containers: ContainerBuilder | ContainerBuilder[], options: { ephemeral?: boolean; rows?: ActionRowBuilder<MessageActionRowComponentBuilder>[] } = {}) {
   return {
     components: [...(Array.isArray(containers) ? containers : [containers]), ...(options.rows ?? [])],
     flags: (MessageFlags.IsComponentsV2 | (options.ephemeral ? MessageFlags.Ephemeral : 0)) as number,

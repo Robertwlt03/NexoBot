@@ -26,6 +26,7 @@ import type { InteractionExtras, NexoInteraction } from '../utils/interactionHel
 import type { TraceContext } from '../utils/logger.js';
 import type { ReactionRoleMessage } from '../services/reactionRoleService.js';
 import type { BotEvent, Command, GuildConfig, ResolvedRoute } from '../types/index.js';
+import { handleContextMenu } from '../services/contextMenus.js';
 
 /** Error context plus the identifiers withTraceContext folds into the trace fields. */
 type TraceableContext = ErrorContext & { commandName?: string; guildId?: string | null; userId?: string | null };
@@ -78,6 +79,11 @@ export default {
       try {
         InteractionHelper.patchInteractionResponses(interaction as NexoInteraction);
         ResponseCoordinator.attach(interaction as NexoInteraction);
+
+        if (interaction.isUserContextMenuCommand()) {
+          await handleContextMenu(interaction, client);
+          return;
+        }
 
         if (interaction.isChatInputCommand()) {
           try {
