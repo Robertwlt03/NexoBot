@@ -74,6 +74,16 @@ function startUpdateInterval(client: Client, guildId: string): void {
     }, UPDATE_INTERVAL_MS);
 }
 
+/**
+ * The voice channel status line under the channel name (PUT /channels/{id}/voice-status, needs the
+ * SET_VOICE_CHANNEL_STATUS permission). Best effort: an empty string clears it.
+ */
+async function setVoiceStatus(client: Client, channelId: string | null | undefined, status: string): Promise<void> {
+    if (!channelId) return;
+    await client.rest.put(`/channels/${channelId}/voice-status`, { body: { status: status.slice(0, 500) } })
+        .catch((error: unknown) => logger.debug('Sprachkanal-Status nicht gesetzt:', (error as Error).message));
+}
+
 export function setupPlayerHandler(client: Client): void {
     if (!client.riffy) {
         logger.warn('Riffy not initialized; music player handlers not attached.');
@@ -155,6 +165,7 @@ export function setupPlayerHandler(client: Client): void {
             const channelId = guildData.playerChannelId || player.textChannel;
             await editOrSendPlayerMessage(client, guildData, channelId, embed, components);
             startUpdateInterval(client, player.guildId);
+            void setVoiceStatus(client, player.voiceChannel, `🎵 ${track.info.title}${track.info.author ? ` – ${track.info.author}` : ''}`);
         } catch (error) {
             logger.error('Music trackStart error:', error);
         }
@@ -164,6 +175,7 @@ export function setupPlayerHandler(client: Client): void {
         try {
             const guildData = getGuildMusicData(player.guildId);
             clearUpdateInterval(guildData);
+            void setVoiceStatus(client, player.voiceChannel, '');
 
             if (guildData.autoplay) {
                 player.autoplay(player);
@@ -208,6 +220,7 @@ export function setupPlayerHandler(client: Client): void {
     client.riffy.on('playerDisconnect', async (player) => {
         const guildData = getGuildMusicData(player.guildId);
         clearUpdateInterval(guildData);
+        void setVoiceStatus(client, player.voiceChannel, '');
 
         if (guildData.playerMessageId && guildData.playerChannelId) {
             try {
