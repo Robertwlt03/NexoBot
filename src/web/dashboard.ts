@@ -22,7 +22,7 @@ import type { ApiGuildDetail, ApiGuildSummary, ApiUser } from './apiTypes.js';
 import { dashboardModules } from './modules/index.js';
 import { meRouter } from './modules/me.js';
 import { ownerRouter } from './modules/owner.js';
-import { HttpError } from './http.js';
+import { HttpError, isHiddenChannel } from './http.js';
 import { ErrorTypes, NexoBotError } from '../utils/errorHandler.js';
 import type { ErrorType } from '../utils/errorHandler.js';
 
@@ -275,7 +275,7 @@ export function createDashboardRouter(client: NexoClient): Router {
       iconUrl: guild.iconURL({ size: 128 }),
       memberCount: guild.memberCount,
       channels: [...guild.channels.cache.values()]
-        .filter((channel) => !channel.isThread())
+        .filter((channel) => !channel.isThread() && !isHiddenChannel(channel))
         .map((channel) => ({
           id: channel.id,
           name: channel.name,
