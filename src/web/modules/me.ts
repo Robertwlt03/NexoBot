@@ -15,6 +15,7 @@ import { getXpForLevel } from '../../services/leveling/leveling.js';
 import { NO_DB_MESSAGE, T, cosmeticsPool, isSnowflake, requirePool } from '../../services/cosmetics/db.js';
 import { loadCatalog } from '../../services/cosmetics/catalog.js';
 import { parseProfileSettings, readDashboardTheme, readProfileSettings, writeDashboardTheme, writeProfileSettings } from '../../services/cosmetics/profile.js';
+import { forgetPalette } from '../../services/messageTheme.js';
 import { buyStreakShield, claimDaily, getDailyState, listTransactions, walletSummary } from '../../services/cosmetics/wallet.js';
 import { blackMarketResponse, gift, ownedItems, purchase, purchaseBundle, shopResponse } from '../../services/cosmetics/shop.js';
 import { listAchievements, syncAchievements } from '../../services/cosmetics/achievements.js';
@@ -82,7 +83,10 @@ export function meRouter(client: NexoClient): Router {
     res.json(await readDashboardTheme(locals(res).session.userId));
   });
   router.put('/theme', async (req, res) => {
-    res.json(await writeDashboardTheme(locals(res).session.userId, req.body));
+    const { userId } = locals(res).session;
+    const theme = await writeDashboardTheme(userId, req.body);
+    forgetPalette(userId);
+    res.json(theme);
   });
 
   router.post('/daily', async (_req, res) => {

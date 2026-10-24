@@ -11,6 +11,7 @@ import {
 } from 'discord.js';
 import { ACCENTS } from './nexoMessage.js';
 import { cardBanner, chosenBanner } from './cardBanner.js';
+import { paintFor } from '../services/messageTheme.js';
 
 /** Discord allows 4000 characters of text per V2 message; keep room for content and footers. */
 const TEXT_BUDGET = 3800;
@@ -279,8 +280,10 @@ Message.prototype.edit = function editAsCard(this: Message, options: Parameters<
 for (const ChannelClass of [BaseGuildTextChannel, BaseGuildVoiceChannel, ThreadChannel, DMChannel]) {
   const proto = ChannelClass.prototype as unknown as { send(options: unknown): Promise<Message> };
   const originalSend = proto.send;
-  proto.send = function sendAsCard(this: unknown, options: unknown) {
-    return originalSend.call(this, hasEmbeds(options) ? toCardPayload(options) : options);
+  proto.send = async function sendAsCard(this: unknown, options: unknown) {
+    const converted = hasEmbeds(options) ? toCardPayload(options) : options;
+    // A DM is for one member: it comes in their colour scheme.
+    return originalSend.call(this, this instanceof DMChannel ? await paintFor(this.recipientId, converted) : converted);
   };
 }
 

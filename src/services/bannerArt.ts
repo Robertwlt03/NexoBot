@@ -1,20 +1,17 @@
-// Renders the banners on top of every Nexo card (dashboard/public/banners/<name>.png): walnut wood, the Nexo coin,
-// a glow and a large line motif in the card's accent colour. Run after changing the look:
-//   npx tsx src/scripts/render-banners.ts
-// The PNGs are committed; utils/cardBanner.ts picks one by the card's accent colour or the message's topic.
+// The banner on top of every Nexo card: walnut wood, the Nexo coin, a glow and a large line motif in the card's
+// colour. Rendered on demand (any scheme colour, see shared/theme.ts messagePalette) and kept in memory; the
+// dashboard serves it at /dashboard/banners/<motif>.png?c=<rrggbb> (utils/cardBanner.ts builds the URL).
 
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { createCanvas, loadImage, Path2D } from '@napi-rs/canvas';
-import { BANNERS } from '../utils/cardBanner.js';
+import { fileURLToPath } from 'node:url';
+import { createCanvas, loadImage, Path2D, type Image } from '@napi-rs/canvas';
 
 const W = 1200;
 const H = 300;
-const root = path.resolve(import.meta.dirname, '../..');
-const out = path.join(root, 'dashboard/public/banners');
 
 /** Line motifs on the dashboard's 24px icon grid. */
-const MOTIFS: Record<keyof typeof BANNERS, string> = {
+export const MOTIFS = {
   nexo: 'M5 19c0-8 6-14 14-14 0 8-6 14-14 14zM5 19l9-9',
   amber: 'M14.5 3.5l6 6M12 6l6 6M9.5 8.5l6 6M4 20l7-7M13 4l7 7-3 3-7-7z',
   gold: 'M3 7a6 3 0 1 0 12 0a6 3 0 1 0-12 0M3 7v5c0 1.7 2.7 3 6 3s6-1.3 6-3V7M9 15v2c0 1.7 2.7 3 6 3s6-1.3 6-3v-5c0-1.7-2.7-3-6-3',
@@ -27,7 +24,9 @@ const MOTIFS: Record<keyof typeof BANNERS, string> = {
   giftEnded: 'M3 8h18v5H3zM5 13v8h14v-8M12 8v13M12 8C10.5 4 6.5 4 7 6.5S12 8 12 8zM12 8c1.5-4 5.5-4 5-1.5S12 8 12 8z',
   quests: 'M7 4h10a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM9.5 4V2.5h5V4M8 10l1.5 1.5L12 9M14 10.5h3M8 15.5l1.5 1.5L12 14.5M14 16h3',
   pink: 'M4 21V13a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8M4 16c1.5 1 3 1 4 0s2.5-1 4 0 3 1 4 0 2.5-1 4 0M2 21h20M12 11V7M12 7c-1.2 0-2-.8-2-2s2-3 2-3 2 1.8 2 3-.8 2-2 2z',
-};
+} as const;
+export type BannerMotif = keyof typeof MOTIFS;
+
 
 const rgba = (color: number, alpha: number) => `rgba(${(color >> 16) & 255},${(color >> 8) & 255},${color & 255},${alpha})`;
 /** The colour mixed with white by `amount` (0–1). */
@@ -43,10 +42,35 @@ function random(seed: number) {
   };
 }
 
-const logo = await loadImage(readFileSync(path.join(root, 'dashboard/public/nexo.svg')));
-mkdirSync(out, { recursive: true });
 
-for (const [name, accent] of Object.entries(BANNERS) as [keyof typeof BANNERS, number][]) {
+const here = path.dirname(fileURLToPath(import.meta.url));
+let logo: Promise<Image> | null = null;
+/** The Nexo coin from the dashboard (source tree or built frontend). */
+function nexoLogo(): Promise<Image> {
+  const file = [path.join(here, '../../dashboard/public/nexo.svg'), path.join(here, '../dashboard/nexo.svg')].find((candidate) => existsSync(candidate));
+  if (!file) throw new Error('nexo.svg not found');
+  return (logo ??= loadImage(readFileSync(file)));
+}
+
+/** Rendered banners by motif and colour; small (≈200 kB each), so a few hundred stay in memory. */
+const cache = new Map<string, Promise<Buffer>>();
+const CACHE_LIMIT = 300;
+
+export function renderBanner(motif: BannerMotif, accent: number): Promise<Buffer> {
+  const key = `${motif}:${accent}`;
+  let png = cache.get(key);
+  if (!png) {
+    png = draw(motif, accent);
+    png.catch(() => cache.delete(key));
+    cache.set(key, png);
+    // ponytail: drop the oldest entry, an LRU if scheme colours ever outgrow this
+    if (cache.size > CACHE_LIMIT) cache.delete(cache.keys().next().value!);
+  }
+  return png;
+}
+
+async function draw(motif: BannerMotif, accent: number): Promise<Buffer> {
+  const image = await nexoLogo();
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
   const rand = random(7);
@@ -116,7 +140,7 @@ for (const [name, accent] of Object.entries(BANNERS) as [keyof typeof BANNERS, n
   ctx.shadowColor = rgba(accent, 1);
   ctx.shadowBlur = 36;
   ctx.strokeStyle = rgba(lighten(accent, 0.55), 0.95);
-  ctx.stroke(new Path2D(MOTIFS[name]));
+  ctx.stroke(new Path2D(MOTIFS[motif]));
   ctx.restore();
 
   // Nexo coin.
@@ -124,7 +148,7 @@ for (const [name, accent] of Object.entries(BANNERS) as [keyof typeof BANNERS, n
   ctx.shadowColor = 'rgba(0,0,0,0.55)';
   ctx.shadowBlur = 28;
   ctx.shadowOffsetY = 8;
-  ctx.drawImage(logo, 64, (H - 190) / 2, 190, 190);
+  ctx.drawImage(image, 64, (H - 190) / 2, 190, 190);
   ctx.restore();
 
   // Soft vignette top and bottom, accent line at the bottom edge.
@@ -142,6 +166,5 @@ for (const [name, accent] of Object.entries(BANNERS) as [keyof typeof BANNERS, n
   ctx.fillStyle = line;
   ctx.fillRect(0, H - 6, W, 6);
 
-  writeFileSync(path.join(out, `${name}.png`), await canvas.encode('png'));
+  return canvas.encode('png');
 }
-console.log(`Rendered ${Object.keys(BANNERS).length} banners to ${path.relative(root, out)}`);

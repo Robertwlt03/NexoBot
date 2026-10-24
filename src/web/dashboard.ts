@@ -3,6 +3,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { MOTIFS, renderBanner, type BannerMotif } from '../services/bannerArt.js';
 import express from 'express';
 import type { NextFunction, Request, Response, Router } from 'express';
 import { PermissionFlagsBits } from 'discord.js';
@@ -353,6 +354,15 @@ export function createDashboardRouter(client: NexoClient): Router {
   router.use('/api', api);
   // Public, opt-in profile pages for link previews in Discord (no login).
   router.use('/p', publicProfileRouter(client, `${config.baseUrl}/dashboard`));
+
+  // Banners on top of Nexo cards, in any scheme colour (fetched by Discord, so public and long-cached).
+  router.get('/banners/:file', async (req, res) => {
+    const motif = /^([A-Za-z]+)\.png$/.exec(req.params.file)?.[1];
+    const color = /^[0-9a-f]{6}$/i.exec(String(req.query.c ?? ''))?.[0];
+    if (!motif || !Object.hasOwn(MOTIFS, motif) || !color) return sendError(res, 404, 'Unbekanntes Banner.');
+    const png = await renderBanner(motif as BannerMotif, Number.parseInt(color, 16));
+    res.type('png').set('Cache-Control', 'public, max-age=31536000, immutable').send(png);
+  });
 
   // ---------- Frontend ----------
   if (staticDir) {

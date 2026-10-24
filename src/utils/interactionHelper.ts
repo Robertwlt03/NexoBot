@@ -20,6 +20,7 @@ import { handleInteractionError, createError, ErrorTypes } from './errorHandler.
 import type { ErrorLike } from './errorHandler.js';
 import { ResponseCoordinator } from './responseCoordinator.js';
 import { cardMessageEdit, hasEmbeds, isCardMessage, toCardPayload } from './embedCard.js';
+import { paintFor } from '../services/messageTheme.js';
 import type { CoordinatedInteraction, PayloadResponder, ResponsePayload } from './responseCoordinator.js';
 import type { TraceContext } from './logger.js';
 import type { GuildConfig, NexoClient } from '../types/index.js';
@@ -54,7 +55,7 @@ type PatchableInteraction = CoordinatedInteraction & {
     /** The first response used the card layout, so later edits of it must too. */
     __nexoCards?: boolean;
 };
-type CardMessage = { flags?: { has(flag: number): boolean } | null; components?: { type: number }[] } | null;
+type CardMessage = { flags?: { has(flag: number): boolean } | null; components?: { type: number }[]; interactionMetadata?: { user?: { id: string } } | null } | null;
 type Updatable = { update?: (options: ResponsePayload) => Promise<unknown>; message?: CardMessage };
 
 export interface SafeExecuteOptions {
@@ -125,6 +126,11 @@ export class InteractionHelper {
         const sourceEdit = (options: ResponsePayload): ResponsePayload => (isCardMessage(component.message)
             ? cardMessageEdit(options, component.message?.components) as ResponsePayload
             : options);
+        // Answers to this member come in their colour scheme. A clicked message only when it is theirs (their own
+        // command's reply or an ephemeral one), never a shared panel.
+        const userId = (interaction as unknown as { user?: { id: string } }).user?.id;
+        const ownsSource = () => component.message?.interactionMetadata?.user?.id === userId || Boolean(component.message?.flags?.has(MessageFlags.Ephemeral));
+        const paint = (options: ResponsePayload, own = true): Promise<ResponsePayload> => (own ? paintFor(userId, options) : Promise.resolve(options));
         const fetchReply = () => (interaction as unknown as { fetchReply(): Promise<CardMessage> }).fetchReply().catch(() => null);
         /** An edit of our own reply. */
         const replyEdit = async (options: ResponsePayload): Promise<ResponsePayload> => {
@@ -139,9 +145,9 @@ export class InteractionHelper {
         };
 
         const originalUpdate = component.update?.bind(interaction);
-        if (originalUpdate) component.update = (options: ResponsePayload) => originalUpdate(sourceEdit(options));
-        interaction.editReply = (async (options: ResponsePayload) => originalEditReply(sanitizeEditReplyOptions(await replyEdit(options)) as never)) as typeof interaction.editReply;
-        interaction.followUp = ((options: ResponsePayload) => originalFollowUp(asOwnMessage(options) as never)) as typeof interaction.followUp;
+        if (originalUpdate) component.update = async (options: ResponsePayload) => originalUpdate(await paint(sourceEdit(options), ownsSource()));
+        interaction.editReply = (async (options: ResponsePayload) => originalEditReply(sanitizeEditReplyOptions(await paint(await replyEdit(options), !editsSource || ownsSource())) as never)) as typeof interaction.editReply;
+        interaction.followUp = (async (options: ResponsePayload) => originalFollowUp(await paint(asOwnMessage(options)) as never)) as typeof interaction.followUp;
 
         interaction.reply = async (options: ResponsePayload) => {
             const coordinator = InteractionHelper.getCoordinator(interaction);
@@ -150,7 +156,7 @@ export class InteractionHelper {
             }
 
             if (!interaction.deferred && !interaction.replied) {
-                options = asFirstResponse(options);
+                options = await paint(asFirstResponse(options));
                 if (coordinator && interaction._isPrefixCommand) {
                     return coordinator.respond(options);
                 }
@@ -158,14 +164,14 @@ export class InteractionHelper {
             }
 
             if (interaction.deferred && !interaction.replied) {
-                options = sanitizeEditReplyOptions(await replyEdit(options));
+                options = sanitizeEditReplyOptions(await paint(await replyEdit(options), !editsSource || ownsSource()));
                 if (coordinator && interaction._isPrefixCommand) {
                     return coordinator.edit(options);
                 }
                 return await originalEditReply(options);
             }
 
-            options = asOwnMessage(options);
+            options = await paint(asOwnMessage(options));
             if (coordinator && interaction._isPrefixCommand) {
                 return coordinator.followUp(options);
             }
