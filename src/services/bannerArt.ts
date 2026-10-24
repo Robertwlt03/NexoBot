@@ -1,16 +1,11 @@
-// The banner on top of every Nexo card: walnut wood, the Nexo coin, a glow and a large line motif in the card's
-// colour. Rendered on demand (any scheme colour, see shared/theme.ts messagePalette) and kept in memory; the
+// The banner on top of every Nexo card: walnut wood, a glow and a large line motif in the card's colour, with the
+// same motif small and faint across the background. No Nexo logo: the message's avatar already shows it. Rendered on demand (any scheme colour, see shared/theme.ts messagePalette) and kept in memory; the
 // dashboard serves it at /dashboard/banners/<motif>.png?c=<rrggbb> (utils/cardBanner.ts builds the URL).
 
-import { existsSync, readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { createCanvas, loadImage, Path2D, type Image } from '@napi-rs/canvas';
+import { createCanvas, Path2D, type SKRSContext2D } from '@napi-rs/canvas';
 
 const W = 1200;
 const H = 300;
-/** Size of the Nexo coin on the banner. */
-const LOGO = 190;
 
 /** Line motifs on the dashboard's 24px icon grid. */
 export const MOTIFS = {
@@ -44,16 +39,21 @@ function random(seed: number) {
   };
 }
 
-
-const here = path.dirname(fileURLToPath(import.meta.url));
-let logo: Promise<Image> | null = null;
-/** The Nexo coin from the dashboard (source tree or built frontend). */
-function nexoLogo(): Promise<Image> {
-  const file = [path.join(here, '../../dashboard/public/nexo.svg'), path.join(here, '../dashboard/nexo.svg')].find((candidate) => existsSync(candidate));
-  if (!file) throw new Error('nexo.svg not found');
-  // The SVG says 64×64 and is rasterised at that size; at the drawn 190 px the robot's face would blur.
-  const sized = () => readFileSync(file, 'utf8').replace(/<svg([^>]*?) width="\d+" height="\d+"/, `<svg$1 width="${LOGO * 2}" height="${LOGO * 2}"`);
-  return (logo ??= loadImage(Buffer.from(sized())));
+/** One line motif centred on (x, y), `scale` times its 24px grid, glowing in the accent colour. */
+function strokeMotif(ctx: SKRSContext2D, motif: BannerMotif, accent: number, x: number, y: number, scale: number, rotation: number, alpha: number, blur: number) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  ctx.scale(scale, scale);
+  ctx.translate(-12, -12);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = rgba(accent, 1);
+  ctx.shadowBlur = blur;
+  ctx.strokeStyle = rgba(lighten(accent, 0.55), alpha);
+  ctx.stroke(new Path2D(MOTIFS[motif]));
+  ctx.restore();
 }
 
 /** Rendered banners by motif and colour; small (≈200 kB each), so a few hundred stay in memory. */
@@ -74,7 +74,6 @@ export function renderBanner(motif: BannerMotif, accent: number): Promise<Buffer
 }
 
 async function draw(motif: BannerMotif, accent: number): Promise<Buffer> {
-  const image = await nexoLogo();
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
   const rand = random(7);
@@ -98,13 +97,10 @@ async function draw(motif: BannerMotif, accent: number): Promise<Buffer> {
     ctx.stroke();
   }
 
-  // Accent wash over the whole width, a strong glow on the right, soft light circles, warm glow behind the logo.
-  const wash = ctx.createLinearGradient(0, 0, W, 0);
-  wash.addColorStop(0, rgba(accent, 0.2));
-  wash.addColorStop(1, rgba(accent, 0.38));
-  ctx.fillStyle = wash;
+  // Accent wash over the whole width, a strong glow in the middle, soft light circles.
+  ctx.fillStyle = rgba(accent, 0.28);
   ctx.fillRect(0, 0, W, H);
-  const glow = ctx.createRadialGradient(W * 0.76, H * 0.45, 0, W * 0.76, H * 0.45, W * 0.7);
+  const glow = ctx.createRadialGradient(W / 2, H * 0.45, 0, W / 2, H * 0.45, W * 0.55);
   glow.addColorStop(0, rgba(accent, 0.75));
   glow.addColorStop(0.4, rgba(accent, 0.3));
   glow.addColorStop(1, rgba(accent, 0));
@@ -112,19 +108,24 @@ async function draw(motif: BannerMotif, accent: number): Promise<Buffer> {
   ctx.fillRect(0, 0, W, H);
   for (let i = 0; i < 9; i++) {
     ctx.beginPath();
-    ctx.arc(W * 0.25 + rand() * W * 0.7, rand() * H, 24 + rand() * 60, 0, Math.PI * 2);
+    ctx.arc(rand() * W, rand() * H, 24 + rand() * 60, 0, Math.PI * 2);
     ctx.fillStyle = rgba(accent, 0.04 + rand() * 0.06);
     ctx.fill();
   }
-  const warm = ctx.createRadialGradient(150, H / 2, 0, 150, H / 2, 260);
-  warm.addColorStop(0, 'rgba(232,163,61,0.22)');
-  warm.addColorStop(1, 'rgba(232,163,61,0)');
-  ctx.fillStyle = warm;
-  ctx.fillRect(0, 0, W, H);
+
+  // The motif small and faint on a loose grid, leaving room around the large one in the middle.
+  for (let col = 0; col < 11; col++) {
+    for (let row = 0; row < 3; row++) {
+      const x = 60 + col * 108 + (row % 2) * 54 + (rand() - 0.5) * 30;
+      const y = 50 + row * 100 + (rand() - 0.5) * 24;
+      if (Math.abs(x - W / 2) < 200) continue;
+      strokeMotif(ctx, motif, accent, x, y, 1.9 + rand() * 0.6, (rand() - 0.5) * 0.6, 0.1 + rand() * 0.12, 6);
+    }
+  }
 
   // Sparkles scattered over the glow.
-  for (let i = 0; i < 26; i++) {
-    const x = W * 0.45 + rand() * W * 0.55;
+  for (let i = 0; i < 36; i++) {
+    const x = rand() * W;
     const y = rand() * H;
     ctx.beginPath();
     ctx.arc(x, y, 1 + rand() * 2.2, 0, Math.PI * 2);
@@ -132,28 +133,8 @@ async function draw(motif: BannerMotif, accent: number): Promise<Buffer> {
     ctx.fill();
   }
 
-  // Large line motif, slightly tilted.
-  ctx.save();
-  ctx.translate(W - 250, H / 2);
-  ctx.rotate(-0.12);
-  ctx.scale(11, 11);
-  ctx.translate(-12, -12);
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = 1.5;
-  ctx.shadowColor = rgba(accent, 1);
-  ctx.shadowBlur = 36;
-  ctx.strokeStyle = rgba(lighten(accent, 0.55), 0.95);
-  ctx.stroke(new Path2D(MOTIFS[motif]));
-  ctx.restore();
-
-  // Nexo coin.
-  ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.55)';
-  ctx.shadowBlur = 28;
-  ctx.shadowOffsetY = 8;
-  ctx.drawImage(image, 64, (H - LOGO) / 2, LOGO, LOGO);
-  ctx.restore();
+  // Large line motif in the middle.
+  strokeMotif(ctx, motif, accent, W / 2, H / 2, 10, 0, 0.95, 36);
 
   // Soft vignette top and bottom, accent line at the bottom edge.
   const shade = ctx.createLinearGradient(0, 0, 0, H);
