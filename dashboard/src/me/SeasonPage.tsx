@@ -3,7 +3,7 @@ import { SEASON_POINTS } from '../../../src/shared/season';
 import { useApi } from '../api';
 import { Card, Notice, PageHeader, Spinner } from '../components/ui';
 import { countdown, num, useMe, useNow } from './api';
-import { Bernis, Glyph, ItemVisual } from './visuals';
+import { Bernis, CoinStacks, Glyph, ItemVisual } from './visuals';
 
 const EARN: [string, number][] = [
   ['Tagesaufgabe geschafft', SEASON_POINTS.quest],
@@ -44,7 +44,7 @@ export default function SeasonPage() {
             </p>
           </section>
 
-          <ol className="mt-4 grid list-none grid-cols-2 items-start gap-3 p-0 sm:grid-cols-3 lg:grid-cols-5">
+          <ol className="mt-4 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 lg:grid-cols-5">
             {data.tiers.map((tier, i) => {
               const reached = i < data.tier;
               const isNext = i === data.tier;
@@ -58,7 +58,9 @@ export default function SeasonPage() {
                       ? <span className="grid h-5 w-5 place-items-center rounded-full bg-accent text-accent-ink"><Glyph name="check" size={12} /></span>
                       : <span className="tabular-nums text-faint">{num(tier.points)}</span>}
                   </div>
-                  {item && <ItemVisual item={item} className={`mt-2 ${reached ? '' : 'opacity-70'}`} />}
+                  {item
+                    ? <ItemVisual item={item} className={`mt-2 ${reached ? '' : 'opacity-70'}`} />
+                    : <div className={`mt-2 grid aspect-[4/3] place-items-center rounded-xl bg-white/[.03] ${reached ? '' : 'opacity-70'}`}><CoinStacks amount={tier.bernis} /></div>}
                   <div className={`mt-2 text-[13px] ${reached ? 'text-ink' : 'text-body'}`}>+<Bernis amount={tier.bernis} nowrap /></div>
                   {item && <div className="mt-0.5 text-[12px] leading-snug text-mute">{item.name}</div>}
                 </li>

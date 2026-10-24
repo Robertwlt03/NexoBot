@@ -18,6 +18,7 @@ export default function InventoryPage() {
     const item = items.get(owned.itemId);
     return item ? [{ owned, item }] : [];
   }), [me.inventory, items]);
+  const sorted = useMemo(() => [...entries].sort((a, b) => COSMETIC_SLOTS.indexOf(a.item.slot) - COSMETIC_SLOTS.indexOf(b.item.slot)), [entries]);
   const equippedCount = entries.filter((e) => isEquipped(me.profile.equipped, e.item)).length;
 
   const toggle = (item: CosmeticItem) => {
@@ -35,33 +36,31 @@ export default function InventoryPage() {
         { label: 'Bereiche belegt', value: `${new Set(entries.map((e) => e.item.slot)).size} / ${COSMETIC_SLOTS.length}` },
       ]} />
       {me.inventory.length === 0 && <Card><Empty title="Noch leer">Im <Link to="/me/shop">Shop</Link> findest du deine ersten Artikel.</Empty></Card>}
-      {COSMETIC_SLOTS.map((slot) => {
-        const list = entries.filter((e) => e.item.slot === slot);
-        if (!list.length) return null;
-        return (
-          <Card key={slot} title={SLOT_LABELS[slot]} description={slot === 'badge' ? `Bis zu ${MAX_EQUIPPED_BADGES} gleichzeitig.` : undefined} right={<span className="badge">{list.length}</span>}>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {list.map(({ owned, item }) => {
-                const on = isEquipped(me.profile.equipped, item);
-                const full = !on && item.slot === 'badge' && me.profile.equipped.badges.length >= MAX_EQUIPPED_BADGES;
-                return (
-                  <div key={item.id} className={`flex flex-col rounded-2xl border bg-white/[.015] p-2.5 ${on ? 'border-accent/50' : RARITY_CLASS[item.rarity].border}`}>
-                    <ItemVisual item={item} />
-                    <div className="px-1 pt-2.5">
-                      <h3 className="truncate text-[14px] font-medium">{item.name}</h3>
-                      <div className="mt-0.5 text-[12px] text-faint"><RarityLabel rarity={item.rarity} /> · {SOURCE_LABELS[owned.source]} am {formatDate(owned.acquiredAt)}</div>
-                    </div>
-                    <button type="button" className={`btn btn-sm mt-3 ${on ? 'btn-secondary' : 'btn-ghost border-white/10'}`} disabled={equip.busy || full}
-                      title={full ? `Du hast schon ${MAX_EQUIPPED_BADGES} Abzeichen angelegt.` : undefined} onClick={() => toggle(item)}>
-                      {on ? 'Ablegen' : 'Anlegen'}
-                    </button>
+      {entries.length > 0 && (
+        // One grid for everything, ordered by area: a card per area left mostly single items in wide empty cards.
+        <Card title="Deine Artikel" description={`Bis zu ${MAX_EQUIPPED_BADGES} Abzeichen gleichzeitig, sonst ein Artikel je Bereich.`} right={<span className="badge">{entries.length}</span>}>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {sorted.map(({ owned, item }) => {
+              const on = isEquipped(me.profile.equipped, item);
+              const full = !on && item.slot === 'badge' && me.profile.equipped.badges.length >= MAX_EQUIPPED_BADGES;
+              return (
+                <div key={item.id} className={`flex flex-col rounded-2xl border bg-white/[.015] p-2.5 ${on ? 'border-accent/50' : RARITY_CLASS[item.rarity].border}`}>
+                  <ItemVisual item={item} />
+                  <div className="px-1 pb-3 pt-2.5">
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-mute">{SLOT_LABELS[item.slot]}</div>
+                    <h3 className="truncate text-[14px] font-medium">{item.name}</h3>
+                    <div className="mt-0.5 text-[12px] text-faint"><RarityLabel rarity={item.rarity} /> · {SOURCE_LABELS[owned.source]} am {formatDate(owned.acquiredAt)}</div>
                   </div>
-                );
-              })}
-            </div>
-          </Card>
-        );
-      })}
+                  <button type="button" className={`btn btn-sm mt-auto ${on ? 'btn-secondary' : 'btn-ghost border-white/10'}`} disabled={equip.busy || full}
+                    title={full ? `Du hast schon ${MAX_EQUIPPED_BADGES} Abzeichen angelegt.` : undefined} onClick={() => toggle(item)}>
+                    {on ? 'Ablegen' : 'Anlegen'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
     </>
   );
 }

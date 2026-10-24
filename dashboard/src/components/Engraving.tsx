@@ -103,7 +103,7 @@ export function Engraving({ art, width }: { art?: ReactNode; width: string }) {
         </g>
       ))}
       {iconArt && (
-        <g transform={`translate(${ICON_AT.x} ${ICON_AT.y}) scale(${ICON_AT.scale})`} strokeWidth={(ICON_LINE * grow) / ICON_AT.scale}>
+        <g className="engraving-icon" transform={`translate(${ICON_AT.x} ${ICON_AT.y}) scale(${ICON_AT.scale})`} strokeWidth={(ICON_LINE * grow) / ICON_AT.scale}>
           {grow === 1 ? iconArt : scaleStrokes(iconArt, grow)}
         </g>
       )}

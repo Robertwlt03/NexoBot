@@ -189,7 +189,7 @@ export function Landing() {
                 </ChatMessage>
                 <ChatMessage bot name="Nexo">
                   <div className="mt-1 rounded-lg bg-dc-panel px-3 py-2.5">
-                    <div className="flex items-center gap-2 text-sm text-white"><span className="text-nexo-cyan"><Icon name="level" size={16} /></span> <b>Lena</b> ist auf <b>Level 5</b> aufgestiegen</div>
+                    <div className="flex items-start gap-2 text-sm text-white"><span className="mt-0.5 shrink-0 text-nexo-cyan"><Icon name="level" size={16} /></span><span><b>Lena</b> ist auf <b>Level 5</b> aufgestiegen</span></div>
                     <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/40">
                       <div className="js-xp h-full w-[72%] rounded-full bg-gradient-to-r from-nexo-violet to-nexo-cyan" />
                     </div>

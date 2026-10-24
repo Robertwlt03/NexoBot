@@ -147,7 +147,7 @@ export default function EconomyPage() {
                     <Field label="Name"><input className="input" value={value.currency.name} readOnly disabled /></Field>
                     <Field label="Symbol"><input className="input" value={value.currency.symbol} readOnly disabled /></Field>
                   </div>
-                  <Notice>Die Währung gilt global für alle Server mit Nexo und kann nur vom Bot-Owner geändert werden.</Notice>
+                  <Notice>Das ist die Server-Währung für Kontostände, Arbeit und den Server-Shop. Sie gilt für alle Server mit Nexo, nur der Bot-Owner kann sie ändern. Mit den Bernis aus Shop und Profil hat sie nichts zu tun.</Notice>
                 </div>
               </Card>
 

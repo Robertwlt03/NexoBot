@@ -83,7 +83,7 @@ export const RARITY_CLASS: Record<Rarity, { border: string; text: string }> = {
 
 /** Rarity identity of a tile (game-shop convention: grey, blue, purple, gold, red). Only used inside item tiles. */
 export const RARITY_TILE: Record<Rarity, string> = {
-  common: '#8a8f99', rare: '#3b8cf6', epic: '#a35cf5', legendary: '#f2a516', mythic: '#f2415f',
+  common: '#8f8a80', rare: '#4f8fbf', epic: '#9a6cc2', legendary: '#f2a516', mythic: '#e0525f',
 };
 
 export function RarityLabel({ rarity }: { rarity: Rarity }) {

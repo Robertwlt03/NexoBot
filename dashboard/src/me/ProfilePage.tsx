@@ -472,7 +472,7 @@ export default function ProfilePage() {
         actions={<Link to="/me/shop" className="btn btn-secondary hover:no-underline"><Glyph name="bag" size={16} /> Zum Shop</Link>} />
 
       {/* The card is the centrepiece: full width until there is room for a side column (xl). */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_300px] [&>*]:mt-0">
         <Card title="Deine Karte" description="So sieht deine Profilkarte gerade aus.">
           <div className="relative">
             <ProfileCardPreview subject={subject} cosmetics={cosmetics} className="w-full" hideSticker />
@@ -490,37 +490,42 @@ export default function ProfilePage() {
             <div className="mt-4 flex flex-wrap items-center gap-3 text-[13px] text-mute">
               Level von
               <div className="min-w-0 flex-1 sm:max-w-[280px]">
-                <Select value={guildId ?? ''} onChange={setGuildId} options={me.levels.map((l) => ({ value: l.guildId, label: `${l.guildName} · Level ${l.level}` }))} />
+                <Select value={guildId ?? ''} onChange={setGuildId} options={me.levels.map((l) => ({ value: l.guildId, label: `Level ${l.level} · ${l.guildName}` }))} />
               </div>
             </div>
           )}
         </Card>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-1 xl:content-start">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:col-start-2 xl:row-span-3 xl:row-start-1 xl:grid-cols-1 xl:content-start">
           <WalletCard />
           <DailyCard />
           <QuestsCard />
         </div>
-      </div>
-
-      <div className="mt-4">
-        <Card title="Ausrüstung" description={`Wähle pro Bereich einen Artikel aus deinem Inventar – bei Abzeichen bis zu ${MAX_EQUIPPED_BADGES}.`}>
-          <SlotEditor value={value} onChange={form.setDraft} />
-        </Card>
-        <div className="grid-2 mt-4 [&>*]:mt-0 [&>*]:min-w-0">
-          <Card title="Über dich" description="Kurzer Text auf deiner Karte.">
-            <div className="stack">
-              <TextArea value={value.bio} onChange={(bio) => form.setDraft({ ...value, bio })} maxLength={MAX_BIO_LENGTH} rows={3} placeholder="Was sollen andere über dich wissen?" />
-              <SwitchRow title="Auf Willkommenskarten zeigen" description="Server, die Mitglieder-Styles erlauben, zeigen deinen Rahmen und deine Farben auf der Willkommenskarte."
-                checked={value.showOnWelcome} onChange={(showOnWelcome) => form.setDraft({ ...value, showOnWelcome })} />
-              <ShareProfile />
-            </div>
-          </Card>
-          <Card title="Level-up-Nachricht" description="So meldet Nexo deinen nächsten Aufstieg.">
-            <LevelUpPreview subject={subject} cosmetics={cosmetics} level={subject.level + 1} reward={levelUpReward(subject.level + 1)} />
+        {/* On xl "Über dich" and the level-up preview stack under the card, next to the side column; equipment spans below. */}
+        <div className="min-w-0 xl:col-span-2 xl:row-start-4">
+          <Card title="Ausrüstung" description={`Wähle pro Bereich einen Artikel aus deinem Inventar – bei Abzeichen bis zu ${MAX_EQUIPPED_BADGES}.`}>
+            <SlotEditor value={value} onChange={form.setDraft} />
           </Card>
         </div>
-        <div className="mt-4"><LinkedRoleCard /></div>
+        <div className="grid-2 xl:contents [&>*]:mt-0 [&>*]:min-w-0">
+          <div className="xl:col-start-1 xl:row-start-2">
+            <Card title="Über dich" description="Kurzer Text auf deiner Karte.">
+              <div className="stack">
+                <TextArea value={value.bio} onChange={(bio) => form.setDraft({ ...value, bio })} maxLength={MAX_BIO_LENGTH} rows={3} placeholder="Was sollen andere über dich wissen?" />
+                <SwitchRow title="Auf Willkommenskarten zeigen" description="Server, die Mitglieder-Styles erlauben, zeigen deinen Rahmen und deine Farben auf der Willkommenskarte."
+                  checked={value.showOnWelcome} onChange={(showOnWelcome) => form.setDraft({ ...value, showOnWelcome })} />
+                <ShareProfile />
+              </div>
+            </Card>
+          </div>
+          <div className="xl:col-start-1 xl:row-start-3">
+            <Card title="Level-up-Nachricht" description="So meldet Nexo deinen nächsten Aufstieg.">
+              <LevelUpPreview subject={subject} cosmetics={cosmetics} level={subject.level + 1} reward={levelUpReward(subject.level + 1)} />
+            </Card>
+          </div>
+        </div>
       </div>
+
+      <div className="mt-4"><LinkedRoleCard /></div>
       <SaveBar dirty={form.dirty} saving={form.saving} onSave={form.save} onReset={form.reset} />
     </>
   );

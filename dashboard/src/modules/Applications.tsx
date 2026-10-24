@@ -156,12 +156,14 @@ function Submissions() {
   return (
     <Card icon="clipboard" title="Eingereichte Bewerbungen" description="Prüfe Bewerbungen und nimm sie an oder lehne sie ab."
       right={(
-        <Select value={status} onChange={(value) => { setStatus(value); setPage(1); }} options={[
-          { value: 'pending', label: 'Offen' },
-          { value: 'approved', label: 'Angenommen' },
-          { value: 'denied', label: 'Abgelehnt' },
-          { value: 'all', label: 'Alle' },
-        ]} />
+        <div className="w-[170px]">
+          <Select value={status} onChange={(value) => { setStatus(value); setPage(1); }} options={[
+            { value: 'pending', label: 'Offen' },
+            { value: 'approved', label: 'Angenommen' },
+            { value: 'denied', label: 'Abgelehnt' },
+            { value: 'all', label: 'Alle' },
+          ]} />
+        </div>
       )}>
       {!data && list.loading && <Spinner />}
       {list.error && !data && <Notice tone="danger">{list.error}</Notice>}

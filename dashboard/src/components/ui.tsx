@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { CHANNEL_TYPES } from '../../../src/web/apiTypes';
 import type { ApiChannel, ApiRole } from '../../../src/web/apiTypes';
@@ -88,8 +88,24 @@ export function Pager({ page, pages, onPage, busy }: { page: number; pages: numb
 }
 
 /** Scroll container for wide tables, so they never stretch the page on small screens. */
+/**
+ * A table that turns into stacked rows on phones (styles.css .table-stack): every cell gets its column heading as
+ * `data-label`, shown in front of the value, so no column hides behind sideways scrolling.
+ */
 export function TableWrap({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`table-wrap ${className}`}><table className="table">{children}</table></div>;
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const table = ref.current?.querySelector('table');
+    if (!table) return;
+    const labels = [...table.querySelectorAll('thead th')].map((th) => th.textContent?.trim() ?? '');
+    table.querySelectorAll('tbody tr').forEach((row) => {
+      [...row.children].forEach((cell, index) => {
+        if (labels[index] && !cell.hasAttribute('colspan')) cell.setAttribute('data-label', labels[index]);
+        else cell.removeAttribute('data-label');
+      });
+    });
+  });
+  return <div ref={ref} className={`table-wrap table-stack ${className}`}><table className="table">{children}</table></div>;
 }
 
 /** Row of number tiles (overview, ticket stats, counting status …). */
@@ -417,12 +433,12 @@ export function SaveBar({ dirty, saving, onSave, onReset }: { dirty: boolean; sa
   useGSAP(() => {
     const el = bar.current;
     if (!el) return;
-    if (!shown.current && !dirty) { gsap.set(el, { xPercent: -50, y: 40, autoAlpha: 0 }); return; }
+    if (!shown.current && !dirty) { gsap.set(el, { y: 40, autoAlpha: 0 }); return; }
     shown.current = true;
     const instant = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     gsap.to(el, dirty
-      ? { xPercent: -50, y: 0, autoAlpha: 1, duration: instant ? 0 : 0.45, ease: 'back.out(1.7)' }
-      : { xPercent: -50, y: 40, autoAlpha: 0, duration: instant ? 0 : 0.25, ease: 'power2.in' });
+      ? { y: 0, autoAlpha: 1, duration: instant ? 0 : 0.45, ease: 'back.out(1.7)' }
+      : { y: 40, autoAlpha: 0, duration: instant ? 0 : 0.25, ease: 'power2.in' });
   }, { dependencies: [dirty] });
   return (
     <div ref={bar} className="save-bar" id="save-bar" aria-hidden={!dirty}>
@@ -447,6 +463,17 @@ export function renderPlaceholders(text: string, sample: Record<string, string>)
   });
 }
 
+/** Discord's basic inline markdown (bold, italic, underline, code) around the placeholder preview. */
+function renderMarkdown(text: string, sample: Record<string, string>): ReactNode[] {
+  return text.split(/(\*\*[^*]+\*\*|__[^_]+__|\*[^*\s][^*]*\*|`[^`]+`)/g).map((part, index) => {
+    if (/^\*\*.+\*\*$/.test(part)) return <b key={index}>{renderPlaceholders(part.slice(2, -2), sample)}</b>;
+    if (/^__.+__$/.test(part)) return <u key={index}>{renderPlaceholders(part.slice(2, -2), sample)}</u>;
+    if (/^\*.+\*$/.test(part)) return <i key={index}>{renderPlaceholders(part.slice(1, -1), sample)}</i>;
+    if (/^`.+`$/.test(part)) return <code key={index}>{part.slice(1, -1)}</code>;
+    return <Fragment key={index}>{renderPlaceholders(part, sample)}</Fragment>;
+  });
+}
+
 export function MessagePreview({ content, embed, sample }: {
   content?: string;
   embed?: { title?: string; description?: string; color?: string; image?: string | null; footer?: string } | null;
@@ -457,13 +484,13 @@ export function MessagePreview({ content, embed, sample }: {
       <img className="avatar" src="/dashboard/nexo.svg" alt="" />
       <div className="min-w-0 flex-1">
         <div className="author">Nexo <span className="bot-tag">App</span></div>
-        {content && <div className="msg-content">{renderPlaceholders(content, sample)}</div>}
+        {content && <div className="msg-content">{renderMarkdown(content, sample)}</div>}
         {embed && (
           <div className="embed" style={{ borderLeftColor: embed.color || 'var(--brand)' }}>
-            {embed.title && <div className="e-title">{renderPlaceholders(embed.title, sample)}</div>}
-            {embed.description && <div className="e-desc">{renderPlaceholders(embed.description, sample)}</div>}
+            {embed.title && <div className="e-title">{renderMarkdown(embed.title, sample)}</div>}
+            {embed.description && <div className="e-desc">{renderMarkdown(embed.description, sample)}</div>}
             {embed.image && <img className="e-image" src={embed.image} alt="" />}
-            {embed.footer && <div className="e-footer">{renderPlaceholders(embed.footer, sample)}</div>}
+            {embed.footer && <div className="e-footer">{renderMarkdown(embed.footer, sample)}</div>}
           </div>
         )}
       </div>

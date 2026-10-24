@@ -3,6 +3,7 @@ import type { CommandCategory, CommandEntry, CommandsOverview } from '../../../s
 import { useAction, useApi, useGuild } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
 import { Badge, Card, Empty, Notice, PageHeader, Spinner, Switch } from '../components/ui';
+import { Icon } from '../icons';
 
 function CommandRow({ command, category, busy, onToggle }: {
   command: CommandEntry; category: CommandCategory; busy: boolean; onToggle: (enabled: boolean) => void;
@@ -55,7 +56,7 @@ export default function CommandsPage() {
       {header}
       <Card>
         <div className="row justify-between">
-          <input className="input max-w-[360px]" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Command suchen, z. B. ban oder msg notes" />
+          <input className="input max-w-[360px]" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Command suchen, z. B. ban" />
           <span className="muted"><strong>{data.enabledTotal}/{data.totalCommands}</strong> Einträge aktiv · Änderungen gelten sofort.</span>
         </div>
       </Card>
@@ -76,7 +77,10 @@ export default function CommandsPage() {
                 text: 'Die Kategorie wird eingeschaltet und alle einzeln ausgeschalteten Commands darin wieder aktiviert.',
                 confirmLabel: 'Zurücksetzen',
                 onConfirm: () => act('reset', { key: category.key }, `${category.name} wurde zurückgesetzt.`),
-              })}>Zurücksetzen</button>
+              })} aria-label={`${category.name} zurücksetzen`} title="Zurücksetzen">
+                {/* Icon only on phones, so the category name keeps its line. */}
+                <Icon name="refresh" size={16} /><span className="max-sm:hidden">Zurücksetzen</span>
+              </button>
               <Switch checked={!category.disabled} disabled={busy !== null} label={`Kategorie ${category.name}`}
                 onChange={(enabled) => act('category', { key: category.key, enabled }, enabled ? `${category.name} ist jetzt an.` : `${category.name} ist jetzt aus.`)} />
             </span>

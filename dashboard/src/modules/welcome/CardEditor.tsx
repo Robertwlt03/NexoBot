@@ -97,7 +97,7 @@ function resized(layer: CardLayer, dx: number, dy: number, px: number, py: numbe
 
 function drawSelection(ctx: Ctx, box: Box, handle: boolean) {
   ctx.save();
-  ctx.strokeStyle = '#7C5CFF';
+  ctx.strokeStyle = '#8FB36B';
   ctx.lineWidth = 3;
   ctx.setLineDash([10, 6]);
   ctx.strokeRect(box.x, box.y, box.w, box.h);
