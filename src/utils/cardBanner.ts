@@ -9,8 +9,8 @@ const BY_COLOUR = {
   warn: 0xF59E0B, danger: 0xEF4444, calm: 0x94A3B8, pink: 0xF472B6,
 } as const;
 
-/** All banners: the colour ones plus topic banners a message chooses itself (withBanner). */
-export const BANNERS = { ...BY_COLOUR, gift: 0x8FB36B, giftEnded: 0x94A3B8 } as const;
+/** All banners: the colour ones plus topic banners a message chooses itself (withBanner, nexoCard's `banner`). */
+export const BANNERS = { ...BY_COLOUR, gift: 0x8FB36B, giftEnded: 0x94A3B8, quests: 0x8FB36B } as const;
 export type BannerName = keyof typeof BANNERS;
 
 /** Bump when the PNGs change, so Discord's media cache fetches the new ones. */

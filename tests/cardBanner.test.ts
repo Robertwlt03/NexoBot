@@ -66,3 +66,8 @@ test('giveaways carry the gift banner, running and ended', async () => {
   assert.match(url('active'), /banners\/gift\.png/);
   assert.match(url('ended'), /banners\/giftEnded\.png/);
 });
+
+test('daily quests carry their own banner', () => {
+  const json = withDashboard('https://nexo.example', () => nexoCard({ kicker: 'Tagesaufgaben', blocks: [{ text: 'x' }], banner: 'quests' }).toJSON()) as never as Json;
+  assert.match(json.components[0].items![0].media.url, /banners\/quests\.png/);
+});

@@ -150,7 +150,7 @@ export default {
       blocks.push({ separator: true }, { text: `**Saison ${season.name}** · Stufe ${season.tier} von ${season.tiers.length}\n${nextTier ? `${textBar(season.points, nextTier.points)} ${season.points} / ${nextTier.points} Punkte` : 'Saisonpfad komplett!'}` });
       blocks.push({ buttons: [...linkButton('Saisonpfad', dashboardUrl('/saison')), ...linkButton('Zum Shop', dashboardUrl('/shop'))] });
       await reply(nexoCard({
-        kicker: 'Tagesaufgaben', title: `${quests.filter((quest) => quest.done).length} von ${quests.length} geschafft`, blocks,
+        kicker: 'Tagesaufgaben', title: `${quests.filter((quest) => quest.done).length} von ${quests.length} geschafft`, blocks, banner: 'quests',
         footer: `Neue Aufgaben <t:${Math.floor(Date.parse(resetsAt) / 1000)}:R> · zählt auf allen Servern · zahlt sich von selbst aus`,
       }));
       return;
