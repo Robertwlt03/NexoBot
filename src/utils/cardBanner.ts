@@ -9,7 +9,7 @@ import { DEFAULT_MESSAGE_PALETTE, type MessageRole } from '../shared/theme.js';
 export type BannerName = MessageRole | 'gift' | 'giftEnded' | 'quests';
 
 /** Bump when the drawing changes, so Discord's media cache fetches the new banners. */
-const VERSION = 2;
+const VERSION = 3;
 
 const channels = (value: number) => [(value >> 16) & 255, (value >> 8) & 255, value & 255];
 const ROLE_COLOURS = Object.entries(DEFAULT_MESSAGE_PALETTE).map(([role, hex]) => [role as MessageRole, channels(Number.parseInt(hex.slice(1), 16))] as const);

@@ -32,7 +32,7 @@ test('each colour gets the closest banner', () => {
 test('banners only come from a public https dashboard', () => {
   assert.equal(cardBanner(0x8FB36B, { baseUrl: 'http://localhost:3000' }), null);
   assert.equal(cardBanner(0x8FB36B, { baseUrl: '' }), null);
-  assert.equal(cardBanner(0xF5C451, { baseUrl: 'https://nexo.example/' }), 'https://nexo.example/dashboard/banners/gold.png?c=f5c451&v=2');
+  assert.equal(cardBanner(0xF5C451, { baseUrl: 'https://nexo.example/' }), 'https://nexo.example/dashboard/banners/gold.png?c=f5c451&v=3');
 });
 
 test('converted embeds open with the banner and read back without it', () => {

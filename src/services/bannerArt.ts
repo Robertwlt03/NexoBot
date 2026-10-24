@@ -9,6 +9,8 @@ import { createCanvas, loadImage, Path2D, type Image } from '@napi-rs/canvas';
 
 const W = 1200;
 const H = 300;
+/** Size of the Nexo coin on the banner. */
+const LOGO = 190;
 
 /** Line motifs on the dashboard's 24px icon grid. */
 export const MOTIFS = {
@@ -49,7 +51,9 @@ let logo: Promise<Image> | null = null;
 function nexoLogo(): Promise<Image> {
   const file = [path.join(here, '../../dashboard/public/nexo.svg'), path.join(here, '../dashboard/nexo.svg')].find((candidate) => existsSync(candidate));
   if (!file) throw new Error('nexo.svg not found');
-  return (logo ??= loadImage(readFileSync(file)));
+  // The SVG says 64×64 and is rasterised at that size; at the drawn 190 px the robot's face would blur.
+  const sized = () => readFileSync(file, 'utf8').replace(/<svg([^>]*?) width="\d+" height="\d+"/, `<svg$1 width="${LOGO * 2}" height="${LOGO * 2}"`);
+  return (logo ??= loadImage(Buffer.from(sized())));
 }
 
 /** Rendered banners by motif and colour; small (≈200 kB each), so a few hundred stay in memory. */
@@ -148,7 +152,7 @@ async function draw(motif: BannerMotif, accent: number): Promise<Buffer> {
   ctx.shadowColor = 'rgba(0,0,0,0.55)';
   ctx.shadowBlur = 28;
   ctx.shadowOffsetY = 8;
-  ctx.drawImage(image, 64, (H - 190) / 2, 190, 190);
+  ctx.drawImage(image, 64, (H - LOGO) / 2, LOGO, LOGO);
   ctx.restore();
 
   // Soft vignette top and bottom, accent line at the bottom edge.
