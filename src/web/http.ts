@@ -58,13 +58,21 @@ export function url(value: unknown, field: string): string | null {
 
 const TEXT_TYPES: ChannelType[] = [ChannelType.GuildText, ChannelType.GuildAnnouncement];
 
+/**
+ * Channels Nexo may not view arrive obfuscated since Discord's 2026 privacy change: name "___hidden___" and the
+ * CHANNEL_OBFUSCATED flag (1 << 17). They are left out of every picker and rejected as targets.
+ */
+export function isHiddenChannel(found: { name?: string | null; flags?: { bitfield: number } | null }): boolean {
+  return found.name === '___hidden___' || ((found.flags?.bitfield ?? 0) & (1 << 17)) !== 0;
+}
+
 /** A channel id of this guild of the given kind, or null when empty. */
 export function channel(guild: Guild, value: unknown, field: string, kind: 'text' | 'voice' | 'category' = 'text'): string | null {
   if (value === null || value === undefined || value === '') return null;
   if (typeof value !== 'string') throw badRequest(`${field}: Kanal erwartet.`);
   const found = guild.channels.cache.get(value);
   const types = kind === 'text' ? TEXT_TYPES : kind === 'voice' ? [ChannelType.GuildVoice, ChannelType.GuildStageVoice] : [ChannelType.GuildCategory];
-  if (!found || !types.includes(found.type)) throw badRequest(`${field}: Kanal nicht gefunden.`);
+  if (!found || !types.includes(found.type) || isHiddenChannel(found)) throw badRequest(`${field}: Kanal nicht gefunden.`);
   return value;
 }
 
@@ -91,7 +99,7 @@ export function idList(guild: Guild, value: unknown, field: string, kind: 'role'
   if (value.length > max) throw badRequest(`${field}: höchstens ${max} Einträge.`);
   return [...new Set(value.map((entry) => (kind === 'role'
     ? role(guild, entry, field)
-    : guild.channels.cache.has(String(entry)) ? String(entry) : null)).filter((id): id is string => id !== null))];
+    : guild.channels.cache.get(String(entry)) && !isHiddenChannel(guild.channels.cache.get(String(entry))!) ? String(entry) : null)).filter((id): id is string => id !== null))];
 }
 
 export function hexColor(value: unknown, field: string): string {

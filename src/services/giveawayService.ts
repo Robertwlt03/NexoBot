@@ -5,6 +5,7 @@ import type { GuildTextBasedChannel } from 'discord.js';
 import type { NexoClient } from '../types/index.js';
 import type { Giveaway } from '../utils/giveaways.js';
 import { logger } from '../utils/logger.js';
+import { withBanner } from '../utils/cardBanner.js';
 import { NexoBotError, ErrorTypes } from '../utils/errorHandler.js';
 import { getColor, botConfig } from '../config/bot.js';
 import { getEndedGiveaways, markGiveawayEnded } from '../utils/database.js';
@@ -162,8 +163,8 @@ export function createGiveawayEmbed(giveaway: Giveaway, status: string, winners:
         }
 
         embed.setTimestamp();
-        
-        return embed;
+
+        return withBanner(embed, isEnded ? 'giftEnded' : 'gift');
     } catch (error) {
         logger.error('Error creating giveaway embed:', error);
         throw new NexoBotError(
@@ -197,7 +198,7 @@ export function createGiveawayButtons(ended: boolean = false): ActionRowBuilder<
                 new ButtonBuilder()
                     .setCustomId('giveaway_join')
                     .setLabel('🎉 Teilnehmen')
-                    .setStyle(ButtonStyle.Primary)
+                    .setStyle(ButtonStyle.Success)
                     .setDisabled(false),
                 new ButtonBuilder()
                     .setCustomId('giveaway_end')

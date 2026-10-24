@@ -3,8 +3,13 @@
 import { EmbedBuilder } from 'discord.js';
 import type { APIEmbedField, EmbedAuthorOptions, EmbedFooterOptions, RestOrArray, User } from 'discord.js';
 import { getColor, botConfig } from '../config/bot.js';
+import { COIN_TIERS } from '../shared/coins.js';
 
 const EMOJI_REGEX = /[\p{Extended_Pictographic}\uFE0F]/gu;
+/** Coin emojis (shared/coins.ts fallbacks) are content, not decoration – they stay. */
+const COIN_EMOJIS = new Set(COIN_TIERS.map((tier) => tier.emoji));
+/** One emoji (with its variation selector / ZWJ sequence) at the very start of a title, then a space. */
+const LEADING_EMOJI = /^(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*\uFE0F?)\s+/u;
 const EMBED_FOOTER_SYMBOL = Symbol('nexobotFooterText');
 const EMBED_BASE_DESCRIPTION_SYMBOL = Symbol('nexobotBaseDescription');
 
@@ -14,20 +19,27 @@ type TaggedEmbedBuilder = EmbedBuilder & {
   [EMBED_BASE_DESCRIPTION_SYMBOL]?: string;
 };
 
-function sanitizeEmbedText(text?: string): string;
-function sanitizeEmbedText<T>(text: T): T | string;
-function sanitizeEmbedText(text: unknown = ''): unknown {
+/**
+ * Nexo's emoji rule (shared with the Nexo cards): calm text, at most one emoji as an accent at the start of a
+ * title (`keepLeadingEmoji`), coin emojis always kept; every other emoji is removed.
+ */
+export function sanitizeEmbedText(text?: string, options?: { keepLeadingEmoji?: boolean }): string;
+export function sanitizeEmbedText<T>(text: T, options?: { keepLeadingEmoji?: boolean }): T | string;
+export function sanitizeEmbedText(text: unknown = '', { keepLeadingEmoji = false } = {}): unknown {
   if (typeof text !== 'string') {
     return text;
   }
 
-  return text
-    .replace(EMOJI_REGEX, '')
+  const lead = keepLeadingEmoji ? LEADING_EMOJI.exec(text.trimStart())?.[1] ?? '' : '';
+  const rest = lead ? text.trimStart().slice(lead.length) : text;
+  const cleaned = rest
+    .replace(EMOJI_REGEX, (emoji) => (COIN_EMOJIS.has(emoji) ? emoji : ''))
     .replace(/[ \t]+/g, ' ')  // Replace consecutive spaces/tabs with single space
     .replace(/[ \t]\n/g, '\n')  // Remove spaces before newlines
     .replace(/\n[ \t]/g, '\n')  // Remove spaces after newlines
     .replace(/\n{3,}/g, '\n\n')  // Limit consecutive newlines to 2
     .trim();
+  return lead ? `${lead} ${cleaned}` : cleaned;
 }
 
 function sanitizeEmbedField(field: APIEmbedField): APIEmbedField {
@@ -52,7 +64,7 @@ const originalSetAuthor: LegacySetter<EmbedAuthorOptions | string | null> = Embe
 const originalAddFields = EmbedBuilder.prototype.addFields;
 
 EmbedBuilder.prototype.setTitle = function setSanitizedTitle(this: EmbedBuilder, title: string | null) {
-  return originalSetTitle.call(this, sanitizeEmbedText(title));
+  return originalSetTitle.call(this, sanitizeEmbedText(title, { keepLeadingEmoji: true }));
 };
 
 EmbedBuilder.prototype.setAuthor = function setSanitizedAuthor(this: EmbedBuilder, author: EmbedAuthorOptions | string | null) {

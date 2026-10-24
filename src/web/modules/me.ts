@@ -6,7 +6,7 @@ import type { Router } from 'express';
 import type { NexoClient } from '../../types/index.js';
 import type { CosmeticItem } from '../../shared/cosmetics.js';
 import type {
-  AchievementsResponse, DailyClaimResult, MeProfileResponse, ProfileLevel,
+  AchievementsResponse, CommunityResponse, DailyClaimResult, MeProfileResponse, ProfileLevel, QuestsResponse,
 } from '../dto/profile.js';
 import { locals, sendError } from '../dashboard.js';
 import { HttpError, badRequest, body } from '../http.js';
@@ -15,10 +15,21 @@ import { getXpForLevel } from '../../services/leveling/leveling.js';
 import { NO_DB_MESSAGE, T, cosmeticsPool, isSnowflake, requirePool } from '../../services/cosmetics/db.js';
 import { loadCatalog } from '../../services/cosmetics/catalog.js';
 import { parseProfileSettings, readDashboardTheme, readProfileSettings, writeDashboardTheme, writeProfileSettings } from '../../services/cosmetics/profile.js';
-import { claimDaily, getDailyState, listTransactions, walletSummary } from '../../services/cosmetics/wallet.js';
+import { forgetPalette } from '../../services/messageTheme.js';
+import { buyStreakShield, claimDaily, getDailyState, listTransactions, walletSummary } from '../../services/cosmetics/wallet.js';
 import { blackMarketResponse, gift, ownedItems, purchase, purchaseBundle, shopResponse } from '../../services/cosmetics/shop.js';
 import { listAchievements, syncAchievements } from '../../services/cosmetics/achievements.js';
 import { userRankings } from '../../services/cosmetics/rankings.js';
+import { getDailyQuests } from '../../services/cosmetics/quests.js';
+import { readReminders, writeReminders } from '../../services/cosmetics/reminders.js';
+import { communityGoals } from '../../services/cosmetics/community.js';
+import { readShareProfile, writeShareProfile } from '../publicProfile.js';
+import { isLinked, pushRoleConnection, roleValues, unlink } from '../../services/cosmetics/linkedRoles.js';
+import { linkedRolesConfig } from '../dashboard.js';
+import { addSeasonPoints, getSeason } from '../../services/cosmetics/season.js';
+import { SEASON_POINTS } from '../../shared/season.js';
+import { petStage } from '../../shared/pets.js';
+import { pendingCommunity, pendingQuestCounts } from '../../services/cosmetics/activity.js';
 
 async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[]> {
   const result = await requirePool().query<{ guild_id: string; level: number; xp: string; rank: string }>(
@@ -35,10 +46,19 @@ async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[
 }
 
 async function profileResponse(client: NexoClient, userId: string): Promise<MeProfileResponse> {
-  const [wallet, profile, inventory, levelList, daily] = await Promise.all([
+  const [wallet, profile, inventory, levelList, daily, quests, reminders, chatDays, shareProfile, linkedRole] = await Promise.all([
     walletSummary(userId), readProfileSettings(userId), ownedItems(userId), levels(client, userId), getDailyState(userId),
+    getDailyQuests(userId, pendingQuestCounts(userId)), readReminders(userId),
+    requirePool().query<{ value: string }>(`SELECT value FROM ${T.user_stats} WHERE user_id = $1 AND stat = 'chat_days'`, [userId]).then((r) => Number(r.rows[0]?.value ?? 0)),
+    readShareProfile(userId),
+    linkedRoleState(userId),
   ]);
-  return { isOwner: isBotOwner(userId), wallet, profile, inventory, levels: levelList, daily };
+  return { isOwner: isBotOwner(userId), wallet, profile, inventory, levels: levelList, daily, quests, reminders, petStage: petStage(chatDays), chatDays, shareProfile, linkedRole };
+}
+
+async function linkedRoleState(userId: string) {
+  const [linked, values] = await Promise.all([isLinked(userId), roleValues(userId)]);
+  return { linked, values };
 }
 
 export function meRouter(client: NexoClient): Router {
@@ -63,14 +83,74 @@ export function meRouter(client: NexoClient): Router {
     res.json(await readDashboardTheme(locals(res).session.userId));
   });
   router.put('/theme', async (req, res) => {
-    res.json(await writeDashboardTheme(locals(res).session.userId, req.body));
+    const { userId } = locals(res).session;
+    const theme = await writeDashboardTheme(userId, req.body);
+    forgetPalette(userId);
+    res.json(theme);
   });
 
   router.post('/daily', async (_req, res) => {
     const { userId } = locals(res).session;
     const { claimed } = await claimDaily(userId);
+    await addSeasonPoints(userId, SEASON_POINTS.daily);
     await syncAchievements(userId);
     const result: DailyClaimResult = { claimed, wallet: await walletSummary(userId), daily: await getDailyState(userId) };
+    res.json(result);
+  });
+
+  router.post('/daily/shield', async (_req, res) => {
+    const { userId } = locals(res).session;
+    await buyStreakShield(userId);
+    res.json({ wallet: await walletSummary(userId), daily: await getDailyState(userId) });
+  });
+
+  // Shared goals of the running events on the member's servers (servers where they have XP and Nexo is present).
+  router.get('/community', async (_req, res) => {
+    const { userId } = locals(res).session;
+    const rows = await requirePool().query<{ guild_id: string }>(`SELECT guild_id FROM ${T.user_levels} WHERE user_id = $1`, [userId]);
+    const guilds = rows.rows.flatMap((row) => {
+      const guild = client.guilds.cache.get(row.guild_id);
+      return guild ? [{ id: guild.id, name: guild.name, iconUrl: guild.iconURL({ size: 64 }) }] : [];
+    });
+    const result: CommunityResponse = { goals: await communityGoals(userId, guilds, pendingCommunity(userId)) };
+    res.json(result);
+  });
+
+  router.get('/season', async (_req, res) => {
+    res.json(await getSeason(locals(res).session.userId));
+  });
+
+  // Linked Roles: push the current values now, or remove the connection.
+  router.post('/linked-role/sync', async (_req, res) => {
+    const { userId } = locals(res).session;
+    const config = linkedRolesConfig();
+    if (!config) throw new HttpError(503, 'Linked Roles sind auf diesem Bot nicht eingerichtet.');
+    if (await pushRoleConnection(config, userId, true) === 'unlinked') throw new HttpError(409, 'Die Verknüpfung besteht nicht mehr – verbinde Nexo in Discord neu.');
+    res.json({ linkedRole: await linkedRoleState(userId) });
+  });
+  router.delete('/linked-role', async (_req, res) => {
+    const { userId } = locals(res).session;
+    const config = linkedRolesConfig();
+    if (config) await unlink(config, userId);
+    res.json({ linkedRole: await linkedRoleState(userId) });
+  });
+
+  router.put('/share', async (req, res) => {
+    const { enabled } = body(req.body);
+    if (typeof enabled !== 'boolean') throw badRequest('enabled: true oder false erwartet.');
+    res.json({ enabled: await writeShareProfile(locals(res).session.userId, enabled) });
+  });
+
+  router.put('/reminders', async (req, res) => {
+    const { enabled } = body(req.body);
+    if (typeof enabled !== 'boolean') throw badRequest('enabled: true oder false erwartet.');
+    res.json({ enabled: await writeReminders(locals(res).session.userId, enabled) });
+  });
+
+  // Polled by the dashboard while the profile page is open: quest progress and the wallet (quests pay on their own).
+  router.get('/quests', async (_req, res) => {
+    const { userId } = locals(res).session;
+    const result: QuestsResponse = { quests: await getDailyQuests(userId, pendingQuestCounts(userId)), wallet: await walletSummary(userId) };
     res.json(result);
   });
 

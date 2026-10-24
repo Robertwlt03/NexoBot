@@ -2,7 +2,7 @@
 // shop_items storage with a short in-memory cache for the card renderer.
 
 import {
-  BACKGROUND_SCENES, BADGE_GLYPHS, CARD_LAYOUTS, COSMETIC_SLOTS, FRAME_STYLES, RARITIES, STICKER_SPOTS, XP_BAR_STYLES,
+  BACKGROUND_SCENES, BADGE_GLYPHS, CARD_LAYOUTS, COSMETIC_SLOTS, FRAME_STYLES, PET_SPECIES, RARITIES, STICKER_SPOTS, XP_BAR_STYLES,
   type BackgroundScene, type BadgeGlyph, type CosmeticItem, type CosmeticSlot, type ItemAvailability, type Rarity, type SlotData,
 } from '../../shared/cosmetics.js';
 import { HttpError, badRequest, body, bool, hexColor, int, str } from '../../web/http.js';
@@ -116,6 +116,13 @@ export const ACHIEVEMENT_BADGES: {
   { achievementId: 'crime_25', stat: 'game_crime', target: 25, reward: 150, name: 'Kleinkrimineller', description: '25 Verbrechen erfolgreich begangen.', rarity: 'rare', glyph: 'skull', color: '#94A3B8', title: 'Gesucht' },
   { achievementId: 'fight_50', stat: 'game_fight', target: 50, reward: 250, name: 'Duellant', description: '50 Duelle gewonnen.', rarity: 'epic', glyph: 'shield', color: '#F97316', title: 'Duellmeister' },
   { achievementId: 'games_all', stat: 'gamesPlayed', target: 11, reward: 400, name: 'Allrounder', description: 'Jedes Minispiel mindestens einmal geschafft.', rarity: 'legendary', glyph: 'controller', color: '#22D3EE', title: 'Tausendsassa' },
+  { achievementId: 'duel_10', stat: 'game_duel', target: 10, reward: 150, name: 'Herausforderer', description: '10 Spiele gegen andere gewonnen (/fun spiel).', rarity: 'rare', glyph: 'controller', color: '#F472B6', title: 'Herausforderer' },
+  { achievementId: 'duel_50', stat: 'game_duel', target: 50, reward: 500, name: 'Brettspielkönig', description: '50 Spiele gegen andere gewonnen (/fun spiel).', rarity: 'legendary', glyph: 'crown', color: '#E879F9', title: 'Brettspielkönig' },
+  { achievementId: 'quests_7', stat: 'quest_days', target: 7, reward: 150, name: 'Pflichtbewusst', description: 'An 7 Tagen alle Tagesaufgaben geschafft.', rarity: 'rare', glyph: 'clock', color: '#86EFAC', title: 'Pflichtbewusst' },
+  { achievementId: 'quests_30', stat: 'quest_days', target: 30, reward: 400, name: 'Aufgabenprofi', description: 'An 30 Tagen alle Tagesaufgaben geschafft.', rarity: 'epic', glyph: 'clock', color: '#34D399', title: 'Aufgabenprofi' },
+  { achievementId: 'quests_100', stat: 'quest_days', target: 100, reward: 1000, name: 'Hundert Tage Fleiß', description: 'An 100 Tagen alle Tagesaufgaben geschafft.', rarity: 'legendary', glyph: 'clock', color: '#F5C451', title: 'Fleißiges Bienchen' },
+  { achievementId: 'community_1', stat: 'community_goals', target: 1, reward: 100, name: 'Teamgeist', description: 'Bei einem Gemeinschaftsziel mitgeholfen.', rarity: 'rare', glyph: 'heart', color: '#5EEAD4', title: 'Teamplayer' },
+  { achievementId: 'community_5', stat: 'community_goals', target: 5, reward: 400, name: 'Gemeinschaftsheld', description: 'Bei 5 Gemeinschaftszielen mitgeholfen.', rarity: 'epic', glyph: 'heart', color: '#2DD4BF', title: 'Herz der Community' },
   { achievementId: 'monthly_top3', stat: 'top3', target: 1, reward: 200, name: 'Podiumsplatz', description: 'In einem Monatsranking unter den Top 3 gelandet.', rarity: 'epic', glyph: 'trophy', color: '#E2E8F0', title: 'Treppchenstürmer' },
   { achievementId: 'monthly_top3_3', stat: 'top3', target: 3, reward: 500, name: 'Podest-Abo', description: 'Dreimal in einem Monatsranking unter den Top 3.', rarity: 'legendary', glyph: 'trophy', color: '#F5C451', title: 'Podest-Abonnent' },
   { achievementId: 'monthly_winner', stat: 'monthlyWins', target: 1, reward: 500, name: 'Monatschampion', description: 'Ein Monatsranking gewonnen.', rarity: 'legendary', glyph: 'crown', color: '#F5C451', title: 'Unangefochten' },
@@ -349,6 +356,14 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('levelup', 'lvl-forest-clearing', 'epic', 2400, 'Waldlichtung', 'Ein Aufstieg im grünen Licht.', { style: 'classic', color: '#8FB36B' }),
   item('sticker', 'sticker-acorn', 'rare', 900, 'Eichel-Sticker', 'Eine Eichel für die Ecke.', { glyph: 'acorn', color: '#C98A4B', corner: 'br' }),
   item('sticker', 'sticker-toadstool', 'rare', 1000, 'Pilz-Sticker', 'Ein Fliegenpilz für die Ecke.', { glyph: 'mushroom', color: '#E2574C', corner: 'tr' }),
+  // ---------- Begleiter (sitzen am Avatar und wachsen mit den Chat-Tagen) ----------
+  item('pet', 'pet-fox', 'rare', 1200, 'Fuchs', 'Schlau, flauschig und immer an deiner Seite.', { species: 'fox', color: '#E8833A' }),
+  item('pet', 'pet-owl', 'rare', 1200, 'Eule', 'Hält nachts Wache, wenn du noch chattest.', { species: 'owl', color: '#9C7A5B' }),
+  item('pet', 'pet-cat', 'epic', 2000, 'Katze', 'Sitzt auf deiner Karte, als gehöre sie ihr.', { species: 'cat', color: '#8E95A3' }),
+  item('pet', 'pet-cat-ginger', 'epic', 2200, 'Rote Katze', 'Ein getigerter Kater mit viel Meinung.', { species: 'cat', color: '#E59A4F' }),
+  item('pet', 'pet-axolotl', 'epic', 2400, 'Axolotl', 'Lächelt immer. Wirklich immer.', { species: 'axolotl', color: '#F7A1C4' }),
+  item('pet', 'pet-dragon', 'legendary', 6000, 'Drache', 'Klein, aber mit Flügeln. Und er wächst.', { species: 'dragon', color: '#4FB477' }),
+  item('pet', 'pet-dragon-night', 'mythic', 12000, 'Nachtdrache', 'Aus der Black-Market-Höhle: ein Drache in Mitternachtsblau.', { species: 'dragon', color: '#4B5BD6' }, BM),
 
   // ---------- Spielwelten: Genre-Hommagen als eigene Motive (keine Marken, Figuren oder Namen echter Spiele) ----------
   item('background', 'bg-pixel-quest', 'epic', 2800, 'Pixelabenteuer', 'Retro-Jump-and-Run: Pixelsonne über gestuften Bergen.', scene('pixel', ['#3B2A6B', '#E86F5B', '#FFD166', '#2E7D4F'])),
@@ -407,7 +422,7 @@ export const BUNDLES: BundleDef[] = [
 
 // ---------- Owner input validation ----------
 
-const AVAILABILITIES: ItemAvailability[] = ['shop', 'blackmarket', 'event', 'achievement', 'ranking'];
+const AVAILABILITIES: ItemAvailability[] = ['shop', 'blackmarket', 'event', 'achievement', 'ranking', 'season'];
 
 function oneOf<V extends string>(value: unknown, list: readonly V[], field: string): V {
   if (!list.includes(value as V)) throw badRequest(`${field}: einer von ${list.join(', ')} erwartet.`);
@@ -452,6 +467,7 @@ export function parseSlotData(slot: CosmeticSlot, input: unknown): SlotData[Cosm
       color: hexColor(d.color, 'Farbe'),
       corner: oneOf(d.corner, STICKER_SPOTS, 'Ecke'),
     };
+    case 'pet': return { species: oneOf(d.species, PET_SPECIES, 'Tier'), color: hexColor(d.color, 'Farbe') };
   }
 }
 

@@ -65,6 +65,7 @@ export function resolveCosmetics(equipped: EquippedCosmetics, items: Map<string,
     levelup: pick(items, equipped.levelup, 'levelup'),
     layout: pick(items, equipped.layout, 'layout'),
     sticker: withSpot(pick(items, equipped.sticker, 'sticker'), stickerSpot),
+    pet: pick(items, equipped.pet, 'pet'),
   };
 }
 
@@ -99,6 +100,7 @@ export function cardSubject(user: ApiUser | null, me: MeProfileResponse, guildId
     rank: level?.rank ?? null,
     serverName: level?.guildName ?? null,
     balance: me.wallet.balance,
+    petStage: me.petStage,
   };
 }
 

@@ -84,7 +84,7 @@ export default function BlackMarketPage() {
         <section className="relative mb-6 overflow-hidden rounded-[20px] border border-rose-500/20 bg-[#070608] p-6 md:p-8">
           <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,rgba(255,255,255,.028)_0_1px,transparent_1px_3px)]" />
           <div className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-rose-600/20 blur-[110px]" />
-          <div className="pointer-events-none absolute -bottom-40 left-10 h-72 w-72 rounded-full bg-violet-700/15 blur-[110px]" />
+          <div className="pointer-events-none absolute -bottom-40 left-10 h-72 w-72 rounded-full bg-amber-800/15 blur-[110px]" />
           <div className="relative flex flex-wrap items-end gap-6">
             <div className="min-w-0 flex-[1_1_300px]">
               <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[.24em] text-rose-300">

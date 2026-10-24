@@ -57,8 +57,8 @@ export function ServerPicker() {
         </div>
 
         <div className="relative mt-4">
-          {loading && !data && <div className="center"><Spinner /></div>}
-          {error && <Notice tone="danger">{error}</Notice>}
+          {loading && !data && <Spinner />}
+          {error && <Notice tone="danger" onRetry={reload}>{error}</Notice>}
           {data && guilds.length === 0 && <Empty title="Keine Server zum Verwalten">Server erscheinen hier, sobald du auf einem die Berechtigung „Server verwalten“ hast. Dein Profil erreichst du jederzeit oben rechts über deinen Namen.</Empty>}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {guilds.map((guild) => (
@@ -87,6 +87,18 @@ export function ServerPicker() {
               </article>
             ))}
           </div>
+          {data && guilds.length > 0 && (
+            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Link to="/me" className="flex items-start gap-4 rounded-[20px] border border-white/[.06] bg-surface p-5 text-ink transition hover:border-white/[.14] hover:no-underline">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent/15 text-accent"><Icon name="users" size={20} /></span>
+                <span><b className="block text-[15px] font-medium">Mein Profil</b><span className="text-[13.5px] text-mute">Profilkarte, Shop, Tagesbonus und Saison – auf allen Servern gleich.</span></span>
+              </Link>
+              <div className="flex items-start gap-4 rounded-[20px] border border-dashed border-white/[.1] p-5">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/[.04] text-mute"><Icon name="settings" size={20} /></span>
+                <span><b className="block text-[15px] font-medium text-ink">Server fehlt?</b><span className="text-[13.5px] text-mute">Hier stehen Server, auf denen du „Server verwalten“ darfst. Nach einer Rechte-Änderung hilft „Aktualisieren“.</span></span>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>

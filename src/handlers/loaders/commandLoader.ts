@@ -7,6 +7,8 @@ import type { RESTPostAPIChatInputApplicationCommandsJSONBody } from 'discord.js
 import { logger } from '../../utils/logger.js';
 import botConfig from '../../config/bot.js';
 import type { Command, NexoClient } from '../../types/index.js';
+import { setCommandIds } from '../../utils/commandMention.js';
+import { CONTEXT_MENUS } from '../../services/contextMenus.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -284,7 +286,8 @@ async function registerGlobalCommands(
     validateCommands(commands);
     logger.info('Command validation passed');
 
-    const commandsToRegister = prepareCommandsForRegistration(commands);
+    // Right-click user commands go along with the slash commands.
+    const commandsToRegister = [...prepareCommandsForRegistration(commands), ...CONTEXT_MENUS.map((menu) => menu.data.toJSON() as unknown as CommandJSON)];
 
     if (botConfig.commands?.deleteCommands) {
         logger.info('Clearing existing global commands before registration...');
@@ -292,7 +295,7 @@ async function registerGlobalCommands(
     }
 
     logger.info(`Registering ${commandsToRegister.length} global commands...`);
-    await client.rest.put(`/applications/${clientId}/commands`, { body: commandsToRegister });
+    setCommandIds(await client.rest.put(`/applications/${clientId}/commands`, { body: commandsToRegister }));
     logger.info(`Successfully registered ${commandsToRegister.length} global commands`);
     logger.info('Global commands may take up to an hour to appear in all servers on first deploy');
 }

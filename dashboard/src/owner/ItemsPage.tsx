@@ -3,7 +3,7 @@ import {
   BADGE_GLYPHS, COSMETIC_SLOTS, PRICE_BANDS, RARITIES, RARITY_LABELS, SLOT_LABELS, emptyEquipped,
 } from '../../../src/shared/cosmetics';
 import type {
-  BackgroundData, BackgroundScene, CosmeticItem, CosmeticSlot, EffectData, FontData, FrameData, ItemAvailability, LayoutData, LevelupData, Rarity, SlotData, StickerData, XpBarData,
+  BackgroundData, BackgroundScene, CosmeticItem, CosmeticSlot, EffectData, FontData, FrameData, ItemAvailability, LayoutData, LevelupData, PetData, Rarity, SlotData, StickerData, XpBarData,
 } from '../../../src/shared/cosmetics';
 import type { ShopEvent } from '../../../src/web/dto/profile';
 import { useApi, useUser } from '../api';
@@ -20,7 +20,7 @@ import { ItemVisual, Bernis, RarityLabel } from '../me/visuals';
 
 const opts = <T extends string>(labels: Record<T, string>) => (Object.keys(labels) as T[]).map((value) => ({ value, label: labels[value] }));
 
-export const AVAILABILITY_LABELS: Record<ItemAvailability, string> = { shop: 'Shop', blackmarket: 'Black Market', event: 'Event', achievement: 'Erfolg', ranking: 'Rangliste' };
+export const AVAILABILITY_LABELS: Record<ItemAvailability, string> = { shop: 'Shop', blackmarket: 'Black Market', event: 'Event', achievement: 'Erfolg', ranking: 'Rangliste', season: 'Saisonpfad' };
 const KIND_LABELS: Record<BackgroundData['kind'], string> = { solid: 'Einfarbig', gradient: 'Verlauf', pattern: 'Muster', aurora: 'Polarlicht', mesh: 'Mesh', scene: 'Szene (illustriert)' };
 const SCENE_LABELS: Record<BackgroundScene, string> = { pixel: 'Pixelabenteuer', 'neon-city': 'Neonstadt', 'moon-ninja': 'Mondschein-Ninja', dungeon: 'Kerker', orbital: 'Orbitalstation', 'pirate-cove': 'Piratenbucht' };
 const PATTERN_LABELS: Record<BackgroundData['pattern'], string> = { none: 'Keins', dots: 'Punkte', grid: 'Raster', waves: 'Wellen', stars: 'Sterne', hex: 'Waben', diagonal: 'Diagonal', circuit: 'Platine' };
@@ -30,6 +30,7 @@ const FONT_LABELS: Record<FontData['font'], string> = { inter: 'Inter', unbounde
 const EFFECT_LABELS: Record<EffectData['effect'], string> = { sparkles: 'Funkeln', snow: 'Schnee', confetti: 'Konfetti', aurora: 'Polarlicht', scanlines: 'Scanlines', stardust: 'Sternenstaub', embers: 'Glut', hearts: 'Herzen', leaves: 'Fallendes Laub' };
 const LEVELUP_LABELS: Record<LevelupData['style'], string> = { classic: 'Klassisch', minimal: 'Minimal', neon: 'Neon', royal: 'Königlich', retro: 'Retro' };
 const LAYOUT_LABELS: Record<LayoutData['layout'], string> = { classic: 'Klassisch', compact: 'Kompakt', centered: 'Zentriert', split: 'Geteilt', banner: 'Banner', mirror: 'Gespiegelt', minimal: 'Minimal' };
+const PET_LABELS: Record<PetData['species'], string> = { fox: 'Fuchs', owl: 'Eule', cat: 'Katze', axolotl: 'Axolotl', dragon: 'Drache' };
 const CORNER_LABELS: Record<StickerData['corner'], string> = { tl: 'Oben links', tr: 'Oben rechts', bl: 'Unten links', br: 'Unten rechts', avatar: 'Auf dem Avatar' };
 
 const SLOT_DEFAULTS: { [S in CosmeticSlot]: SlotData[S] } = {
@@ -45,6 +46,7 @@ const SLOT_DEFAULTS: { [S in CosmeticSlot]: SlotData[S] } = {
   levelup: { style: 'classic', color: '#a99bff' },
   layout: { layout: 'centered' },
   sticker: { glyph: 'star', color: '#facc15', corner: 'tr' },
+  pet: { species: 'fox', color: '#E8833A' },
 };
 
 /** A new item of `slot`, keeping the shared fields of `from`. */
@@ -137,6 +139,13 @@ function DataEditor({ item, onChange }: { item: CosmeticItem; onChange: (item: C
         </div>
       );
     }
+    case 'pet':
+      return (
+        <div className="grid-2">
+          <Field label="Tier"><Select value={item.data.species} onChange={(species) => onChange({ ...item, data: { ...item.data, species } })} options={opts(PET_LABELS)} /></Field>
+          <Field label="Fellfarbe"><ColorInput value={item.data.color} onChange={(color) => onChange({ ...item, data: { ...item.data, color } })} /></Field>
+        </div>
+      );
     case 'title':
       return (
         <div className="grid-2">
@@ -291,10 +300,42 @@ export default function ItemsPage() {
         <label className="flex cursor-pointer items-center gap-2.5 text-[13.5px]"><Switch checked={showInactive} onChange={setShowInactive} label="Inaktive zeigen" /> Inaktive</label>
       </div>
       {loading && !data && <Spinner />}
-      {error && <Notice tone="danger">{error}</Notice>}
+      {error && <Notice tone="danger" onRetry={reload}>{error}</Notice>}
       {data && rows.length === 0 && <Empty title="Keine Artikel">Passe die Filter an oder lege einen neuen Artikel an.</Empty>}
       {rows.length > 0 && (
-        <TableWrap>
+        // Phones: one stacked card per item with every column visible; the table needs too much width there.
+        <ul className="m-0 grid list-none gap-2.5 p-0 sm:hidden">
+          {rows.map((item) => (
+            <li key={item.id} className={`rounded-xl border border-white/[.06] bg-white/[.02] p-3 ${item.active ? '' : 'opacity-55'}`}>
+              <button type="button" className="flex w-full cursor-pointer items-center gap-3 border-0 bg-transparent p-0 text-left font-[inherit] text-body" onClick={() => setEditing({ item, isNew: false })}>
+                <ItemVisual item={item} className="w-16 shrink-0 rounded-lg" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium text-ink">{item.name}</span>
+                  <span className="block truncate font-mono text-[11.5px] text-faint">{item.id}</span>
+                  <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]">
+                    <span>{SLOT_LABELS[item.slot]}</span><span className="text-faint">·</span><RarityLabel rarity={item.rarity} />
+                  </span>
+                </span>
+              </button>
+              <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[13px]">
+                <span className="flex flex-wrap items-center gap-2">
+                  {item.price ? <Bernis amount={item.price} nowrap /> : <span className="text-faint">–</span>}
+                  <span className="text-faint">{AVAILABILITY_LABELS[item.availability]}{item.eventId ? ` · ${events.find((e) => e.id === item.eventId)?.name ?? item.eventId}` : ''}</span>
+                </span>
+                {item.active ? <span className="badge badge-on">Aktiv</span> : <span className="badge badge-off">Inaktiv</span>}
+              </div>
+              <div className="mt-2 flex gap-1">
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing({ item, isNew: false })}>Bearbeiten</button>
+                {item.active
+                  ? <button type="button" className="btn btn-ghost btn-sm text-neg" onClick={() => deactivate(item)}>Deaktivieren</button>
+                  : <button type="button" className="btn btn-ghost btn-sm" onClick={() => activate(item)}>Aktivieren</button>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {rows.length > 0 && (
+        <TableWrap className="max-sm:hidden">
           <thead><tr><th>Artikel</th><th>Bereich</th><th>Seltenheit</th><th className="text-right">Preis</th><th>Erhältlich</th><th>Status</th><th /></tr></thead>
           <tbody>
             {rows.map((item) => (

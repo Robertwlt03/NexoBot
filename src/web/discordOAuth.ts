@@ -13,11 +13,12 @@ export interface DiscordUser {
   avatar: string | null;
 }
 
-interface TokenResponse {
+export interface TokenResponse {
   access_token: string;
   token_type: string;
   expires_in: number;
   scope: string;
+  refresh_token?: string;
 }
 
 export interface OAuthConfig {
@@ -69,7 +70,12 @@ async function discordFetch<T>(path: string, init: RequestInit): Promise<T> {
 }
 
 export async function exchangeCode(config: OAuthConfig, code: string): Promise<string> {
-  const token = await discordFetch<TokenResponse>('/oauth2/token', {
+  return (await exchangeCodeForTokens(config, code)).access_token;
+}
+
+/** The full token response (with refresh token), for flows that keep acting for the user (linked roles). */
+export function exchangeCodeForTokens(config: OAuthConfig, code: string): Promise<TokenResponse> {
+  return discordFetch<TokenResponse>('/oauth2/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -80,7 +86,22 @@ export async function exchangeCode(config: OAuthConfig, code: string): Promise<s
       redirect_uri: config.redirectUri,
     }),
   });
-  return token.access_token;
+}
+
+export function refreshTokens(config: Omit<OAuthConfig, 'redirectUri'>, refreshToken: string): Promise<TokenResponse> {
+  return discordFetch<TokenResponse>('/oauth2/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ client_id: config.clientId, client_secret: config.clientSecret, grant_type: 'refresh_token', refresh_token: refreshToken }),
+  });
+}
+
+/** Authorize URL for the linked-roles verification (identify + role_connections.write, always with consent). */
+export function linkedRoleAuthorizeUrl(config: OAuthConfig, state: string): string {
+  const params = new URLSearchParams({
+    client_id: config.clientId, redirect_uri: config.redirectUri, response_type: 'code', scope: 'identify role_connections.write', state, prompt: 'consent',
+  });
+  return `https://discord.com/oauth2/authorize?${params}`;
 }
 
 const bearer = (accessToken: string) => ({ headers: { Authorization: `Bearer ${accessToken}` } });

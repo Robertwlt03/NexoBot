@@ -12,10 +12,10 @@ export default function ReportsPage() {
           <Card icon="flag" title="Meldekanal" description="Hier landen alle neuen Meldungen, der Serverinhaber wird dabei erwähnt.">
             <div className="stack">
               {value.channelId && !value.loggingEnabled && (
-                <Notice tone="warn">Das Logging ist ausgeschaltet, deshalb kommen keine Meldungen an. Schalte es unter Logging ein.</Notice>
+                <Notice tone="warn">Die Protokollierung ist ausgeschaltet, deshalb kommen keine Meldungen an. Schalte sie unter Protokolle ein.</Notice>
               )}
               {value.channelId && !value.eventEnabled && (
-                <Notice tone="warn">Das Ereignis „Meldung eingereicht“ ist unter Logging ausgeschaltet, deshalb kommen keine Meldungen an.</Notice>
+                <Notice tone="warn">Das Ereignis „Meldung eingereicht“ ist unter Protokolle ausgeschaltet, deshalb kommen keine Meldungen an.</Notice>
               )}
               <Field label="Kanal" hint="Ohne Kanal kann niemand etwas melden. Nexo braucht dort „Nachrichten senden“ und „Links einbetten“.">
                 <ChannelSelect value={value.channelId} placeholder="Kein Meldekanal" onChange={(channelId) => settings.set({ channelId })} />

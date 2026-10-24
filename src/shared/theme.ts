@@ -266,3 +266,37 @@ export function themeWarnings(theme: DashboardTheme): string[] {
   if (theme.mode === 'dark' && contrast(theme.secondary, SURFACE) < 2) notes.push('Die Sekundärfarbe verschwindet fast im Hintergrund.');
   return notes;
 }
+
+// ---------- Message colours (Nexo cards in Discord) ----------
+
+/** What a card's colour means; every scheme has one colour per role. */
+export const MESSAGE_ROLES = ['nexo', 'amber', 'gold', 'success', 'info', 'warn', 'danger', 'calm', 'pink'] as const;
+export type MessageRole = typeof MESSAGE_ROLES[number];
+export type MessagePalette = Record<MessageRole, string>;
+
+/** Walnuss & Moos: the bot's hand-picked palette (config/bot.ts embeds.colors), the look everyone gets by default. */
+export const DEFAULT_MESSAGE_PALETTE: MessagePalette = {
+  nexo: '#8fb36b', amber: '#e8a33d', gold: '#f5c451', success: '#4ade80', info: '#7da0c4',
+  warn: '#f59e0b', danger: '#ef4444', calm: '#94a3b8', pink: '#f472b6',
+};
+
+/** Hue (OKLCH) of each status role: green, red, orange … stay recognisable in every scheme. */
+const ROLE_HUES: Record<Exclude<MessageRole, 'nexo' | 'amber' | 'calm'>, number> = {
+  gold: 88, success: 150, info: 245, warn: 62, danger: 25, pink: 350,
+};
+
+/**
+ * The colours of Nexo's answers for a member's scheme: brand roles are the scheme's own colours, status roles keep
+ * their hue but take the scheme's lightness and saturation (pastel schemes get pastel states, vivid ones vivid).
+ */
+export function messagePalette(theme: DashboardTheme): MessagePalette {
+  if (theme.preset === DEFAULT_THEME.preset) return { ...DEFAULT_MESSAGE_PALETTE };
+  const [L, C] = oklch(theme.primary);
+  const lightness = Math.min(0.8, Math.max(0.66, L));
+  const chroma = Math.min(0.17, Math.max(0.07, C));
+  const status = Object.fromEntries(Object.entries(ROLE_HUES).map(([role, hue]) => [role, fromOklch(lightness, chroma, hue)]));
+  return {
+    nexo: theme.primary, amber: theme.secondary, calm: mix(theme.primary, '#94a3b8', 0.75),
+    ...status,
+  } as MessagePalette;
+}

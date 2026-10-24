@@ -106,13 +106,18 @@ export function NexoLogo({ className, animated = true, followPointer = false, ti
         <filter id={`${id}-lift`} x="-10%" y="-10%" width="120%" height="125%">
           <feDropShadow dx="0" dy="14" stdDeviation="14" floodColor="#1A0E05" floodOpacity=".55" />
         </filter>
-        <linearGradient id={`${id}-eye`} x1="0" y1="0" x2="0" y2="1">
+        {/* Gradients on ellipses in user space: the bot's renderer (banners, from nexo.svg) paints bounding-box
+            gradients on ellipses black. Same look as the bounding box of each part. */}
+        <linearGradient id={`${id}-eye`} gradientUnits="userSpaceOnUse" x1="0" y1="434" x2="0" y2="538">
+          <stop offset="0" stopColor="#A78BFA" /><stop offset="1" stopColor="#22D3EE" />
+        </linearGradient>
+        <linearGradient id={`${id}-antenna`} gradientUnits="userSpaceOnUse" x1="0" y1="211" x2="0" y2="241">
           <stop offset="0" stopColor="#A78BFA" /><stop offset="1" stopColor="#22D3EE" />
         </linearGradient>
         <linearGradient id={`${id}-visor`} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#2A2066" /><stop offset="1" stopColor="#140F33" />
         </linearGradient>
-        <linearGradient id={`${id}-orbit`} x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id={`${id}-orbit`} gradientUnits="userSpaceOnUse" x1={-ORBIT.rx} y1="0" x2={ORBIT.rx} y2="0">
           <stop offset="0" stopColor="#C4B5FD" stopOpacity="0" /><stop offset="0.3" stopColor="#C4B5FD" stopOpacity="0.6" /><stop offset="0.6" stopColor="#E9D5FF" stopOpacity="1" /><stop offset="1" stopColor="#7DD3FC" stopOpacity="1" />
         </linearGradient>
         <clipPath id={`${id}-front`}><rect x="-600" y="0" width="1200" height="600" /></clipPath>
@@ -150,7 +155,7 @@ export function NexoLogo({ className, animated = true, followPointer = false, ti
       <g className="nx-body">
         <rect x="497" y="236" width="30" height="80" rx="15" fill="#FFFFFF" stroke="#CFC8F5" strokeWidth="8" />
         <circle cx="512" cy="226" r="27" fill="#FFFFFF" stroke="#CFC8F5" strokeWidth="8" />
-        <circle className="nx-antenna-light" cx="512" cy="226" r="15" fill={ref('eye')} />
+        <circle className="nx-antenna-light" cx="512" cy="226" r="15" fill={ref('antenna')} />
         <rect x="214" y="450" width="96" height="160" rx="46" fill="#E6E4FB" stroke="#CFC8F5" strokeWidth="8" />
         <rect x="714" y="450" width="96" height="160" rx="46" fill="#E6E4FB" stroke="#CFC8F5" strokeWidth="8" />
         <rect x="262" y="310" width="500" height="420" rx="150" fill="#FFFFFF" stroke="#CFC8F5" strokeWidth="8" />

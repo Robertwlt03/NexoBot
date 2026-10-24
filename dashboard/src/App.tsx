@@ -22,6 +22,7 @@ const MEMBER_PAGES = [
   ['/me/verlauf', lazy(() => import('./me/HistoryPage'))],
   ['/me/ranglisten', lazy(() => import('./me/RankingsPage'))],
   ['/me/erfolge', lazy(() => import('./me/AchievementsPage'))],
+  ['/me/saison', lazy(() => import('./me/SeasonPage'))],
   ['/me/design', lazy(() => import('./me/DesignPage'))],
   ['/owner', lazy(() => import('./owner/OverviewPage'))],
   ['/owner/artikel', lazy(() => import('./owner/ItemsPage'))],
@@ -45,7 +46,7 @@ export function App() {
     setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), 4000);
   }, []);
 
-  if (user === undefined) return <div className="grid h-full place-items-center bg-canvas"><Spinner /></div>;
+  if (user === undefined) return <div className="grid h-full place-items-center bg-canvas"><div className="spinner" role="status" aria-label="Lädt …" /></div>;
 
   return (
     <UserContext.Provider value={user}>

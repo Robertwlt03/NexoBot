@@ -42,7 +42,7 @@ function PanelEditor({ initial, onCancel, onSave, busy, withRoles }: {
         </div>
       )}
       {withRoles && (
-        <MessagePreview sample={{}} embed={{ title: value.title, description: `${value.description}\n\nVerfügbare Rollen\n${roleNames}`, color: '#5865F2', footer: 'Wähle deine Rollen im Dropdown-Menü unten' }} />
+        <MessagePreview sample={{}} embed={{ title: value.title, description: `${value.description}\n\nVerfügbare Rollen\n${roleNames}`, color: '#8FB36B', footer: 'Wähle deine Rollen im Dropdown-Menü unten' }} />
       )}
     </Modal>
   );
@@ -106,7 +106,7 @@ export default function ReactionRolesPage() {
   const { guild } = useGuild();
   const toast = useToast();
   const base = `/guilds/${guild.id}/reactionroles`;
-  const { data, setData, error, loading } = useApi<ReactionRolesData>(base);
+  const { data, setData, error, loading, reload } = useApi<ReactionRolesData>(base);
   const [busy, setBusy] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ReactionRolePanel | null>(null);
@@ -140,7 +140,7 @@ export default function ReactionRolesPage() {
         )} />
 
       {loading && !data && <Spinner />}
-      {error && !data && <Notice tone="danger">{error}</Notice>}
+      {error && !data && <Notice tone="danger" onRetry={reload}>{error}</Notice>}
       {data && (
         <>
           <p className="faint mb-4">{panels.length}/{MAX_PANELS} Panels · bis zu {MAX_ROLES} Rollen pro Panel</p>

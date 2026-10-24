@@ -5,14 +5,15 @@ import gsap from 'gsap';
 import { Draggable } from 'gsap/Draggable';
 import { InertiaPlugin } from 'gsap/InertiaPlugin';
 import { useGSAP } from '@gsap/react';
-import { COSMETIC_SLOTS, DAILY_BONUS, MAX_BIO_LENGTH, MAX_EQUIPPED_BADGES, SLOT_LABELS, STICKER_SPOTS, levelUpReward } from '../../../src/shared/cosmetics';
+import { COSMETIC_SLOTS, DAILY_BONUS, STREAK_SHIELD, MAX_BIO_LENGTH, MAX_EQUIPPED_BADGES, SLOT_LABELS, STICKER_SPOTS, levelUpReward } from '../../../src/shared/cosmetics';
+import { PET_STAGE_NAMES } from '../../../src/shared/pets';
 import { PROFILE_CARD_HEIGHT, PROFILE_CARD_WIDTH, drawSticker, profileGeometry, stickerPoint, stickerRadius } from '../../../src/shared/profileCard';
 import type { CosmeticItem, CosmeticSlot, ResolvedCosmetics, StickerData, StickerSpot, UserProfileSettings } from '../../../src/shared/cosmetics';
-import type { DailyClaimResult, MeProfileResponse } from '../../../src/web/dto/profile';
-import { api, useUser } from '../api';
+import type { DailyClaimResult, LinkedRoleValues, MeProfileResponse, QuestsResponse } from '../../../src/web/dto/profile';
+import { api, useToast, useUser } from '../api';
 import { LevelUpPreview, ProfileCardPreview } from '../components/ProfileCardPreview';
 import { Icon } from '../icons';
-import { Card, PageHeader, SaveBar, Select, SwitchRow, TextArea } from '../components/ui';
+import { Card, PageHeader, SaveBar, Select, Switch, SwitchRow, TextArea } from '../components/ui';
 import {
   cardSubject, countdown, equipItem, isEquipped, num, reducedMotion, resolveCosmetics, unequipItem, useCountUp, useDraft, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
@@ -50,6 +51,14 @@ function DailyCard() {
   const { me, setMe } = useMe();
   const updateWallet = useWalletUpdate();
   const { run, busy } = useMutation();
+  const { run: toggleReminders, busy: reminderBusy } = useMutation();
+  const { run: runShield, busy: shieldBusy } = useMutation();
+  const buyShield = async () => {
+    const result = await runShield<Pick<DailyClaimResult, 'wallet' | 'daily'>>('/me/daily/shield', 'POST', undefined, 'Serien-Schutz gekauft.');
+    if (!result) return;
+    updateWallet(result.wallet);
+    setMe((prev) => ({ ...prev, daily: result.daily }));
+  };
   const now = useNow();
   const [gain, setGain] = useState<number | null>(null);
   const root = useRef<HTMLElement>(null);
@@ -86,12 +95,162 @@ function DailyCard() {
         ))}
       </div>
       <p className="mt-2 text-[12px] text-[var(--accent-text-muted)]">+{DAILY_BONUS.perStreakDay} pro Tag in Folge, bis +{DAILY_BONUS.maxStreakBonus}</p>
+      {daily.available && daily.saving > 0 && (
+        <p className="mt-3 flex items-start gap-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-[12.5px] text-ink">
+          <Glyph name="shield" size={16} /> Dein Serien-Schutz rettet deine Serie: {daily.saving === 1 ? 'ein verpasster Tag wird' : `${daily.saving} verpasste Tage werden`} überbrückt.
+        </p>
+      )}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-[12.5px] text-[var(--accent-text-muted)]">
+        <span className="flex items-center gap-1.5" title="Jeder Serien-Schutz überbrückt einen verpassten Tag.">
+          {Array.from({ length: STREAK_SHIELD.max }, (_, i) => (
+            <span key={i} className={i < daily.shields ? 'text-ink' : 'opacity-35'}><Glyph name="shield" size={16} /></span>
+          ))}
+          Serien-Schutz {daily.shields} von {STREAK_SHIELD.max}
+        </span>
+        {daily.shields < STREAK_SHIELD.max && (
+          <button type="button" className="btn btn-secondary btn-sm" disabled={shieldBusy || me.wallet.balance < STREAK_SHIELD.price} onClick={buyShield}>
+            Kaufen für <Bernis amount={STREAK_SHIELD.price} nowrap />
+          </button>
+        )}
+      </div>
       <div className="mt-4">
         {daily.available
           ? <button type="button" className="btn btn-primary w-full" disabled={busy} onClick={claim}>{busy ? 'Einen Moment …' : 'Bonus abholen'}</button>
           : <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-center text-[13px] text-body">Nächster Bonus in <span className="tabular-nums text-ink">{daily.nextAt ? countdown(daily.nextAt, now) : 'Kürze'}</span></div>}
       </div>
+      <div className="mt-3 flex items-center justify-between gap-3 text-[12.5px] text-[var(--accent-text-muted)]">
+        <span>Um 19 Uhr per DM erinnern, wenn noch etwas offen ist</span>
+        <Switch checked={me.reminders} label="Erinnerung per DM" disabled={reminderBusy}
+          onChange={async (enabled) => { if (await toggleReminders<{ enabled: boolean }>('/me/reminders', 'PUT', { enabled }, enabled ? 'Erinnerung an.' : 'Erinnerung aus.')) setMe((prev) => ({ ...prev, reminders: enabled })); }} />
+      </div>
     </section>
+  );
+}
+
+/** Today's three quests; polled once a minute while visible, since they pay out on their own. */
+function QuestsCard() {
+  const { me, setMe } = useMe();
+  const updateWallet = useWalletUpdate();
+  const now = useNow(30_000);
+  const { quests, bonus, resetsAt } = me.quests;
+  useEffect(() => {
+    const poll = async () => {
+      if (document.hidden) return;
+      const result = await api<QuestsResponse>('/me/quests').catch(() => null);
+      if (!result) return;
+      setMe((prev) => ({ ...prev, quests: result.quests }));
+      updateWallet(result.wallet);
+    };
+    const timer = window.setInterval(poll, 60_000);
+    return () => window.clearInterval(timer);
+  }, [setMe, updateWallet]);
+  const doneCount = quests.filter((quest) => quest.done).length;
+
+  return (
+    <section className="card !p-5 md:col-span-2 xl:col-span-1">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <span className="text-[13px] text-mute">Tagesaufgaben · {doneCount} von {quests.length}</span>
+        <span className="text-[12px] text-faint">Neue in <span className="tabular-nums">{countdown(resetsAt, now)}</span></span>
+      </div>
+      <ul className="mt-3 flex list-none flex-col gap-3 p-0">
+        {quests.map((quest) => (
+          <li key={quest.id}>
+            <div className="flex items-start gap-2.5">
+              <span className={`mt-px grid h-5 w-5 shrink-0 place-items-center rounded-full ${quest.done ? 'bg-pos text-canvas' : 'border border-white/20'}`}>
+                {quest.done && <Glyph name="check" size={12} />}
+              </span>
+              <span className={`min-w-0 flex-1 text-[13.5px] leading-snug ${quest.done ? 'text-mute' : 'text-ink'}`}>{quest.label}</span>
+              <span className="shrink-0 text-[12.5px] text-mute">+<Bernis amount={quest.reward} nowrap /></span>
+            </div>
+            {!quest.done && (
+              <div className="ml-[30px] mt-1.5 flex items-center gap-2">
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[.06]">
+                  <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${(quest.current / quest.target) * 100}%` }} />
+                </div>
+                <span className="text-[11.5px] tabular-nums text-faint">{quest.current} / {quest.target}</span>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div className={`mt-4 flex items-center gap-2 rounded-xl border px-3 py-2 text-[12.5px] ${bonus.done ? 'border-pos/30 bg-pos/10 text-ink' : 'border-white/[.06] bg-white/[.02] text-mute'}`}>
+        <Glyph name="gift" size={16} />
+        <span className="min-w-0 flex-1">{bonus.done ? 'Alle geschafft – Bonus kassiert!' : 'Alle drei geschafft:'}</span>
+        <span className="shrink-0">+<Bernis amount={bonus.reward} nowrap /></span>
+      </div>
+      <p className="mt-2 text-[11.5px] text-faint">Zählt auf allen Servern mit Nexo. Fertige Aufgaben zahlen sich von selbst aus.</p>
+    </section>
+  );
+}
+
+/** Opt-in public profile link; posted in Discord it unfurls into the card with level and season. */
+function ShareProfile() {
+  const { me, setMe } = useMe();
+  const user = useUser();
+  const toast = useToast();
+  const { run, busy } = useMutation();
+  const link = `${window.location.origin}/dashboard/p/${user?.id ?? ''}`;
+  const toggle = async (enabled: boolean) => {
+    if (await run<{ enabled: boolean }>('/me/share', 'PUT', { enabled }, enabled ? 'Profil-Link ist an.' : 'Profil-Link ist aus.')) setMe((prev) => ({ ...prev, shareProfile: enabled }));
+  };
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      toast('Link kopiert – füg ihn in Discord ein.');
+    } catch {
+      toast('Kopieren ging nicht – markier den Link und kopier ihn selbst.', true);
+    }
+  };
+  return (
+    <>
+      <SwitchRow title="Profil-Link teilen" description="Ein öffentlicher Link zu deiner Profilkarte. In Discord gepostet, zeigt er Karte, Level und Saison als Vorschau."
+        checked={me.shareProfile} disabled={busy} onChange={toggle} />
+      {me.shareProfile && (
+        <div className="flex flex-wrap gap-2">
+          <input readOnly value={link} aria-label="Dein Profil-Link" className="input min-w-0 flex-[1_1_220px] font-mono text-[12.5px]" onFocus={(event) => event.currentTarget.select()} />
+          <button type="button" className="btn btn-secondary" onClick={copy}>Kopieren</button>
+        </div>
+      )}
+    </>
+  );
+}
+
+const ROLE_VALUES: { key: keyof LinkedRoleValues; label: string }[] = [
+  { key: 'level', label: 'Höchstes Level' }, { key: 'season_tier', label: 'Saison-Stufe' }, { key: 'achievements', label: 'Erfolge' },
+  { key: 'chat_days', label: 'Chat-Tage' }, { key: 'bernis', label: 'Verdiente Bernis' },
+];
+
+/** Linked Roles: servers hand out roles by these values once the member linked Nexo in Discord. */
+function LinkedRoleCard() {
+  const { me, setMe } = useMe();
+  const { run, busy } = useMutation();
+  const { linked, values } = me.linkedRole;
+  const apply = (result: { linkedRole: MeProfileResponse['linkedRole'] } | null) => { if (result) setMe((prev) => ({ ...prev, linkedRole: result.linkedRole })); };
+  return (
+    <Card title="Verknüpfte Rollen" description="Server können dir Rollen geben, wenn du bestimmte Nexo-Werte erreichst – etwa ab Level 10 oder Saison-Stufe 5.">
+      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        {ROLE_VALUES.map(({ key, label }) => (
+          <div key={key} className="flex flex-col-reverse rounded-xl border border-white/[.06] bg-white/[.02] px-3 py-2">
+            <dt className="text-[12px] text-mute">{label}</dt>
+            <dd className="m-0 text-[18px] font-medium text-ink">{key === 'bernis' ? <Bernis amount={values.bernis} nowrap /> : num(values[key])}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        {linked ? (
+          <>
+            <span className="badge badge-on">Mit Discord verknüpft</span>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={async () => apply(await run('/me/linked-role/sync', 'POST', undefined, 'Werte an Discord übertragen.'))}>Jetzt aktualisieren</button>
+            <button type="button" className="btn btn-ghost btn-sm text-neg" disabled={busy} onClick={async () => apply(await run('/me/linked-role', 'DELETE', undefined, 'Verknüpfung getrennt.'))}>Trennen</button>
+          </>
+        ) : (
+          <a href="/dashboard/linked-role" className="btn btn-primary hover:no-underline">Mit Discord verknüpfen</a>
+        )}
+      </div>
+      <p className="mt-3 text-[12px] text-faint">
+        {linked ? 'Nexo überträgt deine Werte stündlich. Trennen entfernt auch die Rollen, die davon abhängen.' : 'Du verknüpfst einmal, danach hält Nexo die Werte stündlich aktuell. Du kannst es jederzeit wieder trennen.'}
+      </p>
+    </Card>
   );
 }
 
@@ -135,6 +294,7 @@ function SlotEditor({ value, onChange }: { value: UserProfileSettings; onChange:
             <div className="pt-1">
               <div className="text-[14px] font-medium text-ink">{SLOT_LABELS[slot]}</div>
               {slot === 'badge' && <div className="text-[12px] text-faint">{value.equipped.badges.length} / {MAX_EQUIPPED_BADGES} angelegt</div>}
+              {slot === 'pet' && <div className="text-[12px] text-faint" title="Wächst mit den Tagen, an denen du chattest: ab 7 und ab 30 Tagen.">{PET_STAGE_NAMES[me.petStage - 1]} · {me.chatDays} Chat-Tage</div>}
             </div>
             <div className="flex gap-2 overflow-x-auto pb-1">
               <SlotTile selected={isDefault} onClick={() => clear(slot)} title={slot === 'badge' ? 'Keine' : 'Standard'}>
@@ -312,7 +472,7 @@ export default function ProfilePage() {
         actions={<Link to="/me/shop" className="btn btn-secondary hover:no-underline"><Glyph name="bag" size={16} /> Zum Shop</Link>} />
 
       {/* The card is the centrepiece: full width until there is room for a side column (xl). */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_300px] [&>*]:mt-0">
         <Card title="Deine Karte" description="So sieht deine Profilkarte gerade aus.">
           <div className="relative">
             <ProfileCardPreview subject={subject} cosmetics={cosmetics} className="w-full" hideSticker />
@@ -330,34 +490,42 @@ export default function ProfilePage() {
             <div className="mt-4 flex flex-wrap items-center gap-3 text-[13px] text-mute">
               Level von
               <div className="min-w-0 flex-1 sm:max-w-[280px]">
-                <Select value={guildId ?? ''} onChange={setGuildId} options={me.levels.map((l) => ({ value: l.guildId, label: `${l.guildName} · Level ${l.level}` }))} />
+                <Select value={guildId ?? ''} onChange={setGuildId} options={me.levels.map((l) => ({ value: l.guildId, label: `Level ${l.level} · ${l.guildName}` }))} />
               </div>
             </div>
           )}
         </Card>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-1 xl:content-start">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:col-start-2 xl:row-span-3 xl:row-start-1 xl:grid-cols-1 xl:content-start">
           <WalletCard />
           <DailyCard />
+          <QuestsCard />
+        </div>
+        {/* On xl "Über dich" and the level-up preview stack under the card, next to the side column; equipment spans below. */}
+        <div className="min-w-0 xl:col-span-2 xl:row-start-4">
+          <Card title="Ausrüstung" description={`Wähle pro Bereich einen Artikel aus deinem Inventar – bei Abzeichen bis zu ${MAX_EQUIPPED_BADGES}.`}>
+            <SlotEditor value={value} onChange={form.setDraft} />
+          </Card>
+        </div>
+        <div className="grid-2 xl:contents [&>*]:mt-0 [&>*]:min-w-0">
+          <div className="xl:col-start-1 xl:row-start-2">
+            <Card title="Über dich" description="Kurzer Text auf deiner Karte.">
+              <div className="stack">
+                <TextArea value={value.bio} onChange={(bio) => form.setDraft({ ...value, bio })} maxLength={MAX_BIO_LENGTH} rows={3} placeholder="Was sollen andere über dich wissen?" />
+                <SwitchRow title="Auf Willkommenskarten zeigen" description="Server, die Mitglieder-Styles erlauben, zeigen deinen Rahmen und deine Farben auf der Willkommenskarte."
+                  checked={value.showOnWelcome} onChange={(showOnWelcome) => form.setDraft({ ...value, showOnWelcome })} />
+                <ShareProfile />
+              </div>
+            </Card>
+          </div>
+          <div className="xl:col-start-1 xl:row-start-3">
+            <Card title="Level-up-Nachricht" description="So meldet Nexo deinen nächsten Aufstieg.">
+              <LevelUpPreview subject={subject} cosmetics={cosmetics} level={subject.level + 1} reward={levelUpReward(subject.level + 1)} />
+            </Card>
+          </div>
         </div>
       </div>
 
-      <div className="mt-4">
-        <Card title="Ausrüstung" description={`Wähle pro Bereich einen Artikel aus deinem Inventar – bei Abzeichen bis zu ${MAX_EQUIPPED_BADGES}.`}>
-          <SlotEditor value={value} onChange={form.setDraft} />
-        </Card>
-        <div className="grid-2 mt-4 [&>*]:mt-0 [&>*]:min-w-0">
-          <Card title="Über dich" description="Kurzer Text auf deiner Karte.">
-            <div className="stack">
-              <TextArea value={value.bio} onChange={(bio) => form.setDraft({ ...value, bio })} maxLength={MAX_BIO_LENGTH} rows={3} placeholder="Was sollen andere über dich wissen?" />
-              <SwitchRow title="Auf Willkommenskarten zeigen" description="Server, die Mitglieder-Styles erlauben, zeigen deinen Rahmen und deine Farben auf der Willkommenskarte."
-                checked={value.showOnWelcome} onChange={(showOnWelcome) => form.setDraft({ ...value, showOnWelcome })} />
-            </div>
-          </Card>
-          <Card title="Level-up-Nachricht" description="So meldet Nexo deinen nächsten Aufstieg.">
-            <LevelUpPreview subject={subject} cosmetics={cosmetics} level={subject.level + 1} reward={levelUpReward(subject.level + 1)} />
-          </Card>
-        </div>
-      </div>
+      <div className="mt-4"><LinkedRoleCard /></div>
       <SaveBar dirty={form.dirty} saving={form.saving} onSave={form.save} onReset={form.reset} />
     </>
   );

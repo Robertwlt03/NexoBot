@@ -3,6 +3,15 @@ import type { CommandCategory, CommandEntry, CommandsOverview } from '../../../s
 import { useAction, useApi, useGuild } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
 import { Badge, Card, Empty, Notice, PageHeader, Spinner, Switch } from '../components/ui';
+import { Icon } from '../icons';
+import type { IconName } from '../icons';
+
+/** Line icons by category key (lower-cased folder name), matching the side menu (the bot keeps its emojis for Discord). */
+const CATEGORY_ICONS: Record<string, IconName> = {
+  birthday: 'cake', community: 'users', core: 'home', economy: 'coins', fun: 'reaction', giveaway: 'gift', jointocreate: 'mic',
+  leveling: 'level', logging: 'log', moderation: 'gavel', music: 'music', profile: 'users', reaction_roles: 'reaction',
+  serverstats: 'stats', ticket: 'ticket', tools: 'settings', utility: 'settings', verification: 'verify', welcome: 'wave',
+};
 
 function CommandRow({ command, category, busy, onToggle }: {
   command: CommandEntry; category: CommandCategory; busy: boolean; onToggle: (enabled: boolean) => void;
@@ -14,7 +23,7 @@ function CommandRow({ command, category, busy, onToggle }: {
         <div className="flex flex-wrap items-center gap-2">
           <code className="text-(--text-strong)">/{command.name}</code>
           {command.locked && <Badge>Geschützt</Badge>}
-          {inherited && <span className="faint">Aus über {category.disabled ? 'die Kategorie' : 'den übergeordneten Command'}</span>}
+          {inherited && <span className="faint">Aus über {category.disabled ? 'die Kategorie' : 'den übergeordneten Befehl'}</span>}
         </div>
         <div className="faint">{command.description}</div>
       </div>
@@ -26,7 +35,7 @@ function CommandRow({ command, category, busy, onToggle }: {
 export default function CommandsPage() {
   const { guild } = useGuild();
   const base = `/guilds/${guild.id}/commands`;
-  const { data, setData, error, loading } = useApi<CommandsOverview>(base);
+  const { data, setData, error, loading, reload } = useApi<CommandsOverview>(base);
   const { run, busy } = useAction();
   const [query, setQuery] = useState('');
   const { confirm, dialog } = useConfirm();
@@ -36,9 +45,9 @@ export default function CommandsPage() {
     if (result) setData(result);
   };
 
-  const header = <PageHeader icon="commands" title="Commands" description="Schalte Commands und ganze Kategorien für diesen Server an oder aus." />;
+  const header = <PageHeader icon="commands" title="Befehle" description="Schalte Befehle und ganze Kategorien für diesen Server an oder aus." />;
   if (loading && !data) return <>{header}<Spinner /></>;
-  if (!data) return <>{header}<Notice tone="danger">{error ?? 'Laden fehlgeschlagen.'}</Notice></>;
+  if (!data) return <>{header}<Notice tone="danger" onRetry={reload}>{error ?? 'Laden fehlgeschlagen.'}</Notice></>;
 
   const q = query.trim().toLowerCase().replace(/^\//, '');
   const categories = data.categories
@@ -55,17 +64,17 @@ export default function CommandsPage() {
       {header}
       <Card>
         <div className="row justify-between">
-          <input className="input max-w-[360px]" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Command suchen, z. B. ban oder msg notes" />
+          <input className="input max-w-[360px]" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Befehl suchen, z. B. ban" />
           <span className="muted"><strong>{data.enabledTotal}/{data.totalCommands}</strong> Einträge aktiv · Änderungen gelten sofort.</span>
         </div>
       </Card>
 
-      {categories.length === 0 && <Card><Empty title="Nichts gefunden">Kein Command passt zu „{query}“.</Empty></Card>}
+      {categories.length === 0 && <Card><Empty title="Nichts gefunden">Kein Befehl passt zu „{query}“.</Empty></Card>}
 
       {categories.map(({ category, commands }) => (
         <details key={category.key} className="card group" open={q ? true : undefined}>
           <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden before:text-xl before:leading-none before:text-(--text-faint) before:transition-transform before:content-['›'] group-open:before:rotate-90">
-            <span className="text-xl">{category.icon}</span>
+            <span className="text-(--text-muted)"><Icon name={CATEGORY_ICONS[category.key] ?? 'commands'} size={20} /></span>
             <div className="min-w-0 flex-1">
               <h3>{category.name}</h3>
               <span className="faint">{category.disabled ? 'Kategorie ist aus' : `${category.enabledCount}/${category.totalCount} aktiv`}</span>
@@ -73,10 +82,13 @@ export default function CommandsPage() {
             <span className="row" onClick={(e) => e.preventDefault()}>
               <button type="button" className="btn btn-ghost btn-sm" disabled={busy !== null} onClick={() => confirm({
                 title: `${category.name} zurücksetzen?`,
-                text: 'Die Kategorie wird eingeschaltet und alle einzeln ausgeschalteten Commands darin wieder aktiviert.',
+                text: 'Die Kategorie wird eingeschaltet und alle einzeln ausgeschalteten Befehle darin wieder aktiviert.',
                 confirmLabel: 'Zurücksetzen',
                 onConfirm: () => act('reset', { key: category.key }, `${category.name} wurde zurückgesetzt.`),
-              })}>Zurücksetzen</button>
+              })} aria-label={`${category.name} zurücksetzen`} title="Zurücksetzen">
+                {/* Icon only on phones, so the category name keeps its line. */}
+                <Icon name="refresh" size={16} /><span className="max-sm:hidden">Zurücksetzen</span>
+              </button>
               <Switch checked={!category.disabled} disabled={busy !== null} label={`Kategorie ${category.name}`}
                 onChange={(enabled) => act('category', { key: category.key, enabled }, enabled ? `${category.name} ist jetzt an.` : `${category.name} ist jetzt aus.`)} />
             </span>

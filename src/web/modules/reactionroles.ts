@@ -18,6 +18,7 @@ import { botHasPermission } from '../../utils/permissionGuard.js';
 import { NexoBotError } from '../../utils/errorHandler.js';
 import { logger } from '../../utils/logger.js';
 import type { NexoClient } from '../../types/index.js';
+import { messageEmbed, messageTitle } from '../../utils/embedCard.js';
 
 /** Turns service errors into a 400 with their German user message instead of a 500. */
 async function attempt<T>(work: Promise<T>, fallback: string): Promise<T> {
@@ -37,7 +38,7 @@ async function readPanels(client: NexoClient, guild: Guild): Promise<ReactionRol
   const panels = await Promise.all(stored.map(async (panel): Promise<ReactionRolePanel> => {
     const channelExists = guild.channels.cache.has(panel.channelId);
     const message = channelExists ? await fetchPanelMessage(guild, panel) : null;
-    const embed = message?.embeds[0];
+    const embed = messageEmbed(message);
     return {
       messageId: panel.messageId,
       channelId: panel.channelId,
@@ -130,7 +131,7 @@ export const reactionrolesModule: DashboardModule = {
       const { title, description } = panelText(body(req.body));
       const panel = await findPanel(client, guild, req.params.messageId);
       const message = await fetchPanelMessage(guild, panel);
-      if (!message?.embeds[0]) throw badRequest('Die Panel-Nachricht existiert nicht mehr. Poste das Panel zuerst neu.');
+      if (!message || !messageEmbed(message)) throw badRequest('Die Panel-Nachricht existiert nicht mehr. Poste das Panel zuerst neu.');
       await editPanelText(guild, panel, message, title, description);
       res.json(await readPanels(client, guild));
     });
@@ -159,7 +160,7 @@ export const reactionrolesModule: DashboardModule = {
       if (!guild.channels.cache.has(panel.channelId)) throw badRequest('Der eingestellte Panel-Kanal existiert nicht mehr.');
       assertCanPost(guild, panel.channelId);
       const old = await fetchPanelMessage(guild, panel);
-      await attempt(repostReactionRolePanel(guild, panel, client, guild.id, old?.embeds[0]), 'Das Panel konnte nicht neu gepostet werden.');
+      await attempt(repostReactionRolePanel(guild, panel, client, guild.id, messageEmbed(old)), 'Das Panel konnte nicht neu gepostet werden.');
       await old?.delete().catch(() => {});
       res.json(await readPanels(client, guild));
     });
@@ -169,7 +170,7 @@ export const reactionrolesModule: DashboardModule = {
       const panel = (await getAllReactionRoleMessages(client, guild.id)).find((p) => p.messageId === req.params.messageId);
       if (!panel) throw new HttpError(404, 'Dieses Panel gibt es nicht mehr.');
       const message = await fetchPanelMessage(guild, panel);
-      const title = message?.embeds[0]?.title ?? 'dieses Panel';
+      const title = messageTitle(message) ?? 'dieses Panel';
       await attempt(deleteReactionRolePanel(client, guild, panel, message, title, actorOf(res)), 'Das Panel konnte nicht gelöscht werden.');
       res.json(await readPanels(client, guild));
     });

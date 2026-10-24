@@ -63,8 +63,8 @@ export function Facts({ items }: { items: [string, ReactNode][] }) {
 }
 
 /** Loading / error frame: the first load shows a spinner, refetches keep the previous render at reduced opacity. */
-export function Loaded<T>({ state, children }: { state: { data: T | null; error: string | null; loading: boolean }; children: (data: T) => ReactNode }) {
-  if (!state.data) return state.error ? <Notice tone="danger">{state.error}</Notice> : <Spinner />;
+export function Loaded<T>({ state, children }: { state: { data: T | null; error: string | null; loading: boolean; reload?: () => void }; children: (data: T) => ReactNode }) {
+  if (!state.data) return state.error ? <Notice tone="danger" onRetry={state.reload}>{state.error}</Notice> : <Spinner />;
   return (
     <div className={`transition-opacity duration-200 ${state.loading ? 'opacity-50' : ''}`} aria-busy={state.loading}>
       {state.error && <div className="mb-4"><Notice tone="danger">{state.error}</Notice></div>}

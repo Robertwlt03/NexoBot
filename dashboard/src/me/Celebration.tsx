@@ -41,14 +41,14 @@ export function Celebration({ tint, kicker, title, text, tile, actions, onClose 
     });
   }, { scope: root });
 
-  const colours = [tint, '#facc15', '#ffffff', '#f472b6', '#60a5fa'];
+  const colours = [tint, '#F5C451', '#ffffff', '#8FB36B', '#E8A33D'];
   return (
     <div ref={root} data-mode="dark" role="dialog" aria-modal="true" aria-labelledby="celebration-title" className="fixed inset-0 z-[70] grid place-items-center overflow-hidden p-4">
       <button type="button" aria-label="Schließen" className="js-veil absolute inset-0 cursor-default border-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
       <div className="relative flex w-full max-w-[380px] flex-col items-center text-center" style={{ '--tile': tint } as CSSProperties}>
         <div className="js-rays pointer-events-none absolute -top-[150px] left-1/2 -ml-[300px] h-[600px] w-[600px] rounded-full"
           style={{
-            background: 'repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--tile) 34%, transparent) 0deg 7deg, transparent 7deg 20deg)',
+            background: 'repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--tile) 22%, transparent) 0deg 7deg, transparent 7deg 20deg)',
             maskImage: 'radial-gradient(closest-side, #000 20%, transparent)',
           }} />
         <div className="pointer-events-none absolute -top-[40px] left-1/2 -ml-[180px] h-[360px] w-[360px] rounded-full blur-[70px]" style={{ background: 'color-mix(in srgb, var(--tile) 45%, transparent)' }} />

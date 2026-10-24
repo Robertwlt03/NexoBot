@@ -10,8 +10,9 @@
 @theme {
   --font-display: "Unbounded Variable", "gg sans", "Inter", sans-serif;
   --color-blurple: #5865f2;
-  --color-nexo-violet: #7c5cff;
-  --color-nexo-cyan: #22d3ee;
+  /* Landing brand pair = the bot palette (config/bot.ts): moss and amber. */
+  --color-nexo-violet: #8fb36b;
+  --color-nexo-cyan: #e8a33d;
   --color-nexo-ink: #0d0b1f;
   --color-dc-bg: #1e1f22;
   --color-dc-panel: #2b2d31;

@@ -14,19 +14,19 @@ function CreateModal({ list, onClose, onCreated }: { list: GiveawayList; onClose
   const set = (patch: Partial<GiveawayCreate>) => setDraft((prev) => ({ ...prev, ...patch }));
 
   const submit = async () => {
-    const result = await run(`/guilds/${guild.id}/giveaways`, draft, 'Giveaway gestartet. 🎉');
+    const result = await run(`/guilds/${guild.id}/giveaways`, draft, 'Gewinnspiel gestartet. 🎉');
     if (result) onCreated();
   };
 
   return (
     <Modal
-      title="Giveaway starten"
+      title="Gewinnspiel starten"
       onClose={onClose}
       footer={(
         <>
           <button type="button" className="btn btn-ghost" onClick={onClose}>Abbrechen</button>
           <button type="button" className="btn btn-primary" onClick={submit} disabled={busy !== null || !draft.channelId || !draft.prize.trim()}>
-            {busy ? 'Wird gestartet …' : 'Giveaway starten'}
+            {busy ? 'Wird gestartet …' : 'Gewinnspiel starten'}
           </button>
         </>
       )}
@@ -69,12 +69,12 @@ export default function GiveawaysPage() {
     <>
       <PageHeader
         icon="gift"
-        title="Giveaways"
-        description="Starte Giveaways, beende sie vorzeitig oder lose neue Gewinner aus."
-        actions={data && <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}><Icon name="plus" size={16} />Giveaway starten</button>}
+        title="Gewinnspiele"
+        description="Starte Gewinnspiele, beende sie vorzeitig oder lose neue Gewinner aus."
+        actions={data && <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}><Icon name="plus" size={16} />Gewinnspiel starten</button>}
       />
       {loading && !data && <Spinner />}
-      {error && !data && <Notice tone="danger">{error}</Notice>}
+      {error && !data && <Notice tone="danger" onRetry={reload}>{error}</Notice>}
       {data && (
         <Tabs value={status} onChange={switchTab} items={[
           { id: 'active', label: 'Aktiv', count: data.activeCount },
@@ -82,10 +82,10 @@ export default function GiveawaysPage() {
         ]} />
       )}
       {data && (
-        <Card title={status === 'active' ? 'Laufende Giveaways' : 'Beendete Giveaways'}>
+        <Card title={status === 'active' ? 'Laufende Gewinnspiele' : 'Beendete Gewinnspiele'}>
           {data.items.length === 0 ? (
-            <Empty title={status === 'active' ? 'Gerade läuft kein Giveaway' : 'Noch keine beendeten Giveaways'}>
-              {status === 'active' ? 'Starte oben rechts ein neues Giveaway.' : 'Beendete Giveaways erscheinen hier.'}
+            <Empty title={status === 'active' ? 'Gerade läuft kein Gewinnspiel' : 'Noch keine beendeten Gewinnspiele'}>
+              {status === 'active' ? 'Starte oben rechts ein neues Gewinnspiel.' : 'Beendete Gewinnspiele erscheinen hier.'}
             </Empty>
           ) : (
             <TableWrap>
@@ -117,9 +117,9 @@ export default function GiveawaysPage() {
                         {status === 'active' ? (
                           <button type="button" className="btn btn-sm btn-secondary" disabled={busy !== null}
                             onClick={() => confirm({
-                              title: 'Giveaway jetzt beenden?', danger: false, confirmLabel: 'Jetzt beenden',
+                              title: 'Gewinnspiel jetzt beenden?', danger: false, confirmLabel: 'Jetzt beenden',
                               text: <>Für <b>{giveaway.prize}</b> werden sofort {giveaway.winnerCount} Gewinner aus {giveaway.entries} Teilnahmen gezogen und im Kanal verkündet.</>,
-                              onConfirm: () => act(giveaway, 'end', 'Giveaway beendet.'),
+                              onConfirm: () => act(giveaway, 'end', 'Gewinnspiel beendet.'),
                             })}>Beenden</button>
                         ) : (
                           <button type="button" className="btn btn-sm btn-secondary" disabled={busy !== null}
@@ -131,9 +131,9 @@ export default function GiveawaysPage() {
                         )}
                         <button type="button" className="btn btn-sm btn-danger" aria-label="Löschen" disabled={busy !== null}
                           onClick={() => confirm({
-                            title: 'Giveaway löschen?', confirmLabel: 'Löschen',
-                            text: <>Die Nachricht zu <b>{giveaway.prize}</b> wird aus Discord gelöscht und das Giveaway entfernt. Das kann nicht rückgängig gemacht werden.</>,
-                            onConfirm: () => act(giveaway, 'delete', 'Giveaway gelöscht.'),
+                            title: 'Gewinnspiel löschen?', confirmLabel: 'Löschen',
+                            text: <>Die Nachricht zu <b>{giveaway.prize}</b> wird aus Discord gelöscht und das Gewinnspiel entfernt. Das kann nicht rückgängig gemacht werden.</>,
+                            onConfirm: () => act(giveaway, 'delete', 'Gewinnspiel gelöscht.'),
                           })}><Icon name="trash" size={14} /></button>
                       </div>
                     </td>

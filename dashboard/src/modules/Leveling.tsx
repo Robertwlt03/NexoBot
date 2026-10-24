@@ -20,12 +20,13 @@ function RewardsEditor({ value, onChange }: { value: LevelRoleReward[]; onChange
       <div className="stack">
         {value.length === 0 && <p className="faint">Noch keine Rollen-Belohnungen.</p>}
         {value.map((reward, index) => (
-          <div className="flex items-center gap-3" key={index}>
+          // On phones the role select takes its own line, so the role name stays readable.
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2" key={index}>
             <span className="faint whitespace-nowrap">Ab Level</span>
             <div className="w-[110px] shrink-0">
               <NumberInput value={reward.level} min={1} max={500} onChange={(level) => update(index, { level })} />
             </div>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-[1_1_200px]">
               <RoleSelect value={reward.roleId} assignableOnly onChange={(roleId) => update(index, { roleId: roleId ?? '' })} />
             </div>
             <button type="button" className="btn btn-ghost btn-sm" aria-label="Belohnung entfernen" onClick={() => onChange(value.filter((_, i) => i !== index))}>
@@ -89,7 +90,7 @@ function MemberTools({ initialId, disabled, onChanged }: { initialId: string; di
   return (
     <Card icon="users" title="Mitglied bearbeiten" description="Setze Level oder gib/zieh Level ab – wie /levelset, /leveladd und /levelremove.">
       <div className="stack">
-        {disabled && <Notice tone="warn">Das Leveling ist deaktiviert. Level lassen sich erst ändern, wenn es aktiv und gespeichert ist.</Notice>}
+        {disabled && <Notice tone="warn">Das Level-System ist deaktiviert. Level lassen sich erst ändern, wenn es aktiv und gespeichert ist.</Notice>}
         <Field label="Nutzer-ID" hint="Rechtsklick auf ein Mitglied → „Nutzer-ID kopieren“ (Entwicklermodus) oder in der Bestenliste auf „Bearbeiten“ klicken.">
           <div className="input-group">
             <input className="input" value={userId} placeholder="z. B. 123456789012345678" onChange={(e) => setUserId(e.target.value)}
@@ -172,12 +173,12 @@ export default function LevelingPage() {
 
   return (
     <>
-      <PageHeader icon="level" title="Leveling" description="Mitglieder sammeln XP fürs Schreiben, steigen im Level auf und bekommen Rollen als Belohnung." />
+      <PageHeader icon="level" title="Level" description="Mitglieder sammeln XP fürs Schreiben, steigen im Level auf und bekommen Rollen als Belohnung." />
       <SettingsPage settings={settings}>
         {(value) => (
           <>
             <Card>
-              <SwitchRow title="Leveling aktiv" description="Wenn aus, bekommt niemand XP und Level lassen sich nicht ändern."
+              <SwitchRow title="Level-System aktiv" description="Wenn aus, bekommt niemand XP und Level lassen sich nicht ändern."
                 checked={value.enabled} onChange={(enabled) => settings.set({ enabled })} />
             </Card>
 

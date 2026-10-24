@@ -1,7 +1,7 @@
 // Reaction role panel message (embed + "reaction_roles" select menu), shared by /reactroles and the web dashboard.
 
 import { ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder } from 'discord.js';
-import type { Embed, Guild, GuildTextBasedChannel, Message, Role } from 'discord.js';
+import type { APIEmbed, Guild, GuildTextBasedChannel, Message, Role } from 'discord.js';
 import { getColor } from '../config/bot.js';
 import { logger } from '../utils/logger.js';
 import { createError, ErrorTypes } from '../utils/errorHandler.js';
@@ -10,6 +10,7 @@ import { logEvent, EVENT_TYPES } from './loggingService.js';
 import { createReactionRoleMessage, deleteReactionRoleMessage, hasDangerousPermissions } from './reactionRoleService.js';
 import type { ReactionRoleMessage } from './reactionRoleService.js';
 import type { NexoClient } from '../types/index.js';
+import { messageEmbed } from '../utils/embedCard.js';
 
 /** Select-menu panel: `roles` is a list of role ids (the legacy emoji -> role mapping is never edited). */
 export type SelectMenuPanel = ReactionRoleMessage & { roles: string[] };
@@ -125,12 +126,12 @@ export async function postReactionRolePanel(
 export async function rebuildLivePanelMessage(guild: Guild, panelData: SelectMenuPanel): Promise<void> {
     try {
         const msg = await fetchPanelMessage(guild, panelData);
-        if (!msg || !msg.embeds[0]) return;
+        if (!msg || !messageEmbed(msg)) return;
 
         const roleObjects = panelRoles(guild, panelData);
         if (roleObjects.length === 0) return;
 
-        await msg.edit({ embeds: [withRoleField(EmbedBuilder.from(msg.embeds[0]), msg.embeds[0], roleObjects)], components: [buildReactionRoleSelectRow(roleObjects)] });
+        await msg.edit({ embeds: [withRoleField(EmbedBuilder.from(messageEmbed(msg)!), messageEmbed(msg)!, roleObjects)], components: [buildReactionRoleSelectRow(roleObjects)] });
     } catch (error) {
         logger.warn('Could not rebuild live reaction role panel:', (error as Error).message);
     }
@@ -139,12 +140,12 @@ export async function rebuildLivePanelMessage(guild: Guild, panelData: SelectMen
 /** Sets the title/description of the posted panel and refreshes its role field. */
 export async function editPanelText(guild: Guild, panelData: SelectMenuPanel, discordMsg: Message, title: string, description: string): Promise<void> {
     const roleObjects = panelRoles(guild, panelData);
-    const updatedEmbed = EmbedBuilder.from(discordMsg.embeds[0]).setTitle(title).setDescription(description);
-    if (roleObjects.length > 0) withRoleField(updatedEmbed, discordMsg.embeds[0], roleObjects);
+    const updatedEmbed = EmbedBuilder.from(messageEmbed(discordMsg)!).setTitle(title).setDescription(description);
+    if (roleObjects.length > 0) withRoleField(updatedEmbed, messageEmbed(discordMsg)!, roleObjects);
     await discordMsg.edit({ embeds: [updatedEmbed] }).catch(() => {});
 }
 
-function withRoleField(target: EmbedBuilder, current: Embed, roles: Role[]): EmbedBuilder {
+function withRoleField(target: EmbedBuilder, current: Pick<APIEmbed, 'fields'>, roles: Role[]): EmbedBuilder {
     const fields = current.fields?.map(f => ({ name: f.name, value: f.value, inline: f.inline })) || [];
     const roleFieldIdx = fields.findIndex(f => (f.name === ROLE_FIELD || f.name === 'Available Roles'));
     const newRoleValue = roles.map(r => `• ${r}`).join('\n');
@@ -164,7 +165,7 @@ export async function migrateReactionRoleMessageId(client: NexoClient, guildId: 
     await client.db.delete(oldKey).catch(() => {});
 }
 
-export async function repostReactionRolePanel(guild: Guild, panelData: SelectMenuPanel, client: NexoClient, guildId: string, fallbackEmbed: Embed | null | undefined = null): Promise<Message> {
+export async function repostReactionRolePanel(guild: Guild, panelData: SelectMenuPanel, client: NexoClient, guildId: string, fallbackEmbed: Pick<APIEmbed, 'title' | 'description'> | null | undefined = null): Promise<Message> {
     const channel = (await guild.channels.fetch(panelData.channelId).catch(() => null)) as GuildTextBasedChannel | null;
     if (!channel) {
         throw createError(

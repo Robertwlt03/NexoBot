@@ -2,6 +2,7 @@
 
 import {
   ChannelType,
+  ComponentType,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
@@ -29,6 +30,7 @@ import { createError, ErrorTypes } from '../utils/errorHandler.js';
 import type { ErrorContext, ErrorLike, ErrorType } from '../utils/errorHandler.js';
 import { ensureTypedServiceError, wrapServiceBoundary } from '../utils/serviceErrorBoundary.js';
 import { PRIORITY_MAP } from '../utils/helpers.js';
+import { isCardMessage, messageEmbed, messageTitle } from '../utils/embedCard.js';
 
 // Ticket embeds posted before the German translation still carry the English labels.
 const isClaimedByField = (name: string): boolean => name === 'Übernommen von' || name === 'Claimed By';
@@ -376,12 +378,11 @@ export async function closeTicket(channel: TextChannel, closer: User, reason: st
     
     const messages = await channel.messages.fetch();
     const ticketMessage = messages.find(m => 
-      m.embeds.length > 0 && 
-      m.embeds[0].title?.startsWith('Ticket #')
+      messageEmbed(m)?.title?.startsWith('Ticket #')
     );
     
     if (ticketMessage) {
-      const embed = ticketMessage.embeds[0];
+      const embed = messageEmbed(ticketMessage)!;
       const statusField = embed.fields?.find(f => f.name === 'Status');
       
       if (statusField) {
@@ -469,12 +470,11 @@ export async function claimTicket(channel: TextChannel, claimer: User): Promise<
     
     const messages = await channel.messages.fetch();
     const ticketMessage = messages.find(m => 
-      m.embeds.length > 0 && 
-      m.embeds[0].title?.startsWith('Ticket #')
+      messageEmbed(m)?.title?.startsWith('Ticket #')
     );
     
     if (ticketMessage) {
-      const embed = ticketMessage.embeds[0];
+      const embed = messageEmbed(ticketMessage)!;
       const claimedField = embed.fields?.find(f => isClaimedByField(f.name));
       
       if (claimedField) {
@@ -504,8 +504,7 @@ export async function claimTicket(channel: TextChannel, claimer: User): Promise<
     );
 
     const claimStatusMessage = messages.find(m =>
-      m.embeds.length > 0 &&
-      isClaimStatusTitle(m.embeds[0].title)
+      isClaimStatusTitle(messageTitle(m))
     );
 
     if (claimStatusMessage) {
@@ -598,12 +597,11 @@ export async function reopenTicket(
     
     const messages = await channel.messages.fetch();
     const ticketMessage = messages.find(m => 
-      m.embeds.length > 0 && 
-      m.embeds[0].title?.startsWith('Ticket #')
+      messageEmbed(m)?.title?.startsWith('Ticket #')
     );
     
     if (ticketMessage) {
-      const embed = ticketMessage.embeds[0];
+      const embed = messageEmbed(ticketMessage)!;
       const statusField = embed.fields?.find(f => f.name === 'Status');
       
       if (statusField) {
@@ -625,11 +623,9 @@ export async function reopenTicket(
     });
 
     const closeStatusMessage = messages.find(m =>
-      m.embeds.length > 0 &&
-      isClosedTitle(m.embeds[0].title) &&
-      m.components.length > 0 &&
-      // Ticket messages only carry classic action rows.
-      (m.components[0] as ActionRow<MessageActionRowComponent>).components.some(c => c.customId === 'ticket_reopen')
+      isClosedTitle(messageTitle(m)) &&
+      // Card messages carry the card first, then the rows.
+      m.components.some(row => row.type === ComponentType.ActionRow && (row as ActionRow<MessageActionRowComponent>).components.some(c => c.customId === 'ticket_reopen'))
     );
 
     if (closeStatusMessage) {
@@ -684,7 +680,7 @@ async function generateTranscript(channel: TextChannel): Promise<AttachmentBuild
     const rows = messages.map((msg) => {
       const ts = new Date(msg.createdTimestamp).toISOString().replace('T', ' ').slice(0, 19);
       const author = escape(msg.author?.tag ?? msg.author?.username ?? 'Unbekannt');
-      const content = escape(msg.content || (msg.embeds.length ? '[Embed]' : '[Anhang]'));
+      const content = escape(msg.content || (msg.embeds.length || isCardMessage(msg) ? '[Embed]' : '[Anhang]'));
       return `<tr><td class="ts">${ts}</td><td class="author">${author}</td><td class="msg">${content}</td></tr>`;
     }).join('\n');
 
@@ -921,12 +917,11 @@ export async function unclaimTicket(channel: TextChannel, unclaimer: GuildMember
     
     const messages = await channel.messages.fetch();
     const ticketMessage = messages.find(m => 
-      m.embeds.length > 0 && 
-      m.embeds[0].title?.startsWith('Ticket #')
+      messageEmbed(m)?.title?.startsWith('Ticket #')
     );
     
     if (ticketMessage) {
-      const embed = ticketMessage.embeds[0];
+      const embed = messageEmbed(ticketMessage)!;
       const claimedField = embed.fields?.find(f => isClaimedByField(f.name));
       
       if (claimedField) {
@@ -942,8 +937,7 @@ export async function unclaimTicket(channel: TextChannel, unclaimer: GuildMember
     }
     
     const claimMessage = messages.find(m => 
-      m.embeds.length > 0 && 
-      isClaimStatusTitle(m.embeds[0].title)
+      isClaimStatusTitle(messageTitle(m))
     );
     
     if (claimMessage) {
@@ -1031,12 +1025,11 @@ export async function updateTicketPriority(channel: TextChannel, priority: strin
     
     const messages = await channel.messages.fetch();
     const ticketMessage = messages.find(m => 
-      m.embeds.length > 0 && 
-      m.embeds[0].title?.startsWith('Ticket #')
+      messageEmbed(m)?.title?.startsWith('Ticket #')
     );
     
     if (ticketMessage) {
-      const embed = ticketMessage.embeds[0];
+      const embed = messageEmbed(ticketMessage)!;
       
       const updatedEmbed = createEmbed({
         title: embed.title || 'Ticket',

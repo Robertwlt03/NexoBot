@@ -89,6 +89,7 @@ export const LEGACY_COMMAND_MAP: Readonly<Record<string, LegacyCommandTarget>> =
   fight: { command: 'fun', subcommand: 'fight', category: 'Fun' },
   flip: { command: 'fun', subcommand: 'flip', category: 'Fun' },
   roll: { command: 'fun', subcommand: 'roll', category: 'Fun' },
+  spiel: { command: 'fun', subcommand: 'spiel', category: 'Fun' },
 
   // Welcome
   autorole: { command: 'welcome', group: 'autorole', category: 'Welcome' },
