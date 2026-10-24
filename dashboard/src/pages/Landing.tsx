@@ -139,7 +139,7 @@ export function Landing() {
                 <span className="js-word js-intro inline-block">Alle</span>{' '}
                 <span className="js-word js-intro inline-block text-nexo-cyan">Funktionen.</span>
                 <svg className="js-underline-svg js-intro absolute bottom-0 left-0 h-4 w-full" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true">
-                  <path className="js-underline" d="M3 15 C 70 5, 170 3, 297 11" fill="none" stroke="#7c5cff" strokeWidth="5" strokeLinecap="round" />
+                  <path className="js-underline" d="M3 15 C 70 5, 170 3, 297 11" fill="none" stroke="#8fb36b" strokeWidth="5" strokeLinecap="round" />
                 </svg>
               </span>
             </h1>

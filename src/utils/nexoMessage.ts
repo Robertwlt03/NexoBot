@@ -6,10 +6,15 @@ import {
   ActionRowBuilder, ButtonBuilder, ContainerBuilder, MediaGalleryBuilder, MessageFlags, SectionBuilder, SeparatorBuilder,
   SeparatorSpacingSize, TextDisplayBuilder, ThumbnailBuilder, type MessageActionRowComponentBuilder,
 } from 'discord.js';
+import { getColor } from '../config/bot.js';
 
+/** Accent colours from the one palette in config/bot.ts (embeds.colors), so embeds and cards always match. */
+export const ACCENTS = {
+  nexo: getColor('primary'), gold: getColor('economy'), warn: getColor('warning'), danger: getColor('error'), calm: getColor('gray'),
+  success: getColor('success'), info: getColor('info'),
+} as const;
 /** Moss green of the Nexo look (the dashboard's and the profile card's default accent). */
-export const NEXO_ACCENT = 0x8fb36b;
-export const ACCENTS = { nexo: NEXO_ACCENT, gold: 0xf5c451, warn: 0xf59e0b, danger: 0xef4444, calm: 0x64748b } as const;
+export const NEXO_ACCENT = ACCENTS.nexo;
 
 export type NexoBlock =
   | { text: string }

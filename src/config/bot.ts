@@ -102,20 +102,21 @@ export const botConfig = {
   // IMPORTANT: This is the SINGLE SOURCE OF TRUTH for all bot colors
   embeds: {
     colors: {
-      // Main brand colors.
-      primary: "#7C5CFF",
-      secondary: "#22D3EE",
+      // Main brand colors: the Nexo look (moss green like the dashboard and the profile card, amber like the logo).
+      // utils/nexoMessage.ts reads the same values, so embeds and Nexo cards always match.
+      primary: "#8FB36B",
+      secondary: "#E8A33D",
 
-      // Standard status colors for success/error/warning/info messages.
-      success: "#57F287",
-      error: "#ED4245",
-      warning: "#FEE75C",
-      info: "#3498DB",
+      // Status colors, calmer than Discord's defaults but still clearly apart.
+      success: "#4ADE80",
+      error: "#EF4444",
+      warning: "#F59E0B",
+      info: "#7DA0C4",
 
       // Neutral utility colors.
       light: "#FFFFFF",
       dark: "#202225",
-      gray: "#99AAB5",
+      gray: "#94A3B8",
 
       // Discord-style palette shortcuts.
       blurple: "#5865F2",
@@ -127,26 +128,26 @@ export const botConfig = {
 
       // Feature-specific colors.
       giveaway: {
-        active: "#57F287",
-        ended: "#ED4245",
+        active: "#8FB36B",
+        ended: "#94A3B8",
       },
       ticket: {
-        open: "#57F287",
-        claimed: "#FAA61A",
-        closed: "#ED4245",
-        pending: "#99AAB5",
+        open: "#8FB36B",
+        claimed: "#F59E0B",
+        closed: "#94A3B8",
+        pending: "#7DA0C4",
       },
-      economy: "#F1C40F",
-      birthday: "#E91E63",
-      moderation: "#9B59B6",
+      economy: "#F5C451",
+      birthday: "#F472B6",
+      moderation: "#E8A33D",
 
       // Ticket priority color mapping.
       priority: {
-        none: "#95A5A6",
-        low: "#3498db",
-        medium: "#2ecc71",
-        high: "#f1c40f",
-        urgent: "#e74c3c",
+        none: "#94A3B8",
+        low: "#7DA0C4",
+        medium: "#8FB36B",
+        high: "#F59E0B",
+        urgent: "#EF4444",
       },
     },
     footer: {

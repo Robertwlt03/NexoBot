@@ -214,8 +214,8 @@ export function Select<T extends string>({ value, onChange, options }: { value: 
 export function ColorInput({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
     <div className="input-group">
-      <input className="input" type="color" value={/^#[0-9a-f]{6}$/i.test(value) ? value : '#7c5cff'} onChange={(e) => onChange(e.target.value)} />
-      <input className="input max-w-[140px]" value={value} onChange={(e) => onChange(e.target.value)} placeholder="#7C5CFF" maxLength={7} />
+      <input className="input" type="color" value={/^#[0-9a-f]{6}$/i.test(value) ? value : '#8fb36b'} onChange={(e) => onChange(e.target.value)} />
+      <input className="input max-w-[140px]" value={value} onChange={(e) => onChange(e.target.value)} placeholder="#8FB36B" maxLength={7} />
     </div>
   );
 }
