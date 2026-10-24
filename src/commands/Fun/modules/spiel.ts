@@ -131,7 +131,7 @@ export async function playGame(c: Challenge, send: (payload: GamePayload) => Pro
     if (timer) clearTimeout(timer);
     collector.stop('finished');
     const winner = result === 'draw' ? null : players[result];
-    let status = winner ? `🏆 **${winner.username}** gewinnt!${reason}` : `🤝 Unentschieden!${reason}`;
+    let status = winner ? `**${winner.username}** gewinnt!${reason}` : `Unentschieden!${reason}`;
     if (winner) {
       const loser = players[result === 1 ? 2 : 1];
       try {
@@ -253,7 +253,7 @@ export async function playGame(c: Challenge, send: (payload: GamePayload) => Pro
     if (timer) clearTimeout(timer);
     if (finished || reason === 'finished' || reason === 'declined') return;
     finished = true;
-    const text = started ? '⏱️ Zu lange keine Antwort – das Spiel ist beendet, niemand zahlt etwas.' : '⏱️ Die Herausforderung ist abgelaufen.';
+    const text = started ? 'Zu lange keine Antwort – das Spiel ist beendet, niemand zahlt etwas.' : 'Die Herausforderung ist abgelaufen.';
     await message.edit(nexoMessage(card(name, text, ACCENTS.calm))).catch(() => undefined);
   });
 }

@@ -36,10 +36,10 @@ export function reminderLines(daily: { available: boolean; streak: number; nextA
   const lines: string[] = [];
   if (daily.available) {
     lines.push(daily.streak >= 2 && !daily.shields
-      ? `🔥 Deine Serie von **${daily.streak} Tagen** endet um Mitternacht – hol dir heute noch deinen Tagesbonus (${formatCoins(daily.nextAmount)}).`
-      : `🎁 Dein Tagesbonus wartet: ${formatCoins(daily.nextAmount)}.`);
+      ? `Deine Serie von **${daily.streak} Tagen** endet um Mitternacht – hol dir heute noch deinen Tagesbonus (${formatCoins(daily.nextAmount)}).`
+      : `Dein Tagesbonus wartet: ${formatCoins(daily.nextAmount)}.`);
   }
-  if (openQuests.length) lines.push(`📋 Noch offen: ${openQuests.map((quest) => quest.label).join(' · ')}`);
+  if (openQuests.length) lines.push(`Noch offen: ${openQuests.map((quest) => quest.label).join(' · ')}`);
   return lines.length ? lines : null;
 }
 

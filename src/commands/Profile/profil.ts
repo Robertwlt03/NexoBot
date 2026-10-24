@@ -99,7 +99,7 @@ export default {
       const blocks: NexoBlock[] = card
         ? [{ images: [`attachment://${card.name}`] }]
         : review.tiles.map((tile) => ({ text: `**${tile.coins ? formatCoins(tile.value) : `${formatNumber(tile.value)}${tile.unit ? ` ${tile.unit}` : ''}`}** · ${tile.label}` }));
-      if (review.highlights.length) blocks.push({ text: review.highlights.map((line) => `⭐ ${line}`).join('\n') });
+      if (review.highlights.length) blocks.push({ text: review.highlights.map((line) => `– ${line}`).join('\n') });
       await InteractionHelper.safeEditReply(interaction, {
         ...nexoMessage(nexoCard({ kicker: 'Dein Nexo-Jahr', title: `${member.displayName} · ${year}`, accent: ACCENTS.gold, blocks, footer: `Deins sehen: ${cmd('profil jahr')}` })),
         files: card ? [card] : [],
@@ -137,17 +137,17 @@ export default {
       const blocks: NexoBlock[] = quests.map((quest) => ({ text: quest.done
         ? `✅ ~~${quest.label}~~\n-# geschafft · ${formatCoins(quest.reward)}`
         : `⬜ **${quest.label}**\n${textBar(quest.current, quest.target)} ${quest.current}/${quest.target} · ${formatCoins(quest.reward)}` }));
-      blocks.push({ text: bonus.done ? `🎁 Bonus für alle drei kassiert: ${formatCoins(bonus.reward)}` : `🎁 Alle drei geschafft: **${formatCoins(bonus.reward)}** extra` });
+      blocks.push({ text: bonus.done ? `Bonus für alle drei kassiert: ${formatCoins(bonus.reward)}` : `Alle drei geschafft: **${formatCoins(bonus.reward)}** extra` });
       const guild = interaction.guild!;
       const goals = await communityGoals(interaction.user.id, [{ id: guild.id, name: guild.name, iconUrl: null }], pendingCommunity(interaction.user.id));
       if (goals.length) blocks.push({ separator: true });
       for (const goal of goals) {
-        blocks.push({ text: `🤝 **Gemeinschaftsziel ${goal.eventName}**\n${textBar(goal.progress, goal.target)} ${goal.progress.toLocaleString('de-DE')} / ${goal.target.toLocaleString('de-DE')} Nachrichten · du: ${goal.mine}\n-# `
+        blocks.push({ text: `**Gemeinschaftsziel ${goal.eventName}**\n${textBar(goal.progress, goal.target)} ${goal.progress.toLocaleString('de-DE')} / ${goal.target.toLocaleString('de-DE')} Nachrichten · du: ${goal.mine}\n-# `
           + (goal.paid ? 'Belohnung bekommen ✅' : `Ab ${goal.minimum} eigenen Nachrichten gibt es ${formatCoins(goal.reward)}, wenn ihr es schafft.`) });
       }
       const season = await getSeason(interaction.user.id);
       const nextTier = season.tiers[season.tier];
-      blocks.push({ separator: true }, { text: `🏆 **Saison ${season.name}** · Stufe ${season.tier} von ${season.tiers.length}\n${nextTier ? `${textBar(season.points, nextTier.points)} ${season.points} / ${nextTier.points} Punkte` : 'Saisonpfad komplett!'}` });
+      blocks.push({ separator: true }, { text: `**Saison ${season.name}** · Stufe ${season.tier} von ${season.tiers.length}\n${nextTier ? `${textBar(season.points, nextTier.points)} ${season.points} / ${nextTier.points} Punkte` : 'Saisonpfad komplett!'}` });
       blocks.push({ buttons: [...linkButton('Saisonpfad', dashboardUrl('/saison')), ...linkButton('Zum Shop', dashboardUrl('/shop'))] });
       await reply(nexoCard({
         kicker: 'Tagesaufgaben', title: `${quests.filter((quest) => quest.done).length} von ${quests.length} geschafft`, blocks,
