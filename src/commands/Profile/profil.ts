@@ -63,7 +63,7 @@ export default {
     if (subcommand === 'bernis') {
       const balance = await getBalance(interaction.user.id);
       await reply(nexoCard({
-        kicker: CURRENCY.name, title: 'Dein Kontostand',
+        kicker: CURRENCY.name, title: 'Dein Kontostand', accent: ACCENTS.gold,
         blocks: [
           { text: `# ${formatCoins(balance)}\n-# ${formatNumber(balance)} ${balance === 1 ? CURRENCY.singular : CURRENCY.name} insgesamt` },
           { separator: true },

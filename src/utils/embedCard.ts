@@ -1,6 +1,6 @@
 // Moves Nexo's embed-based messages onto the Nexo card layout without rewriting each one. embedToCard() turns an
-// embed into a V2 container in a fixed, reversible shape – every part carries a component id (head 10, content 11,
-// description 12, gallery 20, footer 30, fields 100+) – so cardToEmbed()/messageEmbed() can read a card back as the
+// embed into a V2 container in a fixed, reversible shape – every part carries a component id (banner 5, head 10,
+// content 11, description 12, gallery 20, footer 30, fields 100+) – so cardToEmbed()/messageEmbed() can read a card back as the
 // embed it came from (tickets, reaction-role panels and applications read their data from their messages).
 // toCardPayload() converts a whole send/reply/edit payload; InteractionHelper, channel sends and message.edit use it.
 
@@ -10,12 +10,13 @@ import {
   ThreadChannel, ThumbnailBuilder, type APIEmbed, type APIEmbedField,
 } from 'discord.js';
 import { ACCENTS } from './nexoMessage.js';
+import { cardBanner } from './cardBanner.js';
 
 /** Discord allows 4000 characters of text per V2 message; keep room for content and footers. */
 const TEXT_BUDGET = 3800;
 /** Discord allows 40 components per V2 message (nested ones and buttons included). */
 const COMPONENT_LIMIT = 40;
-const ID = { head: 10, lead: 11, description: 12, gallery: 20, files: 21, footer: 30, field: 100 } as const;
+const ID = { banner: 5, head: 10, lead: 11, description: 12, gallery: 20, files: 21, footer: 30, field: 100 } as const;
 const IMAGE = /\.(png|jpe?g|gif|webp|avif)$/i;
 
 const fieldText = (field: APIEmbedField) => (field.inline ? `**${field.name}:** ${field.value}` : `**${field.name}**\n${field.value}`);
@@ -31,14 +32,18 @@ export function embedToCard(input: EmbedBuilder | APIEmbed, lead = '', files: st
     return piece;
   };
   const text = (id: number, content: string) => new TextDisplayBuilder().setId(id).setContent(fit(content));
+  const description = embed.description?.trim();
+  const thumbnail = embed.thumbnail?.url;
+
+  // Every card opens with a banner in its colour, unless it already shows a big picture of its own.
+  const banner = embed.image?.url || (!description && thumbnail) ? null : cardBanner(embed.color ?? ACCENTS.nexo);
+  if (banner) container.addMediaGalleryComponents(new MediaGalleryBuilder().setId(ID.banner).addItems({ media: { url: banner } }));
 
   const title = embed.title ? (embed.url ? `[${embed.title}](${embed.url})` : embed.title) : '';
   const head = [embed.author?.name ? `-# ${embed.author.name.toUpperCase()}` : '', title ? `## ${title}` : ''].filter(Boolean).join('\n');
   if (head) container.addTextDisplayComponents(text(ID.head, head));
   if (lead.trim()) container.addTextDisplayComponents(text(ID.lead, lead.trim()));
 
-  const description = embed.description?.trim();
-  const thumbnail = embed.thumbnail?.url;
   if (description && thumbnail) {
     container.addSectionComponents(new SectionBuilder().addTextDisplayComponents(text(ID.description, description)).setThumbnailAccessory(new ThumbnailBuilder().setURL(thumbnail)));
   } else if (description) {

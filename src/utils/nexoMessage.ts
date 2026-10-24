@@ -7,6 +7,7 @@ import {
   SeparatorSpacingSize, TextDisplayBuilder, ThumbnailBuilder, type MessageActionRowComponentBuilder,
 } from 'discord.js';
 import { getColor } from '../config/bot.js';
+import { cardBanner } from './cardBanner.js';
 
 /** Accent colours from the one palette in config/bot.ts (embeds.colors), so embeds and cards always match. */
 export const ACCENTS = {
@@ -39,6 +40,9 @@ export interface NexoCardOptions {
 
 export function nexoCard({ kicker, title, accent = NEXO_ACCENT, blocks, footer }: NexoCardOptions): ContainerBuilder {
   const container = new ContainerBuilder().setAccentColor(accent);
+  // A banner in the accent colour on top, unless the card opens with a picture of its own (profile, year card).
+  const banner = blocks[0] && 'images' in blocks[0] ? null : cardBanner(accent);
+  if (banner) container.addMediaGalleryComponents(new MediaGalleryBuilder().addItems({ media: { url: banner } }));
   const head = [kicker ? `-# ${kicker.toUpperCase()}` : '', title ? `## ${title}` : ''].filter(Boolean).join('\n');
   if (head) container.addTextDisplayComponents(new TextDisplayBuilder().setContent(head));
   for (const block of blocks) {
