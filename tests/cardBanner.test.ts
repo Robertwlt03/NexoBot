@@ -30,9 +30,9 @@ test('each colour gets the closest banner', () => {
 });
 
 test('banners only come from a public https dashboard', () => {
-  assert.equal(cardBanner(0x8FB36B, 'http://localhost:3000'), null);
-  assert.equal(cardBanner(0x8FB36B, ''), null);
-  assert.equal(cardBanner(0xF5C451, 'https://nexo.example/'), 'https://nexo.example/dashboard/banners/gold.png?v=1');
+  assert.equal(cardBanner(0x8FB36B, { baseUrl: 'http://localhost:3000' }), null);
+  assert.equal(cardBanner(0x8FB36B, { baseUrl: '' }), null);
+  assert.equal(cardBanner(0xF5C451, { baseUrl: 'https://nexo.example/' }), 'https://nexo.example/dashboard/banners/gold.png?v=1');
 });
 
 test('converted embeds open with the banner and read back without it', () => {
@@ -57,4 +57,12 @@ test('Nexo cards open with the banner unless they start with a picture', () => {
   assert.equal(plain.components[0].type, 12);
   const picture = withDashboard('https://nexo.example', () => nexoCard({ blocks: [{ images: ['attachment://profil.png'] }] }).toJSON()) as never as Json;
   assert.equal(picture.components.length, 1);
+});
+
+test('giveaways carry the gift banner, running and ended', async () => {
+  const { createGiveawayEmbed } = await import('../src/services/giveawayService.js');
+  const giveaway = { prize: 'Nitro', hostId: '1', winnerCount: 1, participants: [], endsAt: Date.now() + 60_000 } as never;
+  const url = (status: string) => (withDashboard('https://nexo.example', () => embedToCard(createGiveawayEmbed(giveaway, status)).toJSON()) as never as Json).components[0].items![0].media.url;
+  assert.match(url('active'), /banners\/gift\.png/);
+  assert.match(url('ended'), /banners\/giftEnded\.png/);
 });

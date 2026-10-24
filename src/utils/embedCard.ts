@@ -10,7 +10,7 @@ import {
   ThreadChannel, ThumbnailBuilder, type APIEmbed, type APIEmbedField,
 } from 'discord.js';
 import { ACCENTS } from './nexoMessage.js';
-import { cardBanner } from './cardBanner.js';
+import { cardBanner, chosenBanner } from './cardBanner.js';
 
 /** Discord allows 4000 characters of text per V2 message; keep room for content and footers. */
 const TEXT_BUDGET = 3800;
@@ -36,7 +36,7 @@ export function embedToCard(input: EmbedBuilder | APIEmbed, lead = '', files: st
   const thumbnail = embed.thumbnail?.url;
 
   // Every card opens with a banner in its colour, unless it already shows a big picture of its own.
-  const banner = embed.image?.url || (!description && thumbnail) ? null : cardBanner(embed.color ?? ACCENTS.nexo);
+  const banner = embed.image?.url || (!description && thumbnail) ? null : cardBanner(embed.color ?? ACCENTS.nexo, { name: chosenBanner(input) });
   if (banner) container.addMediaGalleryComponents(new MediaGalleryBuilder().setId(ID.banner).addItems({ media: { url: banner } }));
 
   const title = embed.title ? (embed.url ? `[${embed.title}](${embed.url})` : embed.title) : '';

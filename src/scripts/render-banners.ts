@@ -1,7 +1,7 @@
 // Renders the banners on top of every Nexo card (dashboard/public/banners/<name>.png): walnut wood, the Nexo coin,
 // a glow and a large line motif in the card's accent colour. Run after changing the look:
 //   npx tsx src/scripts/render-banners.ts
-// The PNGs are committed; utils/cardBanner.ts picks one by the card's accent colour.
+// The PNGs are committed; utils/cardBanner.ts picks one by the card's accent colour or the message's topic.
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -23,6 +23,8 @@ const MOTIFS: Record<keyof typeof BANNERS, string> = {
   warn: 'M12 3l10 18H2zM12 10v5M12 18v.5',
   danger: 'M12 2.5l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6zM9 9l6 6M15 9l-6 6',
   calm: 'M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5',
+  gift: 'M3 8h18v5H3zM5 13v8h14v-8M12 8v13M12 8C10.5 4 6.5 4 7 6.5S12 8 12 8zM12 8c1.5-4 5.5-4 5-1.5S12 8 12 8z',
+  giftEnded: 'M3 8h18v5H3zM5 13v8h14v-8M12 8v13M12 8C10.5 4 6.5 4 7 6.5S12 8 12 8zM12 8c1.5-4 5.5-4 5-1.5S12 8 12 8z',
   pink: 'M4 21V13a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8M4 16c1.5 1 3 1 4 0s2.5-1 4 0 3 1 4 0 2.5-1 4 0M2 21h20M12 11V7M12 7c-1.2 0-2-.8-2-2s2-3 2-3 2 1.8 2 3-.8 2-2 2z',
 };
 
