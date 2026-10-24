@@ -21,12 +21,12 @@ const reward = (c: EconomyConfig, level: number) => {
 };
 
 export default function OwnerSettingsPage() {
-  const { data, setData, error, loading } = useApi<EconomyConfig>('/owner/config');
+  const { data, setData, error, loading, reload } = useApi<EconomyConfig>('/owner/config');
   const persist = useCallback(async (draft: EconomyConfig) => { setData(await api<EconomyConfig>('/owner/config', { method: 'PUT', body: draft })); }, [setData]);
   const form = useDraft(data, persist);
   const c = form.draft;
   if (loading && !c) return <Spinner />;
-  if (!c) return <Notice tone="danger">{error ?? 'Keine Daten.'}</Notice>;
+  if (!c) return <Notice tone="danger" onRetry={reload}>{error ?? 'Keine Daten.'}</Notice>;
   const set = (patch: Partial<EconomyConfig>) => form.setDraft({ ...c, ...patch });
 
   return (

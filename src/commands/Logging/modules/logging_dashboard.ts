@@ -16,6 +16,7 @@ import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import { logger } from '../../../utils/logger.js';
 
 import { replyUserError, ErrorTypes } from '../../../utils/errorHandler.js';
+import { messageTitle } from '../../../utils/embedCard.js';
 
 /** Interactions whose source message is the dashboard (buttons, selects, modals opened from it). */
 type DashboardMessageInteraction = MessageComponentInteraction | ModalSubmitInteraction;
@@ -157,11 +158,11 @@ export async function buildLoggingFilterView(interaction: BaseInteraction, clien
 }
 
 export function isCategoriesView(interaction: DashboardMessageInteraction): boolean {
-  return interaction.message?.embeds?.[0]?.title === '📋 Event-Kategorien';
+  return messageTitle(interaction.message) === '📋 Event-Kategorien';
 }
 
 export function isFilterView(interaction: DashboardMessageInteraction): boolean {
-  return interaction.message?.embeds?.[0]?.title === '🔇 Log-Ignorierfilter';
+  return messageTitle(interaction.message) === '🔇 Log-Ignorierfilter';
 }
 
 export async function refreshDashboardMessage(interaction: DashboardMessageInteraction, client: NexoClient): Promise<void> {

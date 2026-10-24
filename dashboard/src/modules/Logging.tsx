@@ -40,15 +40,15 @@ export default function LoggingPage() {
   const settings = useSettings<LoggingSettings>('logging');
   return (
     <>
-      <PageHeader icon="log" title="Logging" description="Lege fest, welche Ereignisse Nexo in welchen Kanal protokolliert." />
+      <PageHeader icon="log" title="Protokolle" description="Lege fest, welche Ereignisse Nexo in welchen Kanal protokolliert." />
       <SettingsPage settings={settings}>
         {(value) => {
           const setEvents = (types: string[], on: boolean) =>
             settings.set({ events: { ...value.events, ...Object.fromEntries(types.map((type) => [type, on])) } });
           return (
             <>
-              <Card icon="log" title="Logging" description="Hauptschalter: Ist er aus, protokolliert Nexo gar nichts – auch keine Bewerbungen und Meldungen."
-                right={<Switch checked={value.enabled} onChange={(enabled) => settings.set({ enabled })} label="Logging aktiv" />}>
+              <Card icon="log" title="Protokollierung" description="Hauptschalter: Ist er aus, protokolliert Nexo gar nichts – auch keine Bewerbungen und Meldungen."
+                right={<Switch checked={value.enabled} onChange={(enabled) => settings.set({ enabled })} label="Protokollierung aktiv" />}>
                 {!value.channels.audit && value.enabled && <Notice tone="warn">Es ist noch kein Audit-Kanal gesetzt.</Notice>}
               </Card>
 
@@ -63,7 +63,7 @@ export default function LoggingPage() {
                 </div>
               </Card>
 
-              <Card icon="check" title="Ereignisse" description={value.enabled ? "Wähle aus, welche Ereignisse protokolliert werden." : "Wähle aus, welche Ereignisse protokolliert werden. Greift erst, wenn das Logging an ist."}>
+              <Card icon="check" title="Ereignisse" description={value.enabled ? "Wähle aus, welche Ereignisse protokolliert werden." : "Wähle aus, welche Ereignisse protokolliert werden. Greift erst, wenn die Protokollierung an ist."}>
                 <div className="auto-grid">
                   {value.categories.map((category) => {
                     const types = category.events.map((event) => event.type);

@@ -8,6 +8,7 @@ import {
   BADGE_GAP, BADGE_SIZE, FRAME_MAX_OUTSET, PROFILE_CARD_HEIGHT as H, PROFILE_CARD_WIDTH as W, PROFILE_LAYOUTS,
   badgeRowRight, profileGeometry, stickerPoint, stickerRadius,
 } from '../src/shared/profileCard.js';
+import { petPoint } from '../src/shared/pets.js';
 
 type Box = { name: string; x: number; y: number; w: number; h: number } | { name: string; cx: number; cy: number; r: number };
 const rect = (name: string, x: number, y: number, w: number, h: number): Box => ({ name, x, y, w, h });
@@ -57,6 +58,9 @@ function boxes(layout: (typeof PROFILE_LAYOUTS)[number], spot: StickerSpot | nul
   if (g.captionY !== null) list.push(rect('captions', g.xp.x, g.captionY - 13, g.xp.w, 17));
   list.push(rect('xp', g.xp.x, g.xp.y - 7, g.xp.w, g.xp.h + 11));
   if (g.serverLabel) list.push(rect('server', g.serverLabel.x + (spot === 'tl' && g.serverLabel.x < 80 ? 68 : 0), g.serverLabel.y - 10, g.serverLabel.maxWidth, 13));
+  // The fully grown companion (stage 3) sits on the avatar's lower left rim; its box spans the drawing (tail and ears).
+  const pet = petPoint(g.avatar, 3);
+  list.push({ name: 'pet', cx: pet.x, cy: pet.y, r: pet.size * 1.04 });
   if (sticker) {
     const at = stickerPoint(sticker.corner, g.avatar);
     list.push({ name: 'sticker', cx: at.x, cy: at.y, r: stickerRadius(sticker.corner) });
@@ -74,6 +78,7 @@ test('no element of any layout overlaps another, for every sticker spot', () => 
         for (let j = i + 1; j < list.length; j++) {
           const [a, b] = [list[i], list[j]];
           if (spot === 'avatar' && [a.name, b.name].includes('sticker') && [a.name, b.name].includes('avatar')) continue;
+          if ([a.name, b.name].includes('pet') && [a.name, b.name].includes('avatar')) continue;
           if (overlaps(a, b)) problems.push(`${layout}/${spot}: ${a.name} × ${b.name}`);
         }
       }

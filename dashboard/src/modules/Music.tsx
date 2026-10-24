@@ -36,7 +36,7 @@ export default function MusicPage() {
       />
       <div className="stack mb-4">
         <Notice>Der Musikstatus liegt nur im Arbeitsspeicher. Bei einem Neustart von Nexo werden Wiedergabe, Warteschlange und 24/7-Modus zurückgesetzt.</Notice>
-        {error && !data && <Notice tone="danger">{error}</Notice>}
+        {error && !data && <Notice tone="danger" onRetry={reload}>{error}</Notice>}
         {data && !data.available && <Notice tone="warn">Musik ist auf diesem Bot nicht verfügbar – Lavalink ist nicht konfiguriert.</Notice>}
       </div>
       {loading && !data && <Spinner />}
@@ -58,7 +58,7 @@ export default function MusicPage() {
                   <span className="badge">{data.queueLength} in der Warteschlange</span>
                   <span className="badge">Lautstärke {data.volume} %</span>
                   <span className="badge">Wiederholen: {LOOP_LABELS[data.loop] ?? data.loop}</span>
-                  {voiceChannel && <span className="badge">🔊 {voiceChannel.name}</span>}
+                  {voiceChannel && <span className="badge whitespace-nowrap"><Icon name="mic" size={13} />{voiceChannel.name}</span>}
                 </div>
               </div>
             )}

@@ -35,7 +35,7 @@ export default function OwnerBlackMarketPage() {
   const [picking, setPicking] = useState<string[] | null>(null);
 
   if ((overview.loading && !overview.data) || (items.loading && !items.data)) return <Spinner />;
-  if (!overview.data || !items.data) return <Notice tone="danger">{overview.error ?? items.error ?? 'Keine Daten.'}</Notice>;
+  if (!overview.data || !items.data) return <Notice tone="danger" onRetry={() => { overview.reload(); items.reload(); }}>{overview.error ?? items.error ?? 'Keine Daten.'}</Notice>;
   const market = overview.data.blackMarket;
   const size = overview.data.config.blackMarketSize;
   const pool = items.data.filter((item) => item.active && item.availability === 'blackmarket');

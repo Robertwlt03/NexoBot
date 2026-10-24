@@ -10,6 +10,14 @@ import { addActivity, startActivityTracker } from './activity.js';
 import { ensureCoinEmojis } from './coinEmojis.js';
 import { syncAchievements } from './achievements.js';
 import { seedCatalog } from './catalog.js';
+import { startReminders } from './reminders.js';
+import { setCommunityClient } from './community.js';
+import { startBotProfiles } from './botProfile.js';
+import { startPresenceRotation } from './presence.js';
+import { startLinkedRoles } from './linkedRoles.js';
+import { linkedRolesConfig } from '../../web/dashboard.js';
+import { addSeasonPoints, ensureSeasonItems } from './season.js';
+import { SEASON_POINTS } from '../../shared/season.js';
 import { getEconomyConfig, levelReward } from './config.js';
 import { cosmeticsPool } from './db.js';
 import { recordMinigamePoints, recordXpGain, runMonthlyPayout } from './rankings.js';
@@ -17,7 +25,7 @@ import { earn } from './wallet.js';
 
 const GAME_LABELS = {
   work: 'Arbeiten', fish: 'Angeln', mine: 'Bergbau', gamble: 'Glücksspiel', crime: 'Verbrechen', rob: 'Raub', beg: 'Betteln',
-  daily: 'Tägliche Belohnung', fight: 'Duell', flip: 'Münzwurf', roll: 'Würfeln',
+  daily: 'Tägliche Belohnung', fight: 'Duell', flip: 'Münzwurf', roll: 'Würfeln', duel: 'Spiel gegen andere',
 } as const;
 export type MinigameId = keyof typeof GAME_LABELS;
 
@@ -35,13 +43,14 @@ function appendLine(embed: EmbedBuilder, line: string): void {
 
 /**
  * Successful mini game: a small random Berni reward (daily cap applies) plus one monthly ranking point, and
- * "+N 🟠 Bernis" appended to the reply embed when the reward arrives in time.
+ * "+N 🟠 Bernis" appended to the reply embed when the reward arrives in time. Returns what arrived in time (callers
+ * without an embed show it themselves).
  */
-export async function rewardMinigame(embed: EmbedBuilder, user: { id: string; bot: boolean }, guildId: string | null, game: MinigameId): Promise<void> {
-  if (user.bot || !cosmeticsPool()) return;
+export async function rewardMinigame(embed: EmbedBuilder | null, user: { id: string; bot: boolean }, guildId: string | null, game: MinigameId): Promise<number> {
+  if (user.bot || !cosmeticsPool()) return 0;
   const key = `${user.id}|${game}`;
   const now = Date.now();
-  if (now - (lastReward.get(key) ?? 0) < REWARD_COOLDOWN_MS) return;
+  if (now - (lastReward.get(key) ?? 0) < REWARD_COOLDOWN_MS) return 0;
   lastReward.set(key, now);
   addActivity(user.id, `game_${game}`);
   if (lastReward.size > 5000) {
@@ -53,6 +62,7 @@ export async function rewardMinigame(embed: EmbedBuilder, user: { id: string; bo
     if (guildId) await recordMinigamePoints(guildId, user.id);
     const amount = minigameReward.max > 0 ? randomInt(minigameReward.min, minigameReward.max + 1) : 0;
     const granted = amount > 0 ? await earn(user.id, amount, 'minigame', `Minispiel: ${GAME_LABELS[game]}`, guildId, { capped: true }) : 0;
+    void addSeasonPoints(user.id, SEASON_POINTS.minigame);
     void syncAchievements(user.id);
     return granted;
   })().catch((error: unknown) => {
@@ -60,7 +70,8 @@ export async function rewardMinigame(embed: EmbedBuilder, user: { id: string; bo
     return 0;
   });
   const granted = await Promise.race([work, new Promise<number>((resolve) => { setTimeout(() => resolve(0), REPLY_WAIT_MS).unref(); })]);
-  if (granted > 0) appendLine(embed, `+ ${formatCoins(granted)}`);
+  if (granted > 0 && embed) appendLine(embed, `+ ${formatCoins(granted)}`);
+  return granted;
 }
 
 /** XP from messages: monthly activity score and, on level-ups, Bernis (daily cap applies). Callers skip bots. */
@@ -74,6 +85,7 @@ export async function onXpGained(guild: { id: string; name: string }, userId: st
     let amount = 0;
     for (let level = fromLevel + 1; level <= toLevel; level += 1) amount += levelReward(config, level);
     const credited = await earn(userId, amount, 'level_up', `Level ${toLevel} auf ${guild.name}`, guild.id, { capped: true });
+    await addSeasonPoints(userId, SEASON_POINTS.levelUp * (toLevel - fromLevel));
     await syncAchievements(userId);
     return credited;
   } catch (error) {
@@ -106,6 +118,12 @@ export async function startCosmetics(client: Client): Promise<void> {
     logger.error('Berni-Katalog konnte nicht angelegt werden:', error);
   }
   startActivityTracker();
+  await ensureSeasonItems().catch((error: unknown) => logger.warn('Saison-Items konnten nicht angelegt werden:', (error as Error).message));
+  setCommunityClient(client);
+  startBotProfiles(client);
+  startPresenceRotation(client);
+  startLinkedRoles(client, linkedRolesConfig());
+  startReminders(client);
   // Coin emojis for bot messages; needs the application, so after login.
   if (client.isReady()) void ensureCoinEmojis(client);
   else client.once(Events.ClientReady, (ready) => { void ensureCoinEmojis(ready); });

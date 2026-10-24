@@ -237,7 +237,7 @@ export default function ModerationPage() {
     <>
       <PageHeader icon="gavel" title="Moderation" description="Fälle, Verwarnungen und Nutzernotizen" />
       <Notice>
-        Den Mod-Log-Kanal stellst du unter <Link to="../logging">Logging</Link> ein, Moderator- und Admin-Rolle
+        Den Mod-Log-Kanal stellst du unter <Link to="../logging">Protokolle</Link> ein, Moderator- und Admin-Rolle
         unter <Link to="../general">Allgemein</Link>. Bannen, Kicken und Timeouts machst du direkt in Discord.
       </Notice>
       <div className="mt-4"><Tabs value={tab} onChange={setTab} items={TABS.map(({ id, label }) => ({ id, label }))} /></div>

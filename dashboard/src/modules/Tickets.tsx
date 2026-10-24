@@ -42,13 +42,13 @@ function Overview({ overview, canPost, onPosted, onRefresh }: {
           { label: 'Offene Tickets', value: data.stats.openCount },
           { label: 'Geschlossene Tickets', value: data.stats.closedCount },
           { label: 'Ø Zeit bis Schließen', value: formatDuration(data.stats.avgCloseTimeMs) },
-          { label: 'Feedback', value: data.stats.avgRating !== null ? `${data.stats.avgRating}/5` : 'Noch keins', hint: data.stats.avgRating !== null ? `${data.stats.feedbackCount} Bewertungen` : undefined },
+          { label: 'Feedback', value: data.stats.avgRating !== null ? `${data.stats.avgRating.toLocaleString('de-DE', { maximumFractionDigits: 1 })} / 5` : 'Noch keins', hint: data.stats.avgRating !== null ? `${data.stats.feedbackCount} Bewertungen` : undefined },
         ]} />
       )}
       <Card icon="ticket" title="Übersicht" description="Panel-Status und offene Tickets."
         right={<button type="button" className="icon-btn" onClick={onRefresh} aria-label="Aktualisieren"><Icon name="refresh" size={18} /></button>}>
         {!data && overview.loading && <Spinner />}
-        {overview.error && !data && <Notice tone="danger">{overview.error}</Notice>}
+        {overview.error && !data && <Notice tone="danger" onRetry={overview.reload}>{overview.error}</Notice>}
         {data && (
           <div className="stack">
             <div className="row">

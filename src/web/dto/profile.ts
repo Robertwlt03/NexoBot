@@ -14,7 +14,7 @@ export interface WalletSummary {
   dailyCap: number;
 }
 
-export interface OwnedItem { itemId: string; acquiredAt: string; source: 'purchase' | 'gift' | 'achievement' | 'ranking' | 'event' | 'owner' }
+export interface OwnedItem { itemId: string; acquiredAt: string; source: 'purchase' | 'gift' | 'achievement' | 'ranking' | 'event' | 'owner' | 'season' }
 
 export interface ProfileLevel { guildId: string; guildName: string; level: number; xp: number; xpNeeded: number; rank: number | null }
 
@@ -27,12 +27,54 @@ export interface MeProfileResponse {
   /** The member's levels on servers where Nexo is present (for the card preview; highest first). */
   levels: ProfileLevel[];
   daily: DailyBonusState;
+  quests: DailyQuests;
+  /** DM reminder at 19:00 about the daily bonus and open quests (opt-in). */
+  reminders: boolean;
+  /** Growth stage of the companion (1–3) and the days chatted it comes from. */
+  petStage: number;
+  chatDays: number;
+  /** Public profile link /dashboard/p/<id> with a Discord link preview (opt-in). */
+  shareProfile: boolean;
+  /** Linked Roles: whether the member linked Nexo, and the values servers can require. */
+  linkedRole: { linked: boolean; values: LinkedRoleValues };
 }
+export interface LinkedRoleValues { level: number; season_tier: number; achievements: number; chat_days: number; bernis: number }
+/** POST /me/linked-role/sync → { linkedRole }; DELETE /me/linked-role → { linkedRole } */
+/** PUT /me/share { enabled } → { enabled } */
+/** PUT /me/reminders { enabled } → { enabled } */
 /** PUT /me/profile — body: UserProfileSettings; every equipped item must be owned (403 otherwise). Returns MeProfileResponse. */
 
-export interface DailyBonusState { available: boolean; streak: number; nextAmount: number; nextAt: string | null }
+export interface DailyBonusState {
+  available: boolean; streak: number; nextAmount: number; nextAt: string | null;
+  /** Streak shields held, and how many the next claim uses to bridge missed days (0 = none missed). */
+  shields: number; saving: number;
+}
+/** POST /me/daily/shield → { wallet: WalletSummary; daily: DailyBonusState } (buys one streak shield). */
 /** POST /me/daily → { claimed: number; wallet: WalletSummary; daily: DailyBonusState } */
 export interface DailyClaimResult { claimed: number; wallet: WalletSummary; daily: DailyBonusState }
+
+export interface DailyQuest { id: string; label: string; current: number; target: number; reward: number; done: boolean }
+/** Three tasks per Berlin day, paid automatically once done; all three pay `bonus.reward` on top. */
+export interface DailyQuests { quests: DailyQuest[]; bonus: { reward: number; done: boolean }; resetsAt: string }
+/** A server's shared goal during a running event (messages written there by everyone). */
+export interface CommunityGoal {
+  eventId: string; eventName: string; endsAt: string;
+  guildId: string; guildName: string; guildIconUrl: string | null;
+  progress: number; target: number;
+  /** The member's own messages towards it, the share needed for the reward, and whether it was paid. */
+  mine: number; minimum: number; reward: number; paid: boolean;
+}
+/** GET /me/community → { goals: CommunityGoal[] } */
+export interface CommunityResponse { goals: CommunityGoal[] }
+/** GET /me/season: this month's season path. */
+export interface SeasonResponse {
+  /** YYYY-MM and its German name ("Oktober 2026"). */
+  season: string; name: string; endsAt: string;
+  points: number; tier: number;
+  tiers: { points: number; bernis: number; item: 'badge' | 'title' | null; itemId: string | null }[];
+}
+/** GET /me/quests */
+export interface QuestsResponse { quests: DailyQuests; wallet: WalletSummary }
 
 export interface ShopEvent {
   id: string;

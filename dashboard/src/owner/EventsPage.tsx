@@ -95,7 +95,7 @@ export default function EventsPage() {
       <div className="min-w-0 grow basis-[260px]">
         <div className="flex flex-wrap items-center gap-2"><span className="title">{event.name}</span>{status(event, now)}</div>
         <div className="faint mt-0.5">
-          {formatDateTime(event.startsAt)} – {formatDateTime(event.endsAt)} · −{event.discount} % · {event.slots ? event.slots.map((s) => SLOT_LABELS[s]).join(', ') : 'alle Bereiche'}
+          {formatDateTime(event.startsAt)} – {formatDateTime(event.endsAt)}{event.discount > 0 && ` · −${event.discount} %`} · {event.slots ? event.slots.map((s) => SLOT_LABELS[s]).join(', ') : 'alle Bereiche'}
         </div>
       </div>
       {event.kind === 'auto'
@@ -114,7 +114,7 @@ export default function EventsPage() {
       <PageHeader kicker="Owner" title="Events" description="Rabattaktionen im Shop. Automatische Events kommen jedes Jahr wieder, eigene legst du selbst an."
         actions={<button type="button" className="btn btn-primary" onClick={() => setEditing(blankEvent())}><Icon name="plus" size={16} /> Neues Event</button>} />
       {loading && !data && <Spinner />}
-      {error && <Notice tone="danger">{error}</Notice>}
+      {error && <Notice tone="danger" onRetry={reload}>{error}</Notice>}
       {data && (
         <>
           <Card title="Eigene Events" description="Mit Zeitraum, Rabatt und Bereichen – Event-Artikel sind nur während des Events kaufbar.">

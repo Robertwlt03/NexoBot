@@ -30,6 +30,7 @@ const MEMBER_NAV: NavEntry[] = [
   { to: '/me/verlauf', label: 'Verlauf', icon: 'clock' },
   { to: '/me/ranglisten', label: 'Ranglisten', icon: 'trophy' },
   { to: '/me/erfolge', label: 'Erfolge', icon: 'medal' },
+  { to: '/me/saison', label: 'Saison', icon: 'star' },
   { to: '/me/design', label: 'Dashboard-Design', icon: 'palette' },
 ];
 const OWNER_NAV: NavEntry[] = [
@@ -76,12 +77,15 @@ export function MeLayout() {
   const shop = useApi<ShopResponse>('/me/shop');
   const blackMarket = useApi<BlackMarketResponse>('/me/blackmarket');
   const pageRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
   const setProfile = profile.setData;
   const { reload: reloadShopData } = shop;
   const { reload: reloadBlackMarket } = blackMarket;
 
   const setGuard = useCallback((value: boolean) => setDirty(value), []);
   useEffect(() => setMenuOpen(false), [location.pathname]);
+  // Keep the active entry visible when the menu is taller than the window.
+  useEffect(() => { navRef.current?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'nearest' }); }, [location.pathname]);
   useEffect(() => {
     if (!dirty) return;
     const handler = (event: BeforeUnloadEvent) => { event.preventDefault(); };
@@ -132,7 +136,7 @@ export function MeLayout() {
             <div className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">Mein Profil</div>
             {profile.data && <WalletPill balance={profile.data.wallet.balance} />}
           </div>
-          <nav className="flex-1 overflow-y-auto px-3 py-3" onClickCapture={guardClick}>
+          <nav ref={navRef} className="nav-scroll flex-1 overflow-y-auto px-3 py-3" onClickCapture={guardClick}>
             {MEMBER_NAV.map((entry) => (
               <NavLink key={entry.to} end to={entry.to} className={navClass}><Glyph name={entry.icon} size={18} /> {entry.label}</NavLink>
             ))}
@@ -152,8 +156,9 @@ export function MeLayout() {
       <main className="relative flex min-w-0 flex-1 flex-col bg-canvas">
         <header className="flex h-16 shrink-0 items-center gap-3 border-b border-white/[.05] bg-canvas/80 px-4 backdrop-blur-md md:px-8">
           <button className="icon-btn lg:hidden" onClick={() => setMenuOpen((open) => !open)} aria-label="Menü"><Icon name="menu" /></button>
-          <span className="text-sm text-mute">{isOwnerArea ? 'Owner' : 'Mein Profil'}</span>
-          <span className="text-faint">/</span>
+          {/* Phones show only the page name, so the wallet pill has room. */}
+          <span className="text-sm text-mute max-sm:hidden">{isOwnerArea ? 'Owner' : 'Mein Profil'}</span>
+          <span className="text-faint max-sm:hidden">/</span>
           <span className="truncate text-sm font-medium text-ink">{current?.label ?? 'Übersicht'}</span>
           {profile.data && <span className="ml-auto lg:hidden"><WalletPill balance={profile.data.wallet.balance} /></span>}
           {profile.data && <CoinMilestone balance={profile.data.wallet.balance} />}
@@ -162,7 +167,7 @@ export function MeLayout() {
           <PageBackdrop art={current && GLYPHS[current.icon]} column={1100} />
           <div ref={pageRef} className="relative mx-auto max-w-[1100px]">
             {profile.loading && !profile.data && <Spinner />}
-            {profile.error && !profile.data && <Notice tone="danger">{profile.error}</Notice>}
+            {profile.error && !profile.data && <Notice tone="danger" onRetry={profile.reload}>{profile.error}</Notice>}
             {context && (isOwnerArea && !isOwner
               ? <Notice tone="danger">Dieser Bereich ist nur für die Betreiber von Nexo. <Link to="/me">Zu deinem Profil</Link></Notice>
               : (

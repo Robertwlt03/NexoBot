@@ -13,7 +13,7 @@ const RENAME_LATER = 'Der Kanalname konnte noch nicht gesetzt werden. Er wird be
 export default function ServerStatsPage() {
   const { guild, reload: reloadGuild } = useGuild();
   const toast = useToast();
-  const { data, setData, error, loading } = useApi<ServerStatsState>(`/guilds/${guild.id}/serverstats`);
+  const { data, setData, error, loading, reload } = useApi<ServerStatsState>(`/guilds/${guild.id}/serverstats`);
   const { run, busy } = useAction();
   const { confirm, dialog } = useConfirm();
   const base = `/guilds/${guild.id}/serverstats`;
@@ -36,21 +36,22 @@ export default function ServerStatsPage() {
     <>
       <PageHeader icon="stats" title="Server-Statistiken" description="Kanäle, deren Name die Mitglieder- oder Botzahl anzeigt." />
       {loading && !data && <Spinner />}
-      {error && !data && <Notice tone="danger">{error}</Notice>}
+      {error && !data && <Notice tone="danger" onRetry={reload}>{error}</Notice>}
       {data && (
         <>
           <Card icon="stats" title="Zähler" description="Die Namen werden automatisch alle 15 Minuten aktualisiert. Pro Typ ist ein Zähler möglich.">
             {data.counters.length === 0 ? <Empty title="Noch keine Zähler">Erstelle unten deinen ersten Zähler.</Empty> : (
               <div className="list">
                 {data.counters.map((counter) => (
-                  <div className="list-item" key={counter.id}>
+                  <div className="list-item flex-wrap" key={counter.id}>
                     <Icon name={counter.voice ? 'mic' : 'hash'} size={18} />
-                    <div className="grow">
+                    {/* On phones the type select moves to its own line instead of squeezing the label. */}
+                    <div className="min-w-0 flex-[1_1_180px]">
                       <div className="title">{counter.channelName ?? 'Gelöschter Kanal'}</div>
                       <div className="faint">{typeLabel(counter.type)} · ID {counter.id}</div>
                     </div>
                     {counter.channelName && (
-                      <div className="min-w-[180px]">
+                      <div className="min-w-0 flex-[1_1_180px] sm:flex-[0_0_210px]">
                         <Select<CounterType>
                           value={counter.type as CounterType}
                           onChange={(type) => changeType(counter, type)}

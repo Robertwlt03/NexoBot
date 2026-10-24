@@ -26,6 +26,8 @@ import type { InteractionExtras, NexoInteraction } from '../utils/interactionHel
 import type { TraceContext } from '../utils/logger.js';
 import type { ReactionRoleMessage } from '../services/reactionRoleService.js';
 import type { BotEvent, Command, GuildConfig, ResolvedRoute } from '../types/index.js';
+import { handleContextMenu } from '../services/contextMenus.js';
+import { messageTitle } from '../utils/embedCard.js';
 
 /** Error context plus the identifiers withTraceContext folds into the trace fields. */
 type TraceableContext = ErrorContext & { commandName?: string; guildId?: string | null; userId?: string | null };
@@ -78,6 +80,11 @@ export default {
       try {
         InteractionHelper.patchInteractionResponses(interaction as NexoInteraction);
         ResponseCoordinator.attach(interaction as NexoInteraction);
+
+        if (interaction.isUserContextMenuCommand()) {
+          await handleContextMenu(interaction, client);
+          return;
+        }
 
         if (interaction.isChatInputCommand()) {
           try {
@@ -312,7 +319,7 @@ export default {
                     const msg = await channel.messages.fetch(panel.messageId).catch(() => null);
                     if (!msg) return null;
                     
-                    const title = msg?.embeds?.[0]?.title ?? 'Panel ohne Titel';
+                    const title = messageTitle(msg) ?? 'Panel ohne Titel';
                     const channelName = channel?.name ?? 'unbekannt';
                     
                     return {

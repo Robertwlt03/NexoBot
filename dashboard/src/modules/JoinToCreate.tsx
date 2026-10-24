@@ -114,13 +114,13 @@ function CreateCard({ onCreated }: { onCreated: (state: JoinToCreateState) => vo
 
 export default function JoinToCreatePage() {
   const { guild, reload: reloadGuild } = useGuild();
-  const { data, setData, error, loading } = useApi<JoinToCreateState>(`/guilds/${guild.id}/jointocreate`);
+  const { data, setData, error, loading, reload } = useApi<JoinToCreateState>(`/guilds/${guild.id}/jointocreate`);
 
   return (
     <>
       <PageHeader icon="mic" title="Join-to-Create" description="Temporäre Sprachkanäle, die beim Beitreten entstehen und leer wieder verschwinden." />
       {loading && !data && <Spinner />}
-      {error && !data && <Notice tone="danger">{error}</Notice>}
+      {error && !data && <Notice tone="danger" onRetry={reload}>{error}</Notice>}
       {data && (
         <>
           {data.triggers.length === 0

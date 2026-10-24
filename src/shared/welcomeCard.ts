@@ -68,14 +68,14 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'nexo',
     label: 'Nexo',
-    background: { type: 'gradient', color: '#1A1033', color2: '#5B3CC4', angle: 20, imageUrl: null, dim: 0 },
+    background: { type: 'gradient', color: '#1B140E', color2: '#4F6B33', angle: 20, imageUrl: null, dim: 0 },
     layers: [
       { id: 'deco1', type: 'circle', x: 930, y: 60, r: 150, color: '#FFFFFF', opacity: 8 },
       { id: 'deco2', type: 'circle', x: 990, y: 430, r: 90, color: '#FFFFFF', opacity: 6 },
       { id: 'avatar', type: 'avatar', x: 70, y: 105, size: 240, shape: 'circle', borderWidth: 8, borderColor: '#FFFFFF' },
       { id: 'title', type: 'text', x: 360, y: 175, text: 'WILLKOMMEN', font: 'unbounded', size: 50, weight: 700, color: '#FFFFFF', align: 'left', maxWidth: 620, shadow: true },
       { id: 'name', type: 'text', x: 360, y: 260, text: '{user.name}', font: 'inter', size: 64, weight: 700, color: '#FFFFFF', align: 'left', maxWidth: 620, shadow: true },
-      { id: 'sub', type: 'text', x: 360, y: 318, text: 'Mitglied #{memberCount} auf {server}', font: 'inter', size: 28, weight: 400, color: '#D8CCFF', align: 'left', maxWidth: 620, shadow: false },
+      { id: 'sub', type: 'text', x: 360, y: 318, text: 'Mitglied #{memberCount} auf {server}', font: 'inter', size: 28, weight: 400, color: '#E3EBD6', align: 'left', maxWidth: 620, shadow: false },
     ],
   },
   {
@@ -86,7 +86,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
       { id: 'avatar', type: 'avatar', x: 432, y: 50, size: 160, shape: 'circle', borderWidth: 0, borderColor: '#FFFFFF' },
       { id: 'name', type: 'text', x: 512, y: 290, text: '{user.name}', font: 'inter', size: 56, weight: 700, color: '#111111', align: 'center', maxWidth: 900, shadow: false },
       { id: 'sub', type: 'text', x: 512, y: 340, text: 'ist {server} beigetreten', font: 'inter', size: 28, weight: 400, color: '#555555', align: 'center', maxWidth: 900, shadow: false },
-      { id: 'line', type: 'line', x1: 452, y1: 385, x2: 572, y2: 385, width: 4, color: '#7C5CFF', opacity: 100 },
+      { id: 'line', type: 'line', x1: 452, y1: 385, x2: 572, y2: 385, width: 4, color: '#8FB36B', opacity: 100 },
     ],
   },
   {
