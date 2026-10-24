@@ -23,12 +23,12 @@ export function getPaginationRow(customIdPrefix: string = 'page', currentPage: n
     return new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
             .setCustomId(`${customIdPrefix}_first`)
-            .setLabel('⏮️')
+            .setLabel('«')
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(currentPage === 1),
         new ButtonBuilder()
             .setCustomId(`${customIdPrefix}_prev`)
-            .setLabel('◀️')
+            .setLabel('‹')
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(currentPage === 1),
         new ButtonBuilder()
@@ -38,12 +38,12 @@ export function getPaginationRow(customIdPrefix: string = 'page', currentPage: n
             .setDisabled(true),
         new ButtonBuilder()
             .setCustomId(`${customIdPrefix}_next`)
-            .setLabel('▶️')
+            .setLabel('›')
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(currentPage >= totalPages),
         new ButtonBuilder()
             .setCustomId(`${customIdPrefix}_last`)
-            .setLabel('⏭️')
+            .setLabel('»')
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(currentPage >= totalPages)
     );
