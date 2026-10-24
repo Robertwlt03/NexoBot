@@ -38,7 +38,7 @@ function RankingCard({ ranking }: { ranking: GuildRanking }) {
 }
 
 export default function RankingsPage() {
-  const { data, error, loading } = useApi<RankingsResponse>('/me/rankings');
+  const { data, error, loading, reload } = useApi<RankingsResponse>('/me/rankings');
   const now = useNow(60_000);
   const guilds = useMemo(() => {
     const map = new Map<string, GuildRanking[]>();
@@ -51,7 +51,7 @@ export default function RankingsPage() {
       <PageHeader kicker="Mein Profil" title="Ranglisten" description="Jeden Monat bekommen die besten fünf pro Server Bernis – getrennt für Minispiele und Aktivität." />
       <Notice>Belohnungen gibt es auf Servern mit mindestens {MONTHLY_MIN_HUMANS} Menschen und von höchstens {MONTHLY_MAX_SERVERS} Servern pro Monat (die mit den höchsten Belohnungen zählen).</Notice>
       {loading && !data && <Spinner />}
-      {error && <Notice tone="danger">{error}</Notice>}
+      {error && <Notice tone="danger" onRetry={reload}>{error}</Notice>}
       {data && guilds.length === 0 && <Card><Empty title="Noch keine Ranglisten">Sei auf einem Server mit Nexo aktiv, dann tauchst du hier auf.</Empty></Card>}
       {guilds.map((list) => {
         const first = list[0];

@@ -16,13 +16,13 @@ gsap.registerPlugin(ScrollTrigger, DrawSVGPlugin, useGSAP);
 const FEATURES: { icon: IconName; title: string; text: string; wide?: boolean }[] = [
   { icon: 'shield', title: 'Moderation & AutoMod', wide: true, text: 'Spam, Links, Einladungen und Schimpfwörter filtert Discords eigener AutoMod – auch wenn Nexo mal offline ist. Fälle, Verwarnungen und Notizen siehst du gesammelt im Browser.' },
   { icon: 'wave', title: 'Willkommen', text: 'Begrüßung und Abschied mit Live-Vorschau, dazu eine Auto-Rolle.' },
-  { icon: 'level', title: 'Leveling', text: 'XP fürs Schreiben, Rollen als Belohnung und eine Bestenliste.' },
+  { icon: 'level', title: 'Level', text: 'XP fürs Schreiben, Rollen als Belohnung und eine Bestenliste.' },
   { icon: 'ticket', title: 'Tickets & Bewerbungen', text: 'Support-Panel mit Transkripten, Bewerbungen prüfst du direkt im Dashboard.' },
-  { icon: 'gift', title: 'Giveaways', text: 'Starten, vorzeitig beenden, neu auslosen – ohne einen Befehl.' },
+  { icon: 'gift', title: 'Gewinnspiele', text: 'Starten, vorzeitig beenden, neu auslosen – ohne einen Befehl.' },
   { icon: 'music', title: 'Musik', text: 'Warteschlange, Buttons und 24/7-Modus über Lavalink.' },
 ];
 
-const MORE = ['Verifizierung', 'Reaktionsrollen', 'Geburtstage', 'Zählspiel', 'Join-to-Create', 'Server-Statistiken', 'Logging', 'Economy', 'Meldungen', 'Commands sperren'];
+const MORE = ['Verifizierung', 'Reaktionsrollen', 'Geburtstage', 'Zählspiel', 'Join-to-Create', 'Server-Statistiken', 'Protokolle', 'Wirtschaft', 'Meldungen', 'Befehle sperren'];
 
 const STEPS = [
   { title: 'Einladen', text: 'Klick auf „Nexo einladen“ und wähl deinen Server aus.' },
@@ -32,7 +32,7 @@ const STEPS = [
 
 // Slash command counts (38 top-level commands + 160 subcommands). Update when commands change.
 const STATS: { value: string; label: string; detail?: string }[] = [
-  { value: '198', label: 'Befehle insgesamt', detail: '38 Commands + 160 Unterbefehle' },
+  { value: '198', label: 'Befehle insgesamt', detail: '38 Befehle + 160 Unterbefehle' },
   { value: '19', label: 'Module im Dashboard' },
   { value: '0 €', label: 'für immer kostenlos' },
 ];
@@ -144,7 +144,7 @@ export function Landing() {
               </span>
             </h1>
             <p className="js-hero-fade js-intro mt-7 max-w-xl text-lg leading-relaxed text-dc-muted">
-              Moderation, Willkommen, Leveling, Tickets und mehr. Lade Nexo ein, richte alles im Browser ein – fertig. Kein einziger Befehl nötig.
+              Moderation, Willkommen, Level, Tickets und mehr. Lade Nexo ein, richte alles im Browser ein – fertig. Kein einziger Befehl nötig.
             </p>
             {loginFailed && (
               <p className="js-hero-fade js-intro mt-6 max-w-xl rounded-lg border border-[#da373c]/40 bg-[#da373c]/10 px-4 py-3 text-sm text-[#ffb4b4]">

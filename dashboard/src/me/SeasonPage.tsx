@@ -18,7 +18,7 @@ const EARN: [string, number][] = [
 export default function SeasonPage() {
   const { items } = useMe();
   const now = useNow(60_000);
-  const { data, error, loading } = useApi<SeasonResponse>('/me/season');
+  const { data, error, loading, reload } = useApi<SeasonResponse>('/me/season');
   const next = data?.tiers[data.tier];
   const previous = data && data.tier > 0 ? data.tiers[data.tier - 1].points : 0;
 
@@ -27,7 +27,7 @@ export default function SeasonPage() {
       <PageHeader kicker="Mein Profil" title={data ? `Saison ${data.name}` : 'Saison'}
         description="Jeden Monat ein neuer Pfad: Saisonpunkte sammelst du ganz nebenbei. Jede Stufe zahlt sich sofort aus – auf Stufe 5 und 10 warten Stücke, die es nur in dieser Saison gibt." />
       {loading && !data && <Spinner />}
-      {error && <Notice tone="danger">{error}</Notice>}
+      {error && <Notice tone="danger" onRetry={reload}>{error}</Notice>}
       {data && (
         <>
           <section className="card card-hero !p-5">

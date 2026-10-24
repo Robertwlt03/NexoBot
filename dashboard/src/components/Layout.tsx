@@ -196,9 +196,9 @@ export function GuildLayout() {
         <div className="relative flex-1 overflow-y-auto px-4 pb-32 pt-9 md:px-10">
           <PageBackdrop art={ICON_PATHS[current?.icon ?? 'home']} />
           <div ref={pageRef} className="relative mx-auto max-w-[1040px]">
-            {detail.loading && !detail.data && <div className="center"><Spinner /></div>}
+            {detail.loading && !detail.data && <Spinner />}
             {detail.error && (
-              <Notice tone="danger">
+              <Notice tone="danger" onRetry={detail.reload}>
                 {detail.error} <Link to="/servers">Zur Serverauswahl</Link>
               </Notice>
             )}

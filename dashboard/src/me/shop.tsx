@@ -208,7 +208,8 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
             </div>
             <h2 className="mt-3 text-[30px] font-semibold leading-[1.1] tracking-tight text-ink @3xl:text-[40px]">{event ? event.name : 'Hol dir den Look'}</h2>
             <p className="mt-3 max-w-[480px] text-[14.5px] text-body">{event ? event.description : 'Die besten Stücke, die dir noch fehlen – rechts schon auf deiner Karte angelegt.'}</p>
-            {event && (
+            {event && event.discount === 0 && <p className="mt-5 text-[13px] text-mute">Läuft bis {formatDate(event.endsAt)}</p>}
+            {event && event.discount > 0 && (
               <div className="mt-5 flex max-w-[480px] items-center gap-4 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 backdrop-blur">
                 <span className="shrink-0 whitespace-nowrap text-[24px] font-light leading-none tracking-tight text-ink @md:text-[30px]">−{event.discount} %</span>
                 <span className="min-w-0 text-[12.5px] leading-snug text-mute">auf {event.slots ? event.slots.map((sl) => SLOT_LABELS[sl]).join(', ') : 'alles'}<br />bis {formatDate(event.endsAt)}</span>
@@ -386,8 +387,8 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
       <ProductDialog title={item.name} onClose={onClose}
         stage={<ProductStage items={[item]} tint={tint} kicker={`${RARITY_LABELS[item.rarity]} · ${SLOT_LABELS[item.slot]}`} />}>
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 md:p-7">
-          {/* The item itself, big, on its rarity light (stacked layouts skip it: the stage above shows it). */}
-          <div className="game-tile-field relative mx-auto aspect-square w-full max-w-[260px] shrink-0 overflow-hidden rounded-[20px] ring-1 ring-white/10 max-lg:hidden" style={{ '--tile': tint } as CSSProperties} data-mode="dark">
+          {/* The item itself, big, on its rarity light (stacked layouts skip it: the stage above shows it; the gift form needs the room). */}
+          <div className={`game-tile-field relative mx-auto aspect-square w-full max-w-[260px] shrink-0 overflow-hidden rounded-[20px] ring-1 ring-white/10 max-lg:hidden ${giftMode ? 'hidden' : ''}`} style={{ '--tile': tint } as CSSProperties} data-mode="dark">
             <ItemVisual item={item} className="h-full w-full scale-[1.25] rounded-none !bg-transparent" />
           </div>
           <div>

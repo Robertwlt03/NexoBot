@@ -17,7 +17,7 @@ export default function CountingPage() {
   const [start, setStart] = useState(1);
 
   const header = <PageHeader icon="hash" title="Zählspiel" description="Mitglieder zählen gemeinsam hoch – wer sich verzählt oder zweimal hintereinander zählt, setzt alles auf 1 zurück." />;
-  if (!status.data) return <>{header}{status.error ? <Notice tone="danger">{status.error}</Notice> : <Spinner />}</>;
+  if (!status.data) return <>{header}{status.error ? <Notice tone="danger" onRetry={status.reload}>{status.error}</Notice> : <Spinner />}</>;
   const value = status.data;
   const channelName = (id: string | null) => (id ? `#${guild.channels.find((c) => c.id === id)?.name ?? id}` : 'Nicht eingerichtet');
   const targetChannel = channelId ?? value.channelId;

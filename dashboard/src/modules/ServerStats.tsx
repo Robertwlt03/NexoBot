@@ -13,7 +13,7 @@ const RENAME_LATER = 'Der Kanalname konnte noch nicht gesetzt werden. Er wird be
 export default function ServerStatsPage() {
   const { guild, reload: reloadGuild } = useGuild();
   const toast = useToast();
-  const { data, setData, error, loading } = useApi<ServerStatsState>(`/guilds/${guild.id}/serverstats`);
+  const { data, setData, error, loading, reload } = useApi<ServerStatsState>(`/guilds/${guild.id}/serverstats`);
   const { run, busy } = useAction();
   const { confirm, dialog } = useConfirm();
   const base = `/guilds/${guild.id}/serverstats`;
@@ -36,7 +36,7 @@ export default function ServerStatsPage() {
     <>
       <PageHeader icon="stats" title="Server-Statistiken" description="Kanäle, deren Name die Mitglieder- oder Botzahl anzeigt." />
       {loading && !data && <Spinner />}
-      {error && !data && <Notice tone="danger">{error}</Notice>}
+      {error && !data && <Notice tone="danger" onRetry={reload}>{error}</Notice>}
       {data && (
         <>
           <Card icon="stats" title="Zähler" description="Die Namen werden automatisch alle 15 Minuten aktualisiert. Pro Typ ist ein Zähler möglich.">

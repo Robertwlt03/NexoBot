@@ -26,7 +26,7 @@ export default function GeneralPage() {
               </div>
             </Card>
             <Card icon="log" title="Log-Kanal" description="Hierhin gehen die Audit-Logs (Moderation, Nachrichten, Mitglieder …).">
-              <Field label="Kanal" hint="Setzt du einen Kanal, wird das Logging eingeschaltet. Mehr Optionen findest du unter Logging.">
+              <Field label="Kanal" hint="Setzt du einen Kanal, wird die Protokollierung eingeschaltet. Mehr Optionen findest du unter Protokolle.">
                 <ChannelSelect value={value.auditLogChannelId} placeholder="Kein Log-Kanal" onChange={(auditLogChannelId) => settings.set({ auditLogChannelId })} />
               </Field>
             </Card>

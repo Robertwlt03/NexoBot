@@ -6,7 +6,7 @@ import { GLYPHS, Glyph, Bernis } from './visuals';
 
 export default function AchievementsPage() {
   const { items } = useMe();
-  const { data, error, loading } = useApi<AchievementsResponse>('/me/achievements');
+  const { data, error, loading, reload } = useApi<AchievementsResponse>('/me/achievements');
   const list = data?.achievements ?? [];
   const unlocked = list.filter((a) => a.unlockedAt);
   // Unlocked first, then by progress.
@@ -17,7 +17,7 @@ export default function AchievementsPage() {
     <>
       <PageHeader kicker="Mein Profil" title="Erfolge" description="Kleine Ziele mit Belohnung: Bernis, ein Abzeichen und ein Titel, die es nirgends zu kaufen gibt." />
       {loading && !data && <Spinner />}
-      {error && <Notice tone="danger">{error}</Notice>}
+      {error && <Notice tone="danger" onRetry={reload}>{error}</Notice>}
       {data && (
         <Stats items={[
           { label: 'Freigeschaltet', value: `${unlocked.length} / ${list.length}` },

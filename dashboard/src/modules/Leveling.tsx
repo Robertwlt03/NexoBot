@@ -90,7 +90,7 @@ function MemberTools({ initialId, disabled, onChanged }: { initialId: string; di
   return (
     <Card icon="users" title="Mitglied bearbeiten" description="Setze Level oder gib/zieh Level ab – wie /levelset, /leveladd und /levelremove.">
       <div className="stack">
-        {disabled && <Notice tone="warn">Das Leveling ist deaktiviert. Level lassen sich erst ändern, wenn es aktiv und gespeichert ist.</Notice>}
+        {disabled && <Notice tone="warn">Das Level-System ist deaktiviert. Level lassen sich erst ändern, wenn es aktiv und gespeichert ist.</Notice>}
         <Field label="Nutzer-ID" hint="Rechtsklick auf ein Mitglied → „Nutzer-ID kopieren“ (Entwicklermodus) oder in der Bestenliste auf „Bearbeiten“ klicken.">
           <div className="input-group">
             <input className="input" value={userId} placeholder="z. B. 123456789012345678" onChange={(e) => setUserId(e.target.value)}
@@ -173,12 +173,12 @@ export default function LevelingPage() {
 
   return (
     <>
-      <PageHeader icon="level" title="Leveling" description="Mitglieder sammeln XP fürs Schreiben, steigen im Level auf und bekommen Rollen als Belohnung." />
+      <PageHeader icon="level" title="Level" description="Mitglieder sammeln XP fürs Schreiben, steigen im Level auf und bekommen Rollen als Belohnung." />
       <SettingsPage settings={settings}>
         {(value) => (
           <>
             <Card>
-              <SwitchRow title="Leveling aktiv" description="Wenn aus, bekommt niemand XP und Level lassen sich nicht ändern."
+              <SwitchRow title="Level-System aktiv" description="Wenn aus, bekommt niemand XP und Level lassen sich nicht ändern."
                 checked={value.enabled} onChange={(enabled) => settings.set({ enabled })} />
             </Card>
 

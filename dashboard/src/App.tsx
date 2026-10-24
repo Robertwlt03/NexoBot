@@ -46,7 +46,7 @@ export function App() {
     setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), 4000);
   }, []);
 
-  if (user === undefined) return <div className="grid h-full place-items-center bg-canvas"><Spinner /></div>;
+  if (user === undefined) return <div className="grid h-full place-items-center bg-canvas"><div className="spinner" role="status" aria-label="Lädt …" /></div>;
 
   return (
     <UserContext.Provider value={user}>

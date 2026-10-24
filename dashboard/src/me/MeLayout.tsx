@@ -167,7 +167,7 @@ export function MeLayout() {
           <PageBackdrop art={current && GLYPHS[current.icon]} column={1100} />
           <div ref={pageRef} className="relative mx-auto max-w-[1100px]">
             {profile.loading && !profile.data && <Spinner />}
-            {profile.error && !profile.data && <Notice tone="danger">{profile.error}</Notice>}
+            {profile.error && !profile.data && <Notice tone="danger" onRetry={profile.reload}>{profile.error}</Notice>}
             {context && (isOwnerArea && !isOwner
               ? <Notice tone="danger">Dieser Bereich ist nur für die Betreiber von Nexo. <Link to="/me">Zu deinem Profil</Link></Notice>
               : (

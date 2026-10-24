@@ -106,7 +106,7 @@ export function Overview({ data }: { data: InsightsResponse }) {
           ]} /> : unavailable}
         </ModuleCard>
         <ModuleCard id="giveaways">
-          {data.giveaways ? <Facts items={[['Aktive Giveaways', number.format(data.giveaways.active)]]} /> : unavailable}
+          {data.giveaways ? <Facts items={[['Aktive Gewinnspiele', number.format(data.giveaways.active)]]} /> : unavailable}
         </ModuleCard>
         <ModuleCard id="applications">
           {data.applications ? <Facts items={[['Offene Bewerbungen', number.format(data.applications.pending)]]} /> : unavailable}

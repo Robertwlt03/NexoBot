@@ -300,7 +300,7 @@ export default function ItemsPage() {
         <label className="flex cursor-pointer items-center gap-2.5 text-[13.5px]"><Switch checked={showInactive} onChange={setShowInactive} label="Inaktive zeigen" /> Inaktive</label>
       </div>
       {loading && !data && <Spinner />}
-      {error && <Notice tone="danger">{error}</Notice>}
+      {error && <Notice tone="danger" onRetry={reload}>{error}</Notice>}
       {data && rows.length === 0 && <Empty title="Keine Artikel">Passe die Filter an oder lege einen neuen Artikel an.</Empty>}
       {rows.length > 0 && (
         // Phones: one stacked card per item with every column visible; the table needs too much width there.

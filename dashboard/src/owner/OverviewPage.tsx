@@ -7,10 +7,10 @@ import { countdown, formatDate, num, useNow } from '../me/api';
 import { Bernis } from '../me/visuals';
 
 export default function OwnerOverviewPage() {
-  const { data, error, loading } = useApi<OwnerOverview>('/owner/overview');
+  const { data, error, loading, reload } = useApi<OwnerOverview>('/owner/overview');
   const now = useNow(60_000);
   if (loading && !data) return <Spinner />;
-  if (error || !data) return <Notice tone="danger">{error ?? 'Keine Daten.'}</Notice>;
+  if (error || !data) return <Notice tone="danger" onRetry={reload}>{error ?? 'Keine Daten.'}</Notice>;
   const { stats, events, blackMarket } = data;
   const running = events.filter((e) => e.active && Date.parse(e.startsAt) <= now && Date.parse(e.endsAt) > now);
   const next = events.filter((e) => e.active && Date.parse(e.startsAt) > now).sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
@@ -20,7 +20,7 @@ export default function OwnerOverviewPage() {
       <PageHeader kicker="Owner" title="Berni-Wirtschaft" description="Wie viele Bernis im Umlauf sind, was sich verkauft und wer am meisten hat." />
       <Stats items={[
         { label: 'Im Umlauf', value: <Bernis amount={stats.supply} /> },
-        { label: 'Wallets', value: num(stats.wallets) },
+        { label: 'Konten', value: num(stats.wallets) },
         { label: 'Heute verdient', value: <Bernis amount={stats.earnedToday} /> },
         { label: 'Heute ausgegeben', value: <Bernis amount={stats.spentToday} />, hint: stats.earnedToday ? `${Math.round((stats.spentToday / stats.earnedToday) * 100)} % der Einnahmen` : undefined },
       ]} />
@@ -42,7 +42,7 @@ export default function OwnerOverviewPage() {
       <div className="grid-2 mt-4 [&>*]:mt-0 [&>*]:min-w-0">
         <Card title="Events" right={<Link to="/owner/events" className="text-[13px]">Verwalten</Link>}>
           <div className="stack gap-2 text-[13.5px]">
-            {running.map((e) => <div key={e.id}><span className="badge badge-on">Läuft</span> <b className="font-medium text-ink">{e.name}</b> · −{e.discount} % · endet in {countdown(e.endsAt, now)}</div>)}
+            {running.map((e) => <div key={e.id}><span className="badge badge-on">Läuft</span> <b className="font-medium text-ink">{e.name}</b>{e.discount > 0 && ` · −${e.discount} %`} · endet in {countdown(e.endsAt, now)}</div>)}
             {!running.length && <span className="muted">Gerade läuft kein Event.</span>}
             {next && <div className="muted">Als Nächstes: <b className="font-medium text-ink">{next.name}</b> am {formatDate(next.startsAt)}</div>}
           </div>

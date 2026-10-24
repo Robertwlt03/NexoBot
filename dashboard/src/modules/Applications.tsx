@@ -166,7 +166,7 @@ function Submissions() {
         </div>
       )}>
       {!data && list.loading && <Spinner />}
-      {list.error && !data && <Notice tone="danger">{list.error}</Notice>}
+      {list.error && !data && <Notice tone="danger" onRetry={list.reload}>{list.error}</Notice>}
       {data && data.items.length === 0 && <Empty title="Keine Bewerbungen">Hier ist gerade nichts zu tun.</Empty>}
       {data && data.items.length > 0 && (
         <div className="list">

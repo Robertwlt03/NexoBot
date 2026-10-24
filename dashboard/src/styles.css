@@ -258,7 +258,7 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 /* ---------- Buttons & badges ---------- */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; border-radius: 12px; padding: 8px 16px; min-height: 38px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; color: var(--accent-ink); background: var(--accent); transition: background .15s, box-shadow .15s, border-color .15s, color .15s, opacity .15s; white-space: nowrap; }
 .btn:hover:not(:disabled) { text-decoration: none; }
-.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn:disabled { opacity: .4; filter: saturate(.15); box-shadow: none; cursor: not-allowed; }
 .btn-primary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 0 0 1px rgb(var(--ov) / .15) inset, 0 10px 30px -14px var(--accent-glow); }
 .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
 .btn-success { background: var(--success); color: #fff; }
@@ -305,7 +305,7 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
 .table-wrap .table th:first-child, .table-wrap .table td:first-child { padding-left: 16px; }
 /* Number tiles: label first, big light number, small hint (delta) below. */
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 0 0 16px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 0 0 16px; }
 .stat { container-type: inline-size; display: flex; flex-direction: column; background: var(--highlight), var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; box-shadow: var(--card-shadow, none); }
 /* The number follows the tile width, so coin amounts stay on one line in narrow tiles. */
 .stat dt { order: 2; font-size: clamp(20px, 10.5cqi, 30px); font-weight: 300; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--text-strong); line-height: 1.15; margin-top: 6px; }
@@ -323,6 +323,11 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 .empty h3 { margin-bottom: 6px; }
 .spinner { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgb(var(--ov) / .08); border-top-color: var(--accent); animation: spin .8s linear infinite; }
 .center { display: grid; place-items: center; min-height: 240px; }
+.skeleton { display: grid; gap: 14px; padding: 24px 0; }
+.skeleton > span { display: block; height: 14px; border-radius: 7px; background: rgb(var(--ov) / .06); }
+.skeleton > span:first-child { height: 22px; }
+@media (prefers-reduced-motion: no-preference) { .skeleton > span { animation: skeleton-pulse 1.4s ease-in-out infinite; } }
+@keyframes skeleton-pulse { 50% { opacity: .45; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Shown/hidden with GSAP (ui.tsx); the shake runs when navigation is blocked by unsaved changes. */

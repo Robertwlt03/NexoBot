@@ -379,12 +379,23 @@ export function Badge({ on, children }: { on?: boolean; children: ReactNode }) {
   return <span className={`badge ${on === undefined ? 'badge-brand' : on ? 'badge-on' : 'badge-off'}`}>{children}</span>;
 }
 
-export function Notice({ tone, children }: { tone?: 'warn' | 'danger'; children: ReactNode }) {
-  return <div className={`notice${tone ? ` ${tone}` : ''}`}>{children}</div>;
+export function Notice({ tone, children, onRetry }: { tone?: 'warn' | 'danger'; children: ReactNode; onRetry?: () => void }) {
+  if (!onRetry) return <div className={`notice${tone ? ` ${tone}` : ''}`}>{children}</div>;
+  return (
+    <div className={`notice flex flex-wrap items-center gap-3${tone ? ` ${tone}` : ''}`}>
+      <span className="min-w-0 flex-1">{children}</span>
+      <button type="button" className="btn btn-secondary btn-sm" onClick={onRetry}><Icon name="refresh" size={14} /> Erneut versuchen</button>
+    </div>
+  );
 }
 
+/** Loading placeholder: a few pulsing lines where the content will appear. */
 export function Spinner() {
-  return <div className="center"><div className="spinner" /></div>;
+  return (
+    <div className="skeleton" role="status" aria-label="Lädt …">
+      <span className="w-2/5" /><span className="w-full" /><span className="w-11/12" /><span className="w-3/5" />
+    </div>
+  );
 }
 
 export function Empty({ title, children }: { title: string; children?: ReactNode }) {
@@ -413,11 +424,11 @@ export function Modal({ title, children, footer, onClose, wide = false }: { titl
 
 /** Generic page body for settings modules: loading, error and the save bar. */
 export function SettingsPage<T>({ settings, children }: {
-  settings: { value: T | null; dirty: boolean; save: () => Promise<void>; reset: () => void; saving: boolean; error: string | null; loading: boolean };
+  settings: { value: T | null; dirty: boolean; save: () => Promise<void>; reset: () => void; saving: boolean; error: string | null; loading: boolean; reload?: () => void };
   children: (value: T) => ReactNode;
 }) {
   if (settings.loading && !settings.value) return <Spinner />;
-  if (settings.error && !settings.value) return <Notice tone="danger">{settings.error}</Notice>;
+  if (settings.error && !settings.value) return <Notice tone="danger" onRetry={settings.reload}>{settings.error}</Notice>;
   if (!settings.value) return null;
   return (
     <>

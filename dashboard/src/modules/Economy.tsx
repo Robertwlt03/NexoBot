@@ -128,7 +128,7 @@ export default function EconomyPage() {
 
   return (
     <>
-      <PageHeader icon="coins" title="Economy" description="Premium-Rolle für den Shop, Bestenliste und Kontostände deiner Mitglieder." />
+      <PageHeader icon="coins" title="Wirtschaft" description="Premium-Rolle für den Shop, Bestenliste und Kontostände deiner Mitglieder." />
       <SettingsPage settings={settings}>
         {(value) => {
           const money: Money = (amount) => `${value.currency.symbol}${amount.toLocaleString('de-DE')}`;
