@@ -20,12 +20,13 @@ function RewardsEditor({ value, onChange }: { value: LevelRoleReward[]; onChange
       <div className="stack">
         {value.length === 0 && <p className="faint">Noch keine Rollen-Belohnungen.</p>}
         {value.map((reward, index) => (
-          <div className="flex items-center gap-3" key={index}>
+          // On phones the role select takes its own line, so the role name stays readable.
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2" key={index}>
             <span className="faint whitespace-nowrap">Ab Level</span>
             <div className="w-[110px] shrink-0">
               <NumberInput value={reward.level} min={1} max={500} onChange={(level) => update(index, { level })} />
             </div>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-[1_1_200px]">
               <RoleSelect value={reward.roleId} assignableOnly onChange={(roleId) => update(index, { roleId: roleId ?? '' })} />
             </div>
             <button type="button" className="btn btn-ghost btn-sm" aria-label="Belohnung entfernen" onClick={() => onChange(value.filter((_, i) => i !== index))}>

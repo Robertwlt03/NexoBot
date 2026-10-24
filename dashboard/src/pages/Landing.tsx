@@ -105,9 +105,9 @@ export function Landing() {
   if (user) return <Navigate to="/servers" replace />;
 
   return (
-    <div ref={root} data-mode="dark" className="min-h-full overflow-x-hidden bg-[#111214] text-dc-text [background-image:radial-gradient(rgba(255,255,255,.05)_1px,transparent_1px)] [background-size:24px_24px]">
+    <div ref={root} data-mode="dark" className="min-h-full overflow-x-hidden bg-canvas text-dc-text [background-image:radial-gradient(rgba(255,255,255,.05)_1px,transparent_1px)] [background-size:24px_24px]">
       {/* Nav */}
-      <header className="js-nav js-intro sticky top-0 z-30 border-b border-white/5 bg-[#111214]/75 backdrop-blur-md">
+      <header className="js-nav js-intro sticky top-0 z-30 border-b border-white/5 bg-canvas/75 backdrop-blur-md">
         <div className={`${container} flex h-16 items-center gap-6`}>
           <a href="/dashboard/" className="flex items-center gap-2.5 text-white hover:no-underline">
             <NexoLogo className="h-9 w-auto" animated={false} />
@@ -127,7 +127,7 @@ export function Landing() {
 
       {/* Hero */}
       <section className="relative">
-        <div className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-blurple/20 blur-[120px]" />
+        <div className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-nexo-violet/15 blur-[120px]" />
         <div className={`${container} relative grid grid-cols-1 items-center gap-16 pb-20 pt-14 md:pt-24 lg:grid-cols-[1.05fr_1fr]`}>
           <div>
             <p className="js-kicker js-intro mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.03] px-3 py-1 text-xs font-medium uppercase tracking-[.14em] text-dc-muted">
@@ -152,7 +152,7 @@ export function Landing() {
               </p>
             )}
             <div className="js-hero-fade js-intro mt-9 flex flex-wrap gap-3">
-              <a href="/dashboard/auth/invite" className="group inline-flex items-center gap-2.5 rounded-xl bg-blurple px-6 py-3.5 font-semibold text-white shadow-[0_10px_30px_-10px_rgba(88,101,242,.8)] transition hover:-translate-y-0.5 hover:bg-[#4752c4] hover:no-underline">
+              <a href="/dashboard/auth/invite" className="group inline-flex items-center gap-2.5 rounded-xl bg-nexo-violet px-6 py-3.5 font-semibold text-[#13200b] shadow-[0_10px_30px_-10px_rgba(143,179,107,.7)] transition hover:-translate-y-0.5 hover:bg-[#9fc27c] hover:no-underline">
                 <span className="transition group-hover:rotate-90"><Icon name="plus" size={18} /></span> Nexo einladen
               </a>
               <a href="/dashboard/auth/login" className="inline-flex items-center gap-2.5 rounded-xl border border-white/15 bg-white/[.03] px-6 py-3.5 font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/35 hover:no-underline">
@@ -225,9 +225,9 @@ export function Landing() {
         <div className="mt-14 grid grid-cols-1 gap-4 md:grid-cols-3">
           {FEATURES.map((feature) => (
             <article key={feature.title}
-              className={`js-reveal group relative overflow-hidden rounded-2xl border border-white/[.07] bg-dc-panel/70 p-7 transition duration-300 hover:-translate-y-1 hover:border-nexo-violet/50 ${feature.wide ? 'md:col-span-2' : ''}`}>
+              className={`js-reveal group relative overflow-hidden rounded-2xl border border-white/[.07] bg-panel/70 p-7 transition duration-300 hover:-translate-y-1 hover:border-nexo-violet/50 ${feature.wide ? 'md:col-span-2' : ''}`}>
               <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-nexo-violet/0 blur-3xl transition duration-500 group-hover:bg-nexo-violet/25" />
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#1e1f22] text-white ring-1 ring-white/10 transition duration-300 group-hover:-rotate-6 group-hover:text-nexo-cyan">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-surface text-white ring-1 ring-white/10 transition duration-300 group-hover:-rotate-6 group-hover:text-nexo-cyan">
                 <Icon name={feature.icon} size={24} />
               </span>
               <h3 className="mt-5 font-display text-lg font-semibold text-white">{feature.title}</h3>
@@ -244,7 +244,7 @@ export function Landing() {
       </section>
 
       {/* Steps */}
-      <section id="start" className="scroll-mt-20 border-t border-white/5 bg-[#0c0d0f] py-24">
+      <section id="start" className="scroll-mt-20 border-t border-white/5 bg-rail py-24">
         <div className={container}>
           <div className="js-reveal max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-[.14em] text-nexo-cyan">So geht's</p>
@@ -254,7 +254,7 @@ export function Landing() {
             <div className="js-step-line absolute left-0 right-0 top-7 hidden h-px bg-gradient-to-r from-nexo-violet via-nexo-cyan to-transparent md:block" />
             {STEPS.map((step, i) => (
               <div key={step.title} className="js-reveal relative">
-                <span className="relative z-10 inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/15 bg-[#0c0d0f] font-display text-xl font-bold text-white">{i + 1}</span>
+                <span className="relative z-10 inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/15 bg-rail font-display text-xl font-bold text-white">{i + 1}</span>
                 <h3 className="mt-6 font-display text-xl font-semibold text-white">{step.title}</h3>
                 <p className="mt-2 max-w-xs leading-relaxed text-dc-muted">{step.text}</p>
               </div>
@@ -265,14 +265,14 @@ export function Landing() {
 
       {/* CTA */}
       <section className={`${container} js-cta py-24`}>
-        <div className="relative overflow-hidden rounded-3xl bg-blurple px-8 py-14 md:px-14">
-          <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(rgba(255,255,255,.35)_1px,transparent_1px)] [background-size:18px_18px]" />
+        <div className="relative overflow-hidden rounded-3xl bg-[linear-gradient(135deg,#3b2615_0%,#231a13_55%,#1b140e_100%)] px-8 py-14 ring-1 ring-white/10 md:px-14">
+          <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(rgba(232,163,61,.35)_1px,transparent_1px)] [background-size:18px_18px]" />
           <div className="relative grid grid-cols-1 items-center gap-8 md:grid-cols-[1fr_auto]">
             <div>
               <h2 className="font-display text-3xl font-bold leading-tight tracking-tight text-white md:text-4xl">Bereit für deinen Server?</h2>
               <p className="mt-3 max-w-lg text-white/80">Einladen, anmelden, einrichten – in unter zwei Minuten. Fragen? Komm auf unseren Support-Server.</p>
               <div className="mt-7 flex flex-wrap gap-3">
-                <a href="/dashboard/auth/invite" className="rounded-xl bg-white px-6 py-3.5 font-semibold text-blurple transition hover:-translate-y-0.5 hover:no-underline">Nexo einladen</a>
+                <a href="/dashboard/auth/invite" className="rounded-xl bg-nexo-violet px-6 py-3.5 font-semibold text-[#13200b] transition hover:-translate-y-0.5 hover:bg-[#9fc27c] hover:no-underline">Nexo einladen</a>
                 <a href={LINKS.supportServer} target="_blank" rel="noreferrer" className="rounded-xl border border-white/40 px-6 py-3.5 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10 hover:no-underline">Support-Server</a>
               </div>
             </div>
@@ -317,7 +317,7 @@ function ChatMessage({ bot, name, initial, color, children }: { bot?: boolean; n
 
 function Chip({ className, icon, tone, children }: { className: string; icon: IconName; tone: string; children: ReactNode }) {
   return (
-    <div className={`js-chip js-intro absolute z-20 hidden items-center gap-2 rounded-xl border border-white/10 bg-[#1e1f22]/95 px-3.5 py-2.5 text-sm font-medium text-white shadow-xl backdrop-blur sm:flex ${className}`}>
+    <div className={`js-chip js-intro absolute z-20 hidden items-center gap-2 rounded-xl border border-white/10 bg-panel/95 px-3.5 py-2.5 text-sm font-medium text-white shadow-xl backdrop-blur sm:flex ${className}`}>
       <span className={tone}><Icon name={icon} size={16} /></span>{children}
     </div>
   );

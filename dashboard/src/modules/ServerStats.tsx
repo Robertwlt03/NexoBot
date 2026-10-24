@@ -43,14 +43,15 @@ export default function ServerStatsPage() {
             {data.counters.length === 0 ? <Empty title="Noch keine Zähler">Erstelle unten deinen ersten Zähler.</Empty> : (
               <div className="list">
                 {data.counters.map((counter) => (
-                  <div className="list-item" key={counter.id}>
+                  <div className="list-item flex-wrap" key={counter.id}>
                     <Icon name={counter.voice ? 'mic' : 'hash'} size={18} />
-                    <div className="grow">
+                    {/* On phones the type select moves to its own line instead of squeezing the label. */}
+                    <div className="min-w-0 flex-[1_1_180px]">
                       <div className="title">{counter.channelName ?? 'Gelöschter Kanal'}</div>
                       <div className="faint">{typeLabel(counter.type)} · ID {counter.id}</div>
                     </div>
                     {counter.channelName && (
-                      <div className="min-w-[180px]">
+                      <div className="min-w-0 flex-[1_1_180px] sm:flex-[0_0_210px]">
                         <Select<CounterType>
                           value={counter.type as CounterType}
                           onChange={(type) => changeType(counter, type)}

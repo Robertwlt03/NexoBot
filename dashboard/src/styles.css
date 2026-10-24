@@ -192,7 +192,9 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 /* Cards inside any grid are laid out by the grid, never by the stacking margin; grid children may shrink. */
 :is(.auto-grid, .grid-2, [class*="grid-cols-"]) > * { margin-top: 0; min-width: 0; }
 .save-bar + .card, .save-bar + .auto-grid, .save-bar + .tabs, .notice + .card, .notice + .tabs, .notice + .stats, .notice + .notice, .card + .notice, .stats + .card { margin-top: 16px; }
-.card-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+/* The card's action (e.g. "Rollen synchronisieren") moves under the title when the card gets narrow. */
+.card-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+.card-head > div:first-child { flex: 1 1 220px; min-width: 0; }
 .card-head h3 { display: flex; align-items: center; gap: 10px; font-size: 15px; }
 .card-head h3 svg { color: var(--text-muted); }
 .card-head p { color: var(--text-muted); font-size: 13.5px; margin-top: 4px; }

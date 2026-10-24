@@ -36,11 +36,13 @@ export function RankList({ rows, loading, error, emptyTitle, emptyText, page, pa
                 <button type="button" className="title block w-full cursor-pointer border-0 bg-transparent p-0 text-left [font:inherit] hover:underline"
                   title={selectLabel} onClick={() => onSelect(row.userId)}>{row.name}</button>
               ) : <div className="title">{row.name}</div>}
-              <div className="faint truncate">{row.meta ?? row.userId}</div>
+              {/* On phones the detail (e.g. wallet · bank) replaces the id line, so the value column stays narrow. */}
+              <div className={`faint truncate${row.detail ? ' max-sm:hidden' : ''}`}>{row.meta ?? row.userId}</div>
+              {row.detail && <div className="faint sm:hidden">{row.detail}</div>}
             </div>
             <div className="shrink-0 whitespace-nowrap text-right">
               <div>{row.value}</div>
-              {row.detail && <div className="faint">{row.detail}</div>}
+              {row.detail && <div className="faint max-sm:hidden">{row.detail}</div>}
             </div>
             {/* On phones the name is the button, so the row keeps room for it. */}
             {onSelect && <button type="button" className="btn btn-ghost btn-sm max-sm:hidden" onClick={() => onSelect(row.userId)}>{selectLabel}</button>}

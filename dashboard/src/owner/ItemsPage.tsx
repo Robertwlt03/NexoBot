@@ -303,7 +303,39 @@ export default function ItemsPage() {
       {error && <Notice tone="danger">{error}</Notice>}
       {data && rows.length === 0 && <Empty title="Keine Artikel">Passe die Filter an oder lege einen neuen Artikel an.</Empty>}
       {rows.length > 0 && (
-        <TableWrap>
+        // Phones: one stacked card per item with every column visible; the table needs too much width there.
+        <ul className="m-0 grid list-none gap-2.5 p-0 sm:hidden">
+          {rows.map((item) => (
+            <li key={item.id} className={`rounded-xl border border-white/[.06] bg-white/[.02] p-3 ${item.active ? '' : 'opacity-55'}`}>
+              <button type="button" className="flex w-full cursor-pointer items-center gap-3 border-0 bg-transparent p-0 text-left font-[inherit] text-body" onClick={() => setEditing({ item, isNew: false })}>
+                <ItemVisual item={item} className="w-16 shrink-0 rounded-lg" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium text-ink">{item.name}</span>
+                  <span className="block truncate font-mono text-[11.5px] text-faint">{item.id}</span>
+                  <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]">
+                    <span>{SLOT_LABELS[item.slot]}</span><span className="text-faint">·</span><RarityLabel rarity={item.rarity} />
+                  </span>
+                </span>
+              </button>
+              <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[13px]">
+                <span className="flex flex-wrap items-center gap-2">
+                  {item.price ? <Bernis amount={item.price} nowrap /> : <span className="text-faint">–</span>}
+                  <span className="text-faint">{AVAILABILITY_LABELS[item.availability]}{item.eventId ? ` · ${events.find((e) => e.id === item.eventId)?.name ?? item.eventId}` : ''}</span>
+                </span>
+                {item.active ? <span className="badge badge-on">Aktiv</span> : <span className="badge badge-off">Inaktiv</span>}
+              </div>
+              <div className="mt-2 flex gap-1">
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing({ item, isNew: false })}>Bearbeiten</button>
+                {item.active
+                  ? <button type="button" className="btn btn-ghost btn-sm text-neg" onClick={() => deactivate(item)}>Deaktivieren</button>
+                  : <button type="button" className="btn btn-ghost btn-sm" onClick={() => activate(item)}>Aktivieren</button>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {rows.length > 0 && (
+        <TableWrap className="max-sm:hidden">
           <thead><tr><th>Artikel</th><th>Bereich</th><th>Seltenheit</th><th className="text-right">Preis</th><th>Erhältlich</th><th>Status</th><th /></tr></thead>
           <tbody>
             {rows.map((item) => (
