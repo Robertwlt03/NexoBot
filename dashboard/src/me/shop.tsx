@@ -102,7 +102,7 @@ export function StoreCard({ listing, owned, variant, onOpen, className = '', lar
       </div>
       <div className="relative w-full px-3.5 pb-4 pt-2.5">
         <div className="text-[10.5px] font-bold uppercase tracking-[.14em]" style={{ color: tint }}>{RARITY_LABELS[item.rarity]} · {SLOT_LABELS[item.slot]}</div>
-        <h3 className={`mt-1 truncate font-bold uppercase leading-tight tracking-[.02em] text-white ${large ? 'text-[22px]' : 'text-[14.5px]'}`}>{item.name}</h3>
+        <h3 className={`mt-1 truncate font-sans font-bold uppercase leading-tight tracking-[.02em] text-white ${large ? 'text-[22px]' : 'text-[14.5px]'}`}>{item.name}</h3>
         <div className="mt-2 flex min-h-6 items-center gap-2 text-[15px] font-bold text-white">
           {owned
             ? <span className="text-[12.5px] font-semibold text-white/60">Anlegen →</span>

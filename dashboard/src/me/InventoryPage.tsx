@@ -48,7 +48,7 @@ export default function InventoryPage() {
                   <div key={item.id} className={`flex flex-col rounded-2xl border bg-white/[.015] p-2.5 ${on ? 'border-accent/50' : RARITY_CLASS[item.rarity].border}`}>
                     <ItemVisual item={item} />
                     <div className="px-1 pt-2.5">
-                      <h3 className="truncate text-[14px] font-medium">{item.name}</h3>
+                      <h3 className="truncate font-sans text-[14px] font-medium">{item.name}</h3>
                       <div className="mt-0.5 text-[12px] text-faint"><RarityLabel rarity={item.rarity} /> · {SOURCE_LABELS[owned.source]} am {formatDate(owned.acquiredAt)}</div>
                     </div>
                     <button type="button" className={`btn btn-sm mt-3 ${on ? 'btn-secondary' : 'btn-ghost border-white/10'}`} disabled={equip.busy || full}
