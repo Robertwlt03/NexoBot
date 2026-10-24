@@ -4,7 +4,7 @@
 // payload (content moves into the card, rows and files stay). Every send AND edit of a converted message must go
 // through toCardPayload, because a V2 message cannot take embeds again.
 
-import { EmbedBuilder, MessageFlags, type APIEmbed, type ContainerBuilder } from 'discord.js';
+import { ComponentType, EmbedBuilder, Message, MessageFlags, type APIEmbed, type ContainerBuilder } from 'discord.js';
 import { ACCENTS, nexoCard, type NexoBlock } from './nexoMessage.js';
 
 /** Discord allows 4000 characters of text per V2 message; keep room for content and footers. */
@@ -74,3 +74,45 @@ export function toCardPayload<T extends AnyPayload>(payload: T): Omit<T, 'conten
   if (!cards.length && content?.trim()) cards.push(nexoCard({ blocks: [{ text: content }] }));
   return { ...rest, components: [...cards, ...components], flags: MessageFlags.IsComponentsV2 | ephemeralFlag | (numericFlags & ~MessageFlags.Ephemeral & ~MessageFlags.IsComponentsV2) } as never;
 }
+
+// ---------- Central conversion ----------
+
+export const hasEmbeds = (options: unknown): options is AnyPayload =>
+  Boolean(options) && typeof options === 'object' && Array.isArray((options as AnyPayload).embeds) && (options as AnyPayload).embeds!.length > 0;
+
+/** Whether a message already uses the card layout (Components V2). */
+export const isCardMessage = (message: { flags?: { has(flag: number): boolean } | null } | null | undefined): boolean =>
+  Boolean(message?.flags?.has(MessageFlags.IsComponentsV2));
+
+/** The top-level button/select rows of a message (kept when an edit only changes its embed). */
+export const messageRows = (message: { components?: { type: number }[] } | null | undefined): unknown[] =>
+  (message?.components ?? []).filter((component) => component.type === ComponentType.ActionRow);
+
+/** Title of a message's first embed or card ("## …" heading of its first text), for code that recognises views. */
+export function messageTitle(message: { embeds?: { title?: string | null }[]; components?: unknown[] } | null | undefined): string | null {
+  const fromEmbed = message?.embeds?.[0]?.title;
+  if (fromEmbed) return fromEmbed;
+  // Walk the V2 tree for the first "## " heading of a text display.
+  const stack: unknown[] = [...(message?.components ?? [])].map((c) => (typeof (c as { toJSON?: () => unknown }).toJSON === 'function' ? (c as { toJSON(): unknown }).toJSON() : c));
+  while (stack.length) {
+    const node = stack.shift() as { content?: string; components?: unknown[] } | null;
+    const heading = node?.content?.split('\n').find((line) => line.startsWith('## '));
+    if (heading) return heading.slice(3);
+    if (node?.components) stack.unshift(...node.components);
+  }
+  return null;
+}
+
+/** An edit/update payload for a card message: embeds → cards, ephemeral dropped, rows kept when the edit had none. */
+export function cardEdit(options: AnyPayload, existingRows: unknown[]): AnyPayload {
+  const converted = toCardPayload(options.components === undefined ? { ...options, components: existingRows } : options);
+  return { ...converted, flags: converted.flags & ~MessageFlags.Ephemeral };
+}
+
+// Edits through message.edit (collectors, services) on card messages convert as well; plain embed messages
+// (panels and logs posted with channel.send) stay embeds.
+const originalEdit = Message.prototype.edit;
+Message.prototype.edit = function editAsCard(this: Message, options: Parameters<Message['edit']>[0]) {
+  if (isCardMessage(this) && hasEmbeds(options)) return originalEdit.call(this, cardEdit(options, messageRows(this)) as never);
+  return originalEdit.call(this, options);
+} as Message['edit'];

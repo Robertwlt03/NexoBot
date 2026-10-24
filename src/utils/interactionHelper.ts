@@ -19,6 +19,7 @@ import type {
 import { handleInteractionError, createError, ErrorTypes } from './errorHandler.js';
 import type { ErrorLike } from './errorHandler.js';
 import { ResponseCoordinator } from './responseCoordinator.js';
+import { cardEdit, hasEmbeds, isCardMessage, messageRows, toCardPayload } from './embedCard.js';
 import type { CoordinatedInteraction, PayloadResponder, ResponsePayload } from './responseCoordinator.js';
 import type { TraceContext } from './logger.js';
 import type { GuildConfig, NexoClient } from '../types/index.js';
@@ -48,7 +49,13 @@ export type ModalPayload =
     | APIModalInteractionResponseCallbackData;
 
 /** An interaction whose reply methods get wrapped by patchInteractionResponses. */
-type PatchableInteraction = CoordinatedInteraction & { __nexoResponsePatched?: boolean };
+type PatchableInteraction = CoordinatedInteraction & {
+    __nexoResponsePatched?: boolean;
+    /** The first response used the card layout, so later edits of it must too. */
+    __nexoCards?: boolean;
+};
+type CardMessage = { flags?: { has(flag: number): boolean } | null; components?: { type: number }[] } | null;
+type Updatable = { update?: (options: ResponsePayload) => Promise<unknown>; message?: CardMessage };
 
 export interface SafeExecuteOptions {
     autoDefer?: boolean;
@@ -97,7 +104,33 @@ export class InteractionHelper {
             return;
         }
 
+        // Nexo's one design: replies with embeds go out as Nexo cards (utils/embedCard.ts).
+        const asCards = (options: ResponsePayload): ResponsePayload => {
+            if (!hasEmbeds(options)) return options;
+            interaction.__nexoCards = true;
+            return toCardPayload(options as never) as ResponsePayload;
+        };
+        const deferredWithoutContent = () => interaction.deferred && !interaction.replied;
+
+        const component = interaction as unknown as Updatable;
+        const originalUpdate = component.update?.bind(interaction);
+        if (originalUpdate) {
+            // Button/select updates convert when the message already is a card (posted embeds stay embeds).
+            component.update = (options: ResponsePayload) => originalUpdate(isCardMessage(component.message) && hasEmbeds(options)
+                ? cardEdit(options as never, messageRows(component.message)) as ResponsePayload
+                : options);
+        }
+        interaction.editReply = (async (options: ResponsePayload) => {
+            if (!hasEmbeds(options) || !(interaction.__nexoCards || deferredWithoutContent())) return originalEditReply(options as never);
+            interaction.__nexoCards = true;
+            // An edit without components keeps the reply's rows, as it did with embeds.
+            const rows = (options as { components?: unknown }).components === undefined ? messageRows(await (interaction as unknown as { fetchReply(): Promise<CardMessage> }).fetchReply().catch(() => null)) : [];
+            return originalEditReply(sanitizeEditReplyOptions(cardEdit(options as never, rows) as ResponsePayload) as never);
+        }) as typeof interaction.editReply;
+        interaction.followUp = ((options: ResponsePayload) => originalFollowUp(asCards(options) as never)) as typeof interaction.followUp;
+
         interaction.reply = async (options: ResponsePayload) => {
+            options = asCards(options);
             const coordinator = InteractionHelper.getCoordinator(interaction);
             if (coordinator?.isUsageFinalized()) {
                 return coordinator.getReplyMessage();

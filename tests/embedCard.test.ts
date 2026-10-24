@@ -40,3 +40,31 @@ test('very long embeds are cut to the V2 text budget', () => {
   const all = texts(embedToCard(long).toJSON() as never).join('');
   assert.ok(all.length <= 4000, String(all.length));
 });
+
+test('interaction replies, edits, follow-ups and card updates go out as cards; plain posts stay', async () => {
+  const { InteractionHelper } = await import('../src/utils/interactionHelper.js');
+  const sent: Record<string, { flags?: number; embeds?: unknown[]; components?: unknown[] }> = {};
+  const row = { type: 1 };
+  const fake = {
+    id: '1', user: { id: '2' }, deferred: false, replied: false,
+    message: { flags: { has: (flag: number) => flag === MessageFlags.IsComponentsV2 }, components: [{ type: 17 }, row] },
+    reply: async (o: never) => { sent.reply = o; fake.replied = true; },
+    editReply: async (o: never) => { sent.editReply = o; },
+    followUp: async (o: never) => { sent.followUp = o; },
+    update: async (o: never) => { sent.update = o; },
+    fetchReply: async () => ({ components: [row] }),
+  };
+  InteractionHelper.patchInteractionResponses(fake as never);
+  const embed = () => createEmbed({ title: 'Hallo', description: 'Text' });
+  await fake.reply({ embeds: [embed()], flags: MessageFlags.Ephemeral } as never);
+  await fake.editReply({ embeds: [embed()] } as never);
+  await fake.followUp({ embeds: [embed()] } as never);
+  await fake.update({ embeds: [embed()] } as never);
+  for (const kind of ['reply', 'editReply', 'followUp', 'update']) {
+    assert.ok((sent[kind].flags! & MessageFlags.IsComponentsV2) !== 0, `${kind} is not a card`);
+    assert.equal(sent[kind].embeds, undefined, `${kind} still has embeds`);
+  }
+  assert.ok(sent.reply.flags! & MessageFlags.Ephemeral, 'reply lost ephemeral');
+  assert.ok(sent.editReply.components!.includes(row) && sent.update.components!.includes(row), 'rows were dropped');
+  await fake.reply('nur Text' as never);
+});
