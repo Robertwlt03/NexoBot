@@ -31,4 +31,6 @@ PostgreSQL. Fork of TitanBot (the LICENSE keeps the codebymitch line).
 - `npm run typecheck`, `npm run build`, `npm test`.
 - Dashboard changes: check them in the mock preview (`npx vite --config dashboard/vite.mock.config.ts`, port 5199,
   launch config "dashboard-mock"), desktop and 375 px, dark and light mode.
+  The mock config and `dashboard/mock-fixtures.ts` are local only (`.git/info/exclude`) and must match the checked-out
+  code; on a branch whose code they do not fit, the mock server fails to start.
 - Text contrast ≥ 4.5:1 in both modes (`tests/contrast.test.ts` reads the tokens from `dashboard/src/styles.css`).

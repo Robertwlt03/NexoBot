@@ -1,8 +1,10 @@
 <p align="center">
-  <img src="../assets/banner-commands.svg" alt="Command-Migration: 99 → 36 Commands" width="100%">
+  <img src="../assets/banner-commands.webp" alt="Command-Migration: 99 → 36 Commands" width="100%">
 </p>
 
 NexoBot fasst die früheren Einzel-Commands thematisch zusammen. Aus 99 Top-Level-Commands werden 36. Command-Namen innerhalb der Gruppen, Optionen und Buttons bleiben gleich.
+
+Seit der Zusammenfassung neu dazugekommen: `/profil` (Profilkarte, Bernis, Shop, Tagesaufgaben, Erinnerung, Jahr, verknüpfte Rollen) und `/fun spiel`, dazu die Rechtsklick-Einträge *Profilkarte ansehen* und *Zum Spiel herausfordern*. Sie ersetzen keine alten Commands.
 
 ## <img src="../assets/icons/unchanged-check.svg" height="33" align="absmiddle" alt="">Was gleich bleibt
 
@@ -104,7 +106,7 @@ Bestehende Subcommands bleiben außerdem direkt erhalten bei `/economy` (dashboa
 | `/welcome …` | `/welcome message …` | Welcome |
 
 <p align="center">
-  <img src="../assets/banner-footer.svg" alt="" width="480">
+  <img src="../assets/banner-footer.webp" alt="" width="480">
 </p>
 
 <p align="center">
