@@ -120,3 +120,11 @@ test('components-only edits keep the card and swap the rows', async () => {
   assert.deepEqual(keepCards({ components: [] }, [card, oldRow]).components, [card]);
   assert.deepEqual(keepCards({ content: 'x' }, [card]), { content: 'x' });
 });
+
+test('ephemeral given by name or bitfield stays ephemeral', async () => {
+  const { MessageFlagsBitField } = await import('discord.js');
+  for (const flags of [['Ephemeral'], new MessageFlagsBitField(MessageFlags.Ephemeral), MessageFlags.Ephemeral]) {
+    const payload = toCardPayload({ embeds: [createEmbed({ title: 'Nur für dich' })], flags });
+    assert.ok(payload.flags & MessageFlags.Ephemeral, `lost ephemeral for ${JSON.stringify(flags)}`);
+  }
+});

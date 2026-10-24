@@ -6,7 +6,7 @@
 
 import {
   BaseGuildTextChannel, BaseGuildVoiceChannel, ComponentType, ContainerBuilder, DMChannel, EmbedBuilder, FileBuilder,
-  MediaGalleryBuilder, Message, MessageFlags, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, TextDisplayBuilder,
+  MediaGalleryBuilder, Message, MessageFlags, MessageFlagsBitField, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, TextDisplayBuilder,
   ThreadChannel, ThumbnailBuilder, type APIEmbed, type APIEmbedField,
 } from 'discord.js';
 import { ACCENTS } from './nexoMessage.js';
@@ -113,7 +113,8 @@ export function toCardPayload<T extends AnyPayload>(payload: T): Omit<T, 'conten
   const { content, embeds = [], components = [], flags, ephemeral, ...rest } = payload;
   if (embeds.some((embed) => keptEmbeds.has(embed as object))) return payload as never;
   const files = (payload.files ?? []).map(fileName).filter((name): name is string => Boolean(name));
-  const numericFlags = Number(flags ?? 0);
+  // Flags come as numbers, bitfields or names (['Ephemeral']); resolve them all.
+  const numericFlags = Number(MessageFlagsBitField.resolve((flags ?? 0) as never));
   const ephemeralFlag = ephemeral || (numericFlags & MessageFlags.Ephemeral) ? MessageFlags.Ephemeral : 0;
   const cards = embeds.map((embed, index) => embedToCard(embed, index === 0 ? content ?? '' : '', index === 0 ? files : []));
   if (!cards.length && content?.trim()) cards.push(new ContainerBuilder().setAccentColor(ACCENTS.nexo).addTextDisplayComponents(new TextDisplayBuilder().setId(ID.lead).setContent(content)));
