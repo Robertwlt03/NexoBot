@@ -198,7 +198,7 @@ export function createGiveawayButtons(ended: boolean = false): ActionRowBuilder<
                 new ButtonBuilder()
                     .setCustomId('giveaway_join')
                     .setLabel('🎉 Teilnehmen')
-                    .setStyle(ButtonStyle.Primary)
+                    .setStyle(ButtonStyle.Success)
                     .setDisabled(false),
                 new ButtonBuilder()
                     .setCustomId('giveaway_end')

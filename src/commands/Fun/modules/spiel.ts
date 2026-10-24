@@ -101,7 +101,7 @@ export async function playGame(c: Challenge, send: (payload: GamePayload) => Pro
 
   const boardView = () => {
     if (kind === 'tictactoe') {
-      const components = rows(tic.map((cell, i) => button(`${id}_t${i}`, cell === 1 ? '❌' : cell === 2 ? '⭕' : '·', cell ? ButtonStyle.Primary : ButtonStyle.Secondary, Boolean(cell) || finished)), 3);
+      const components = rows(tic.map((cell, i) => button(`${id}_t${i}`, cell === 1 ? '❌' : cell === 2 ? '⭕' : '·', cell === 1 ? ButtonStyle.Danger : cell === 2 ? ButtonStyle.Success : ButtonStyle.Primary, Boolean(cell) || finished)), 3);
       return { description: `❌ ${p1.username}  ·  ⭕ ${p2.username}`, components };
     }
     if (kind === 'viergewinnt') {

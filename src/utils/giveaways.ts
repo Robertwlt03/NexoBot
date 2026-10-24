@@ -200,7 +200,7 @@ export function giveawayButtons(ended = false) {
                 new ButtonBuilder()
                     .setCustomId('giveaway_join')
                     .setLabel('🎉 Teilnehmen')
-                    .setStyle(ButtonStyle.Primary),
+                    .setStyle(ButtonStyle.Success),
                 new ButtonBuilder()
                     .setCustomId('giveaway_end')
                     .setLabel('🛑 Beenden')
