@@ -19,7 +19,7 @@ import type {
 import { handleInteractionError, createError, ErrorTypes } from './errorHandler.js';
 import type { ErrorLike } from './errorHandler.js';
 import { ResponseCoordinator } from './responseCoordinator.js';
-import { cardEdit, hasEmbeds, isCardMessage, messageRows, toCardPayload } from './embedCard.js';
+import { cardMessageEdit, hasEmbeds, isCardMessage, toCardPayload } from './embedCard.js';
 import type { CoordinatedInteraction, PayloadResponder, ResponsePayload } from './responseCoordinator.js';
 import type { TraceContext } from './logger.js';
 import type { GuildConfig, NexoClient } from '../types/index.js';
@@ -107,8 +107,9 @@ export class InteractionHelper {
         // Nexo's one design: replies with embeds go out as Nexo cards (utils/embedCard.ts).
         const asCards = (options: ResponsePayload): ResponsePayload => {
             if (!hasEmbeds(options)) return options;
-            interaction.__nexoCards = true;
-            return toCardPayload(options as never) as ResponsePayload;
+            const converted = toCardPayload(options as never);
+            if (!('embeds' in converted)) interaction.__nexoCards = true;
+            return converted as ResponsePayload;
         };
         const deferredWithoutContent = () => interaction.deferred && !interaction.replied;
 
@@ -116,16 +117,27 @@ export class InteractionHelper {
         const originalUpdate = component.update?.bind(interaction);
         if (originalUpdate) {
             // Button/select updates convert when the message already is a card (posted embeds stay embeds).
-            component.update = (options: ResponsePayload) => originalUpdate(isCardMessage(component.message) && hasEmbeds(options)
-                ? cardEdit(options as never, messageRows(component.message)) as ResponsePayload
+            component.update = (options: ResponsePayload) => originalUpdate(isCardMessage(component.message)
+                ? cardMessageEdit(options, component.message?.components) as ResponsePayload
                 : options);
         }
         interaction.editReply = (async (options: ResponsePayload) => {
-            if (!hasEmbeds(options) || !(interaction.__nexoCards || deferredWithoutContent())) return originalEditReply(options as never);
-            interaction.__nexoCards = true;
-            // An edit without components keeps the reply's rows, as it did with embeds.
-            const rows = (options as { components?: unknown }).components === undefined ? messageRows(await (interaction as unknown as { fetchReply(): Promise<CardMessage> }).fetchReply().catch(() => null)) : [];
-            return originalEditReply(sanitizeEditReplyOptions(cardEdit(options as never, rows) as ResponsePayload) as never);
+            const fetchReply = () => (interaction as unknown as { fetchReply(): Promise<CardMessage> }).fetchReply().catch(() => null);
+            // A card reply stays a card through every edit (embeds, text, components-only).
+            if (interaction.__nexoCards) {
+                // The current components are only needed when the edit does not bring its own rows.
+                const bringsRows = typeof options === 'object' && options !== null && (options as { components?: unknown }).components !== undefined
+                    && (hasEmbeds(options) || Boolean((options as { content?: unknown }).content));
+                const existing = bringsRows ? [] : (await fetchReply())?.components;
+                return originalEditReply(sanitizeEditReplyOptions(cardMessageEdit(options, existing) as ResponsePayload) as never);
+            }
+            // The first edit of a deferred reply decides: with embeds it becomes a card.
+            if (hasEmbeds(options) && deferredWithoutContent()) {
+                const converted = toCardPayload(options as never);
+                if (!('embeds' in converted)) interaction.__nexoCards = true;
+                return originalEditReply(sanitizeEditReplyOptions(converted as ResponsePayload) as never);
+            }
+            return originalEditReply(options as never);
         }) as typeof interaction.editReply;
         interaction.followUp = ((options: ResponsePayload) => originalFollowUp(asCards(options) as never)) as typeof interaction.followUp;
 

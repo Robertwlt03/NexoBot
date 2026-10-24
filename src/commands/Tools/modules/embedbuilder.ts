@@ -30,6 +30,7 @@ import { logger } from '../../../utils/logger.js';
 import { NexoBotError, replyUserError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { getColor } from '../../../config/bot.js';
 import type { Command } from '../../../types/index.js';
+import { keepAsEmbed } from '../../../utils/embedCard.js';
 
 interface EmbedAuthorState {
     name: string;
@@ -102,8 +103,9 @@ function resolveEmbedColor(value: string | number | null) {
     return getColor('primary');
 }
 
+/** The admin's own embed: posted (and previewed) exactly as designed, never turned into a Nexo card. */
 function buildPreviewEmbed(state: EmbedBuilderState) {
-    const embed = new EmbedBuilder();
+    const embed = keepAsEmbed(new EmbedBuilder());
 
     if (state.title)       embed.setTitle(state.title.substring(0, 256));
     if (state.description) embed.setDescription(state.description.substring(0, 4096));

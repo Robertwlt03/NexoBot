@@ -1,106 +1,223 @@
-// Moves the existing embed-based messages onto the Nexo card layout without rewriting each one: embedToCard()
-// turns an embed into a V2 container (author → kicker, title, description, fields as label lines, thumbnail as a
-// section picture, image as a gallery, footer as small text), toCardPayload() does it for a whole reply/edit/send
-// payload (content moves into the card, rows and files stay). Every send AND edit of a converted message must go
-// through toCardPayload, because a V2 message cannot take embeds again.
+// Moves Nexo's embed-based messages onto the Nexo card layout without rewriting each one. embedToCard() turns an
+// embed into a V2 container in a fixed, reversible shape – every part carries a component id (head 10, content 11,
+// description 12, gallery 20, footer 30, fields 100+) – so cardToEmbed()/messageEmbed() can read a card back as the
+// embed it came from (tickets, reaction-role panels and applications read their data from their messages).
+// toCardPayload() converts a whole send/reply/edit payload; InteractionHelper, channel sends and message.edit use it.
 
-import { ComponentType, EmbedBuilder, Message, MessageFlags, type APIEmbed, type ContainerBuilder } from 'discord.js';
-import { ACCENTS, nexoCard, type NexoBlock } from './nexoMessage.js';
+import {
+  BaseGuildTextChannel, BaseGuildVoiceChannel, ComponentType, ContainerBuilder, DMChannel, EmbedBuilder, FileBuilder,
+  MediaGalleryBuilder, Message, MessageFlags, SectionBuilder, SeparatorBuilder, SeparatorSpacingSize, TextDisplayBuilder,
+  ThreadChannel, ThumbnailBuilder, type APIEmbed, type APIEmbedField,
+} from 'discord.js';
+import { ACCENTS } from './nexoMessage.js';
 
 /** Discord allows 4000 characters of text per V2 message; keep room for content and footers. */
 const TEXT_BUDGET = 3800;
+/** Discord allows 40 components per V2 message (nested ones and buttons included). */
+const COMPONENT_LIMIT = 40;
+const ID = { head: 10, lead: 11, description: 12, gallery: 20, files: 21, footer: 30, field: 100 } as const;
+const IMAGE = /\.(png|jpe?g|gif|webp|avif)$/i;
 
-function fieldBlocks(fields: NonNullable<APIEmbed['fields']>): string[] {
-  const blocks: string[] = [];
-  let inline: string[] = [];
-  const flush = () => {
-    if (inline.length) blocks.push(inline.join('\n'));
-    inline = [];
-  };
-  for (const field of fields) {
-    if (field.inline) {
-      inline.push(`**${field.name}:** ${field.value}`);
-    } else {
-      flush();
-      blocks.push(`**${field.name}**\n${field.value}`);
-    }
-  }
-  flush();
-  return blocks;
-}
+const fieldText = (field: APIEmbedField) => (field.inline ? `**${field.name}:** ${field.value}` : `**${field.name}**\n${field.value}`);
 
-/** One embed as a Nexo card. `lead` (e.g. former message content with mentions) goes first. */
-export function embedToCard(input: EmbedBuilder | APIEmbed, lead = ''): ContainerBuilder {
+/** One embed as a Nexo card. `lead` (former message content with mentions) goes first; `files` are attachment names. */
+export function embedToCard(input: EmbedBuilder | APIEmbed, lead = '', files: string[] = []): ContainerBuilder {
   const embed = input instanceof EmbedBuilder ? input.toJSON() : input;
-  const texts: string[] = [];
-  if (lead.trim()) texts.push(lead.trim());
-  if (embed.description?.trim()) texts.push(embed.description.trim());
-  texts.push(...fieldBlocks(embed.fields ?? []));
-
-  // Stay inside the V2 text budget: cut the longest blocks last.
-  let budget = TEXT_BUDGET - (embed.title?.length ?? 0) - (embed.footer?.text.length ?? 0) - (embed.author?.name.length ?? 0);
-  const fitted = texts.map((text) => {
+  const container = new ContainerBuilder().setAccentColor(embed.color ?? ACCENTS.nexo);
+  let budget = TEXT_BUDGET;
+  const fit = (text: string) => {
     const piece = text.length > budget ? `${text.slice(0, Math.max(0, budget - 1))}…` : text;
     budget -= piece.length;
     return piece;
-  }).filter(Boolean);
+  };
+  const text = (id: number, content: string) => new TextDisplayBuilder().setId(id).setContent(fit(content));
 
-  const blocks: NexoBlock[] = [];
-  fitted.forEach((text, index) => {
-    // The embed's thumbnail sits next to the first text block, like it did next to the description.
-    if (index === 0 && embed.thumbnail?.url) blocks.push({ text, thumbnail: embed.thumbnail.url });
-    else blocks.push({ text });
-    // A thin line between the description and the fields.
-    if (index === 0 && fitted.length > 1 && embed.description?.trim() && !lead.trim()) blocks.push({ separator: true });
-  });
-  if (!fitted.length && embed.thumbnail?.url) blocks.push({ images: [embed.thumbnail.url] });
-  if (embed.image?.url) blocks.push({ images: [embed.image.url] });
+  const title = embed.title ? (embed.url ? `[${embed.title}](${embed.url})` : embed.title) : '';
+  const head = [embed.author?.name ? `-# ${embed.author.name.toUpperCase()}` : '', title ? `## ${title}` : ''].filter(Boolean).join('\n');
+  if (head) container.addTextDisplayComponents(text(ID.head, head));
+  if (lead.trim()) container.addTextDisplayComponents(text(ID.lead, lead.trim()));
 
-  const title = embed.title ? (embed.url ? `[${embed.title}](${embed.url})` : embed.title) : undefined;
-  return nexoCard({ kicker: embed.author?.name, title, accent: embed.color ?? ACCENTS.nexo, blocks, footer: embed.footer?.text });
+  const description = embed.description?.trim();
+  const thumbnail = embed.thumbnail?.url;
+  if (description && thumbnail) {
+    container.addSectionComponents(new SectionBuilder().addTextDisplayComponents(text(ID.description, description)).setThumbnailAccessory(new ThumbnailBuilder().setURL(thumbnail)));
+  } else if (description) {
+    container.addTextDisplayComponents(text(ID.description, description));
+  }
+  const fields = embed.fields ?? [];
+  if (description && fields.length) container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
+  fields.forEach((field, index) => container.addTextDisplayComponents(text(ID.field + index, fieldText(field))));
+
+  const referenced = (url?: string) => url?.startsWith('attachment://') ? url.slice('attachment://'.length) : null;
+  const shown = new Set([referenced(embed.image?.url), referenced(thumbnail)].filter(Boolean));
+  const images = [...(embed.image?.url ? [embed.image.url] : []), ...(!description && thumbnail ? [thumbnail] : [])];
+  // Attachments the embed did not show would be invisible in a card: images join the gallery, others become files.
+  const extraImages = files.filter((name) => !shown.has(name) && IMAGE.test(name));
+  const others = files.filter((name) => !shown.has(name) && !IMAGE.test(name));
+  const gallery = [...images, ...extraImages.map((name) => `attachment://${name}`)];
+  if (gallery.length) container.addMediaGalleryComponents(new MediaGalleryBuilder().setId(ID.gallery).addItems(...gallery.slice(0, 10).map((url) => ({ media: { url } }))));
+  others.forEach((name) => container.addFileComponents(new FileBuilder().setURL(`attachment://${name}`)));
+  if (embed.footer?.text) container.addTextDisplayComponents(text(ID.footer, `-# ${embed.footer.text}`));
+  return container;
 }
 
-type AnyPayload = Record<string, unknown> & { content?: string | null; embeds?: (EmbedBuilder | APIEmbed)[]; components?: unknown[]; flags?: unknown; ephemeral?: boolean };
+/** How many components a payload part counts towards Discord's limit of 40 (nested ones included). */
+function countComponents(component: unknown): number {
+  const json = (typeof (component as { toJSON?: () => unknown })?.toJSON === 'function' ? (component as { toJSON(): unknown }).toJSON() : component) as { components?: unknown[]; accessory?: unknown } | null;
+  if (!json || typeof json !== 'object') return 0;
+  return 1 + (json.components ?? []).reduce<number>((sum, child) => sum + countComponents(child), 0) + (json.accessory ? 1 : 0);
+}
+
+/** Embeds an admin designed themselves (embed builder) are posted exactly as designed, never as cards. */
+const keptEmbeds = new WeakSet<object>();
+export function keepAsEmbed<T extends EmbedBuilder>(embed: T): T {
+  keptEmbeds.add(embed);
+  return embed;
+}
+
+type AnyPayload = Record<string, unknown> & {
+  content?: string | null; embeds?: (EmbedBuilder | APIEmbed)[]; components?: unknown[]; flags?: unknown; ephemeral?: boolean; files?: unknown[];
+};
+
+type Mentions = { parse?: readonly string[]; users?: readonly string[]; roles?: readonly string[]; repliedUser?: boolean };
+
+/**
+ * Mentions in embeds never pinged anyone, mentions in card text do. So a converted message may only ping what its
+ * former content would have pinged (the ids written there), within whatever the caller allowed. Pure, for tests.
+ */
+export function contentOnlyMentions(content: string, allowed: Mentions | undefined): Mentions {
+  const ids = (pattern: RegExp) => [...content.matchAll(pattern)].map((match) => match[1]);
+  const may = (kind: 'users' | 'roles') => !allowed || allowed.parse?.includes(kind) || allowed[kind] !== undefined;
+  const pick = (kind: 'users' | 'roles', found: string[]) => (!may(kind) ? [] : allowed?.[kind] ? found.filter((id) => allowed[kind]!.includes(id)) : found);
+  const everyone = /@(everyone|here)\b/.test(content) && (!allowed || allowed.parse?.includes('everyone'));
+  return {
+    parse: everyone ? ['everyone'] : [],
+    users: [...new Set(pick('users', ids(/<@!?(\d+)>/g)))],
+    roles: [...new Set(pick('roles', ids(/<@&(\d+)>/g)))],
+    ...(allowed?.repliedUser !== undefined ? { repliedUser: allowed.repliedUser } : {}),
+  };
+}
+
+const fileName = (file: unknown): string | null => {
+  if (typeof file === 'string') return file.split(/[\\/]/).pop() ?? null;
+  const named = file as { name?: string | null; attachment?: unknown } | null;
+  return named?.name ?? (typeof named?.attachment === 'string' ? named.attachment.split(/[\\/]/).pop() ?? null : null);
+};
 
 /**
  * A reply/edit/send payload with its embeds as Nexo cards (V2). Content moves into the first card, components and
- * files stay, an ephemeral flag is kept. Payloads without embeds that already are V2 pass through.
+ * files stay (unshown files appear in the card), an ephemeral flag is kept. Returns the payload unchanged when the
+ * cards would exceed Discord's component limit – that message simply stays an embed.
  */
 export function toCardPayload<T extends AnyPayload>(payload: T): Omit<T, 'content' | 'embeds' | 'ephemeral'> & { components: unknown[]; flags: number } {
   const { content, embeds = [], components = [], flags, ephemeral, ...rest } = payload;
+  if (embeds.some((embed) => keptEmbeds.has(embed as object))) return payload as never;
+  const files = (payload.files ?? []).map(fileName).filter((name): name is string => Boolean(name));
   const numericFlags = Number(flags ?? 0);
   const ephemeralFlag = ephemeral || (numericFlags & MessageFlags.Ephemeral) ? MessageFlags.Ephemeral : 0;
-  const cards = embeds.map((embed, index) => embedToCard(embed, index === 0 ? content ?? '' : ''));
-  if (!cards.length && content?.trim()) cards.push(nexoCard({ blocks: [{ text: content }] }));
-  return { ...rest, components: [...cards, ...components], flags: MessageFlags.IsComponentsV2 | ephemeralFlag | (numericFlags & ~MessageFlags.Ephemeral & ~MessageFlags.IsComponentsV2) } as never;
+  const cards = embeds.map((embed, index) => embedToCard(embed, index === 0 ? content ?? '' : '', index === 0 ? files : []));
+  if (!cards.length && content?.trim()) cards.push(new ContainerBuilder().setAccentColor(ACCENTS.nexo).addTextDisplayComponents(new TextDisplayBuilder().setId(ID.lead).setContent(content)));
+  // An embed with nothing a card can show (e.g. only a colour) stays an embed; an empty card would be rejected.
+  if (cards.some((card) => !(card.toJSON().components ?? []).length)) return payload as never;
+  const all = [...cards, ...components];
+  if (all.reduce<number>((sum, component) => sum + countComponents(component), 0) > COMPONENT_LIMIT) return payload as never;
+  return {
+    ...rest,
+    allowedMentions: contentOnlyMentions(content ?? '', rest.allowedMentions as Mentions | undefined),
+    components: all,
+    flags: MessageFlags.IsComponentsV2 | ephemeralFlag | (numericFlags & ~MessageFlags.Ephemeral & ~MessageFlags.IsComponentsV2),
+  } as never;
 }
+
+// ---------- Reading cards back ----------
+
+interface RawNode { type?: number; id?: number; content?: string; components?: RawNode[]; accessory?: { media?: { url?: string } }; items?: { media?: { url?: string } }[]; accent_color?: number | null }
+
+const raw = (component: unknown): RawNode => (typeof (component as { toJSON?: () => unknown })?.toJSON === 'function' ? (component as { toJSON(): RawNode }).toJSON() : component as RawNode);
+
+/** The embed a Nexo card was made from (inverse of embedToCard). Pure, for tests. */
+export function cardToEmbed(card: unknown): APIEmbed & { fields: APIEmbedField[] } {
+  const container = raw(card);
+  const embed: APIEmbed & { fields: APIEmbedField[] } = { fields: [], ...(container.accent_color != null ? { color: container.accent_color } : {}) };
+  const visit = (node: RawNode) => {
+    if (node.type === ComponentType.Section) {
+      if (node.accessory?.media?.url) embed.thumbnail = { url: node.accessory.media.url };
+      node.components?.forEach((child) => visit(raw(child)));
+      return;
+    }
+    if (node.type === ComponentType.MediaGallery && node.id === ID.gallery && node.items?.[0]?.media?.url) {
+      embed.image = { url: node.items[0].media.url };
+      return;
+    }
+    const text = node.content;
+    if (node.type !== ComponentType.TextDisplay || text === undefined) return;
+    if (node.id === ID.head) {
+      for (const line of text.split('\n')) {
+        if (line.startsWith('-# ')) embed.author = { name: line.slice(3) };
+        else if (line.startsWith('## ')) {
+          const linked = /^\[(.*)\]\((.*)\)$/.exec(line.slice(3));
+          embed.title = linked ? linked[1] : line.slice(3);
+          if (linked) embed.url = linked[2];
+        }
+      }
+    } else if (node.id === ID.description) {
+      embed.description = text;
+    } else if (node.id === ID.footer) {
+      embed.footer = { text: text.replace(/^-# /, '') };
+    } else if (node.id !== undefined && node.id >= ID.field) {
+      const inline = /^\*\*([\s\S]+?):\*\* ([\s\S]*)$/.exec(text);
+      const block = /^\*\*([\s\S]+?)\*\*\n([\s\S]*)$/.exec(text);
+      if (block) embed.fields.push({ name: block[1], value: block[2] });
+      else if (inline) embed.fields.push({ name: inline[1], value: inline[2], inline: true });
+    }
+  };
+  (container.components ?? []).forEach((child) => visit(raw(child)));
+  return embed;
+}
+
+/** Whether a message already uses the card layout (Components V2). */
+export const isCardMessage = (message: { flags?: { has(flag: number): boolean } | null } | null | undefined): boolean =>
+  Boolean(message?.flags?.has(MessageFlags.IsComponentsV2));
+
+/**
+ * The message's first embed – or, for a card message, the embed its first card was made from – or null. Use this
+ * instead of message.embeds[0] wherever Nexo reads data back from its own messages.
+ */
+export function messageEmbed(message: { embeds?: unknown[]; components?: unknown[]; flags?: { has(flag: number): boolean } | null } | null | undefined): (APIEmbed & { fields: APIEmbedField[] }) | null {
+  if (!message) return null;
+  const first = message.embeds?.[0];
+  if (first) {
+    const json = raw(first) as APIEmbed;
+    return { ...json, fields: json.fields ?? [] };
+  }
+  if (!isCardMessage(message)) return null;
+  const card = (message.components ?? []).map(raw).find((node) => node.type === ComponentType.Container);
+  return card ? cardToEmbed(card) : null;
+}
+
+/** Title of a message's first embed or card, for code that recognises views. */
+export const messageTitle = (message: Parameters<typeof messageEmbed>[0]): string | null => messageEmbed(message)?.title ?? null;
 
 // ---------- Central conversion ----------
 
 export const hasEmbeds = (options: unknown): options is AnyPayload =>
   Boolean(options) && typeof options === 'object' && Array.isArray((options as AnyPayload).embeds) && (options as AnyPayload).embeds!.length > 0;
 
-/** Whether a message already uses the card layout (Components V2). */
-export const isCardMessage = (message: { flags?: { has(flag: number): boolean } | null } | null | undefined): boolean =>
-  Boolean(message?.flags?.has(MessageFlags.IsComponentsV2));
-
 /** The top-level button/select rows of a message (kept when an edit only changes its embed). */
 export const messageRows = (message: { components?: { type: number }[] } | null | undefined): unknown[] =>
   (message?.components ?? []).filter((component) => component.type === ComponentType.ActionRow);
 
-/** Title of a message's first embed or card ("## …" heading of its first text), for code that recognises views. */
-export function messageTitle(message: { embeds?: { title?: string | null }[]; components?: unknown[] } | null | undefined): string | null {
-  const fromEmbed = message?.embeds?.[0]?.title;
-  if (fromEmbed) return fromEmbed;
-  // Walk the V2 tree for the first "## " heading of a text display.
-  const stack: unknown[] = [...(message?.components ?? [])].map((c) => (typeof (c as { toJSON?: () => unknown }).toJSON === 'function' ? (c as { toJSON(): unknown }).toJSON() : c));
-  while (stack.length) {
-    const node = stack.shift() as { content?: string; components?: unknown[] } | null;
-    const heading = node?.content?.split('\n').find((line) => line.startsWith('## '));
-    if (heading) return heading.slice(3);
-    if (node?.components) stack.unshift(...node.components);
-  }
-  return null;
+const componentType = (component: unknown): number | undefined => raw(component)?.type;
+
+/**
+ * Edits that only set components (e.g. disabling buttons when a collector ends) would wipe a card: keep the
+ * message's cards and replace only its rows. Payloads that bring their own cards or embeds pass through.
+ */
+export function keepCards<T extends AnyPayload>(options: T, existing: unknown[] | undefined): T {
+  if ((options.embeds?.length ?? 0) > 0 || options.components === undefined) return options;
+  if (options.components.some((component) => componentType(component) === ComponentType.Container)) return options;
+  const cards = (existing ?? []).filter((component) => componentType(component) !== ComponentType.ActionRow);
+  return { ...options, components: [...cards, ...options.components] };
 }
 
 /** An edit/update payload for a card message: embeds → cards, ephemeral dropped, rows kept when the edit had none. */
@@ -109,10 +226,32 @@ export function cardEdit(options: AnyPayload, existingRows: unknown[]): AnyPaylo
   return { ...converted, flags: converted.flags & ~MessageFlags.Ephemeral };
 }
 
-// Edits through message.edit (collectors, services) on card messages convert as well; plain embed messages
-// (panels and logs posted with channel.send) stay embeds.
+/**
+ * Any edit of a card message: embeds or text become the card (rows kept when the edit had none), components-only
+ * edits keep the card, empty content keys are dropped (a card message cannot carry content).
+ */
+export function cardMessageEdit(options: unknown, existing: unknown[] | undefined): unknown {
+  if (typeof options === 'string') options = { content: options };
+  if (!options || typeof options !== 'object') return options;
+  const payload = { ...(options as AnyPayload) };
+  const text = typeof payload.content === 'string' && payload.content.trim() ? payload.content : '';
+  if (!text) delete payload.content;
+  if (hasEmbeds(payload) || text) return cardEdit(payload, (existing ?? []).filter((component) => componentType(component) === ComponentType.ActionRow));
+  return keepCards(payload, existing);
+}
+
+// Edits through message.edit (collectors, services) of card messages convert as well; messages that are still
+// classic embeds (older posts, oversized ones) stay embeds.
 const originalEdit = Message.prototype.edit;
 Message.prototype.edit = function editAsCard(this: Message, options: Parameters<Message['edit']>[0]) {
-  if (isCardMessage(this) && hasEmbeds(options)) return originalEdit.call(this, cardEdit(options, messageRows(this)) as never);
-  return originalEdit.call(this, options);
+  return originalEdit.call(this, (isCardMessage(this) ? cardMessageEdit(options, this.components) : options) as never);
 } as Message['edit'];
+
+// Posts (panels, tickets, giveaways, logs, welcome …) go out as cards too: every text-capable channel class.
+for (const ChannelClass of [BaseGuildTextChannel, BaseGuildVoiceChannel, ThreadChannel, DMChannel]) {
+  const proto = ChannelClass.prototype as unknown as { send(options: unknown): Promise<Message> };
+  const originalSend = proto.send;
+  proto.send = function sendAsCard(this: unknown, options: unknown) {
+    return originalSend.call(this, hasEmbeds(options) ? toCardPayload(options) : options);
+  };
+}

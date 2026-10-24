@@ -26,6 +26,7 @@ import type { AutocompleteInteraction, ButtonInteraction, ChatInputCommandIntera
 import type { ReactionRoleMessage } from '../../services/reactionRoleService.js';
 import type { PanelStatus } from '../../utils/panelStatus.js';
 import type { Command, NexoClient } from '../../types/index.js';
+import { messageEmbed, messageTitle } from '../../utils/embedCard.js';
 
 /**
  * Panels managed by this command are select-menu panels (see SelectMenuPanel).
@@ -140,7 +141,7 @@ export default {
                 const channel = guild.channels.cache.get(panel.channelId) as GuildTextBasedChannel | undefined;
                 if (!channel) continue;
 
-                const cachedTitle = channel.messages?.cache?.get(panel.messageId)?.embeds?.[0]?.title;
+                const cachedTitle = messageTitle(channel.messages?.cache?.get(panel.messageId));
                 const roleCount = Array.isArray(panel.roles) ? panel.roles.length : 0;
                 const label = cachedTitle
                     ? `${cachedTitle} (#${channel.name})`
@@ -310,7 +311,7 @@ function buildReactionRoleDashboardPayload(
     panelStatus: PanelStatus | null = null,
 ) {
     const channel = guild.channels.cache.get(panelData.channelId) as GuildTextBasedChannel | undefined;
-    const title = discordMsg?.embeds?.[0]?.title ?? 'Panel ohne Titel';
+    const title = messageTitle(discordMsg) ?? 'Panel ohne Titel';
     const roleList =
         panelData.roles.length > 0
             ? panelData.roles.map(id => `<@&${id}>`).join(',')
@@ -448,7 +449,7 @@ async function handleDashboard(interaction: ChatInputCommandInteraction, selecte
         onButton: async (btnInteraction) => {
             if (btnInteraction.customId === `rr_repost_${guildId}`) {
                 await btnInteraction.deferUpdate();
-                const fallbackEmbed = discordMsg?.embeds?.[0];
+                const fallbackEmbed = messageEmbed(discordMsg);
                 const newMsg = await repostReactionRolePanel(
                     guild,
                     panelData,
@@ -490,8 +491,8 @@ async function handleEditText(buttonInteraction: ButtonInteraction, rootInteract
         ? await channel.messages.fetch(panelData.messageId).catch(() => null)
         : null;
 
-    const currentTitle = discordMsg?.embeds?.[0]?.title ?? '';
-    const currentDesc = discordMsg?.embeds?.[0]?.description ?? '';
+    const currentTitle = messageTitle(discordMsg) ?? '';
+    const currentDesc = messageEmbed(discordMsg)?.description ?? '';
 
     const modal = new ModalBuilder()
         .setCustomId('rr_edit_text')
@@ -768,7 +769,7 @@ async function handleDeletePanel(btnInteraction: ButtonInteraction, rootInteract
     const discordMsg = channel
         ? await channel.messages.fetch(panelData.messageId).catch(() => null)
         : null;
-    const title = discordMsg?.embeds?.[0]?.title ?? 'dieses Panel';
+    const title = messageTitle(discordMsg) ?? 'dieses Panel';
 
     const deleteModal = new ModalBuilder()
         .setCustomId('rr_delete_confirm_modal')

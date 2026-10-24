@@ -68,3 +68,55 @@ test('interaction replies, edits, follow-ups and card updates go out as cards; p
   assert.ok(sent.editReply.components!.includes(row) && sent.update.components!.includes(row), 'rows were dropped');
   await fake.reply('nur Text' as never);
 });
+
+test('a card reads back as the embed it came from (tickets and panels rely on it)', async () => {
+  const { cardToEmbed, messageEmbed } = await import('../src/utils/embedCard.js');
+  const embed = createEmbed({
+    title: 'Ticket #42', description: 'Bitte beschreib dein Anliegen.\nZweite Zeile', author: 'Support', color: 'ticket.open', footer: 'Ticket-ID 42',
+    thumbnail: 'https://cdn.discordapp.com/embed/avatars/1.png',
+    fields: [{ name: 'Status', value: 'Offen', inline: true }, { name: 'Übernommen von', value: 'Niemand', inline: true }, { name: 'Grund', value: 'Account gehackt:\nRollen weg' }],
+  });
+  const back = cardToEmbed(embedToCard(embed));
+  assert.equal(back.title, 'Ticket #42');
+  assert.equal(back.description, 'Bitte beschreib dein Anliegen.\nZweite Zeile');
+  assert.deepEqual(back.fields, [{ name: 'Status', value: 'Offen', inline: true }, { name: 'Übernommen von', value: 'Niemand', inline: true }, { name: 'Grund', value: 'Account gehackt:\nRollen weg' }]);
+  assert.equal(back.footer?.text, 'Ticket-ID 42');
+  assert.equal(back.thumbnail?.url, 'https://cdn.discordapp.com/embed/avatars/1.png');
+  assert.equal(back.color, 0x8fb36b);
+  // Through a "message": classic embeds and cards both answer.
+  const card = embedToCard(embed);
+  assert.equal(messageEmbed({ flags: { has: (f: number) => f === MessageFlags.IsComponentsV2 }, components: [card] })?.title, 'Ticket #42');
+  assert.equal(messageEmbed({ embeds: [embed.toJSON()] })?.fields.length, 3);
+  assert.equal(messageEmbed({ flags: { has: () => false }, components: [] }), null);
+});
+
+test('posted files show up in the card and oversized messages stay embeds', () => {
+  const payload = toCardPayload({ embeds: [createEmbed({ title: 'Transkript', image: 'attachment://karte.png' })], files: [{ attachment: Buffer.from(''), name: 'karte.png' }, { attachment: Buffer.from(''), name: 'transcript-42.html' }] });
+  const json = JSON.stringify((payload.components[0] as { toJSON(): unknown }).toJSON());
+  assert.equal((json.match(/attachment:\/\/karte\.png/g) ?? []).length, 1, 'image shown once');
+  assert.match(json, /"type":13[^}]*attachment:\/\/transcript-42\.html|attachment:\/\/transcript-42\.html[^}]*"type":13/);
+  const rows = Array.from({ length: 5 }, () => new ActionRowBuilder<ButtonBuilder>().addComponents(...Array.from({ length: 5 }, (_, i) => new ButtonBuilder().setCustomId(`b${Math.random()}${i}`).setLabel('x').setStyle(ButtonStyle.Secondary))));
+  const big = toCardPayload({ embeds: [createEmbed({ title: 'Viel', fields: Array.from({ length: 12 }, (_, i) => ({ name: `F${i}`, value: 'v' })) })], components: rows });
+  assert.ok('embeds' in big, 'should have stayed an embed');
+});
+
+test('cards only ping what the old content pinged – never the mentions inside the former embed', async () => {
+  const { contentOnlyMentions } = await import('../src/utils/embedCard.js');
+  const payload = toCardPayload({ content: 'Willkommen <@111>!', embeds: [createEmbed({ description: 'Frag <@&222> oder <@333>' })] });
+  assert.deepEqual((payload as { allowedMentions?: unknown }).allowedMentions, { parse: [], users: ['111'], roles: [] });
+  assert.deepEqual(contentOnlyMentions('', undefined), { parse: [], users: [], roles: [] });
+  assert.deepEqual(contentOnlyMentions('<@1> <@&2> @here', { parse: ['users'] }), { parse: [], users: ['1'], roles: [] });
+  assert.deepEqual(contentOnlyMentions('<@1> <@5>', { users: ['5'] }), { parse: [], users: ['5'], roles: [] });
+  assert.deepEqual(contentOnlyMentions('@everyone <@&2>', { parse: ['everyone', 'roles'] }).parse, ['everyone']);
+});
+
+test('components-only edits keep the card and swap the rows', async () => {
+  const { keepCards } = await import('../src/utils/embedCard.js');
+  const card = embedToCard(createEmbed({ title: 'Karte' }));
+  const oldRow = { type: 1, components: [] };
+  const newRow = new ActionRowBuilder<ButtonBuilder>().addComponents(new ButtonBuilder().setCustomId('n').setLabel('Neu').setStyle(ButtonStyle.Secondary));
+  const kept = keepCards({ components: [newRow] }, [card, oldRow]);
+  assert.deepEqual(kept.components, [card, newRow]);
+  assert.deepEqual(keepCards({ components: [] }, [card, oldRow]).components, [card]);
+  assert.deepEqual(keepCards({ content: 'x' }, [card]), { content: 'x' });
+});

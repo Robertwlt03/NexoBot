@@ -24,6 +24,7 @@ import {
 import type { Application, ApplicationFilters, ApplicationInput, ApplicationRole, ApplicationSettings } from '../utils/database.js';
 import botConfig from '../config/bot.js';
 import type { NexoClient } from '../types/index.js';
+import { messageEmbed } from '../utils/embedCard.js';
 
 export interface ApplicationReviewData {
     action: string;
@@ -586,7 +587,7 @@ export async function reviewApplicationWithEffects(
             if (logChannel) {
                 const logMessage = await logChannel.messages.fetch(application.logMessageId as string);
                 if (logMessage) {
-                    const embed = logMessage.embeds[0];
+                    const embed = messageEmbed(logMessage);
                     if (embed) {
                         const reviewStatus = getApplicationStatusPresentation(status);
                         const newEmbed = EmbedBuilder.from(embed)
