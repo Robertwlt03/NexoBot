@@ -140,7 +140,8 @@
   --radius-lg: 22px;
   --ring: 0 0 0 3px rgba(143, 179, 107, 0.22);
   --font: "Inter Variable", "Inter", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-display: var(--font);
+  /* Headings in the homepage font (Unbounded, loaded in tailwind.css), text stays Inter. */
+  --font-display: "Unbounded Variable", "Unbounded", var(--font);
   --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
@@ -162,6 +163,7 @@ body {
 a { color: var(--accent-text); text-decoration: none; }
 a:hover { text-decoration: underline; text-underline-offset: 3px; }
 h1, h2, h3, h4 { color: var(--text-strong); margin: 0; line-height: 1.2; font-weight: 600; letter-spacing: -0.015em; }
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
 h1 { font-size: 28px; letter-spacing: -0.025em; }
 h2 { font-size: 18px; }
 h3 { font-size: 15px; }

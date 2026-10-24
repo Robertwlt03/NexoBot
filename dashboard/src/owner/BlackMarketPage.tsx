@@ -16,7 +16,7 @@ function Tile({ item, selected, onClick }: { item: CosmeticItem; selected?: bool
       className={`relative flex flex-col rounded-2xl border bg-[#0c0c10] p-2.5 text-left font-[inherit] text-body ${onClick ? 'cursor-pointer' : ''} ${selected ? 'border-accent ring-2 ring-accent/30' : RARITY_CLASS[item.rarity].border}`}>
       <ItemVisual item={item} />
       <div className="px-1 pt-2.5">
-        <h3 className="truncate text-[14px] font-medium">{item.name}</h3>
+        <h3 className="truncate font-sans text-[14px] font-medium">{item.name}</h3>
         <div className="mt-0.5 text-[12px] text-faint">{SLOT_LABELS[item.slot]} · <RarityLabel rarity={item.rarity} /></div>
         <div className="mt-1.5 text-[13px]"><Bernis amount={item.price} /></div>
       </div>
