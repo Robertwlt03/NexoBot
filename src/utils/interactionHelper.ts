@@ -104,51 +104,53 @@ export class InteractionHelper {
             return;
         }
 
-        // Nexo's one design: replies with embeds go out as Nexo cards (utils/embedCard.ts).
-        const asCards = (options: ResponsePayload): ResponsePayload => {
+        // Nexo's one design: replies with embeds go out as Nexo cards (utils/embedCard.ts). Only the first response
+        // (reply or the first edit of a deferred reply) decides whether the reply is a card; follow-ups are their
+        // own messages, and after deferUpdate() editReply edits the clicked message instead.
+        const component = interaction as unknown as Updatable & { deferUpdate?: (...args: unknown[]) => Promise<unknown>; deferReply?: (...args: unknown[]) => Promise<unknown> };
+        let editsSource = false;
+        const originalDeferUpdate = component.deferUpdate?.bind(interaction);
+        if (originalDeferUpdate) component.deferUpdate = (...args: unknown[]) => { editsSource = true; return originalDeferUpdate(...args); };
+        const originalDeferReply = component.deferReply?.bind(interaction);
+        if (originalDeferReply) component.deferReply = (...args: unknown[]) => { editsSource = false; return originalDeferReply(...args); };
+
+        const asFirstResponse = (options: ResponsePayload): ResponsePayload => {
             if (!hasEmbeds(options)) return options;
             const converted = toCardPayload(options as never);
             if (!('embeds' in converted)) interaction.__nexoCards = true;
             return converted as ResponsePayload;
         };
-        const deferredWithoutContent = () => interaction.deferred && !interaction.replied;
-
-        const component = interaction as unknown as Updatable;
-        const originalUpdate = component.update?.bind(interaction);
-        if (originalUpdate) {
-            // Button/select updates convert when the message already is a card (posted embeds stay embeds).
-            component.update = (options: ResponsePayload) => originalUpdate(isCardMessage(component.message)
-                ? cardMessageEdit(options, component.message?.components) as ResponsePayload
-                : options);
-        }
-        interaction.editReply = (async (options: ResponsePayload) => {
-            const fetchReply = () => (interaction as unknown as { fetchReply(): Promise<CardMessage> }).fetchReply().catch(() => null);
-            // A card reply stays a card through every edit (embeds, text, components-only).
+        const asOwnMessage = (options: ResponsePayload): ResponsePayload => (hasEmbeds(options) ? toCardPayload(options as never) as ResponsePayload : options);
+        /** An edit of the clicked message (update, or editReply after deferUpdate): cards stay cards, embeds stay embeds. */
+        const sourceEdit = (options: ResponsePayload): ResponsePayload => (isCardMessage(component.message)
+            ? cardMessageEdit(options, component.message?.components) as ResponsePayload
+            : options);
+        const fetchReply = () => (interaction as unknown as { fetchReply(): Promise<CardMessage> }).fetchReply().catch(() => null);
+        /** An edit of our own reply. */
+        const replyEdit = async (options: ResponsePayload): Promise<ResponsePayload> => {
+            if (editsSource) return sourceEdit(options);
             if (interaction.__nexoCards) {
-                // The current components are only needed when the edit does not bring its own rows.
-                const bringsRows = typeof options === 'object' && options !== null && (options as { components?: unknown }).components !== undefined
-                    && (hasEmbeds(options) || Boolean((options as { content?: unknown }).content));
-                const existing = bringsRows ? [] : (await fetchReply())?.components;
-                return originalEditReply(sanitizeEditReplyOptions(cardMessageEdit(options, existing) as ResponsePayload) as never);
+                // The current components are only needed when the edit does not bring its own rows and content.
+                const bringsAll = typeof options === 'object' && options !== null && (options as { components?: unknown }).components !== undefined
+                    && 'content' in (options as object);
+                return cardMessageEdit(options, bringsAll ? [] : (await fetchReply())?.components) as ResponsePayload;
             }
-            // The first edit of a deferred reply decides: with embeds it becomes a card.
-            if (hasEmbeds(options) && deferredWithoutContent()) {
-                const converted = toCardPayload(options as never);
-                if (!('embeds' in converted)) interaction.__nexoCards = true;
-                return originalEditReply(sanitizeEditReplyOptions(converted as ResponsePayload) as never);
-            }
-            return originalEditReply(options as never);
-        }) as typeof interaction.editReply;
-        interaction.followUp = ((options: ResponsePayload) => originalFollowUp(asCards(options) as never)) as typeof interaction.followUp;
+            return interaction.deferred && !interaction.replied ? asFirstResponse(options) : options;
+        };
+
+        const originalUpdate = component.update?.bind(interaction);
+        if (originalUpdate) component.update = (options: ResponsePayload) => originalUpdate(sourceEdit(options));
+        interaction.editReply = (async (options: ResponsePayload) => originalEditReply(sanitizeEditReplyOptions(await replyEdit(options)) as never)) as typeof interaction.editReply;
+        interaction.followUp = ((options: ResponsePayload) => originalFollowUp(asOwnMessage(options) as never)) as typeof interaction.followUp;
 
         interaction.reply = async (options: ResponsePayload) => {
-            options = asCards(options);
             const coordinator = InteractionHelper.getCoordinator(interaction);
             if (coordinator?.isUsageFinalized()) {
                 return coordinator.getReplyMessage();
             }
 
             if (!interaction.deferred && !interaction.replied) {
+                options = asFirstResponse(options);
                 if (coordinator && interaction._isPrefixCommand) {
                     return coordinator.respond(options);
                 }
@@ -156,12 +158,14 @@ export class InteractionHelper {
             }
 
             if (interaction.deferred && !interaction.replied) {
+                options = sanitizeEditReplyOptions(await replyEdit(options));
                 if (coordinator && interaction._isPrefixCommand) {
-                    return coordinator.edit(sanitizeEditReplyOptions(options));
+                    return coordinator.edit(options);
                 }
-                return await originalEditReply(sanitizeEditReplyOptions(options));
+                return await originalEditReply(options);
             }
 
+            options = asOwnMessage(options);
             if (coordinator && interaction._isPrefixCommand) {
                 return coordinator.followUp(options);
             }

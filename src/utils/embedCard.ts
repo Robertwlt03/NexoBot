@@ -21,7 +21,7 @@ const IMAGE = /\.(png|jpe?g|gif|webp|avif)$/i;
 const fieldText = (field: APIEmbedField) => (field.inline ? `**${field.name}:** ${field.value}` : `**${field.name}**\n${field.value}`);
 
 /** One embed as a Nexo card. `lead` (former message content with mentions) goes first; `files` are attachment names. */
-export function embedToCard(input: EmbedBuilder | APIEmbed, lead = '', files: string[] = []): ContainerBuilder {
+export function embedToCard(input: EmbedBuilder | APIEmbed, lead = '', files: string[] = [], { compact = false } = {}): ContainerBuilder {
   const embed = input instanceof EmbedBuilder ? input.toJSON() : input;
   const container = new ContainerBuilder().setAccentColor(embed.color ?? ACCENTS.nexo);
   let budget = TEXT_BUDGET;
@@ -46,7 +46,9 @@ export function embedToCard(input: EmbedBuilder | APIEmbed, lead = '', files: st
   }
   const fields = embed.fields ?? [];
   if (description && fields.length) container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
-  fields.forEach((field, index) => container.addTextDisplayComponents(text(ID.field + index, fieldText(field))));
+  // Compact (only when a card must stay a card but is too big): all fields in one text, no longer readable back.
+  if (compact && fields.length) container.addTextDisplayComponents(text(ID.field, fields.map(fieldText).join('\n')));
+  else fields.forEach((field, index) => container.addTextDisplayComponents(text(ID.field + index, fieldText(field))));
 
   const referenced = (url?: string) => url?.startsWith('attachment://') ? url.slice('attachment://'.length) : null;
   const shown = new Set([referenced(embed.image?.url), referenced(thumbnail)].filter(Boolean));
@@ -109,19 +111,29 @@ const fileName = (file: unknown): string | null => {
  * files stay (unshown files appear in the card), an ephemeral flag is kept. Returns the payload unchanged when the
  * cards would exceed Discord's component limit – that message simply stays an embed.
  */
-export function toCardPayload<T extends AnyPayload>(payload: T): Omit<T, 'content' | 'embeds' | 'ephemeral'> & { components: unknown[]; flags: number } {
+export function toCardPayload<T extends AnyPayload>(payload: T, { force = false } = {}): Omit<T, 'content' | 'embeds' | 'ephemeral'> & { components: unknown[]; flags: number } {
   const { content, embeds = [], components = [], flags, ephemeral, ...rest } = payload;
-  if (embeds.some((embed) => keptEmbeds.has(embed as object))) return payload as never;
+  // `force`: the target already is a card (an edit), so falling back to an embed is not possible.
+  if (!force && embeds.some((embed) => keptEmbeds.has(embed as object))) return payload as never;
   const files = (payload.files ?? []).map(fileName).filter((name): name is string => Boolean(name));
   // Flags come as numbers, bitfields or names (['Ephemeral']); resolve them all.
   const numericFlags = Number(MessageFlagsBitField.resolve((flags ?? 0) as never));
   const ephemeralFlag = ephemeral || (numericFlags & MessageFlags.Ephemeral) ? MessageFlags.Ephemeral : 0;
-  const cards = embeds.map((embed, index) => embedToCard(embed, index === 0 ? content ?? '' : '', index === 0 ? files : []));
-  if (!cards.length && content?.trim()) cards.push(new ContainerBuilder().setAccentColor(ACCENTS.nexo).addTextDisplayComponents(new TextDisplayBuilder().setId(ID.lead).setContent(content)));
+  const build = (compact: boolean) => {
+    const cards = embeds.map((embed, index) => embedToCard(embed, index === 0 ? content ?? '' : '', index === 0 ? files : [], { compact }));
+    if (!cards.length && content?.trim()) cards.push(new ContainerBuilder().setAccentColor(ACCENTS.nexo).addTextDisplayComponents(new TextDisplayBuilder().setId(ID.lead).setContent(content)));
+    // A card needs something to show; an edit that must stay a card gets a quiet dash.
+    for (const card of cards) if (!(card.toJSON().components ?? []).length && force) card.addTextDisplayComponents(new TextDisplayBuilder().setContent('–'));
+    return [...cards, ...components];
+  };
+  const size = (list: unknown[]) => list.reduce<number>((sum, component) => sum + countComponents(component), 0);
+  let all = build(false);
   // An embed with nothing a card can show (e.g. only a colour) stays an embed; an empty card would be rejected.
-  if (cards.some((card) => !(card.toJSON().components ?? []).length)) return payload as never;
-  const all = [...cards, ...components];
-  if (all.reduce<number>((sum, component) => sum + countComponents(component), 0) > COMPONENT_LIMIT) return payload as never;
+  if (all.some((component) => componentType(component) === ComponentType.Container && !(raw(component).components ?? []).length)) return payload as never;
+  if (size(all) > COMPONENT_LIMIT) {
+    if (!force) return payload as never;
+    all = build(true);
+  }
   return {
     ...rest,
     allowedMentions: contentOnlyMentions(content ?? '', rest.allowedMentions as Mentions | undefined),
@@ -133,6 +145,14 @@ export function toCardPayload<T extends AnyPayload>(payload: T): Omit<T, 'conten
 // ---------- Reading cards back ----------
 
 interface RawNode { type?: number; id?: number; content?: string; components?: RawNode[]; accessory?: { media?: { url?: string } }; items?: { media?: { url?: string } }[]; accent_color?: number | null }
+
+const componentType = (component: unknown): number | undefined => raw(component)?.type;
+
+/** The lead text (former content, id 11) of a message's first card. */
+function leadOf(existing: unknown[] | undefined): string {
+  const card = (existing ?? []).map(raw).find((node) => node.type === ComponentType.Container);
+  return card?.components?.map(raw).find((node) => node.id === ID.lead)?.content ?? '';
+}
 
 const raw = (component: unknown): RawNode => (typeof (component as { toJSON?: () => unknown })?.toJSON === 'function' ? (component as { toJSON(): RawNode }).toJSON() : component as RawNode);
 
@@ -208,8 +228,6 @@ export const hasEmbeds = (options: unknown): options is AnyPayload =>
 export const messageRows = (message: { components?: { type: number }[] } | null | undefined): unknown[] =>
   (message?.components ?? []).filter((component) => component.type === ComponentType.ActionRow);
 
-const componentType = (component: unknown): number | undefined => raw(component)?.type;
-
 /**
  * Edits that only set components (e.g. disabling buttons when a collector ends) would wipe a card: keep the
  * message's cards and replace only its rows. Payloads that bring their own cards or embeds pass through.
@@ -223,7 +241,7 @@ export function keepCards<T extends AnyPayload>(options: T, existing: unknown[] 
 
 /** An edit/update payload for a card message: embeds → cards, ephemeral dropped, rows kept when the edit had none. */
 export function cardEdit(options: AnyPayload, existingRows: unknown[]): AnyPayload {
-  const converted = toCardPayload(options.components === undefined ? { ...options, components: existingRows } : options);
+  const converted = toCardPayload(options.components === undefined ? { ...options, components: existingRows } : options, { force: true });
   return { ...converted, flags: converted.flags & ~MessageFlags.Ephemeral };
 }
 
@@ -236,8 +254,12 @@ export function cardMessageEdit(options: unknown, existing: unknown[] | undefine
   if (!options || typeof options !== 'object') return options;
   const payload = { ...(options as AnyPayload) };
   const text = typeof payload.content === 'string' && payload.content.trim() ? payload.content : '';
-  if (!text) delete payload.content;
-  if (hasEmbeds(payload) || text) return cardEdit(payload, (existing ?? []).filter((component) => componentType(component) === ComponentType.ActionRow));
+  // Without a content key a classic edit kept the old content: keep the card's lead line (mentions) the same way.
+  const lead = 'content' in payload ? text : leadOf(existing);
+  delete payload.content;
+  // `embeds: []` (clearing) is meaningless on a card and must not reach it.
+  if (Array.isArray(payload.embeds) && !payload.embeds.length) delete payload.embeds;
+  if (hasEmbeds(payload) || text) return cardEdit({ ...payload, ...(lead ? { content: lead } : {}) }, (existing ?? []).filter((component) => componentType(component) === ComponentType.ActionRow));
   return keepCards(payload, existing);
 }
 
@@ -256,3 +278,9 @@ for (const ChannelClass of [BaseGuildTextChannel, BaseGuildVoiceChannel, ThreadC
     return originalSend.call(this, hasEmbeds(options) ? toCardPayload(options) : options);
   };
 }
+
+// message.reply builds a MessagePayload before channel.send, so it converts here.
+const originalMessageReply = Message.prototype.reply;
+Message.prototype.reply = function replyAsCard(this: Message, options: Parameters<Message['reply']>[0]) {
+  return originalMessageReply.call(this, (hasEmbeds(options) ? toCardPayload(options) : options) as never);
+} as Message['reply'];

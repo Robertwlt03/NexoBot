@@ -128,3 +128,47 @@ test('ephemeral given by name or bitfield stays ephemeral', async () => {
     assert.ok(payload.flags & MessageFlags.Ephemeral, `lost ephemeral for ${JSON.stringify(flags)}`);
   }
 });
+
+test('review fixes: deferUpdate edits the clicked message, follow-ups do not mark the reply, edits keep the lead and never fall back', async () => {
+  const { InteractionHelper } = await import('../src/utils/interactionHelper.js');
+  const { cardMessageEdit } = await import('../src/utils/embedCard.js');
+  const row = { type: 1 };
+  const make = (cardMessage: boolean) => {
+    const sent: Record<string, { flags?: number; embeds?: unknown[]; components?: unknown[]; content?: string }> = {};
+    const fake = {
+      id: '1', user: { id: '2' }, deferred: false, replied: false,
+      message: { flags: { has: (flag: number) => cardMessage && flag === MessageFlags.IsComponentsV2 }, components: cardMessage ? [embedToCard(createEmbed({ title: 'Panel' })), row] : [row] },
+      deferUpdate: async () => { fake.deferred = true; },
+      deferReply: async () => { fake.deferred = true; },
+      reply: async (o: never) => { sent.reply = o; fake.replied = true; },
+      editReply: async (o: never) => { sent.editReply = o; },
+      followUp: async (o: never) => { sent.followUp = o; },
+      update: async (o: never) => { sent.update = o; },
+      fetchReply: async () => ({ components: [row] }),
+    };
+    InteractionHelper.patchInteractionResponses(fake as never);
+    return { fake, sent };
+  };
+  // deferUpdate on a classic embed message: the error edit stays an embed (no V2 flag on a classic message).
+  const classic = make(false);
+  await classic.fake.deferUpdate();
+  await classic.fake.editReply({ embeds: [createEmbed({ title: 'Fehler' })] } as never);
+  assert.ok(classic.sent.editReply.embeds, 'classic message got a card');
+  // deferUpdate on a card message: becomes a card edit and keeps the rows.
+  const card = make(true);
+  await card.fake.deferUpdate();
+  await card.fake.editReply({ embeds: [createEmbed({ title: 'Fehler' })] } as never);
+  assert.ok(card.sent.editReply.components!.includes(row) && !card.sent.editReply.embeds);
+  // reply with plain content, follow-up card, then edit of the reply: the reply stays plain.
+  const plain = make(false);
+  await plain.fake.reply({ content: 'Hallo' } as never);
+  await plain.fake.followUp({ embeds: [createEmbed({ title: 'Info' })] } as never);
+  await plain.fake.editReply({ embeds: [createEmbed({ title: 'Neu' })] } as never);
+  assert.ok(plain.sent.editReply.embeds, 'plain reply was turned into a card by a follow-up');
+  // Card edits keep the mention line and squeeze oversized edits instead of sending embeds to a card.
+  const ticket = embedToCard(createEmbed({ title: 'Ticket #1' }), '<@1> <@&2>');
+  const edited = cardMessageEdit({ embeds: [createEmbed({ title: 'Ticket #1', description: 'geschlossen' })] }, [ticket]) as { components: { toJSON(): unknown }[] };
+  assert.match(JSON.stringify(edited.components[0].toJSON()), /<@1> <@&2>/);
+  const huge = cardMessageEdit({ embeds: [createEmbed({ title: 'Viel', fields: Array.from({ length: 25 }, (_, i) => ({ name: `F${i}`, value: 'v' })) })], components: Array.from({ length: 5 }, () => new ActionRowBuilder<ButtonBuilder>().addComponents(new ButtonBuilder().setCustomId(`c${Math.random()}`).setLabel('x').setStyle(ButtonStyle.Secondary))) }, [ticket]) as { embeds?: unknown };
+  assert.equal(huge.embeds, undefined, 'oversized edit fell back to embeds on a card');
+});
