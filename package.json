@@ -28,7 +28,9 @@
     "restore:db": "node dist/scripts/restore.js",
     "backup:drill": "node dist/scripts/restore-drill.js",
     "test": "tsx --test tests/*.test.ts",
-    "dev:dashboard": "vite --config dashboard/vite.config.ts"
+    "dev:dashboard": "vite --config dashboard/vite.config.ts",
+    "storybook": "storybook dev -p 6006 --no-open",
+    "build-storybook": "storybook build -o dist/storybook"
   },
   "dependencies": {
     "@discordjs/rest": "^2.6.1",
@@ -55,6 +57,7 @@
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/unbounded": "^5.3.0",
     "@gsap/react": "^2.1.2",
+    "@storybook/react-vite": "10.6.2",
     "@tailwindcss/vite": "^4.3.3",
     "@types/express": "^5.0.6",
     "@types/node": "^20.19.43",
@@ -66,6 +69,7 @@
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router": "^7.18.4",
+    "storybook": "10.6.2",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",

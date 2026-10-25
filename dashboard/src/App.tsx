@@ -1,7 +1,7 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { BrowserRouter, MemoryRouter, Navigate, Route, Routes } from 'react-router';
 import type { ApiUser } from '../../src/web/apiTypes';
 import { api, ToastContext, UserContext, type Toast } from './api';
 import { ThemeProvider } from './theme';
@@ -32,7 +32,8 @@ const MEMBER_PAGES = [
   ['/owner/einstellungen', lazy(() => import('./owner/SettingsPage'))],
 ] as const;
 
-export function App() {
+/** The dashboard. `initialPath` renders one page without the browser URL (Storybook previews). */
+export function App({ initialPath }: { initialPath?: string } = {}) {
   const [user, setUser] = useState<ApiUser | null | undefined>(undefined);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -52,7 +53,7 @@ export function App() {
     <UserContext.Provider value={user}>
       <ThemeProvider loggedIn={Boolean(user)}>
       <ToastContext.Provider value={toast}>
-        <BrowserRouter basename="/dashboard">
+        <Router initialPath={initialPath}>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/servers" element={user ? <ServerPicker /> : <Navigate to="/" replace />} />
@@ -67,12 +68,16 @@ export function App() {
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </BrowserRouter>
+        </Router>
         <div className="toasts">{toasts.map((t) => <ToastItem key={t.id} toast={t} />)}</div>
       </ToastContext.Provider>
       </ThemeProvider>
     </UserContext.Provider>
   );
+}
+
+function Router({ initialPath, children }: { initialPath?: string; children: ReactNode }) {
+  return initialPath ? <MemoryRouter initialEntries={[initialPath]}>{children}</MemoryRouter> : <BrowserRouter basename="/dashboard">{children}</BrowserRouter>;
 }
 
 function ToastItem({ toast }: { toast: Toast }) {

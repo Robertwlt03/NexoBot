@@ -33,4 +33,7 @@ PostgreSQL. Fork of TitanBot (the LICENSE keeps the codebymitch line).
   launch config "dashboard-mock"), desktop and 375 px, dark and light mode.
   The mock config and `dashboard/mock-fixtures.ts` are local only (`.git/info/exclude`) and must match the checked-out
   code; on a branch whose code they do not fit, the mock server fails to start.
+- Storybook (`npm run storybook`, port 6006, launch config "storybook"): board with every page, comparison across the
+  twelve colour schemes, Discord messages and building blocks. New dashboard pages go into `dashboard/stories/pages.ts`
+  and `Seiten.stories.tsx`; it uses the same local mock fixtures as the mock preview.
 - Text contrast ≥ 4.5:1 in both modes (`tests/contrast.test.ts` reads the tokens from `dashboard/src/styles.css`).
