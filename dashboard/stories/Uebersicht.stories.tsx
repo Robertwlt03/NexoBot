@@ -3,14 +3,16 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { PAGE_GROUPS, PAGES } from './pages';
-import { DEVICES, PageFrame, frameStyles, type Device } from './frames';
+import { DEVICES, PageFrame, frameStyles, useFramesLoading, type Device } from './frames';
 
 function Board({ globals }: { globals: { scheme: string; mode: string; device: Device } }) {
   const device = globals.device ?? 'desktop';
   const [scale, setScale] = useState(device === 'phone' ? 0.42 : 0.24);
+  const { cover, onLoad } = useFramesLoading(PAGES.length);
   return (
     <div className="sb-board">
       <style>{frameStyles}</style>
+      {cover}
       <h1>Alle Seiten</h1>
       <p className="sb-lead">{PAGES.length} Seiten des Dashboards mit Beispieldaten. Farbvorlage, Modus und Gerät stellst du oben in der Leiste um, sie gelten für alle Vorschauen. Ein Klick öffnet eine Seite groß.</p>
       <div className="sb-bar">
@@ -21,7 +23,7 @@ function Board({ globals }: { globals: { scheme: string; mode: string; device: D
         <section key={group.title} className="sb-group">
           <h2>{group.title}</h2>
           <div className="sb-row">
-            {group.pages.map((page) => <PageFrame key={page.key} page={page} scale={scale} device={device} globals={globals} />)}
+            {group.pages.map((page) => <PageFrame key={page.key} page={page} scale={scale} device={device} globals={globals} onLoad={onLoad} />)}
           </div>
         </section>
       ))}

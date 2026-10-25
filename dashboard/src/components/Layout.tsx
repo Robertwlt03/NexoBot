@@ -13,6 +13,19 @@ import { PageBackdrop } from './Backdrop';
 
 gsap.registerPlugin(useGSAP);
 
+/**
+ * Scrolls the menu (and only the menu) so its active entry is visible. scrollIntoView would also scroll the page
+ * and any page embedding the dashboard in a frame.
+ */
+export function keepActiveVisible(nav: HTMLElement | null) {
+  const active = nav?.querySelector('[aria-current="page"]');
+  if (!nav || !active) return;
+  const menu = nav.getBoundingClientRect();
+  const entry = active.getBoundingClientRect();
+  if (entry.top < menu.top) nav.scrollTop -= menu.top - entry.top;
+  else if (entry.bottom > menu.bottom) nav.scrollTop += entry.bottom - menu.bottom;
+}
+
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export function guildInitials(name: string) {
@@ -124,7 +137,7 @@ export function GuildLayout() {
   }, []);
   useGSAP(() => placeMarker(true), { dependencies: [location.pathname, placeMarker] });
   // Keep the active entry visible when the menu is taller than the window.
-  useEffect(() => { navRef.current?.querySelector('a[aria-current="page"]')?.scrollIntoView({ block: 'nearest' }); }, [location.pathname, detail.data]);
+  useEffect(() => keepActiveVisible(navRef.current), [location.pathname, detail.data]);
   useEffect(() => {
     const nav = navRef.current;
     if (!nav) return;

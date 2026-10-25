@@ -3,7 +3,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { THEME_PRESETS } from '../../src/shared/theme';
 import { PAGES, pageByKey } from './pages';
-import { PageFrame, frameStyles, type Device } from './frames';
+import { PageFrame, frameStyles, useFramesLoading, type Device } from './frames';
 
 interface Args { seite: string }
 
@@ -11,14 +11,16 @@ function Comparison({ seite, globals }: Args & { globals: { mode: string; device
   const page = pageByKey(seite);
   const device = globals.device ?? 'desktop';
   const scale = device === 'phone' ? 0.42 : 0.26;
+  const { cover, onLoad } = useFramesLoading(THEME_PRESETS.length);
   return (
     <div className="sb-board">
       <style>{frameStyles}</style>
+      {cover}
       <h1>{page.label} in allen Farbvorlagen</h1>
       <p className="sb-lead">Die Seite wählst du unten bei den Einstellungen, Modus und Gerät oben in der Leiste. Ein Klick öffnet die Vorlage groß.</p>
       <div className="sb-row" style={{ marginTop: 22 }}>
         {THEME_PRESETS.map((preset) => (
-          <PageFrame key={preset.id} page={page} label={preset.name} scale={scale} device={device} globals={{ scheme: preset.id, mode: globals.mode }} />
+          <PageFrame key={preset.id} page={page} label={preset.name} scale={scale} device={device} globals={{ scheme: preset.id, mode: globals.mode }} onLoad={onLoad} />
         ))}
       </div>
     </div>
@@ -34,5 +36,5 @@ export default {
 
 export const AlleFarbvorlagen: StoryObj<Args> = {
   name: 'Alle Farbvorlagen',
-  render: (args, { globals }) => <Comparison {...args} globals={globals as { mode: string; device: Device }} />,
+  render: (args, { globals }) => <Comparison key={`${args.seite}-${globals.device}`} {...args} globals={globals as { mode: string; device: Device }} />,
 };

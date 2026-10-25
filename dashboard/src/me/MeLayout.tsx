@@ -8,7 +8,7 @@ import type { ApiGuildSummary } from '../../../src/web/apiTypes';
 import type { CosmeticItem } from '../../../src/shared/cosmetics';
 import type { BlackMarketResponse, MeProfileResponse, ShopResponse } from '../../../src/web/dto/profile';
 import { DirtyContext, useApi, useUser } from '../api';
-import { ServerRail, SideMenu, UserPanel } from '../components/Layout';
+import { keepActiveVisible, ServerRail, SideMenu, UserPanel } from '../components/Layout';
 import { PageBackdrop } from '../components/Backdrop';
 import { Notice, Spinner } from '../components/ui';
 import { Icon } from '../icons';
@@ -85,7 +85,7 @@ export function MeLayout() {
   const setGuard = useCallback((value: boolean) => setDirty(value), []);
   useEffect(() => setMenuOpen(false), [location.pathname]);
   // Keep the active entry visible when the menu is taller than the window.
-  useEffect(() => { navRef.current?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'nearest' }); }, [location.pathname]);
+  useEffect(() => keepActiveVisible(navRef.current), [location.pathname]);
   useEffect(() => {
     if (!dirty) return;
     const handler = (event: BeforeUnloadEvent) => { event.preventDefault(); };

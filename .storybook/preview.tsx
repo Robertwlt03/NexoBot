@@ -27,9 +27,9 @@ const withDevice: Decorator = (Story, context) => {
   const { scheme, mode } = context.globals;
   applyTheme(themeFor(scheme, mode));
   return (
-    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24, background: 'var(--bg-app)' }}>
+    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 'min(24px, 4vw)', background: 'var(--bg-app)' }}>
       <iframe title="Handy-Ansicht" src={`iframe.html?id=${context.id}&viewMode=story&framed=1&globals=scheme:${scheme};mode:${mode}`}
-        style={{ width: 390, height: 'min(844px, calc(100vh - 48px))', border: '1px solid var(--border-strong)', borderRadius: 28, background: 'var(--bg-main)', boxShadow: '0 24px 60px -24px rgba(0,0,0,.6)' }} />
+        style={{ width: 'min(390px, 100%)', height: 'min(844px, calc(100vh - 2 * min(24px, 4vw)))', border: '1px solid var(--border-strong)', borderRadius: 28, background: 'var(--bg-main)', boxShadow: '0 24px 60px -24px rgba(0,0,0,.6)' }} />
     </div>
   );
 };

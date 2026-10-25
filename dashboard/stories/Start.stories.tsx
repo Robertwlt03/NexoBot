@@ -24,6 +24,8 @@ const SWITCHES = [
 const TOOLS = [
   'Die Seitenleiste links zeigt nur Start und die vier Bereiche. Einzelne Seiten öffnest du über die Übersicht oder mit der Suche (⌘K): Tipp den Namen der Seite ein, zum Beispiel „Shop“.',
   'Ganz links in der Leiste lädt der Pfeil die Ansicht neu. Rechts sitzen Zoom, Vollbild und ein Link zum Öffnen in einem neuen Tab.',
+  'Am Handy zeigt die Leiste nur die Symbole (Farbtupfer, Mond und Sonne, Bildschirm und Handy); Zoom und die übrigen Storybook-Werkzeuge sind dort ausgeblendet.',
+  'Übersicht und Vergleich laden alle Vorschauen auf einmal und zeigen solange eine Ladeanzeige; danach erscheinen sie zusammen, und du bleibst oben auf der Seite.',
   'Die gewählten Einstellungen stehen in der Adresse; du kannst eine Ansicht also als Lesezeichen speichern oder weitergeben.',
   'Das Zahnrad oben links zeigt alle Tastenkürzel.',
 ];

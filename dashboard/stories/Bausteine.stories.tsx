@@ -11,7 +11,7 @@ import { Chart, Sparkline } from '../src/components/charts';
 import { Badge, Card, Empty, Notice, Stats, Switch, Tabs } from '../src/components/ui';
 
 const Sheet = ({ title, children }: { title: string; children: ReactNode }) => (
-  <div style={{ minHeight: '100vh', padding: 32, background: 'var(--bg-main)', color: 'var(--text)', display: 'grid', gap: 22, alignContent: 'start' }}>
+  <div style={{ minHeight: '100vh', padding: 'clamp(14px, 4vw, 32px)', background: 'var(--bg-main)', color: 'var(--text)', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 22, alignContent: 'start' }}>
     <h1 style={{ fontSize: 26 }}>{title}</h1>
     {children}
   </div>
@@ -90,7 +90,7 @@ export const Diagramme: StoryObj = {
   render: () => (
     <Sheet title="Diagramme">
       <Row><div style={{ width: 220 }}><Sparkline values={wave(20, 6)} /></div><div style={{ width: 220 }}><Sparkline values={wave(40, 12)} /></div></Row>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(420px, 100%), 1fr))', gap: 20 }}>
         <Chart title="Mitgliederentwicklung" kind="line" labels={days.map((i) => `${i + 1}.10.`)} longLabels={days.map((i) => `${i + 1}.10.2026`)} series={[{ name: 'Mitglieder', values: wave(1200, 30) }]} />
         <Chart title="Beitritte und Austritte" kind="bars" labels={days.map((i) => `${i + 1}.10.`)} longLabels={days.map((i) => `${i + 1}.10.2026`)} series={[{ name: 'Beitritte', values: wave(12, 5) }, { name: 'Austritte', values: wave(6, 3) }]} />
       </div>
