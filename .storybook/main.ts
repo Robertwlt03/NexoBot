@@ -31,6 +31,11 @@ const config: StorybookConfig = {
   framework: { name: '@storybook/react-vite', options: { builder: { viteConfigPath: 'dashboard/vite.config.ts' } } },
   // Single pages are only shown inside the overviews; the sidebar keeps Übersicht, Vergleich, Discord and Bausteine.
   tags: { seite: { defaultFilterSelection: 'exclude' } },
+  // Storybook's own measuring tools and its viewport/background switches would compete with our toolbar.
+  features: {
+    viewport: false, backgrounds: false, measure: false, outline: false, actions: false, interactions: false,
+    sidebarOnboardingChecklist: false, menuOnboardingChecklist: false,
+  },
   staticDirs: [{ from: '../dashboard/public', to: '/dashboard' }],
   async viteFinal(config) {
     return { ...config, base: '/', plugins: [...(config.plugins ?? []), banners()] };

@@ -16,15 +16,15 @@ const AREAS = [
 ];
 
 const SWITCHES = [
-  { title: 'Farbvorlage', text: `Eine der zwölf Vorlagen aus „Dashboard-Design“: ${THEME_PRESETS.map((p) => p.name).join(', ')}.` },
-  { title: 'Modus', text: 'Dunkel oder Hell, wie die Umschaltung im Dashboard. Auf der Discord-Seite wechselt auch der Chat zwischen Discords dunklem und hellem Aussehen.' },
-  { title: 'Gerät', text: 'Desktop mit 1280 Pixeln Breite oder Handy mit 390 Pixeln. Auf „Handy“ zeigt jede Seite das echte Handy-Layout in einem Handy-Rahmen.' },
+  { title: 'Farbvorlage · Auswahl', text: `Klick auf das Feld mit den zwei Farbtupfern öffnet die Liste der zwölf Vorlagen aus „Dashboard-Design“: ${THEME_PRESETS.map((p) => p.name).join(', ')}. Die aktive hat ein Häkchen.` },
+  { title: 'Modus · Schalter', text: 'Zwei Seiten, Dunkel oder Hell; die blaue ist aktiv. Auf der Discord-Seite wechselt auch der Chat zwischen Discords dunklem und hellem Aussehen.' },
+  { title: 'Gerät · Schalter', text: 'Desktop mit 1280 Pixeln Breite oder Handy mit 390 Pixeln; die blaue ist aktiv. Auf „Handy“ zeigt jede Seite das echte Handy-Layout in einem Handy-Rahmen.' },
 ];
 
 const TOOLS = [
-  'Die Seitenleiste links zeigt nur die vier Bereiche. Einzelne Seiten öffnest du über die Übersicht oder mit der Suche (⌘K): Tipp den Namen der Seite ein, zum Beispiel „Shop“.',
-  'Rechts in der Leiste: Vollbild, Zoom und ein Link zum Öffnen in einem neuen Tab. Die Ansicht mit den gewählten Einstellungen steht in der Adresse, du kannst sie also als Lesezeichen speichern oder weitergeben.',
-  'Links in der Leiste sind Storybooks eigene Werkzeuge: Neu laden, Hintergrund, Raster, Maßband und Umrisse zum Ausmessen von Abständen.',
+  'Die Seitenleiste links zeigt nur Start und die vier Bereiche. Einzelne Seiten öffnest du über die Übersicht oder mit der Suche (⌘K): Tipp den Namen der Seite ein, zum Beispiel „Shop“.',
+  'Ganz links in der Leiste lädt der Pfeil die Ansicht neu. Rechts sitzen Zoom, Vollbild und ein Link zum Öffnen in einem neuen Tab.',
+  'Die gewählten Einstellungen stehen in der Adresse; du kannst eine Ansicht also als Lesezeichen speichern oder weitergeben.',
   'Das Zahnrad oben links zeigt alle Tastenkürzel.',
 ];
 

@@ -1,6 +1,5 @@
 // Toolbar switches (colour scheme, light/dark, desktop/phone) for every story. The sample API lives in sample.ts.
 import type { Decorator, Preview } from '@storybook/react-vite';
-import { THEME_PRESETS } from '../src/shared/theme';
 import { applyTheme } from '../dashboard/src/theme';
 import { sample, themeFor } from './sample';
 import '../dashboard/src/tailwind.css';
@@ -36,19 +35,11 @@ const withDevice: Decorator = (Story, context) => {
 };
 
 const preview: Preview = {
+  // The toolbar controls for these globals are our own (manager.tsx), so the default dropdowns are switched off.
   globalTypes: {
-    scheme: {
-      description: 'Farbvorlage',
-      toolbar: { title: 'Farbvorlage', icon: 'paintbrush', items: THEME_PRESETS.map((p) => ({ value: p.id, title: p.name })), dynamicTitle: true },
-    },
-    mode: {
-      description: 'Hell oder dunkel',
-      toolbar: { title: 'Modus', icon: 'mirror', items: [{ value: 'dark', title: 'Dunkel' }, { value: 'light', title: 'Hell' }], dynamicTitle: true },
-    },
-    device: {
-      description: 'Desktop oder Handy',
-      toolbar: { title: 'Gerät', icon: 'mobile', items: [{ value: 'desktop', title: 'Desktop' }, { value: 'phone', title: 'Handy' }], dynamicTitle: true },
-    },
+    scheme: { description: 'Farbvorlage' },
+    mode: { description: 'Hell oder dunkel' },
+    device: { description: 'Desktop oder Handy' },
   },
   initialGlobals: { scheme: 'walnuss', mode: 'dark', device: 'desktop' },
   // withDevice is the outer one: it frames the whole story, the frame then applies the theme itself.
