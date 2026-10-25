@@ -31,10 +31,9 @@ export function useFramesLoading(total: number) {
   const onLoad = useCallback(() => setLoaded((n) => n + 1), []);
   const cover = ready ? null : (
     <div className="sb-loading" role="status">
-      <span className="sb-spin" aria-hidden />
-      <b>Seiten werden geladen</b>
-      <span>{Math.min(loaded, total)} von {total}</span>
-      <span className="sb-progress"><i style={{ width: `${(loaded / total) * 100}%` }} /></span>
+      {/* Storybook's own spinner (its preview styles), so the cover looks like Storybook preparing a story. */}
+      <div className="sb-loader" aria-hidden />
+      <span>{Math.min(loaded, total)} von {total} Seiten geladen</span>
     </div>
   );
   return { cover, onLoad };
@@ -70,12 +69,7 @@ export const frameStyles = `
 .sb-frame figcaption { font-size: 13px; font-weight: 600; color: var(--text-strong); }
 .sb-frame-window { position: relative; overflow: hidden; padding: 0; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--bg-main); cursor: zoom-in; box-shadow: 0 10px 30px -18px rgba(0,0,0,.6); transition: border-color .15s, transform .15s; }
 .sb-frame-window:hover { border-color: var(--accent); transform: translateY(-2px); }
-.sb-loading { position: fixed; inset: 0; z-index: 10; display: grid; place-content: center; justify-items: center; gap: 10px; background: var(--bg-app); color: var(--text-muted); font-family: var(--font); font-size: 14px; }
-.sb-loading b { color: var(--text-strong); font-family: var(--font-display); font-size: 18px; }
-.sb-spin { width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--border-strong); border-top-color: var(--accent); animation: sb-spin .8s linear infinite; }
-.sb-progress { width: 220px; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
-.sb-progress i { display: block; height: 100%; background: var(--accent); transition: width .2s; }
-@keyframes sb-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .sb-spin { animation-duration: 2.4s; } }
+.sb-loading { position: fixed; inset: 0; z-index: 10; background: var(--bg-app); }
+.sb-loading span { position: absolute; top: calc(50% + 30px); left: 0; right: 0; text-align: center; color: var(--text-muted); font: 13px/1.4 "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
 .sb-frame-window iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; pointer-events: none; background: var(--bg-main); }
 `;
