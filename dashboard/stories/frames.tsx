@@ -70,6 +70,8 @@ export const frameStyles = `
 .sb-frame-window { position: relative; overflow: hidden; padding: 0; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--bg-main); cursor: zoom-in; box-shadow: 0 10px 30px -18px rgba(0,0,0,.6); transition: border-color .15s, transform .15s; }
 .sb-frame-window:hover { border-color: var(--accent); transform: translateY(-2px); }
 .sb-loading { position: fixed; inset: 0; z-index: 10; background: var(--bg-app); }
+/* In Storybook's highlight blue (its colorSecondary, the colour of the active toolbar buttons). */
+.sb-loading .sb-loader { border-color: rgba(2, 156, 253, .25); border-top-color: #029cfd; mix-blend-mode: normal; }
 .sb-loading span { position: absolute; top: calc(50% + 30px); left: 0; right: 0; text-align: center; color: var(--text-muted); font: 13px/1.4 "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
 .sb-frame-window iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; pointer-events: none; background: var(--bg-main); }
 `;
