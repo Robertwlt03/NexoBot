@@ -8,10 +8,10 @@ export const DEVICES = {
 } as const;
 export type Device = keyof typeof DEVICES;
 
-/** Opens one page large in Storybook (same look as the overview). */
-function openPage(key: string, globals: { scheme: string; mode: string }) {
+/** Opens a story in Storybook, keeping the toolbar's choices (scheme, mode, device). */
+export function openStory(id: string, globals: { scheme: string; mode: string; device?: string }) {
   const top = window.top ?? window;
-  top.location.href = `${top.location.pathname}?path=/story/seiten--${key}&globals=scheme:${globals.scheme};mode:${globals.mode}`;
+  top.location.href = `${top.location.pathname}?path=/story/${id}&globals=scheme:${globals.scheme};mode:${globals.mode};device:${globals.device ?? 'desktop'}`;
 }
 
 export function PageFrame({ page, label, scale, device, globals }: {
@@ -22,7 +22,7 @@ export function PageFrame({ page, label, scale, device, globals }: {
     <figure className="sb-frame">
       <figcaption>{label ?? page.label}</figcaption>
       <button type="button" className="sb-frame-window" style={{ width: size.width * scale, height: size.height * scale }}
-        onClick={() => openPage(page.key, globals)} title={`${page.label} groß öffnen`}>
+        onClick={() => openStory(`seiten--${page.key}`, { ...globals, device })} title={`${page.label} groß öffnen`}>
         <iframe src={pageFrameUrl(page.key, globals)} title={page.label} loading="lazy" tabIndex={-1}
           style={{ width: size.width, height: size.height, transform: `scale(${scale})` }} />
       </button>

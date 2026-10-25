@@ -1,49 +1,15 @@
-/// <reference types="vite/client" />
-// Toolbar switches (colour scheme, light/dark, desktop/phone) and the sample API. Pages fetch from /dashboard/api like
-// in production; here the answers come from dashboard/mock-fixtures.ts, the same data as the mock preview.
+// Toolbar switches (colour scheme, light/dark, desktop/phone) for every story. The sample API lives in sample.ts.
 import type { Decorator, Preview } from '@storybook/react-vite';
-import { THEME_PRESETS, type DashboardTheme, type ThemeMode } from '../src/shared/theme';
+import { THEME_PRESETS } from '../src/shared/theme';
 import { applyTheme } from '../dashboard/src/theme';
+import { sample, themeFor } from './sample';
 import '../dashboard/src/tailwind.css';
 import '../dashboard/src/styles.css';
 
-interface Fixtures {
-  resolve: (path: string, query: URLSearchParams) => unknown;
-  mutate: (method: string, path: string, body: unknown) => { status?: number; body: unknown } | undefined;
-  routes: Record<string, unknown>;
-}
+/** Inside the phone frame of `withDevice` (see below); there the story renders normally at phone width. */
+const framed = new URLSearchParams(window.location.search).has('framed');
 
-// The fixtures are local only (not in git, like the mock preview); without them the pages show their error state.
-export const fixtures = Object.values(import.meta.glob('../dashboard/mock-fixtures.ts', { eager: true }))[0] as Fixtures | undefined;
-
-export function themeFor(scheme: string, mode: ThemeMode): DashboardTheme {
-  const preset = THEME_PRESETS.find((p) => p.id === scheme) ?? THEME_PRESETS[0];
-  return { preset: preset.id, primary: preset.primary, secondary: preset.secondary, mode };
-}
-
-const sample = { theme: themeFor('walnuss', 'dark'), loggedOut: false };
-const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
-
-const realFetch = window.fetch.bind(window);
-window.fetch = async (input, init) => {
-  const url = new URL(input instanceof Request ? input.url : String(input), window.location.href);
-  if (!url.pathname.startsWith('/dashboard/api')) return realFetch(input, init);
-  const path = url.pathname.slice('/dashboard/api'.length);
-  const method = init?.method ?? 'GET';
-  if (path === '/me' && sample.loggedOut) return json({ error: 'Nicht angemeldet.' }, 401);
-  if (path === '/me/theme' && method === 'GET') return json(sample.theme);
-  if (!fixtures) return json({ error: 'Keine Beispieldaten: dashboard/mock-fixtures.ts fehlt.' }, 404);
-  if (method !== 'GET') {
-    let body: unknown = null;
-    try { body = typeof init?.body === 'string' ? JSON.parse(init.body) : null; } catch { /* keep null */ }
-    const reply = fixtures.mutate(method, path, body);
-    return json(reply ? reply.body : fixtures.routes[path] ?? { ok: true }, reply?.status ?? 200);
-  }
-  const body = fixtures.resolve(path, url.searchParams);
-  return body ? json(body) : json({ error: 'Keine Beispieldaten für diese Seite.' }, 404);
-};
-
-/** Every story gets the chosen scheme; pages remount on a change so they fetch the new theme. */
+/** Colour scheme and light/dark; pages remount on a change so they fetch the new theme from the sample API. */
 const withTheme: Decorator = (Story, context) => {
   const theme = themeFor(context.globals.scheme, context.globals.mode);
   sample.theme = theme;
@@ -51,6 +17,22 @@ const withTheme: Decorator = (Story, context) => {
   try { localStorage.setItem('nexo.dashboardTheme', JSON.stringify(theme)); } catch { /* private mode */ }
   applyTheme(theme);
   return <Story key={`${theme.preset}-${theme.mode}-${sample.loggedOut}`} />;
+};
+
+/**
+ * Desktop or phone. On "Handy" the story runs in a 390 px wide frame, so the dashboard's own phone layout (media
+ * queries) applies. The overviews size their previews themselves (`parameters.ownDevice`).
+ */
+const withDevice: Decorator = (Story, context) => {
+  if (context.globals.device !== 'phone' || framed || context.parameters.ownDevice) return <Story />;
+  const { scheme, mode } = context.globals;
+  applyTheme(themeFor(scheme, mode));
+  return (
+    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24, background: 'var(--bg-app)' }}>
+      <iframe title="Handy-Ansicht" src={`iframe.html?id=${context.id}&viewMode=story&framed=1&globals=scheme:${scheme};mode:${mode}`}
+        style={{ width: 390, height: 'min(844px, calc(100vh - 48px))', border: '1px solid var(--border-strong)', borderRadius: 28, background: 'var(--bg-main)', boxShadow: '0 24px 60px -24px rgba(0,0,0,.6)' }} />
+    </div>
+  );
 };
 
 const preview: Preview = {
@@ -64,15 +46,16 @@ const preview: Preview = {
       toolbar: { title: 'Modus', icon: 'mirror', items: [{ value: 'dark', title: 'Dunkel' }, { value: 'light', title: 'Hell' }], dynamicTitle: true },
     },
     device: {
-      description: 'Desktop oder Handy (Übersicht und Vergleich)',
+      description: 'Desktop oder Handy',
       toolbar: { title: 'Gerät', icon: 'mobile', items: [{ value: 'desktop', title: 'Desktop' }, { value: 'phone', title: 'Handy' }], dynamicTitle: true },
     },
   },
   initialGlobals: { scheme: 'walnuss', mode: 'dark', device: 'desktop' },
-  decorators: [withTheme],
+  // withDevice is the outer one: it frames the whole story, the frame then applies the theme itself.
+  decorators: [withTheme, withDevice],
   parameters: {
     layout: 'fullscreen',
-    options: { storySort: { order: ['Übersicht', 'Vergleich', 'Discord', 'Bausteine', 'Seiten'] } },
+    options: { storySort: { order: ['Start', 'Übersicht', 'Vergleich', 'Discord', 'Bausteine', 'Seiten'] } },
   },
 };
 

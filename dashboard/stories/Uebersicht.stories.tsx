@@ -29,7 +29,7 @@ function Board({ globals }: { globals: { scheme: string; mode: string; device: D
   );
 }
 
-export default { title: 'Übersicht', parameters: { options: { showPanel: false } } } satisfies Meta;
+export default { title: 'Übersicht', parameters: { ownDevice: true, options: { showPanel: false } } } satisfies Meta;
 
 export const AlleSeiten: StoryObj = {
   name: 'Alle Seiten',

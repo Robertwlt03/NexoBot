@@ -27,6 +27,7 @@ function Comparison({ seite, globals }: Args & { globals: { mode: string; device
 
 export default {
   title: 'Vergleich',
+  parameters: { ownDevice: true },
   args: { seite: 'server-uebersicht' },
   argTypes: { seite: { name: 'Seite', options: PAGES.map((p) => p.key), control: { type: 'select', labels: Object.fromEntries(PAGES.map((p) => [p.key, p.label])) } } },
 } satisfies Meta<Args>;

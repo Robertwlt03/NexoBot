@@ -2,7 +2,7 @@
 // them (tag `seite`); the board (Übersicht) and the comparison (Vergleich) show them as live previews.
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { App } from '../src/App';
-import { fixtures } from '../../.storybook/preview';
+import { fixtures } from '../../.storybook/sample';
 import { pageByKey } from './pages';
 
 const firstGuild = () => (fixtures?.routes['/guilds'] as { id: string }[] | undefined)?.[0]?.id ?? '0';

@@ -47,7 +47,7 @@ export const discordStyles = `
 .dc-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 10px; padding: 14px 24px; background: #313338; border-bottom: 1px solid rgba(0,0,0,.3); color: #f2f3f5; font-weight: 600; }
 .dc-head i { color: #80848e; font-style: normal; font-size: 22px; font-weight: 400; }
 .dc-head small { margin-left: auto; color: #949ba4; font-weight: 500; }
-.dc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(560px, 1fr)); gap: 6px 24px; padding: 8px 8px 0; }
+.dc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(560px, 100%), 1fr)); gap: 6px 24px; padding: 8px 8px 0; }
 .dc-msg { display: flex; gap: 16px; padding: 14px 16px 6px; }
 .dc-avatar { width: 40px; height: 40px; border-radius: 50%; flex: none; }
 .dc-body { flex: 1; min-width: 0; }
@@ -71,4 +71,12 @@ export const discordStyles = `
 .dc-btn.primary { background: #5865f2; } .dc-btn.success { background: #248046; } .dc-btn.danger { background: #da373c; } .dc-btn.link { background: #4e5058; }
 .dc-btn.link::after { content: "↗"; font-size: 13px; opacity: .85; } .dc-btn.off { opacity: .5; }
 .dc-eph { margin-top: 6px; font-size: 12px; color: #949ba4; } .dc-eph span { color: #00a8fc; }
+.dc-channel.light { background: #ffffff; color: #313338; }
+.dc-channel.light .dc-head { background: #ffffff; color: #060607; border-bottom-color: #e3e5e8; }
+.dc-channel.light .dc-author b, .dc-channel.light .dc-title { color: #060607; }
+.dc-channel.light .dc-card { background: #f2f3f5; border-color: #e3e5e8; }
+.dc-channel.light .dc-kicker, .dc-channel.light .dc-small, .dc-channel.light .dc-time, .dc-channel.light .dc-eph { color: #5c5e66; }
+.dc-channel.light .dc-sep { background: #e3e5e8; } .dc-channel.light .dc-bar { color: #4e5058; }
+.dc-channel.light .dc-mention { background: rgba(88,101,242,.15); color: #505cdc; } .dc-channel.light .dc-ts { background: rgba(6,6,7,.06); }
+.dc-channel.light .dc-btn.link { background: #6d6f78; } .dc-channel.light .dc-eph span { color: #006ce7; }
 `;

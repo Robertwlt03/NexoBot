@@ -3,15 +3,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { messagePalette } from '../../src/shared/theme';
 import { CoinIcon } from '../src/components/CoinIcon';
-import { themeFor } from '../../.storybook/preview';
+import { themeFor } from '../../.storybook/sample';
 import { Bar, DiscordMessage, discordStyles } from './discord';
 
-function Channel({ scheme }: { scheme: string }) {
-  const palette = messagePalette(themeFor(scheme, 'dark'));
+function Channel({ scheme, mode }: { scheme: string; mode: 'dark' | 'light' }) {
+  // The answer colours follow the member's scheme; the channel itself follows light/dark like Discord's own theme.
+  const palette = messagePalette(themeFor(scheme, mode));
   return (
-    <div className="dc-channel">
+    <div className={`dc-channel ${mode}`}>
       <style>{discordStyles}</style>
-      <div className="dc-head"><i>#</i>allgemein<small>Farbvorlage oben in der Leiste umstellen</small></div>
+      <div className="dc-head"><i>#</i>allgemein<small>Farbvorlage, Modus und Gerät oben in der Leiste</small></div>
       <div className="dc-grid">
         <DiscordMessage palette={palette} role="nexo" motif="quests" kicker="Tagesaufgaben" title="1 von 3 geschafft" time="18:04" ephemeral
           buttons={[{ label: 'Saisonpfad', link: true }, { label: 'Zum Shop', link: true }]}>
@@ -24,7 +25,7 @@ function Channel({ scheme }: { scheme: string }) {
 
         <DiscordMessage palette={palette} role="gold" kicker="Bernis" title="Dein Kontostand" time="18:05" ephemeral
           buttons={[{ label: 'Zum Shop', link: true }, { label: 'Tagesbonus abholen', link: true }]}>
-          <p style={{ fontSize: 26, fontWeight: 700, color: '#f2f3f5' }}><span className="dc-coins"><CoinIcon tier="silver" size={30} />28</span>{' '}<span className="dc-coins"><CoinIcon tier="bronze" size={30} />50</span></p>
+          <p className="dc-title" style={{ fontSize: 26 }}><span className="dc-coins"><CoinIcon tier="silver" size={30} />28</span>{' '}<span className="dc-coins"><CoinIcon tier="bronze" size={30} />50</span></p>
           <p className="dc-small">2.850 Bernis insgesamt</p>
           <div className="dc-sep" />
           <p>Bernis bekommst du für Level-ups, Minispiele, Erfolge, Tagesaufgaben und den Tagesbonus.</p>
@@ -76,5 +77,5 @@ export default { title: 'Discord', parameters: { options: { showPanel: false } }
 
 export const Nachrichten: StoryObj = {
   name: 'Nachrichten',
-  render: (_args, { globals }) => <Channel scheme={globals.scheme as string} />,
+  render: (_args, { globals }) => <Channel scheme={globals.scheme as string} mode={globals.mode === 'light' ? 'light' : 'dark'} />,
 };
