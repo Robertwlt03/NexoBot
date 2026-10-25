@@ -30,7 +30,7 @@ const withTheme: Decorator = (Story, context) => {
  */
 const withDevice: Decorator = (Story, context) => {
   const switches: Switch[] = context.parameters.switches;
-  if (context.globals.device !== 'phone' || framed || context.parameters.ownDevice || !switches.includes('device')) return <Story />;
+  if (context.globals.device !== 'phone' || framed || context.viewMode === 'docs' || context.parameters.ownDevice || !switches.includes('device')) return <Story />;
   const { scheme, mode } = context.globals;
   applyTheme(themeFor(scheme, mode));
   return (
@@ -42,6 +42,8 @@ const withDevice: Decorator = (Story, context) => {
 };
 
 const preview: Preview = {
+  // Every component gets a docs page; the overviews, pages and foundations opt out with '!autodocs'.
+  tags: ['autodocs'],
   // The toolbar controls for these globals are our own (manager.tsx), so the default dropdowns are switched off.
   globalTypes: {
     scheme: { description: 'Farbvorlage' },
@@ -54,7 +56,8 @@ const preview: Preview = {
   parameters: {
     layout: 'fullscreen',
     switches: ['scheme', 'mode', 'device'] satisfies Switch[],
-    options: { storySort: { order: ['Start', 'Übersicht', 'Vergleich', 'Discord', 'Bausteine', 'Seiten'] } },
+    options: { storySort: { order: ['Start', 'Übersicht', 'Vergleich', 'Discord', 'Grundlagen', 'Komponenten', ['Aktionen', 'Layout', 'Formular', 'Rückmeldung', 'Diagramme', 'Marke', 'Discord'], 'Seiten'] } },
+    controls: { expanded: true, sort: 'requiredFirst' },
   },
 };
 

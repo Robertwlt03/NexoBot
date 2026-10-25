@@ -3,10 +3,10 @@
 // A story lists in `parameters.switches` the switches that change something on it; the others are hidden there.
 // On a phone the switches shrink to icons and Storybook's zoom and isolation buttons are hidden, so everything fits.
 // The manager bundle compiles JSX to React.createElement, so React has to be in scope.
-import React, { useSyncExternalStore, type ReactNode } from 'react';
+import React, { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import { BrowserIcon, MobileIcon, MoonIcon, SunIcon } from '@storybook/icons';
 import { Select, Separator, ToggleButton } from 'storybook/internal/components';
-import { addons, types, useGlobals, useParameter } from 'storybook/manager-api';
+import { addons, types, useGlobals, useParameter, useStorybookApi } from 'storybook/manager-api';
 import { THEME_PRESETS } from '../src/shared/theme';
 
 const NARROW = '(max-width: 640px)';
@@ -16,19 +16,33 @@ const useNarrow = () => useSyncExternalStore((onChange) => {
   return () => narrowQuery.removeEventListener('change', onChange);
 }, () => narrowQuery.matches);
 
-// Fewer buttons: the addon panel is empty (every setting sits in the toolbar or on the page), and the editor link,
-// tag filter, "new story", "modified stories" and the context menus only help while coding. Zoom and isolation mode
+// Fewer buttons: the editor link, tag filter, "new story", "modified stories" and the context menus only help while coding. Zoom and isolation mode
 // do not fit next to our switches on a phone.
 const hide = (selectors: string[]) => `${selectors.join(', ')} { display: none !important; }`;
 const label = (text: string) => `[aria-label="${text}"]`;
 const frameStyle = document.createElement('style');
 frameStyle.textContent = hide([
-  label('Show addon panel'), label('Open in editor'), '[aria-label$="tag filter"]', '[aria-label$="tag filters"]',
+  label('Open in editor'), '[aria-label$="tag filter"]', '[aria-label$="tag filters"]',
   label('Create a new story'), label('Show modified stories since last commit'), label('Open context menu'),
 ]) + ` @media ${NARROW} { ${hide([label('Open in isolation mode'), label('Change zoom level')])} }`;
 document.head.append(frameStyle);
 
 addons.setConfig({ showPanel: false });
+
+// The addon panel (controls, actions, accessibility) only has content on the component stories (`parameters.panel`).
+const panelStyle = document.createElement('style');
+document.head.append(panelStyle);
+
+/** Opens the panel on component stories and closes it, with its button, everywhere else. */
+function PanelSync() {
+  const api = useStorybookApi();
+  const panel = useParameter<boolean>('panel', false);
+  useEffect(() => {
+    api.togglePanel(panel);
+    panelStyle.textContent = panel ? '' : hide([label('Show addon panel'), label('Hide addon panel')]);
+  }, [api, panel]);
+  return null;
+}
 
 /** True when the open story lists this switch in `parameters.switches` (all three by default, see preview.tsx). */
 const useSwitch = (name: string) => useParameter<string[]>('switches', ['scheme', 'mode', 'device']).includes(name);
@@ -81,6 +95,7 @@ function Pair({ caption, name, options }: { caption: string; name: string; optio
 }
 
 addons.register('nexo/toolbar', () => {
+  addons.add('nexo/panel', { type: types.TOOL, title: 'Panel', render: () => <PanelSync /> });
   addons.add('nexo/scheme', { type: types.TOOL, title: 'Farbvorlage', render: () => <SchemePicker /> });
   addons.add('nexo/mode', {
     type: types.TOOL, title: 'Modus',

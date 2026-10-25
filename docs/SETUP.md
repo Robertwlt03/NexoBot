@@ -89,7 +89,7 @@ npm run storybook          # http://localhost:6006
 npm run build-storybook    # statische Fassung nach dist/storybook
 ```
 
-Storybook beginnt mit einer Startseite, die alles erklärt. Es zeigt alle Dashboard-Seiten auf einer Übersicht, eine Seite in allen zwölf Farbvorlagen, die Nachrichten in Discord und die Bausteine. Oben in der Leiste schaltest du Farbvorlage, hell oder dunkel und Desktop oder Handy um; das gilt überall, auch auf einer einzeln geöffneten Seite. Die Beispieldaten kommen aus der lokalen `dashboard/mock-fixtures.ts` (nicht im Repository); ohne sie zeigen die Seiten ihren Fehlerzustand. Die Banner der Discord-Karten zeichnet nur der Entwicklungsserver.
+Storybook beginnt mit einer Startseite, die alles erklärt. Es zeigt alle Dashboard-Seiten auf einer Übersicht, eine Seite in allen zwölf Farbvorlagen und Nexos Discord-Nachrichten, gebaut mit dem Code des Bots. Unter „Grundlagen“ stehen Farben, Schrift, Formen, Icons und Farbvorlagen, unter „Komponenten“ jeder Baustein mit Anleitung, Eigenschaften, Beispielen und Code zum Kopieren; dort prüft der Bereich „Accessibility“ Kontrast und Bedienbarkeit. Oben in der Leiste schaltest du Farbvorlage, hell oder dunkel und Desktop oder Handy um, jeweils dort, wo es etwas ändert. Die Beispieldaten kommen aus der lokalen `dashboard/mock-fixtures.ts` (nicht im Repository); ohne sie zeigen die Seiten ihren Fehlerzustand. Die Discord-Nachrichten und ihre Banner baut nur der Entwicklungsserver.
 
 ## <img src="../assets/icons/env.svg" height="33" align="absmiddle" alt="">Umgebungsvariablen
 

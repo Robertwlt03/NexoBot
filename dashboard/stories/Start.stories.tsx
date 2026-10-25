@@ -11,8 +11,9 @@ type Globals = { scheme: string; mode: string; device: string };
 const AREAS = [
   { id: 'übersicht--alle-seiten', title: 'Übersicht', text: `Alle ${PAGES.length} Dashboard-Seiten auf einmal, gruppiert wie die Navigation: Start, Server, Mein Profil und Owner. Jede Vorschau ist die echte Seite mit Beispieldaten. Ein Klick öffnet sie groß, mit dem Regler „Größe“ machst du die Vorschauen größer oder kleiner.` },
   { id: 'vergleich--alle-farbvorlagen', title: 'Vergleich', text: 'Eine Seite in allen zwölf Farbvorlagen nebeneinander. Welche Seite, wählst du oben auf der Seite. Hell oder dunkel und Desktop oder Handy kommen aus der Leiste.' },
-  { id: 'discord--nachrichten', title: 'Discord', text: 'So sehen Nexos Antworten im Chat aus: Banner in der Farbe der Aktion, Münzen und Knöpfe nach Aktion. Die Farben folgen der Farbvorlage, so wie Mitglieder sie mit ihrem eigenen Dashboard-Design sehen.' },
-  { id: 'bausteine--logo', title: 'Bausteine', text: 'Die kleinen Teile, aus denen die Seiten bestehen: Logo, Münzen, Karten und Hinweise, Profilkarte und Diagramme.' },
+  { id: 'discord--nachrichten', title: 'Discord', text: 'Nexos Antworten im Chat, gebaut mit dem echten Code des Bots (nexoCard, nexoMessage) und gefärbt wie für Mitglieder mit eigenem Dashboard-Design. Unter jeder Nachricht zeigt „Code anzeigen“ den Aufruf, der sie baut.' },
+  { id: 'grundlagen--farben', title: 'Grundlagen', text: 'Farben mit Wert und Kontrast im gewählten Modus, Schrift, Rundungen und Schatten, alle Icons zum Kopieren und die zwölf Farbvorlagen.' },
+  { id: 'komponenten-aktionen-knöpfe--arten', title: 'Komponenten', text: 'Jeder Baustein des Dashboards mit Anleitung: wann man ihn nimmt, alle Eigenschaften mit Typ, Beispiele mit „Show code“ zum Kopieren. Unten im Bereich „Controls“ änderst du Eigenschaften live, „Accessibility“ prüft Kontrast und Bedienbarkeit.' },
 ];
 
 const SWITCHES = [
@@ -60,7 +61,7 @@ function Start({ globals }: { globals: Globals }) {
         </div>
 
         <div>
-          <h2 style={{ fontSize: 20, marginBottom: 12 }}>Die vier Bereiche</h2>
+          <h2 style={{ fontSize: 20, marginBottom: 12 }}>Die Bereiche</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14 }}>
             {AREAS.map((a) => <Box key={a.id} title={a.title} onClick={() => openStory(a.id, globals)}>{a.text}</Box>)}
           </div>
@@ -78,7 +79,8 @@ function Start({ globals }: { globals: Globals }) {
           <ul style={{ display: 'grid', gap: 8, paddingLeft: 20, color: 'var(--text-muted)', lineHeight: 1.55 }}>
             <li>Starten mit <code>npm run storybook</code>, dann <code>http://localhost:6006</code> öffnen.</li>
             <li>Die Beispieldaten kommen aus <code>dashboard/mock-fixtures.ts</code>, dieselben wie in der Mock-Vorschau. Die Datei liegt nur lokal; fehlt sie, zeigen die Seiten ihren Fehlerzustand.</li>
-            <li>Die Banner der Discord-Karten zeichnet der Entwicklungsserver mit dem Code des Bots. In der statischen Fassung (<code>npm run build-storybook</code>) fehlen sie.</li>
+            <li>Die Discord-Nachrichten und ihre Banner baut der Entwicklungsserver mit dem Code des Bots. In der statischen Fassung (<code>npm run build-storybook</code>) fehlen sie. Eine neue Beispielnachricht kommt als Funktion in <code>.storybook/discordCards.ts</code>.</li>
+            <li>Eine neue Komponente bekommt eine Datei in <code>dashboard/stories/components/</code>; ihre Anleitungsseite entsteht von selbst aus den Stories und den Kommentaren im Code.</li>
             <li>Eine neue Dashboard-Seite kommt in <code>dashboard/stories/pages.ts</code> und <code>Seiten.stories.tsx</code>, dann erscheint sie in Übersicht und Vergleich.</li>
           </ul>
         </div>
@@ -88,7 +90,7 @@ function Start({ globals }: { globals: Globals }) {
 }
 
 // Text page without accent colours: only light/dark changes it.
-export default { title: 'Start', parameters: { switches: ['mode'], options: { showPanel: false } } } satisfies Meta;
+export default { title: 'Start', tags: ['!autodocs'], parameters: { switches: ['mode'] } } satisfies Meta;
 
 export const Willkommen: StoryObj = {
   render: (_args, { globals }) => <Start globals={globals as Globals} />,
