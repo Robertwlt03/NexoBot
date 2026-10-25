@@ -30,6 +30,15 @@ const RINGS = Array.from({ length: 12 }, (_, i) => {
   return { d: `M${points.join('L')}Z`, w: i % 3 ? 4 + (i % 2) * 3 : 10 };
 });
 
+/**
+ * Drying cracks in the coin: a wedge from the rim towards the heart and one short hairline. They are holes (the
+ * background shows through), drawn with a dark inner edge and a lit upper lip so they read as depth.
+ */
+const CRACKS = [
+  { d: 'M887.5 179.5L883.8 189.2L872.6 195.0L870.3 207.1L855.8 207.3L848.3 221.8L845.5 229.9L837.5 238.9L827.1 244.3L822.4 247.6L815.3 260.0L806.8 265.6L798.9 272.5L792.3 284.8L786.1 292.6L778.6 297.8L770.3 303.9L764.9 313.8L755.0 317.5L746.8 326.1L739.2 333.9L732.3 341.3L724.0 347.9L716.2 355.3L709.7 364.0L702.1 371.2L695.4 379.5L685.5 384.0L679.8 394.2L680.9 394.8L686.3 384.9L696.3 380.7L704.4 373.7L712.5 366.8L720.7 360.1L729.1 354.1L737.0 347.1L746.8 341.7L752.8 332.6L762.1 329.5L771.3 323.4L782.1 319.7L791.5 314.2L799.4 305.0L806.9 296.0L813.2 290.6L825.4 289.2L829.8 277.0L841.9 279.8L854.4 270.8L856.5 257.9L866.1 255.2L878.4 248.5L884.2 245.7L890.3 238.1L902.9 235.1L910.5 230.6L923.6 227.6Z', lip: 'M887.5 179.5L883.8 189.2L872.6 195.0L870.3 207.1L855.8 207.3L848.3 221.8L845.5 229.9L837.5 238.9L827.1 244.3L822.4 247.6L815.3 260.0L806.8 265.6L798.9 272.5L792.3 284.8L786.1 292.6L778.6 297.8L770.3 303.9L764.9 313.8L755.0 317.5L746.8 326.1L739.2 333.9L732.3 341.3L724.0 347.9L716.2 355.3L709.7 364.0L702.1 371.2L695.4 379.5', main: true },
+  { d: 'M81.7 767.2L87.0 764.0L91.9 760.3L96.7 757.3L101.8 754.6L107.5 752.5L113.1 748.8L117.6 744.9L124.1 743.0L127.1 735.8L131.4 733.4L137.3 732.2L143.2 728.8L147.3 723.7L151.9 720.4L157.2 717.8L163.1 716.0L168.4 713.2L174.8 712.1L179.3 707.6L184.1 704.0L183.4 703.0L178.5 706.7L174.3 711.0L168.0 711.9L162.3 713.9L156.5 715.8L150.7 718.1L145.3 721.5L141.1 726.1L135.9 727.5L129.3 728.4L123.8 733.1L120.0 738.2L114.8 739.9L110.3 744.5L104.7 745.5L99.1 747.7L92.9 749.5L87.2 752.4L82.0 755.1L76.6 757.3Z', lip: 'M81.7 767.2L87.0 764.0L91.9 760.3L96.7 757.3L101.8 754.6L107.5 752.5L113.1 748.8L117.6 744.9L124.1 743.0L127.1 735.8L131.4 733.4L137.3 732.2L143.2 728.8L147.3 723.7L151.9 720.4L157.2 717.8L163.1 716.0L168.4 713.2L174.8 712.1', main: false },
+];
+
 function orbitPoint(angle: number) {
   const x = ORBIT.rx * Math.cos(angle);
   const y = ORBIT.ry * Math.sin(angle);
@@ -121,9 +130,15 @@ export function NexoLogo({ className, animated = true, followPointer = false, ti
           <stop offset="0" stopColor="#C4B5FD" stopOpacity="0" /><stop offset="0.3" stopColor="#C4B5FD" stopOpacity="0.6" /><stop offset="0.6" stopColor="#E9D5FF" stopOpacity="1" /><stop offset="1" stopColor="#7DD3FC" stopOpacity="1" />
         </linearGradient>
         <clipPath id={`${id}-front`}><rect x="-600" y="0" width="1200" height="600" /></clipPath>
+        <mask id={`${id}-cut`} maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+          <rect width="1024" height="1024" fill="#FFFFFF" />
+          {CRACKS.map((crack) => <path key={crack.main ? "main" : "hair"} d={crack.d} fill="#000000" />)}
+        </mask>
+        <clipPath id={`${id}-face`}><circle cx="512" cy="512" r="491" /></clipPath>
       </defs>
 
-      {/* The coin: rim, end grain with growth rings, an engraved groove and a soft sheen. */}
+      {/* The coin: rim, end grain with growth rings, an engraved groove and a soft sheen; the cracks are cut out. */}
+      <g mask={ref('cut')}>
       <circle cx="512" cy="512" r="492" fill={ref('rim')} />
       <circle cx="512" cy="512" r="452" fill={ref('wood')} />
       <g clipPath={ref('coin')}>
@@ -135,6 +150,15 @@ export function NexoLogo({ className, animated = true, followPointer = false, ti
       <circle cx="512" cy="512" r="420" fill="none" stroke="#24140A" strokeOpacity=".45" strokeWidth="5" />
       <circle cx="512" cy="512" r="415" fill="none" stroke="#FFE7C7" strokeOpacity=".12" strokeWidth="3" />
       <circle cx="512" cy="512" r="490" fill="none" stroke="#FFE7C7" strokeOpacity=".18" strokeWidth="4" />
+      <g clipPath={ref('face')}>
+        {CRACKS.map((crack) => (
+          <g key={crack.main ? "main" : "hair"}>
+            <path d={crack.d} fill="none" stroke="#140A04" strokeOpacity=".55" strokeWidth={crack.main ? 12 : 6} strokeLinejoin="round" />
+            <path d={crack.lip} fill="none" stroke="#E7B985" strokeOpacity={crack.main ? 0.5 : 0.35} strokeWidth={crack.main ? 4 : 2.5} strokeLinecap="round" transform="translate(-1.5 -1.5)" />
+          </g>
+        ))}
+      </g>
+      </g>
 
       {/* The robot as a die-cut sticker: a thick white cut line around its silhouette, lifted off the wood. */}
       <g className="nx-sticker">
