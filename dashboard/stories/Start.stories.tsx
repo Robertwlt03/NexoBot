@@ -10,20 +10,20 @@ type Globals = { scheme: string; mode: string; device: string };
 
 const AREAS = [
   { id: 'übersicht--alle-seiten', title: 'Übersicht', text: `Alle ${PAGES.length} Dashboard-Seiten auf einmal, gruppiert wie die Navigation: Start, Server, Mein Profil und Owner. Jede Vorschau ist die echte Seite mit Beispieldaten. Ein Klick öffnet sie groß, mit dem Regler „Größe“ machst du die Vorschauen größer oder kleiner.` },
-  { id: 'vergleich--alle-farbvorlagen', title: 'Vergleich', text: 'Eine Seite in allen zwölf Farbvorlagen nebeneinander. Welche Seite, stellst du unten im Bereich „Controls“ ein. Hell oder dunkel und Desktop oder Handy kommen aus der Leiste oben.' },
+  { id: 'vergleich--alle-farbvorlagen', title: 'Vergleich', text: 'Eine Seite in allen zwölf Farbvorlagen nebeneinander. Welche Seite, wählst du oben auf der Seite. Hell oder dunkel und Desktop oder Handy kommen aus der Leiste.' },
   { id: 'discord--nachrichten', title: 'Discord', text: 'So sehen Nexos Antworten im Chat aus: Banner in der Farbe der Aktion, Münzen und Knöpfe nach Aktion. Die Farben folgen der Farbvorlage, so wie Mitglieder sie mit ihrem eigenen Dashboard-Design sehen.' },
   { id: 'bausteine--logo', title: 'Bausteine', text: 'Die kleinen Teile, aus denen die Seiten bestehen: Logo, Münzen, Karten und Hinweise, Profilkarte und Diagramme.' },
 ];
 
 const SWITCHES = [
   { title: 'Farbvorlage · Auswahl', text: `Klick auf das Feld mit den zwei Farbtupfern öffnet die Liste der zwölf Vorlagen aus „Dashboard-Design“: ${THEME_PRESETS.map((p) => p.name).join(', ')}. Die aktive hat ein Häkchen.` },
-  { title: 'Modus · Schalter', text: 'Zwei Seiten, Dunkel oder Hell; die blaue ist aktiv. Auf der Discord-Seite wechselt auch der Chat zwischen Discords dunklem und hellem Aussehen.' },
-  { title: 'Gerät · Schalter', text: 'Desktop mit 1280 Pixeln Breite oder Handy mit 390 Pixeln; die blaue ist aktiv. Auf „Handy“ zeigt jede Seite das echte Handy-Layout in einem Handy-Rahmen.' },
+  { title: 'Modus · Schalter', text: 'Zwei Seiten, Dunkel oder Hell; die grüne ist aktiv. Auf der Discord-Seite wechselt auch der Chat zwischen Discords dunklem und hellem Aussehen.' },
+  { title: 'Gerät · Schalter', text: 'Desktop mit 1280 Pixeln Breite oder Handy mit 390 Pixeln; die grüne ist aktiv. Auf „Handy“ zeigt jede Seite das echte Handy-Layout in einem Handy-Rahmen.' },
 ];
 
 const TOOLS = [
   'Die Seitenleiste links zeigt nur Start und die vier Bereiche. Einzelne Seiten öffnest du über die Übersicht oder mit der Suche (⌘K): Tipp den Namen der Seite ein, zum Beispiel „Shop“.',
-  'Ganz links in der Leiste lädt der Pfeil die Ansicht neu. Rechts sitzen Zoom, Vollbild und ein Link zum Öffnen in einem neuen Tab.',
+  'Ganz links in der Leiste lädt der Pfeil die Ansicht neu. Rechts sitzen Zoom und ein Link zum Öffnen in einem neuen Tab.',
   'Am Handy zeigt die Leiste nur die Symbole (Farbtupfer, Mond und Sonne, Bildschirm und Handy); Zoom und die übrigen Storybook-Werkzeuge sind dort ausgeblendet.',
   'Übersicht und Vergleich laden alle Vorschauen auf einmal und zeigen solange eine Ladeanzeige; danach erscheinen sie zusammen, und du bleibst oben auf der Seite.',
   'Die gewählten Einstellungen stehen in der Adresse; du kannst eine Ansicht also als Lesezeichen speichern oder weitergeben.',
@@ -53,7 +53,7 @@ function Start({ globals }: { globals: Globals }) {
 
         <div>
           <h2 style={{ fontSize: 20, marginBottom: 12 }}>Die drei Schalter oben in der Leiste</h2>
-          <p style={{ color: 'var(--text-muted)', marginBottom: 14 }}>Sie gelten überall: auf dieser Seite, in der Übersicht, im Vergleich, auf Discord, bei den Bausteinen und auf jeder einzeln geöffneten Seite.</p>
+          <p style={{ color: 'var(--text-muted)', marginBottom: 14 }}>Die Leiste zeigt nur die Schalter, die auf der offenen Seite etwas ändern. Auf dieser Textseite ist das nur der Modus; im Vergleich fehlt die Farbvorlage, weil er alle zwölf zeigt; Logo, Münzen und Profilkarte haben feste Farben. Die Wahl bleibt beim Wechsel erhalten.</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14 }}>
             {SWITCHES.map((s) => <Box key={s.title} title={s.title}>{s.text}</Box>)}
           </div>
@@ -87,7 +87,8 @@ function Start({ globals }: { globals: Globals }) {
   );
 }
 
-export default { title: 'Start', parameters: { options: { showPanel: false } } } satisfies Meta;
+// Text page without accent colours: only light/dark changes it.
+export default { title: 'Start', parameters: { switches: ['mode'], options: { showPanel: false } } } satisfies Meta;
 
 export const Willkommen: StoryObj = {
   render: (_args, { globals }) => <Start globals={globals as Globals} />,

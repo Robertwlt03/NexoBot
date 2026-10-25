@@ -62,6 +62,7 @@ export const frameStyles = `
 .sb-board .sb-lead { margin: 6px 0 0; color: var(--text-muted); max-width: 900px; }
 .sb-bar { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; margin: 18px 0 8px; color: var(--text-muted); font-size: 13px; }
 .sb-bar input[type=range] { width: 180px; accent-color: var(--accent); }
+.sb-select { height: 34px; margin-left: 6px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--border-strong); background: var(--bg-card); color: var(--text-strong); font: inherit; font-size: 14px; }
 .sb-group { margin-top: 30px; }
 .sb-group h2 { font-family: var(--font-display); font-size: 17px; margin: 0 0 12px; color: var(--text-strong); }
 .sb-row { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }

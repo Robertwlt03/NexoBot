@@ -20,7 +20,11 @@ const Row = ({ children }: { children: ReactNode }) => <div style={{ display: 'f
 
 export default { title: 'Bausteine', parameters: { options: { showPanel: false } } } satisfies Meta;
 
+/** Fixed brand colours and fixed sizes: only the background follows light/dark. */
+const fixed = { switches: ['mode'] };
+
 export const Logo: StoryObj = {
+  parameters: fixed,
   render: () => (
     <Sheet title="Logo">
       <Row>
@@ -36,6 +40,7 @@ export const Logo: StoryObj = {
 
 export const Muenzen: StoryObj = {
   name: 'Münzen',
+  parameters: fixed,
   render: () => (
     <Sheet title="Bernis-Münzen">
       {[48, 24, 16].map((size) => (
@@ -75,6 +80,7 @@ const plain: ResolvedCosmetics = {
 };
 
 export const Profilkarte: StoryObj = {
+  parameters: fixed,
   render: () => (
     <Sheet title="Profilkarte">
       <div style={{ maxWidth: 760 }}><ProfileCardPreview subject={subject} cosmetics={plain} /></div>

@@ -1,6 +1,6 @@
 // Toolbar switches (colour scheme, light/dark, desktop/phone) for every story. The sample API lives in sample.ts.
 import type { Decorator, Preview } from '@storybook/react-vite';
-import { applyTheme } from '../dashboard/src/theme';
+import { applyTheme, ThemeProvider } from '../dashboard/src/theme';
 import { sample, themeFor } from './sample';
 import '../dashboard/src/tailwind.css';
 import '../dashboard/src/styles.css';
@@ -8,14 +8,20 @@ import '../dashboard/src/styles.css';
 /** Inside the phone frame of `withDevice` (see below); there the story renders normally at phone width. */
 const framed = new URLSearchParams(window.location.search).has('framed');
 
-/** Colour scheme and light/dark; pages remount on a change so they fetch the new theme from the sample API. */
+/** The toolbar switches; a story lists in `parameters.switches` only those that change something on it. */
+export type Switch = 'scheme' | 'mode' | 'device';
+
+/**
+ * Colour scheme and light/dark; stories remount on a change so pages fetch the new theme from the sample API. The
+ * ThemeProvider gives the building blocks outside a page (charts) the theme too; inside a page the app's own wins.
+ */
 const withTheme: Decorator = (Story, context) => {
   const theme = themeFor(context.globals.scheme, context.globals.mode);
   sample.theme = theme;
   sample.loggedOut = Boolean(context.parameters.loggedOut);
   try { localStorage.setItem('nexo.dashboardTheme', JSON.stringify(theme)); } catch { /* private mode */ }
   applyTheme(theme);
-  return <Story key={`${theme.preset}-${theme.mode}-${sample.loggedOut}`} />;
+  return <ThemeProvider key={`${theme.preset}-${theme.mode}-${sample.loggedOut}`} loggedIn={false}><Story /></ThemeProvider>;
 };
 
 /**
@@ -23,7 +29,8 @@ const withTheme: Decorator = (Story, context) => {
  * queries) applies. The overviews size their previews themselves (`parameters.ownDevice`).
  */
 const withDevice: Decorator = (Story, context) => {
-  if (context.globals.device !== 'phone' || framed || context.parameters.ownDevice) return <Story />;
+  const switches: Switch[] = context.parameters.switches;
+  if (context.globals.device !== 'phone' || framed || context.parameters.ownDevice || !switches.includes('device')) return <Story />;
   const { scheme, mode } = context.globals;
   applyTheme(themeFor(scheme, mode));
   return (
@@ -46,6 +53,7 @@ const preview: Preview = {
   decorators: [withTheme, withDevice],
   parameters: {
     layout: 'fullscreen',
+    switches: ['scheme', 'mode', 'device'] satisfies Switch[],
     options: { storySort: { order: ['Start', 'Übersicht', 'Vergleich', 'Discord', 'Bausteine', 'Seiten'] } },
   },
 };
