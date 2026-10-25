@@ -36,16 +36,7 @@ const config: StorybookConfig = {
     viewport: false, backgrounds: false, measure: false, outline: false, actions: false, interactions: false,
     sidebarOnboardingChecklist: false, menuOnboardingChecklist: false,
   },
-  staticDirs: [
-    { from: '../dashboard/public', to: '/dashboard' },
-    // Inter and Unbounded for Storybook's own frame (manager.tsx); the stories get them from the dashboard's CSS.
-    { from: '../node_modules/@fontsource-variable/inter/files', to: '/fonts' },
-    { from: '../node_modules/@fontsource-variable/unbounded/files', to: '/fonts' },
-  ],
-  managerHead: (head) => `${head}<style>
-    @font-face { font-family: 'Inter Variable'; font-style: normal; font-display: swap; font-weight: 100 900; src: url(/fonts/inter-latin-wght-normal.woff2) format('woff2-variations'); }
-    @font-face { font-family: 'Unbounded Variable'; font-style: normal; font-display: swap; font-weight: 200 900; src: url(/fonts/unbounded-latin-wght-normal.woff2) format('woff2-variations'); }
-  </style>`,
+  staticDirs: [{ from: '../dashboard/public', to: '/dashboard' }],
   async viteFinal(config) {
     return { ...config, base: '/', plugins: [...(config.plugins ?? []), banners()] };
   },

@@ -16,9 +16,9 @@ const AREAS = [
 ];
 
 const SWITCHES = [
-  { title: 'Farbvorlage · Auswahl', text: `Klick auf das Feld mit den zwei Farbtupfern öffnet die Liste der zwölf Vorlagen aus „Dashboard-Design“: ${THEME_PRESETS.map((p) => p.name).join(', ')}. Die aktive hat ein Häkchen.` },
-  { title: 'Modus · Schalter', text: 'Zwei Seiten, Dunkel oder Hell; die grüne ist aktiv. Auf der Discord-Seite wechselt auch der Chat zwischen Discords dunklem und hellem Aussehen.' },
-  { title: 'Gerät · Schalter', text: 'Desktop mit 1280 Pixeln Breite oder Handy mit 390 Pixeln; die grüne ist aktiv. Auf „Handy“ zeigt jede Seite das echte Handy-Layout in einem Handy-Rahmen.' },
+  { title: 'Farbvorlage · Auswahl', text: `Klick auf „Farbvorlage“ mit den zwei Farbtupfern öffnet die Liste der zwölf Vorlagen aus „Dashboard-Design“: ${THEME_PRESETS.map((p) => p.name).join(', ')}. Die aktive hat ein Häkchen.` },
+  { title: 'Modus · Schalter', text: 'Zwei Seiten, Dunkel oder Hell; die gedrückte ist aktiv. Auf der Discord-Seite wechselt auch der Chat zwischen Discords dunklem und hellem Aussehen.' },
+  { title: 'Gerät · Schalter', text: 'Desktop mit 1280 Pixeln Breite oder Handy mit 390 Pixeln; die gedrückte ist aktiv. Auf „Handy“ zeigt jede Seite das echte Handy-Layout in einem Handy-Rahmen.' },
 ];
 
 const TOOLS = [
