@@ -82,6 +82,15 @@ Fertige Images: `ghcr.io/robertwlt03/nexobot`.
 
 Healthchecks: `GET /health` (Prozess lebt) und `GET /ready` (Bot verbunden und Datenbank bereit).
 
+### Storybook
+
+```bash
+npm run storybook          # http://localhost:6006
+npm run build-storybook    # statische Fassung nach dist/storybook
+```
+
+Storybook zeigt alle Dashboard-Seiten auf einer Übersicht, eine Seite in allen zwölf Farbvorlagen, die Nachrichten in Discord und die Bausteine. Oben in der Leiste schaltest du Farbvorlage, hell oder dunkel und Desktop oder Handy für alle Vorschauen zugleich um. Die Beispieldaten kommen aus der lokalen `dashboard/mock-fixtures.ts` (nicht im Repository); ohne sie zeigen die Seiten ihren Fehlerzustand. Die Banner der Discord-Karten zeichnet nur der Entwicklungsserver.
+
 ## <img src="../assets/icons/env.svg" height="33" align="absmiddle" alt="">Umgebungsvariablen
 
 Alle Variablen mit Beispielwerten stehen in [.env.example](../.env.example). Die wichtigsten:
