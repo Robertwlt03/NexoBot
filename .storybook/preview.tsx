@@ -1,5 +1,6 @@
 // Toolbar switches (colour scheme, light/dark, desktop/phone) for every story. The sample API lives in sample.ts.
 import type { Decorator, Preview } from '@storybook/react-vite';
+import { themes } from 'storybook/theming';
 import { applyTheme, ThemeProvider } from '../dashboard/src/theme';
 import { sample, themeFor } from './sample';
 import '../dashboard/src/tailwind.css';
@@ -60,7 +61,8 @@ const preview: Preview = {
     options: { storySort: { order: ['Start', 'Übersicht', 'Vergleich', 'Discord', 'Grundlagen', 'Komponenten', ['Aktionen', 'Layout', 'Formular', 'Rückmeldung', 'Diagramme', 'Marke', 'Discord'], 'Seiten'] } },
     controls: { expanded: true, sort: 'requiredFirst' },
     // The example's code as a tab in the addon panel (the panel only opens on component stories, see manager.tsx).
-    docs: { codePanel: true },
+    // Guide pages follow the system's light/dark setting like Storybook's own frame does (docs.css matches it).
+    docs: { codePanel: true, theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? themes.dark : themes.light },
     // Code snippets keep a tag's attributes on one line while it fits, instead of one attribute per line.
     jsx: { maxInlineAttributesLineLength: 90 },
   },

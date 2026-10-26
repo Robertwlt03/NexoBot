@@ -1,9 +1,46 @@
 /*
  * Guide pages: "Show code" and "Copy code" sit in a footer bar of the example box, styled like Storybook's own bar
- * above the example (same border, background and hairline), instead of floating under the box.
- * The docs pages use Storybook's light docs theme, so these are its light colours. The doubled class beats the
- * emotion class Storybook injects after this file.
+ * above the example, and the code opens as a quiet card indented in the box (GitHub's syntax colours, ≥ 4.5:1 on the
+ * card). The guide pages follow the system's light/dark setting (preview.tsx), so these colours do too: they are
+ * those of Storybook's light and dark docs themes. The doubled class beats the emotion class Storybook injects later.
  */
+:root {
+  --sbx-prose: #2e3438;
+  --sbx-frame: #fff;
+  --sbx-line: rgba(38, 74, 115, 0.15);
+  --sbx-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  --sbx-card: #f6f8fa;
+  --sbx-card-line: rgba(38, 74, 115, 0.1);
+  --sbx-text: #1f2328;
+  --sbx-muted: #59636e;
+  --sbx-tag: #116329;
+  --sbx-component: #953800;
+  --sbx-attr: #0550ae;
+  --sbx-value: #0a3069;
+  --sbx-keyword: #cf222e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sbx-prose: #c9cccf;
+    --sbx-frame: #222325;
+    --sbx-line: rgba(255, 255, 255, 0.1);
+    --sbx-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.2);
+    --sbx-card: #1a1b1d;
+    --sbx-card-line: rgba(255, 255, 255, 0.08);
+    --sbx-text: #e6edf3;
+    --sbx-muted: #9198a1;
+    --sbx-tag: #7ee787;
+    --sbx-component: #ffa657;
+    --sbx-attr: #79c0ff;
+    --sbx-value: #a5d6ff;
+    --sbx-keyword: #ff7b72;
+  }
+}
+
+/* The page text in Storybook's colour; it would otherwise inherit the dashboard's text colour from styles.css. */
+.sbdocs.sbdocs-wrapper { color: var(--sbx-prose); }
+
+/* Footer bar with the code buttons, closing the box. */
 .sbdocs.sbdocs-preview:has(+ .sbdocs-preview-actions) {
   margin-bottom: 0;
   border-bottom-left-radius: 0;
@@ -16,41 +53,35 @@
   height: 40px;
   margin: 0 0 40px;
   padding: 0 7px;
-  background: #fff;
-  border: 1px solid rgba(38, 74, 115, 0.15);
+  background: var(--sbx-frame);
+  border: 1px solid var(--sbx-line);
   border-top: 0;
   border-radius: 0 0 4px 4px;
-  box-shadow: inset 0 1px 0 0 rgba(38, 74, 115, 0.15), 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 1px 0 0 var(--sbx-line), var(--sbx-shadow);
 }
 
-/*
- * "Show code" opens the code inside the box, under the example: a light, quiet code card indented in the box's white
- * frame (GitHub's light syntax colours, which keep at least 4.5:1 on the card), instead of Storybook's black block.
- */
+/* The code under the example: an indented card in the box's frame. */
 .sbdocs.sbdocs-preview > .docs-story + div {
   padding: 12px;
-  background: #fff;
-  box-shadow: inset 0 1px 0 0 rgba(38, 74, 115, 0.15);
+  background: var(--sbx-frame);
+  box-shadow: inset 0 1px 0 0 var(--sbx-line);
 }
 .sbdocs.sbdocs-preview > .docs-story + div > div {
   border-radius: 8px;
-  background: #f6f8fa;
-  box-shadow: inset 0 0 0 1px rgba(38, 74, 115, 0.1);
+  background: var(--sbx-card);
+  box-shadow: inset 0 0 0 1px var(--sbx-card-line);
 }
 .sbdocs.sbdocs-preview pre.prismjs {
   padding: 14px 18px;
-  color: #1f2328;
+  color: var(--sbx-text);
   font-size: 12.5px;
   line-height: 1.7;
 }
-.sbdocs.sbdocs-preview pre.prismjs .token.plain-text { color: #1f2328; }
-.sbdocs.sbdocs-preview pre.prismjs .token.punctuation { color: #59636e; }
-.sbdocs.sbdocs-preview pre.prismjs .token.tag { color: #116329; }
-.sbdocs.sbdocs-preview pre.prismjs .token.class-name { color: #953800; }
-.sbdocs.sbdocs-preview pre.prismjs .token.attr-name { color: #0550ae; }
-.sbdocs.sbdocs-preview pre.prismjs .token.attr-value { color: #0a3069; }
-.sbdocs.sbdocs-preview pre.prismjs .token.attr-value .token.punctuation { color: #0a3069; }
-.sbdocs.sbdocs-preview pre.prismjs .token.attr-equals { color: #59636e; }
-.sbdocs.sbdocs-preview pre.prismjs .token:is(.string, .number, .boolean) { color: #0a3069; }
-.sbdocs.sbdocs-preview pre.prismjs .token:is(.keyword, .operator) { color: #cf222e; }
-.sbdocs.sbdocs-preview pre.prismjs .token.comment { color: #59636e; }
+.sbdocs.sbdocs-preview pre.prismjs .token.plain-text { color: var(--sbx-text); }
+.sbdocs.sbdocs-preview pre.prismjs .token:is(.punctuation, .attr-equals, .comment) { color: var(--sbx-muted); }
+.sbdocs.sbdocs-preview pre.prismjs .token.tag { color: var(--sbx-tag); }
+.sbdocs.sbdocs-preview pre.prismjs .token.class-name { color: var(--sbx-component); }
+.sbdocs.sbdocs-preview pre.prismjs .token.attr-name { color: var(--sbx-attr); }
+.sbdocs.sbdocs-preview pre.prismjs .token:is(.attr-value, .string, .number, .boolean),
+.sbdocs.sbdocs-preview pre.prismjs .token.attr-value .token.punctuation { color: var(--sbx-value); }
+.sbdocs.sbdocs-preview pre.prismjs .token:is(.keyword, .operator) { color: var(--sbx-keyword); }
