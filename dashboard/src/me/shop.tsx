@@ -11,7 +11,7 @@ import { useUser } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
 import { ProfileCardPreview } from '../components/ProfileCardPreview';
 import { ProductStage, TryOnPreview } from './ProductStage';
-import { Empty, Field, Notice, Select, Switch, TextInput } from '../components/ui';
+import { Empty, Field, Notice, Pager, Select, Switch, TextInput } from '../components/ui';
 import {
   cardSubject, countdown, equipItem, formatDate, isEquipped, reducedMotion, resolveCosmetics, startsIn, useEquip, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
@@ -181,6 +181,9 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
   );
 }
 
+/** Catalogue items per page. */
+const PAGE_SIZE = 20;
+
 type Sort = 'new' | 'price-asc' | 'price-desc';
 
 /** Kind filter: all, the running event's own items, or one item kind. */
@@ -201,6 +204,7 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
   const [affordable, setAffordable] = useState(false);
   const [query, setQuery] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
   const root = useRef<HTMLDivElement>(null);
   const owned = useMemo(() => new Set(me.inventory.map((o) => o.itemId)), [me.inventory]);
 
@@ -220,7 +224,16 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
   useGSAP(() => {
     if (reducedMotion()) return;
     gsap.fromTo('.js-item', { y: 16, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.45, stagger: 0.025, ease: 'power3.out', clearProps: 'transform' });
-  }, { scope: root, dependencies: [slot, rarity, sort, affordable, deals, listings.length], revertOnUpdate: true });
+  }, { scope: root, dependencies: [slot, rarity, sort, affordable, deals, listings.length, page], revertOnUpdate: true });
+
+  // 20 items per page; a filter change starts at page 1 again (the page clamps when fewer pages remain).
+  const pages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
+  const current = Math.min(page, pages);
+  const turn = (next: number) => {
+    setPage(next);
+    root.current?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
+  };
+  useEffect(() => { setPage(1); }, [slot, rarity, sort, affordable, deals, query]);
 
   const counts = useMemo(() => new Map(COSMETIC_SLOTS.map((s) => [s, listings.filter((l) => l.item.slot === s).length])), [listings]);
   const eventOnly = event ? listings.filter(isEventOnly).length : 0;
@@ -264,9 +277,12 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
       {shown.length === 0
         ? <Empty title="Nichts gefunden">{deals && !listings.some((l) => l.discount > 0) ? 'Gerade ist nichts reduziert.' : <>Probier andere Filter{affordable ? ' oder hol dir erst den Tagesbonus' : ''}.</>}</Empty>
         : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {shown.map((l) => <StoreCard key={l.item.id} listing={l} owned={owned.has(l.item.id)} variant={variant} onOpen={() => setOpenId(l.item.id)} />)}
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {shown.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE).map((l) => <StoreCard key={l.item.id} listing={l} owned={owned.has(l.item.id)} variant={variant} onOpen={() => setOpenId(l.item.id)} />)}
+            </div>
+            <Pager page={current} pages={pages} onPage={turn} />
+          </>
         )}
       {open && <ItemDetail listing={open} owned={owned.has(open.item.id)} onClose={() => setOpenId(null)} />}
     </div>

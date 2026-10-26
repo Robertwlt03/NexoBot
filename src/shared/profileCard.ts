@@ -296,19 +296,21 @@ export const GLYPH_DRAWERS: Record<BadgeGlyph, GlyphDrawer> = {
     outline(0.42);
     ctx.fill();
   },
+  // Two-tone leaf (as the dashboard's autumn icon): the lit half in the colour, the other half a shade darker.
   leaf: (ctx) => {
+    ctx.rotate(Math.PI / 4);
     ctx.beginPath();
-    ctx.moveTo(-9.5, 10.5);
-    ctx.bezierCurveTo(-12, -2, -3, -11, 10.5, -10.5);
-    ctx.bezierCurveTo(11, 3, 2, 11.5, -9.5, 10.5);
+    ctx.moveTo(0, -12);
+    ctx.bezierCurveTo(7.6, -6.5, 7.6, 5.5, 0, 12);
+    ctx.bezierCurveTo(-7.6, 5.5, -7.6, -6.5, 0, -12);
     ctx.closePath();
-    poly(ctx, [[-7.4, 8.2], [7.2, -7.4], [7.9, -6.7], [-6.7, 8.9]]);
-    ctx.fill('evenodd');
-    ctx.lineWidth = 1.8;
+    ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(-9.5, 10.5);
-    ctx.lineTo(-11.5, 12);
-    ctx.stroke();
+    ctx.moveTo(0, -12);
+    ctx.bezierCurveTo(7.6, -6.5, 7.6, 5.5, 0, 12);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+    ctx.fill();
   },
   moon: (ctx) => {
     ctx.save();
@@ -1345,10 +1347,10 @@ function drawEffect(ctx: Ctx, effect: EffectData['effect'], accent: string, w: n
       }
       break;
     case 'leaves':
-      // Falling leaves in moss, fern and autumn amber.
+      // Falling two-tone leaves in moss and the autumn icon's ochre, rust and brown.
       for (let i = 0; i < 22; i++) {
-        ctx.globalAlpha = 0.22 + rng() * 0.38;
-        const color = ['#8FB36B', '#5FA35A', '#C98A4B', '#E0A85A'][Math.floor(rng() * 4)];
+        ctx.globalAlpha = 0.3 + rng() * 0.4;
+        const color = ['#8FB36B', '#e0a43a', '#d0682a', '#a8401a'][Math.floor(rng() * 4)];
         drawGlyph(ctx, 'leaf', rng() * w, rng() * h, 9 + rng() * 13, color, rng() * Math.PI * 2);
       }
       break;
@@ -1378,26 +1380,26 @@ const jitter = (i: number, k: number) => {
 };
 const polar = (cx: number, cy: number, radius: number, angle: number): [number, number] => [cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius];
 
-/** Leaf from (x, y) pointing at `angle`: length l, half-width w, with a lighter midrib. */
-function drawLeaf(ctx: Ctx, x: number, y: number, angle: number, l: number, w: number, fill: string, vein?: string) {
+/**
+ * Leaf from (x, y) pointing at `angle`: length l, half-width w. Two-tone like the dashboard's autumn icon: the upper
+ * half in `fill`, the lower half a shade darker. `vein` is kept for callers but no longer drawn.
+ */
+function drawLeaf(ctx: Ctx, x: number, y: number, angle: number, l: number, w: number, fill: string, _vein?: string) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(angle);
   ctx.beginPath();
   ctx.moveTo(0, 0);
   ctx.quadraticCurveTo(l * 0.45, -w, l, 0);
-  ctx.quadraticCurveTo(l * 0.45, w, 0, 0);
   ctx.closePath();
   ctx.fillStyle = fill;
   ctx.fill();
-  if (vein) {
-    ctx.beginPath();
-    ctx.moveTo(l * 0.12, 0);
-    ctx.lineTo(l * 0.82, 0);
-    ctx.strokeStyle = vein;
-    ctx.lineWidth = Math.max(0.6, w * 0.16);
-    ctx.stroke();
-  }
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.quadraticCurveTo(l * 0.45, w, l, 0);
+  ctx.closePath();
+  ctx.fillStyle = darken(fill, 0.2);
+  ctx.fill();
   ctx.restore();
 }
 
