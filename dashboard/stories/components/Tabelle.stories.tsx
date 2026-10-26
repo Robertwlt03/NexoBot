@@ -17,7 +17,7 @@ const meta = {
         <thead><tr><th>Mitglied</th><th>Level</th><th>Nachrichten</th><th>Status</th></tr></thead>
         <tbody>
           <tr><td>Lena</td><td>24</td><td>3.120</td><td><Badge on>Aktiv</Badge></td></tr>
-          <tr><td>Alex</td><td>19</td><td>2.004</td><td><Badge on>Aktiv</Badge></td></tr>
+          <tr><td>Robert</td><td>19</td><td>2.004</td><td><Badge on>Aktiv</Badge></td></tr>
           <tr><td>Sam</td><td>7</td><td>412</td><td><Badge>Pausiert</Badge></td></tr>
         </tbody>
       </>

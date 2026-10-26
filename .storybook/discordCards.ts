@@ -54,7 +54,7 @@ export function verwarnung() {
   return nexoMessage(nexoCard({
     kicker: 'Moderation', title: 'Verwarnung erteilt', accent: ACCENTS.warn,
     blocks: [{ text: '<@2> wurde verwarnt: Spam in #allgemein.' }],
-    footer: 'Fall #128 · von Alex',
+    footer: 'Fall #128 · von Robert',
   }));
 }
 
