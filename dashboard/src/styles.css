@@ -162,8 +162,64 @@
   --color-warn: #6f3204;
 }
 
+/*
+ * Cyberpunk, after the Edgerunners site (cyberpunk.net/en/edgerunners): near-black surfaces, neon yellow as the accent,
+ * cyan as the second colour, chamfered corners and yellow hatching instead of wood (components/Backdrop.tsx, the
+ * shapes at the end of this file). Always dark; the dark islands inside the page (banner, item tiles) take the same
+ * tokens, so nothing falls back to walnut.
+ */
+[data-theme="cyberpunk"], [data-theme="cyberpunk"] [data-mode="dark"]:not([data-theme]) {
+  --bg-app: #08090b;
+  --bg-sidebar: #0f1114;
+  --bg-main: #0c0d10;
+  --bg-card: #15171b;
+  --bg-card-hover: #1c1f24;
+  --bg-input: #101216;
+  --ov: 230 236 245;
+  --bg-hover: rgb(var(--ov) / 0.06);
+  --bg-active: rgb(var(--ov) / 0.1);
+  --border: rgb(var(--ov) / 0.09);
+  --border-strong: rgb(var(--ov) / 0.16);
+  --border-control: rgb(var(--ov) / 0.3);
+  --border-input: #6b717c;
+  --scrim: 74%;
+  --scrim-color: #0c0d10;
+  --card-shadow: 0 18px 40px -28px rgb(0 0 0 / 0.9);
+
+  --text-strong: #f4f4f4;
+  --text: #d6d6d6;
+  --text-muted: #a8adb5;
+  --text-faint: #969ba4;
+
+  /* Mint and pink from the headline misprint, orange from the site's warning stripes. */
+  --pos: #5de39b;
+  --neg: #ff5c7a;
+  --warning: #ff9d3c;
+  --shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.9), 0 0 40px -22px rgb(252 238 10 / 0.3);
+  --highlight: linear-gradient(180deg, rgb(252 238 10 / 0.035), rgb(252 238 10 / 0) 120px);
+  color-scheme: dark;
+
+  --color-white: #f4f4f4;
+  --color-rail: #08090b;
+  --color-canvas: #0c0d10;
+  --color-panel: #0f1114;
+  --color-surface: #15171b;
+  --color-raised: #1c1f24;
+  --color-field: #101216;
+  --color-ink: #f4f4f4;
+  --color-body: #d6d6d6;
+  --color-mute: #a8adb5;
+  --color-faint: #969ba4;
+  --color-pos: #5de39b;
+  --color-neg: #ff5c7a;
+  --color-warn: #ff9d3c;
+}
+
 /* Mode-independent tokens. */
 :root {
+  /* Cyberpunk hatching that fades in, after the Edgerunners logo: slanted stripes that grow wider until they run into
+     the kicker label. */
+  --hatch-lead: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 14'%3E%3Cpath fill='%23fcee0a' d='M0 14h1.0l6 -14h-1.0zM8 14h1.6l6 -14h-1.6zM16 14h2.5l6 -14h-2.5zM24 14h3.4l6 -14h-3.4zM32 14h4.4l6 -14h-4.4zM40 14h5.4l6 -14h-5.4zM48 14h6.5l6 -14h-6.5z'/%3E%3C/svg%3E");
   --accent: #8fb36b;
   --accent-strong: #759358;
   --accent-ink: #14190f;
@@ -194,6 +250,15 @@
   /* Headings in the homepage font (Unbounded, loaded in tailwind.css), text stays Inter. */
   --font-display: "Unbounded Variable", "Unbounded", var(--font);
   --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+/* Cyberpunk is cut sharper: smaller corners and a squared display font (after the shared tokens, which set the rounder
+   defaults). */
+[data-theme="cyberpunk"] {
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 10px;
+  --font-display: "Chakra Petch", var(--font);
 }
 
 /* Element defaults live in the base layer so Tailwind utilities can override them. */
@@ -476,6 +541,35 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 
 /* Header wood per mode (components/Backdrop.tsx). */
 .wood-light { display: none; }
+/* Theme looks: the wood layers and the burnt engraving belong to the wood themes, the grid and traces to Cyberpunk. */
+.look-cyber { display: none; }
+[data-theme="cyberpunk"] :is(.wood-dark, .wood-light, .look-wood) { display: none; }
+[data-theme="cyberpunk"] .look-cyber { display: block; }
+/* Black board with a faint grid and a cyan glow top right. */
+.cyber-grid {
+  background:
+    radial-gradient(55% 120% at 100% 0%, rgb(0 240 255 / 0.16), transparent 60%),
+    radial-gradient(45% 100% at 0% 0%, rgb(252 238 10 / 0.08), transparent 60%),
+    linear-gradient(rgb(230 236 245 / 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, rgb(230 236 245 / 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
+    #0b0c0f;
+}
+/* A thin yellow line along the top edge, like the site's nav strip; its own layer above the wash over the text column. */
+.cyber-stripe { background: linear-gradient(rgb(252 238 10 / 0.5), rgb(252 238 10 / 0.5)) left 0 top 0 / 100% 1px no-repeat; }
+/*
+ * The page icon in its target corners (components/CircuitArt.tsx): fixed size, 96px from 768px and 72px below (and a
+ * little higher, so it ends before the description), at the height of the page header and flush with the right edge of
+ * the content column (--column from Backdrop.tsx; the
+ * column's side padding is 16px, 40px from 768px).
+ */
+.cyber-hud-at { --pad: 16px; top: 14px; right: max(var(--pad), calc(50% - var(--column) / 2)); }
+.cyber-hud { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; color: rgb(var(--ov) / 0.35); }
+.cyber-hud svg { width: 72px; height: 72px; }
+.cyber-hud-tag { font-family: var(--font-display); font-size: 10px; line-height: 1; letter-spacing: 0.14em; color: var(--text-faint); white-space: nowrap; }
+@media (min-width: 768px) {
+  .cyber-hud-at { --pad: 40px; top: 16px; }
+  .cyber-hud svg { width: 96px; height: 96px; }
+}
 [data-mode="light"] .wood-dark { display: none; }
 [data-mode="light"] .wood-light { display: block; }
 /*
@@ -554,3 +648,64 @@ main:has(.page-head > .actions) .engraving-icon { display: none; }
   .table-stack td:not([data-label]) { justify-content: flex-end; }
   .table-stack td:empty { display: none; }
 }
+
+/*
+ * Cyberpunk shapes, cut like the Edgerunners site: chamfered instead of rounded corners (corner-shape keeps the border
+ * on the cut; browsers without it keep the small radii), only top left and bottom right (rule after this block), one
+ * big cut bottom right on cards and buttons, pills become slanted tags (circles stay round; a pill that should turn
+ * into a tag uses rounded-[999px] instead of rounded-full), and headings in capitals with the site's mint/pink
+ * misprint.
+ */
+@layer components {
+[data-theme="cyberpunk"] :is(.card, .stat, .modal, .notice, .list-item, .table-wrap, .table-stack tr, .tabs, .tabs-pill, .tab, .tab-count, .filter-chip, .btn, .input, .textarea, .select, .switch, .badge, .chip, .var-list button, .icon-tile, .icon-btn, .save-bar, .toast, .skeleton > span, .bundle-tile, code, [class*="rounded-"]:not(.rounded-full, .rounded-\[22px\])):not(.theme-sample, .theme-sample *) { corner-shape: bevel; }
+/* The theme previews on the design page keep their own look whatever theme is active (me/DesignPage.tsx). */
+.theme-sample-cyber, .theme-sample-cyber [class*="rounded-"]:not(.rounded-full) { corner-shape: bevel; }
+[data-theme="cyberpunk"] :is(.card, .stat, .modal) { border-radius: 3px 3px 18px 3px; }
+[data-theme="cyberpunk"] .btn { border-radius: 2px 2px 12px 2px; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.05em; }
+[data-theme="cyberpunk"] .btn-sm { border-radius: 2px 2px 9px 2px; }
+/* Switches: a flat bar with a cut corner and a square knob; on, the bar turns yellow and the knob black like a primary
+   button. */
+[data-theme="cyberpunk"] .switch { border-radius: 2px 2px 8px 2px; background: var(--bg-input); }
+[data-theme="cyberpunk"] .switch::after { border-radius: 1px 1px 5px 1px; corner-shape: bevel; }
+[data-theme="cyberpunk"] .switch.on { background: var(--accent); border-color: var(--accent); }
+[data-theme="cyberpunk"] .switch.on::after { background: var(--accent-ink); }
+/* The hero is a black panel with a yellow edge and a cyan glow; the shared yellow-into-black gradient turns olive. */
+[data-theme="cyberpunk"] .card-hero { background: radial-gradient(90% 140% at 100% 0%, rgb(0 240 255 / 0.12), transparent 55%), var(--highlight), var(--bg-card); border-color: var(--accent-line); }
+/* Header text and buttons stay left of the icon in its target corners (components/CircuitArt.tsx, 96px wide). */
+@media (min-width: 768px) { [data-theme="cyberpunk"] .page-head { padding-right: 120px; } }
+/* On phones the description runs below the icon; the kicker and the title keep its 72px clear beside it. */
+@media (max-width: 767px) { [data-theme="cyberpunk"] .page-head :is(.page-kicker, h1) { padding-right: 84px; } }
+/* Between phone and tablet the buttons still sit beside the title, so they keep the icon's room too. */
+@media (min-width: 600px) and (max-width: 767px) { [data-theme="cyberpunk"] .page-head .actions { padding-right: 84px; } }
+[data-theme="cyberpunk"] :is(h1, h2) { text-transform: uppercase; letter-spacing: 0.02em; }
+[data-theme="cyberpunk"] .page-head h1 { text-shadow: 2px 2px 0 rgb(93 227 155 / 0.75), -2px -2px 0 rgb(195 98 192 / 0.75), 0 0 8px var(--scrim-color); }
+/* The kicker as the "EDGERUNNERS" label of the logo: fading hatching running into a yellow tag with black capitals. */
+[data-theme="cyberpunk"] .page-kicker { font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; gap: 4px; }
+[data-theme="cyberpunk"] .page-kicker::before { width: 60px; height: 14px; border-radius: 0; background: var(--hatch-lead) center / contain no-repeat; box-shadow: none; }
+[data-theme="cyberpunk"] .page-kicker > span { padding: 1px 12px 0 10px; background: #fcee0a; color: #0c0d10; text-shadow: none; border-radius: 6px 0; corner-shape: bevel; }
+}
+
+/*
+ * Only two corners are cut, top left and bottom right, as on the site's panels: with all four cut, square things (icons,
+ * server and profile pictures) read as stop signs. Pills get small cuts, so their ends slant instead of coming to a
+ * point. Unlayered, so it also wins over the Tailwind rounded-* utilities on the same elements.
+ */
+[data-theme="cyberpunk"] :is(.card, .stat, .modal, .notice, .list-item, .table-wrap, .table-stack tr, .tabs, .tabs-pill, .tab, .tab-count, .filter-chip, .btn, .input, .textarea, .select, .switch, .badge, .chip, .var-list button, .icon-tile, .icon-btn, .save-bar, .toast, .skeleton > span, .bundle-tile, code, [class*="rounded-"]:not(.rounded-full)):not(.theme-sample, .theme-sample *),
+.theme-sample-cyber, .theme-sample-cyber [class*="rounded-"]:not(.rounded-full) { border-top-right-radius: 0; border-bottom-left-radius: 0; }
+[data-theme="cyberpunk"] :is(.badge, .chip, .tab-count, .filter-chip, .rounded-\[999px\]) { border-top-left-radius: 7px; border-bottom-right-radius: 7px; }
+
+/*
+ * Cyberpunk server rail (components/Layout.tsx ServerRail): nothing carved, since there is no wood. The markers and the
+ * divider are plain flat lines, the open server's marker in yellow (the menu's marker matches it); server icons are cut like everything else (top left
+ * and bottom right); the Nexo button drops its round socket, so the logo plate itself is the button. Unlayered, so it
+ * wins over the Tailwind sizes and rings on the same elements.
+ */
+[data-theme="cyberpunk"] .rail-groove { background: rgb(var(--ov) / 0.2); box-shadow: none; border-radius: 0; }
+[data-theme="cyberpunk"] .rail-groove.h-8 { background: var(--accent); }
+/* The open page's marker in the menu (Layout.tsx, MeLayout.tsx) takes the rail marker's shape: a square 4px bar. */
+[data-theme="cyberpunk"] .nav-marker::before { width: 4px; height: 24px; border-radius: 0; }
+[data-theme="cyberpunk"] .rail-divider { height: 1px; }
+[data-theme="cyberpunk"] .rounded-\[22px\] { border-radius: 12px 0; corner-shape: bevel; }
+[data-theme="cyberpunk"] .rail-home { background: transparent; box-shadow: none; overflow: visible; }
+[data-theme="cyberpunk"] .rail-home svg { width: 44px; }
+[data-theme="cyberpunk"] .rail-home:hover svg { filter: drop-shadow(0 0 6px rgb(252 238 10 / 0.45)); }

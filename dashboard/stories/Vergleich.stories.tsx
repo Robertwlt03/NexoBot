@@ -1,5 +1,5 @@
-// One page in all twelve colour schemes side by side. The page is picked on the page itself (kept in the story's
-// args, so it stays in the address); light/dark and desktop/phone come from the toolbar.
+// One page in every theme side by side, each in its own mode. The page is picked on the page itself (kept in the
+// story's args, so it stays in the address); desktop/phone comes from the toolbar.
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useArgs } from 'storybook/preview-api';
 import { THEME_PRESETS } from '../../src/shared/theme';
@@ -17,8 +17,8 @@ function Comparison({ seite, globals, onPage }: Args & { globals: { mode: string
     <div className="sb-board">
       <style>{frameStyles}</style>
       {cover}
-      <h1>{page.label} in allen Farbvorlagen</h1>
-      <p className="sb-lead">Modus und Gerät stellst du oben in der Leiste um. Ein Klick öffnet eine Vorlage groß.</p>
+      <h1>{page.label} in allen Themes</h1>
+      <p className="sb-lead">Jedes Theme in seinem eigenen Modus. Das Gerät stellst du oben in der Leiste um, ein Klick öffnet ein Theme groß.</p>
       <div className="sb-bar">
         <label>Seite{' '}
           <select className="sb-select" value={seite} onChange={(e) => onPage(e.target.value)}>
@@ -32,7 +32,7 @@ function Comparison({ seite, globals, onPage }: Args & { globals: { mode: string
       </div>
       <div className="sb-row" style={{ marginTop: 22 }}>
         {THEME_PRESETS.map((preset) => (
-          <PageFrame key={preset.id} page={page} label={preset.name} scale={scale} device={device} globals={{ scheme: preset.id, mode: globals.mode }} onLoad={onLoad} />
+          <PageFrame key={preset.id} page={page} label={preset.name} scale={scale} device={device} globals={{ scheme: preset.id, mode: preset.mode }} onLoad={onLoad} />
         ))}
       </div>
     </div>
@@ -42,14 +42,14 @@ function Comparison({ seite, globals, onPage }: Args & { globals: { mode: string
 export default {
   title: 'Vergleich',
   tags: ['!autodocs'],
-  // Shows every colour scheme itself, so the scheme switch would change nothing.
-  parameters: { ownDevice: true, switches: ['mode', 'device'] },
+  // Shows every theme in its own mode itself, so the theme and mode switches would change nothing.
+  parameters: { ownDevice: true, switches: ['device'] },
   args: { seite: 'server-uebersicht' },
   argTypes: { seite: { control: false } },
 } satisfies Meta<Args>;
 
 export const AlleFarbvorlagen: StoryObj<Args> = {
-  name: 'Alle Farbvorlagen',
+  name: 'Alle Themes',
   // Storybook's hooks only work in the render function itself, not in a component below it.
   render: function Render(args, { globals }) {
     const [, updateArgs] = useArgs<Args>();

@@ -84,7 +84,7 @@ export function Overview() {
           </p>
           <div className="mt-6 flex flex-wrap gap-2 text-[12.5px]">
             {([['Textkanäle', count(CHANNEL_TYPES.text, CHANNEL_TYPES.announcement, CHANNEL_TYPES.forum)], ['Sprachkanäle', count(CHANNEL_TYPES.voice, CHANNEL_TYPES.stage)], ['Rollen', guild.roles.length]] as const).map(([label, value]) => (
-              <span key={label} className="rounded-full border border-white/10 bg-white/[.04] px-3 py-1 text-body"><b className="font-medium text-ink">{value}</b> {label}</span>
+              <span key={label} className="rounded-[999px] border border-white/10 bg-white/[.04] px-3 py-1 text-body"><b className="font-medium text-ink">{value}</b> {label}</span>
             ))}
           </div>
           <div className="mt-auto flex flex-wrap gap-2 pt-6">

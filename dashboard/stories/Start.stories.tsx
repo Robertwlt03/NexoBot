@@ -10,15 +10,14 @@ type Globals = { scheme: string; mode: string; device: string };
 
 const AREAS = [
   { id: 'übersicht--alle-seiten', title: 'Übersicht', text: `Alle ${PAGES.length} Dashboard-Seiten auf einmal, gruppiert wie die Navigation: Start, Server, Mein Profil und Owner. Jede Vorschau ist die echte Seite mit Beispieldaten. Ein Klick öffnet sie groß, mit dem Regler „Größe“ machst du die Vorschauen größer oder kleiner.` },
-  { id: 'vergleich--alle-farbvorlagen', title: 'Vergleich', text: 'Eine Seite in allen zwölf Farbvorlagen nebeneinander. Welche Seite, wählst du oben auf der Seite. Hell oder dunkel und Desktop oder Handy kommen aus der Leiste.' },
+  { id: 'vergleich--alle-farbvorlagen', title: 'Vergleich', text: 'Eine Seite in allen Themes nebeneinander, jedes in seinem Modus. Welche Seite, wählst du oben auf der Seite; Desktop oder Handy kommt aus der Leiste.' },
   { id: 'discord--nachrichten', title: 'Discord', text: 'Nexos Antworten im Chat, gebaut mit dem echten Code des Bots (nexoCard, nexoMessage) und gefärbt wie für Mitglieder mit eigenem Dashboard-Design. Unter jeder Nachricht zeigt „Code anzeigen“ den Aufruf, der sie baut.' },
-  { id: 'grundlagen--farben', title: 'Grundlagen', text: 'Farben mit Wert und Kontrast im gewählten Modus, Schrift, Rundungen und Schatten, alle Icons zum Kopieren und die zwölf Farbvorlagen.' },
+  { id: 'grundlagen--farben', title: 'Grundlagen', text: 'Farben mit Wert und Kontrast im gewählten Modus, Schrift, Rundungen und Schatten, alle Icons zum Kopieren und die Themes.' },
   { id: 'komponenten-aktionen-knöpfe--arten', title: 'Komponenten', text: 'Jeder Baustein des Dashboards mit Anleitung: wann man ihn nimmt, alle Eigenschaften mit Typ, Beispiele mit „Show code“ zum Kopieren. Unten im Bereich „Controls“ änderst du Eigenschaften live, „Accessibility“ prüft Kontrast und Bedienbarkeit.' },
 ];
 
 const SWITCHES = [
-  { title: 'Farbvorlage · Auswahl', text: `Klick auf „Farbvorlage“ mit den zwei Farbtupfern öffnet die Liste der zwölf Vorlagen aus „Dashboard-Design“: ${THEME_PRESETS.map((p) => p.name).join(', ')}. Die aktive hat ein Häkchen.` },
-  { title: 'Modus · Schalter', text: 'Zwei Seiten, Dunkel oder Hell; die gedrückte ist aktiv. Auf der Discord-Seite wechselt auch der Chat zwischen Discords dunklem und hellem Aussehen.' },
+  { title: 'Theme · Auswahl', text: `Klick auf „Theme“ mit den zwei Farbtupfern öffnet die Themes aus „Dashboard-Design“: ${THEME_PRESETS.map((p) => `${p.name} (${p.mode === 'light' ? 'hell' : 'dunkel'})`).join(', ')}. Jedes Theme bringt seinen Modus mit, einen eigenen Hell/Dunkel-Schalter gibt es nicht mehr. Auf der Discord-Seite folgt auch der Chat dem Modus des Themes.` },
   { title: 'Gerät · Schalter', text: 'Desktop mit 1280 Pixeln Breite oder Handy mit 390 Pixeln; die gedrückte ist aktiv. Auf „Handy“ zeigt jede Seite das echte Handy-Layout in einem Handy-Rahmen.' },
 ];
 
@@ -47,14 +46,14 @@ function Start({ globals }: { globals: Globals }) {
           <div style={{ flex: 1, minWidth: 260 }}>
             <h1 style={{ fontSize: 34 }}>Nexo Storybook</h1>
             <p style={{ color: 'var(--text-muted)', marginTop: 6, maxWidth: 720, lineHeight: 1.55 }}>
-              Das ganze Nexo-Dashboard auf einen Blick: jede Seite mit Beispieldaten, in jeder Farbvorlage, hell und dunkel, am Desktop und am Handy. Dazu die Nachrichten in Discord und die Bausteine der Seiten.
+              Das ganze Nexo-Dashboard auf einen Blick: jede Seite mit Beispieldaten, in jedem Theme, am Desktop und am Handy. Dazu die Nachrichten in Discord und die Bausteine der Seiten.
             </p>
           </div>
         </header>
 
         <div>
-          <h2 style={{ fontSize: 20, marginBottom: 12 }}>Die drei Schalter oben in der Leiste</h2>
-          <p style={{ color: 'var(--text-muted)', marginBottom: 14 }}>Die Leiste zeigt nur die Schalter, die auf der offenen Seite etwas ändern. Auf dieser Textseite ist das nur der Modus; im Vergleich fehlt die Farbvorlage, weil er alle zwölf zeigt; Logo, Münzen und Profilkarte haben feste Farben. Die Wahl bleibt beim Wechsel erhalten.</p>
+          <h2 style={{ fontSize: 20, marginBottom: 12 }}>Die zwei Schalter oben in der Leiste</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: 14 }}>Die Leiste zeigt nur die Schalter, die auf der offenen Seite etwas ändern. Auf dieser Textseite ist das nur das Theme; im Vergleich fehlt es, weil er alle Themes zeigt; Logo, Münzen und Profilkarte haben feste Farben. Die Wahl bleibt beim Wechsel erhalten.</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14 }}>
             {SWITCHES.map((s) => <Box key={s.title} title={s.title}>{s.text}</Box>)}
           </div>

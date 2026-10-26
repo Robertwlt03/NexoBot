@@ -49,12 +49,12 @@ export function ServerRail({ guilds, activeId }: { guilds: ApiGuildSummary[]; ac
     <nav className="flex w-[72px] shrink-0 flex-col items-center gap-2.5 overflow-y-auto border-r border-white/[.05] bg-rail py-4" aria-label="Server">
       <div className="relative flex w-full justify-center">
         <span className={pill(onOverview)} />
-        <button className={`${item} cursor-pointer border-0 bg-surface p-0 ring-1 ring-white/[.06] hover:ring-accent/40`} title="Alle Server" onClick={() => navigate('/servers')}>
+        <button className={`${item} rail-home cursor-pointer border-0 bg-surface p-0 ring-1 ring-white/[.06] hover:ring-accent/40`} title="Alle Server" onClick={() => navigate('/servers')}>
           <NexoLogo className="w-9 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" animated={false} />
         </button>
       </div>
-      {/* Divider between "Alle Server" and the servers: the same groove as the open-server marker. */}
-      <div className="rail-groove my-1 h-[2px] w-7 shrink-0 rounded-full" />
+      {/* Divider between "Alle Server" and the servers: the same groove as the open-server marker (Cyberpunk: a flat line). */}
+      <div className="rail-groove rail-divider my-1 h-[2px] w-7 shrink-0 rounded-full" />
       {guilds.filter((g) => g.botPresent).map((guild) => {
         const active = guild.id === activeId;
         return (
@@ -181,7 +181,7 @@ export function GuildLayout() {
             </div>
           </div>
           <nav ref={navRef} className="nav-scroll relative flex-1 overflow-y-auto px-3 py-3" onClickCapture={guardClick}>
-            <div ref={markerRef} className="invisible absolute left-3 right-3 top-0 rounded-xl border border-white/[.06] bg-white/[.05] before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r before:bg-accent" />
+            <div ref={markerRef} className="invisible absolute left-3 right-3 top-0 rounded-xl border border-white/[.06] bg-white/[.05] nav-marker before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r before:bg-accent" />
             <NavLink end to={`/servers/${guildId}`} className={({ isActive }) => `${navLink} ${isActive ? 'text-ink' : 'text-mute hover:bg-white/[.03] hover:text-ink'}`}>
               <Icon name="home" size={18} /> Übersicht
             </NavLink>
@@ -209,7 +209,7 @@ export function GuildLayout() {
           <span className="truncate text-sm font-medium text-ink">{current?.label ?? 'Übersicht'}</span>
         </header>
         <div className="relative flex-1 overflow-y-auto px-4 pb-32 pt-9 md:px-10">
-          <PageBackdrop art={ICON_PATHS[current?.icon ?? 'home']} />
+          <PageBackdrop art={ICON_PATHS[current?.icon ?? 'home']} label={current?.label ?? 'Übersicht'} />
           <div ref={pageRef} className="relative mx-auto max-w-[1040px]">
             {detail.loading && !detail.data && <Spinner />}
             {detail.error && (

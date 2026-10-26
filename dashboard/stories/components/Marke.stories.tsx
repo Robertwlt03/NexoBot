@@ -18,7 +18,7 @@ const meta = {
         component: [
           'Feste Markenteile; sie folgen nicht der Farbvorlage.',
           '',
-          '- `NexoLogo`: der Holztaler mit dem Roboter. Groß mit `animated` (schwebt, blinzelt) und `followPointer` (Augen folgen der Maus); klein in Seitenleiste und Avatar mit `animated={false}`. Die Größe kommt über `className`, zum Beispiel `w-24`.',
+          '- `NexoLogo`: der Roboter als Sticker, in den Holz-Themes auf dem Holztaler, in Cyberpunk auf einer abgeschrägten schwarzen Platte mit gelbem Rahmen und Schraffur. Groß mit `animated` (schwebt, blinzelt) und `followPointer` (Augen folgen der Maus); klein in Seitenleiste und Avatar mit `animated={false}`. Die Größe kommt über `className`, zum Beispiel `w-24`.',
           '- `CoinIcon`: die Bernis-Münzen in vier Stufen (`tier`: platinum, gold, silver, bronze), Größe über `size`.',
           '- `Icon`: Linien-Icons aus `icons.tsx` (`name`, `size`), in Knöpfen 16 px. `IconTile` ist die Kachel im Seitenkopf. Alle Namen stehen unter Grundlagen → Icons.',
         ].join('\n'),

@@ -2,7 +2,7 @@
 // read live from the page (styles.css plus the toolbar's scheme and mode), so this page never goes stale.
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { THEME_PRESETS, chartPalette, themeVariables, type DashboardTheme, type ThemeMode } from '../../src/shared/theme';
+import { THEME_PRESETS, chartPalette, normalizeTheme, themeLook, themeVariables, type DashboardTheme } from '../../src/shared/theme';
 import walnut from '../src/assets/wood/walnut.webp';
 import oak from '../src/assets/wood/oak.webp';
 import { ICON_PATHS, Icon, type IconName } from '../src/icons';
@@ -11,7 +11,7 @@ const GROUPS: { title: string; text: string; tokens: string[] }[] = [
   { title: 'Flächen', text: 'Von hinten nach vorn: App-Hintergrund, Seitenleiste, Seite, Karte. Eingabefelder haben ihre eigene Fläche.', tokens: ['--bg-app', '--bg-sidebar', '--bg-main', '--bg-card', '--bg-card-hover', '--bg-input', '--bg-hover', '--bg-active'] },
   { title: 'Linien', text: 'Trennlinien und Rahmen; Eingabefelder brauchen den kräftigeren Rand (3:1 nach WCAG).', tokens: ['--border', '--border-strong', '--border-input'] },
   { title: 'Text', text: 'Vier Stufen; alle halten auf der Seite mindestens 4.5:1 (geprüft in tests/contrast.test.ts).', tokens: ['--text-strong', '--text', '--text-muted', '--text-faint'] },
-  { title: 'Akzent', text: 'Kommt aus der Farbvorlage des Mitglieds (src/shared/theme.ts) und ändert sich mit der Auswahl oben.', tokens: ['--accent', '--accent-strong', '--accent-hover', '--accent-ink', '--accent-text', '--accent-soft', '--accent-line', '--accent-2', '--chart-primary'] },
+  { title: 'Akzent', text: 'Kommt aus dem Theme des Mitglieds (src/shared/theme.ts) und ändert sich mit der Auswahl oben.', tokens: ['--accent', '--accent-strong', '--accent-hover', '--accent-ink', '--accent-text', '--accent-soft', '--accent-line', '--accent-2', '--chart-primary'] },
   { title: 'Zustände', text: 'Erfolg, Fehler und Warnung; --success und --danger für Knopfflächen, die anderen für Text und Icons.', tokens: ['--pos', '--neg', '--warning', '--success', '--danger', '--blurple'] },
 ];
 const TEXT_TOKENS = new Set(['--text-strong', '--text', '--text-muted', '--text-faint', '--accent-text', '--pos', '--neg', '--warning']);
@@ -77,7 +77,7 @@ function Colours() {
       <div>
         <h1>Farben</h1>
         <p style={{ color: 'var(--text-muted)', marginTop: 6, maxWidth: 760 }}>
-          Alle Farben als CSS-Variablen aus <code>dashboard/src/styles.css</code>, mit dem Wert im gewählten Modus und der gewählten Farbvorlage. Im Code nie feste Farben verwenden, sondern <code>var(--name)</code> oder die Tailwind-Klassen (<code>bg-surface</code>, <code>text-mute</code> …).
+          Alle Farben als CSS-Variablen aus <code>dashboard/src/styles.css</code>, mit dem Wert im gewählten Theme. Im Code nie feste Farben verwenden, sondern <code>var(--name)</code> oder die Tailwind-Klassen (<code>bg-surface</code>, <code>text-mute</code> …).
         </p>
       </div>
       {GROUPS.map((group) => (
@@ -178,9 +178,9 @@ function Schemes() {
   return (
     <div style={page}>
       <div>
-        <h1>Farbvorlagen</h1>
+        <h1>Themes</h1>
         <p style={{ color: 'var(--text-muted)', marginTop: 6, maxWidth: 760 }}>
-          Die zwölf Vorlagen, die Mitglieder auf „Dashboard-Design“ wählen (<code>THEME_PRESETS</code> in <code>src/shared/theme.ts</code>). Jede setzt Akzent und Zweitfarbe; daraus errechnet <code>themeVariables</code> alle <code>--accent-*</code>-Werte, im hellen Modus so abgedunkelt, dass Text lesbar bleibt.
+          Die Themes, die Mitglieder auf „Dashboard-Design“ wählen (<code>THEME_PRESETS</code> in <code>src/shared/theme.ts</code>). Jedes ist ein ganzer Look mit eigenem Modus: Flächen und Kopfbereich kommen aus <code>styles.css</code> (<code>data-theme</code>, <code>data-mode</code>), aus Akzent und Zweitfarbe errechnet <code>themeVariables</code> alle <code>--accent-*</code>-Werte.
         </p>
       </div>
       <div style={grid(220)}>
@@ -189,8 +189,9 @@ function Schemes() {
             <div style={{ display: 'flex', height: 54, borderRadius: 10, overflow: 'hidden' }}>
               <span style={{ flex: 2, background: preset.primary }} /><span style={{ flex: 1, background: preset.secondary }} />
             </div>
-            <b style={{ color: 'var(--text-strong)' }}>{preset.name}</b>
-            <code style={{ fontSize: 12, color: 'var(--text-muted)' }}>{preset.id} · {preset.primary} · {preset.secondary}</code>
+            <b style={{ color: 'var(--text-strong)' }}>{preset.name} · {preset.mode === 'light' ? 'Hell' : 'Dunkel'}</b>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{preset.description}</span>
+            <code style={{ fontSize: 12, color: 'var(--text-muted)' }}>{preset.id} · {preset.look} · {preset.primary} · {preset.secondary}</code>
           </div>
         ))}
       </div>
@@ -235,15 +236,19 @@ const COMBO_TEXT: [string, string][] = [
 /** One scheme in one mode, with its own tokens: data-mode switches styles.css's block, the inline style the accent. */
 function Combo({ theme, name }: { theme: DashboardTheme; name: string }) {
   const light = theme.mode === 'light';
-  const tone = light ? 'var(--scrim-color)' : 'var(--bg-main)';
+  const cyber = themeLook(theme) === 'cyber';
+  const tone = light || cyber ? 'var(--scrim-color)' : 'var(--bg-main)';
   return (
-    <div data-mode={theme.mode} style={{ ...themeVariables(theme), display: 'grid', background: 'var(--bg-app)', color: 'var(--text)', borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border-strong)' } as CSSProperties}>
-      {/* The header wood with its wash, as behind every page title. */}
+    <div data-mode={theme.mode} data-theme={theme.preset} style={{ ...themeVariables(theme), display: 'grid', background: 'var(--bg-app)', color: 'var(--text)', borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border-strong)' } as CSSProperties}>
+      {/* The header material with its wash, as behind every page title. */}
       <div style={{ position: 'relative', height: 72, display: 'grid', alignContent: 'center', padding: '0 16px' }}>
-        <img src={light ? oak : walnut} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        {cyber
+          ? <span className="cyber-grid" style={{ position: 'absolute', inset: 0 }} />
+          : <img src={light ? oak : walnut} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
         <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, color-mix(in srgb, ${tone} var(--scrim), transparent) 70%, color-mix(in srgb, ${tone} 18%, transparent))` }} />
+        {cyber && <span className="cyber-stripe" style={{ position: 'absolute', inset: 0 }} />}
         <b style={{ position: 'relative', color: 'var(--text-strong)', fontFamily: 'var(--font-display)', fontSize: 16 }}>{name}</b>
-        <span style={{ position: 'relative', color: light ? 'var(--text-strong)' : 'var(--text-muted)', fontSize: 12 }}>{light ? 'Hell · Eiche' : 'Dunkel · Nussbaum'}</span>
+        <span style={{ position: 'relative', color: light ? 'var(--text-strong)' : 'var(--text-muted)', fontSize: 12 }}>{cyber ? 'Dunkel · Neongelb und Schraffur' : light ? 'Hell · Eiche' : 'Dunkel · Nussbaum'}</span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '64px 1fr', background: 'var(--bg-main)' }}>
         <div style={{ background: 'var(--bg-sidebar)', padding: '12px 8px', display: 'grid', gap: 6, alignContent: 'start' }}>
@@ -278,17 +283,11 @@ function Combinations() {
       <div>
         <h1>Farbkombinationen</h1>
         <p style={{ color: 'var(--text-muted)', marginTop: 6, maxWidth: 760 }}>
-          Alle zwölf Farbvorlagen im dunklen und im hellen Modus auf einer Seite: Holz mit Lasur, Flächen, die Textstufen mit ihrem Kontrast auf der Karte, Abzeichen, Knöpfe (Kontrast der Schrift auf dem Knopf), ein Eingabefeld und die Diagrammfarben. Werte unter 4.5:1 sind rot markiert.
+          Alle Themes in ihrem Modus auf einer Seite: Kopfbereich mit Lasur, Flächen, die Textstufen mit ihrem Kontrast auf der Karte, Abzeichen, Knöpfe (Kontrast der Schrift auf dem Knopf), ein Eingabefeld und die Diagrammfarben. Werte unter 4.5:1 sind rot markiert.
         </p>
       </div>
-      <div style={grid(620)}>
-        {THEME_PRESETS.map((preset) => (
-          <section key={preset.id} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(290px, 100%), 1fr))', gap: 10 }}>
-            {(['dark', 'light'] as ThemeMode[]).map((mode) => (
-              <Combo key={mode} name={preset.name} theme={{ preset: preset.id, primary: preset.primary, secondary: preset.secondary, mode }} />
-            ))}
-          </section>
-        ))}
+      <div style={grid(320)}>
+        {THEME_PRESETS.map((preset) => <Combo key={preset.id} name={preset.name} theme={normalizeTheme({ preset: preset.id })} />)}
       </div>
     </div>
   );
@@ -300,5 +299,5 @@ export const Farben: StoryObj = { render: () => <Colours /> };
 export const Schrift: StoryObj = { parameters: { switches: ['mode'] }, render: () => <Type /> };
 export const Formen: StoryObj = { parameters: { switches: ['mode'] }, render: () => <Shapes /> };
 export const IconSet: StoryObj = { name: 'Icons', parameters: { switches: ['mode'] }, render: () => <Icons /> };
-export const Farbvorlagen: StoryObj = { parameters: { switches: ['mode'] }, render: () => <Schemes /> };
+export const Farbvorlagen: StoryObj = { name: 'Themes', parameters: { switches: ['mode'] }, render: () => <Schemes /> };
 export const Farbkombinationen: StoryObj = { parameters: { switches: [] }, render: () => <Combinations /> };

@@ -60,7 +60,7 @@ function WalletPill({ balance }: { balance: number }) {
   const { flight, done } = useCoinFlight(balance, pill);
   return (
     <>
-      <span ref={pill} className="inline-flex items-center gap-1.5 rounded-full border border-white/[.08] bg-white/[.04] px-3 py-1 text-[13px] font-medium text-ink">
+      <span ref={pill} className="inline-flex items-center gap-1.5 rounded-[999px] border border-white/[.08] bg-white/[.04] px-3 py-1 text-[13px] font-medium text-ink">
         <Bernis amount={shown} nowrap max={2} />
       </span>
       <CoinFlight flight={flight} pill={pill} onDone={done} />
@@ -125,7 +125,7 @@ export function MeLayout() {
   const current = [...MEMBER_NAV, ...OWNER_NAV].find((entry) => entry.to === location.pathname.replace(/\/$/, ''));
   const navLink = 'relative flex items-center gap-3 rounded-xl border px-3 py-2 text-[14px] font-medium transition-colors hover:no-underline';
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `${navLink} ${isActive ? 'border-white/[.06] bg-white/[.05] text-ink before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r before:bg-accent' : 'border-transparent text-mute hover:bg-white/[.03] hover:text-ink'}`;
+    `${navLink} ${isActive ? 'border-white/[.06] bg-white/[.05] text-ink nav-marker before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r before:bg-accent' : 'border-transparent text-mute hover:bg-white/[.03] hover:text-ink'}`;
 
   return (
     <div className="flex h-full bg-canvas">
@@ -164,7 +164,7 @@ export function MeLayout() {
           {profile.data && <CoinMilestone balance={profile.data.wallet.balance} />}
         </header>
         <div className="relative flex-1 overflow-y-auto px-4 pb-32 pt-9 md:px-10">
-          <PageBackdrop art={current && GLYPHS[current.icon]} column={1100} />
+          <PageBackdrop art={current && GLYPHS[current.icon]} label={current?.label} column={1100} />
           <div ref={pageRef} className="relative mx-auto max-w-[1100px]">
             {profile.loading && !profile.data && <Spinner />}
             {profile.error && !profile.data && <Notice tone="danger" onRetry={profile.reload}>{profile.error}</Notice>}

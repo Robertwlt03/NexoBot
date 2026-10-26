@@ -1,10 +1,10 @@
-// The toolbar switches, built from Storybook's own components so they look native: the colour scheme is a select with
-// swatches, light/dark and desktop/phone are pairs of toggle buttons that show both options.
+// The toolbar switches, built from Storybook's own components so they look native: the theme is a select with
+// swatches (each theme brings its own light or dark mode), desktop/phone is a pair of toggle buttons.
 // A story lists in `parameters.switches` the switches that change something on it; the others are hidden there.
 // On a phone the switches shrink to icons and Storybook's zoom and isolation buttons are hidden, so everything fits.
 // The manager bundle compiles JSX to React.createElement, so React has to be in scope.
 import React, { useEffect, useSyncExternalStore, type ReactNode } from 'react';
-import { BrowserIcon, MobileIcon, MoonIcon, SunIcon } from '@storybook/icons';
+import { BrowserIcon, MobileIcon } from '@storybook/icons';
 import { Select, Separator, ToggleButton } from 'storybook/internal/components';
 import { DOCS_RENDERED, STORY_RENDER_PHASE_CHANGED, STORY_RENDERED } from 'storybook/internal/core-events';
 import { addons, types, useGlobals, useParameter, useStorybookApi, useStorybookState } from 'storybook/manager-api';
@@ -45,9 +45,12 @@ function PanelSync() {
   return null;
 }
 
-const ORDER = ['scheme', 'mode', 'device'];
-/** The switches the open story lists in `parameters.switches` (all three by default, see preview.tsx). */
-const useSwitches = () => useParameter<string[]>('switches', ORDER);
+const ORDER = ['scheme', 'device'];
+/**
+ * The switches the open story lists in `parameters.switches` (see preview.tsx). A theme decides light or dark itself,
+ * so a story that lists "mode" gets the theme select.
+ */
+const useSwitches = () => useParameter<string[]>('switches', ORDER).map((name) => (name === 'mode' ? 'scheme' : name));
 /**
  * Whether a separator goes in front of this switch: between our switches, and in front of the first one when
  * Storybook's own tools stand before it (reload and vision filter on single stories; guide pages have none there).
@@ -97,7 +100,7 @@ const Swatch = ({ colors }: { colors: string[] }) => (
   </span>
 );
 
-/** A choice from a list: the current scheme with its colours, the list shows all twelve. */
+/** A choice from a list: the current theme with its colours; picking one also sets its light or dark mode. */
 function SchemePicker() {
   const [globals, updateGlobals] = useGlobals();
   const narrow = useNarrow();
@@ -108,11 +111,14 @@ function SchemePicker() {
     <>
       {separator && <Separator />}
       {/* Select keeps its choice internally; the key resets it when the scheme comes from the address. */}
-      <Select key={current.id} ariaLabel="Farbvorlage" tooltip="Farbvorlage" size="small" padding="small"
+      <Select key={current.id} ariaLabel="Theme" tooltip="Theme" size="small" padding="small"
         icon={<Swatch colors={[current.primary, current.secondary]} />} showSelectedOptionTitle={!narrow}
-        defaultOptions={[current.id]} onSelect={(scheme) => scheme !== current.id && updateGlobals({ scheme })}
-        options={THEME_PRESETS.map((p) => ({ value: p.id, title: p.name, icon: <Swatch colors={[p.primary, p.secondary]} /> }))}>
-        {narrow ? null : 'Farbvorlage'}
+        defaultOptions={[current.id]} onSelect={(scheme) => {
+          const next = THEME_PRESETS.find((p) => p.id === scheme);
+          if (next && next.id !== current.id) updateGlobals({ scheme: next.id, mode: next.mode });
+        }}
+        options={THEME_PRESETS.map((p) => ({ value: p.id, title: `${p.name} · ${p.mode === 'light' ? 'Hell' : 'Dunkel'}`, icon: <Swatch colors={[p.primary, p.secondary]} /> }))}>
+        {narrow ? null : 'Theme'}
       </Select>
     </>
   );
@@ -147,12 +153,7 @@ function Pair({ caption, name, options }: { caption: string; name: string; optio
 
 addons.register('nexo/toolbar', () => {
   addons.add('nexo/panel', { type: types.TOOL, title: 'Panel', render: () => <PanelSync /> });
-  addons.add('nexo/scheme', { type: types.TOOL, title: 'Farbvorlage', render: () => <SchemePicker /> });
-  addons.add('nexo/mode', {
-    type: types.TOOL, title: 'Modus',
-    render: () => <Pair caption="Modus" name="mode"
-      options={[{ value: 'dark', label: 'Dunkel', icon: <MoonIcon /> }, { value: 'light', label: 'Hell', icon: <SunIcon /> }]} />,
-  });
+  addons.add('nexo/scheme', { type: types.TOOL, title: 'Theme', render: () => <SchemePicker /> });
   addons.add('nexo/device', {
     type: types.TOOL, title: 'Gerät',
     render: () => <Pair caption="Gerät" name="device"
