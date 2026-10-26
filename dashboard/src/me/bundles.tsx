@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { RARITIES, SLOT_LABELS } from '../../../src/shared/cosmetics';
 import type { CosmeticItem } from '../../../src/shared/cosmetics';
-import type { PurchaseResult, ShopBundle, ShopListing } from '../../../src/web/dto/profile';
+import type { PurchaseResult, ShopBundle, ShopEvent, ShopListing } from '../../../src/web/dto/profile';
 import { useConfirm } from '../components/ConfirmDialog';
 import { Notice } from '../components/ui';
 import { equipItem, isEquipped, useEquip, useMe, useMutation, useWalletUpdate } from './api';
@@ -67,7 +67,15 @@ function Contents({ items }: { items: CosmeticItem[] }) {
  * Bundles are the special offers of the shop: a holographic frame that slowly circles the tile, game-style tags
  * (bundle and deal), your card wearing the whole set and what is inside right on the tile.
  */
-function BundleTile({ bundle, items, onOpen }: { bundle: ShopBundle; items: CosmeticItem[]; onOpen: () => void }) {
+/** "−20 % Herbst-Special auf 3 von 6 Artikeln": how much of a bundle the running event discounts; null when none. */
+function eventDeal(parts: ShopListing[], event?: ShopEvent): string | null {
+  if (!event || event.discount === 0) return null;
+  const hit = parts.filter((part) => part.eventId === event.id && part.discount > 0);
+  if (!hit.length) return null;
+  return `−${event.discount} % ${event.name} auf ${hit.length === parts.length ? 'alle Artikel' : `${hit.length} von ${parts.length} Artikeln`}`;
+}
+
+function BundleTile({ bundle, items, deal, onOpen }: { bundle: ShopBundle; items: CosmeticItem[]; deal: string | null; onOpen: () => void }) {
   const tint = tintOf(items);
   const saving = bundle.owned === 0 ? bundle.fullPrice - bundle.price : 0;
   const percent = saving > 0 ? Math.round((saving / bundle.fullPrice) * 100) : 0;
@@ -101,6 +109,7 @@ function BundleTile({ bundle, items, onOpen }: { bundle: ShopBundle; items: Cosm
         <span className="relative flex w-full flex-1 flex-col px-5 pb-5 pt-1">
           <span className="block truncate text-[19px] font-extrabold uppercase tracking-[.02em] text-white">{bundle.name}</span>
           <span className="mt-0.5 line-clamp-1 block text-[13px] text-white/60">{bundle.description}</span>
+          {deal && <span className="mt-2 inline-flex self-start rounded-md bg-[#facc15]/15 px-2 py-0.5 text-[12px] font-semibold text-[#facc15]">{deal}</span>}
           <span className="mt-3.5 flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
             <Contents items={items} />
             <span className="ml-auto shrink-0 text-right">
@@ -117,7 +126,7 @@ function BundleTile({ bundle, items, onOpen }: { bundle: ShopBundle; items: Cosm
   );
 }
 
-function BundleDetail({ bundle, parts, onClose }: { bundle: ShopBundle; parts: ShopListing[]; onClose: () => void }) {
+function BundleDetail({ bundle, parts, deal, onClose }: { bundle: ShopBundle; parts: ShopListing[]; deal: string | null; onClose: () => void }) {
   const { me } = useMe();
   const updateWallet = useWalletUpdate();
   const { run, busy } = useMutation();
@@ -167,6 +176,7 @@ function BundleDetail({ bundle, parts, onClose }: { bundle: ShopBundle; parts: S
             <p className="text-[11px] font-bold uppercase tracking-[.16em]" style={{ color: tint }}>Paket · {items.length} Artikel</p>
             <h2 className="mt-1.5 text-[26px] font-bold leading-tight tracking-tight">{bundle.name}</h2>
             <p className="mt-2 text-[14px] text-body">{bundle.description}</p>
+            {deal && <p className="mt-2 text-[13px] font-semibold text-warn">{deal}, schon im Paketpreis enthalten.</p>}
           </div>
           {/* Exactly what is inside, with what each piece costs (or that you have it already). */}
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
@@ -217,7 +227,7 @@ function BundleDetail({ bundle, parts, onClose }: { bundle: ShopBundle; parts: S
 }
 
 /** "Pakete" section of the shop front. */
-export function BundleSection({ bundles, listings }: { bundles: ShopBundle[]; listings: ShopListing[] }) {
+export function BundleSection({ bundles, listings, event }: { bundles: ShopBundle[]; listings: ShopListing[]; event?: ShopEvent }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const byId = useMemo(() => new Map(listings.map((entry) => [entry.item.id, entry])), [listings]);
@@ -238,7 +248,9 @@ export function BundleSection({ bundles, listings }: { bundles: ShopBundle[]; li
         </div>
       </div>
       <div className="relative grid grid-cols-1 gap-5 md:grid-cols-2">
-        {visible.map((bundle) => <BundleTile key={bundle.id} bundle={bundle} items={partsOf(bundle).map((part) => part.item)} onOpen={() => setOpenId(bundle.id)} />)}
+        {visible.map((bundle) => (
+          <BundleTile key={bundle.id} bundle={bundle} items={partsOf(bundle).map((part) => part.item)} deal={eventDeal(partsOf(bundle), event)} onOpen={() => setOpenId(bundle.id)} />
+        ))}
       </div>
       {shown.length > 4 && (
         <div className="relative mt-5 flex justify-center">
@@ -247,7 +259,7 @@ export function BundleSection({ bundles, listings }: { bundles: ShopBundle[]; li
           </button>
         </div>
       )}
-      {open && <BundleDetail bundle={open} parts={partsOf(open)} onClose={() => setOpenId(null)} />}
+      {open && <BundleDetail bundle={open} parts={partsOf(open)} deal={eventDeal(partsOf(open), event)} onClose={() => setOpenId(null)} />}
     </section>
   );
 }

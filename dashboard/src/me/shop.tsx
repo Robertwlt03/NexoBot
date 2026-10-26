@@ -169,12 +169,12 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
         </div>
       </section>
 
-      <BundleSection bundles={bundles} listings={listings} />
+      <BundleSection bundles={bundles} listings={listings} event={event} />
 
       {/* The whole catalogue: kinds as tabs, "new" as the default order, deals as a switch (on while an event discounts). */}
       <section className="mt-12">
         <h2 className="mb-3 text-[19px] font-semibold tracking-tight">Alle Artikel</h2>
-        <ItemBrowser listings={listings} variant="shop" dealsFirst={!!event && event.discount > 0 && listings.some((l) => l.discount > 0)} />
+        <ItemBrowser listings={listings} variant="shop" event={event} dealsFirst={!!event && event.discount > 0 && listings.some((l) => l.discount > 0)} />
       </section>
       {open && <ItemDetail listing={open} owned={owned.has(open.item.id)} onClose={() => setOpenId(null)} />}
     </>
@@ -183,12 +183,18 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
 
 type Sort = 'new' | 'price-asc' | 'price-desc';
 
-/** Filterable item grid; `filters` adds slot tabs, rarity, sort, "nur leistbar", "nur im Angebot" and search. */
-export function ItemBrowser({ listings, variant, filters = true, dealsFirst = false }: {
-  listings: ShopListing[]; variant: ShopVariant; filters?: boolean; dealsFirst?: boolean;
+/** Kind filter: all, the running event's own items, or one item kind. */
+type KindFilter = CosmeticSlot | 'all' | 'event';
+
+/**
+ * Filterable item grid; `filters` adds the kind chips, rarity, sort, "nur leistbar", "nur im Angebot" and search.
+ * With a running `event`, a chip named after it shows the items that exist only during that event.
+ */
+export function ItemBrowser({ listings, variant, filters = true, dealsFirst = false, event }: {
+  listings: ShopListing[]; variant: ShopVariant; filters?: boolean; dealsFirst?: boolean; event?: ShopEvent;
 }) {
   const { me } = useMe();
-  const [slot, setSlot] = useState<CosmeticSlot | 'all'>('all');
+  const [slot, setSlot] = useState<KindFilter>('all');
   const [deals, setDeals] = useState(dealsFirst);
   const [rarity, setRarity] = useState<Rarity | 'all'>('all');
   const [sort, setSort] = useState<Sort>('new');
@@ -198,16 +204,18 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
   const root = useRef<HTMLDivElement>(null);
   const owned = useMemo(() => new Set(me.inventory.map((o) => o.itemId)), [me.inventory]);
 
+  /** Items that exist only during the running event (not the ones it merely discounts). */
+  const isEventOnly = (l: ShopListing) => !!event && l.item.availability === 'event' && l.item.eventId === event.id;
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = listings.filter((l) => (slot === 'all' || l.item.slot === slot)
+    const list = listings.filter((l) => (slot === 'all' || (slot === 'event' ? isEventOnly(l) : l.item.slot === slot))
       && (rarity === 'all' || l.item.rarity === rarity)
       && (!affordable || (forSale(l.item) && !owned.has(l.item.id) && l.finalPrice <= me.wallet.balance))
       && (!deals || l.discount > 0)
       && (!q || `${l.item.name} ${l.item.description}`.toLowerCase().includes(q)));
     // The API lists items in catalog order, so "Neueste" is the reversed order.
     return sort === 'new' ? [...list].reverse() : [...list].sort((a, b) => (sort === 'price-asc' ? 1 : -1) * (a.finalPrice - b.finalPrice));
-  }, [listings, slot, rarity, affordable, deals, query, sort, owned, me.wallet.balance]);
+  }, [listings, slot, rarity, affordable, deals, query, sort, owned, me.wallet.balance, event]);
 
   useGSAP(() => {
     if (reducedMotion()) return;
@@ -215,7 +223,12 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
   }, { scope: root, dependencies: [slot, rarity, sort, affordable, deals, listings.length], revertOnUpdate: true });
 
   const counts = useMemo(() => new Map(COSMETIC_SLOTS.map((s) => [s, listings.filter((l) => l.item.slot === s).length])), [listings]);
-  const kinds: [CosmeticSlot | 'all', string, number][] = [['all', 'Alle', listings.length], ...COSMETIC_SLOTS.filter((s) => counts.get(s)).map((s): [CosmeticSlot, string, number] => [s, SLOT_LABELS[s], counts.get(s) ?? 0])];
+  const eventOnly = event ? listings.filter(isEventOnly).length : 0;
+  const kinds: [KindFilter, string, number][] = [
+    ['all', 'Alle', listings.length],
+    ...(event && eventOnly ? [['event', event.name, eventOnly] as [KindFilter, string, number]] : []),
+    ...COSMETIC_SLOTS.filter((s) => counts.get(s)).map((s): [CosmeticSlot, string, number] => [s, SLOT_LABELS[s], counts.get(s) ?? 0]),
+  ];
   const open = listings.find((l) => l.item.id === openId);
 
   return (
@@ -226,13 +239,14 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
               Phones get the same choice as a dropdown, where the chips would fill half the screen. */}
           <div className="filter-chips mb-4 max-sm:hidden" role="group" aria-label="Art">
             {kinds.map(([id, label, count]) => (
-              <button key={id} type="button" className="filter-chip" aria-pressed={slot === id} onClick={() => setSlot(id)}>
-                {label} <span className="tab-count">{count}</span>
+              <button key={id} type="button" className={`filter-chip${id === 'event' ? ' filter-chip-event' : ''}`} aria-pressed={slot === id} onClick={() => setSlot(id)}
+                title={id === 'event' ? `Gibt es nur während „${label}“` : undefined}>
+                {id === 'event' && event && <EventIcon event={event} size={16} />}{label} <span className="tab-count">{count}</span>
               </button>
             ))}
           </div>
           <div className="mb-3 sm:hidden">
-            <Select value={slot} onChange={setSlot} options={kinds.map(([id, label, count]) => ({ value: id, label: `${label} (${count})` }))} />
+            <Select value={slot} onChange={setSlot} options={kinds.map(([id, label, count]) => ({ value: id, label: id === 'event' ? `Nur während „${label}“ (${count})` : `${label} (${count})` }))} />
           </div>
           <div className="mb-5 grid grid-cols-2 items-center gap-3 md:grid-cols-[1fr_170px_170px_auto_auto]">
             <div className="col-span-2 md:col-span-1"><TextInput value={query} onChange={setQuery} placeholder="Artikel suchen …" /></div>
