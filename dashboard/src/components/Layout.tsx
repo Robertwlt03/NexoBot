@@ -53,7 +53,7 @@ export function ServerRail({ guilds, activeId }: { guilds: ApiGuildSummary[]; ac
         </button>
       </div>
       {/* Divider between "Alle Server" and the servers: the same groove as the open-server marker. */}
-      <div className="rail-groove my-1 h-[2px] w-7 shrink-0 rounded-full" />
+      <div className="rail-groove rail-line my-1 h-px w-7 shrink-0 rounded-full" />
       {guilds.filter((g) => g.botPresent).map((guild) => {
         const active = guild.id === activeId;
         return (

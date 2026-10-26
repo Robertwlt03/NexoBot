@@ -374,6 +374,9 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 [data-mode="light"] .rail-groove {
   box-shadow: 0 0 0 1px rgb(70 38 12 / .28), inset 0 2px 2px -1px rgb(70 38 12 / .55), 0 1.5px 0 1px rgb(255 248 235 / .55);
 }
+/* The divider is a 1 px hairline cut: the sidebar colour with a fine dark edge above and a light one below. */
+.rail-groove.rail-line { box-shadow: 0 -1px 0 rgb(0 0 0 / .45), 0 1px 0 rgb(255 255 255 / .08); }
+[data-mode="light"] .rail-groove.rail-line { box-shadow: 0 -1px 0 rgb(70 38 12 / .35), 0 1px 0 rgb(255 248 235 / .6); }
 
 /* A title in its own colour (achievements list); on the light surfaces mixed toward the ink so it stays readable. */
 .title-tint { color: var(--tint); }
