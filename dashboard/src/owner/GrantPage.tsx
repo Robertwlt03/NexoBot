@@ -38,7 +38,7 @@ export default function GrantPage() {
         <div className="stack">
           <div className="grid-2">
             <Field label="Discord-Nutzer-ID" error={userId && !SNOWFLAKE.test(userId) ? 'Eine Nutzer-ID hat 17–20 Ziffern.' : null}
-              hint={user && <button type="button" className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] text-[12.5px] text-accent" onClick={() => setUserId(user.id)}>Meine ID einsetzen</button>}>
+              hint={user && <button type="button" className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] text-[12.5px] text-accent-text" onClick={() => setUserId(user.id)}>Meine ID einsetzen</button>}>
               <TextInput value={userId} onChange={(v) => setUserId(v.trim())} placeholder="401234567890123456" maxLength={20} />
             </Field>
             <Field label="Betrag (in Bronze)" hint={<>Entspricht <Bernis amount={amount} nowrap />. Negativ zum Abziehen.</>}><NumberInput value={amount} onChange={setAmount} step={50} /></Field>

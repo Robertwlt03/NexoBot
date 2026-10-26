@@ -122,7 +122,7 @@ export const discordStyles = `
 .dc-coins { display: inline-flex; align-items: center; gap: 4px; vertical-align: -3px; }
 .dc-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .dc-btn { height: 32px; padding: 0 16px; border-radius: 8px; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; color: #fff; white-space: nowrap; }
-.dc-btn.primary { background: #5865f2; } .dc-btn.success { background: #248046; } .dc-btn.danger { background: #da373c; } .dc-btn.link { background: #4e5058; }
+.dc-btn.primary { background: #5865f2; } .dc-btn.secondary { background: #4e5058; } .dc-btn.success { background: #248046; } .dc-btn.danger { background: #da373c; } .dc-btn.link { background: #4e5058; }
 .dc-btn.link::after { content: "↗"; font-size: 13px; opacity: .85; } .dc-btn.off { opacity: .5; }
 .dc-eph { margin-top: 6px; font-size: 12px; color: #949ba4; } .dc-eph span { color: #00a8fc; }
 :root[data-mode="light"] .dc-channel { background: #ffffff; color: #313338; }
@@ -131,8 +131,8 @@ export const discordStyles = `
 :root[data-mode="light"] .dc-channel .dc-card { background: #f2f3f5; border-color: #e3e5e8; }
 :root[data-mode="light"] .dc-channel .dc-kicker, :root[data-mode="light"] .dc-channel .dc-small, :root[data-mode="light"] .dc-channel .dc-time, :root[data-mode="light"] .dc-channel .dc-eph { color: #5c5e66; }
 :root[data-mode="light"] .dc-channel .dc-sep { background: #e3e5e8; } :root[data-mode="light"] .dc-channel .dc-bar { color: #4e5058; }
-:root[data-mode="light"] .dc-channel .dc-mention { background: rgba(88,101,242,.15); color: #505cdc; } :root[data-mode="light"] .dc-channel .dc-ts { background: rgba(6,6,7,.06); }
-:root[data-mode="light"] .dc-channel .dc-btn.link { background: #6d6f78; } :root[data-mode="light"] .dc-channel .dc-eph span { color: #006ce7; }
+:root[data-mode="light"] .dc-channel .dc-mention { background: rgba(88,101,242,.15); color: #4752c4; } :root[data-mode="light"] .dc-channel .dc-ts { background: rgba(6,6,7,.06); }
+:root[data-mode="light"] .dc-channel :is(.dc-btn.link, .dc-btn.secondary) { background: #6d6f78; } :root[data-mode="light"] .dc-channel .dc-head :is(i, small) { color: #5c5e66; } :root[data-mode="light"] .dc-channel .dc-eph span { color: #006ce7; }
 :root[data-mode="light"] .dc-channel .dc-h3 { color: #060607; } :root[data-mode="light"] .dc-channel .dc-code { background: #e3e5e8; } :root[data-mode="light"] .dc-channel .dc-quote { border-left-color: #c4c9ce; }
 :root[data-mode="light"] .dc-channel .dc-code-block summary { color: #006ce7; } :root[data-mode="light"] .dc-channel .dc-code-block pre { background: #f2f3f5; color: #313338; }
 `;

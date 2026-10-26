@@ -45,7 +45,7 @@ export function MemberPicker({ base, selected, onSelect }: {
     return (
       <div className="input flex min-w-0 items-center gap-2 py-1.5">
         <img src={selected.avatarUrl ?? DEFAULT_AVATAR} alt="" className="h-6 w-6 shrink-0 rounded-full" />
-        <span className="min-w-0 flex-1 truncate text-[#f2f3f5]">{selected.name}</span>
+        <span className="min-w-0 flex-1 truncate text-ink">{selected.name}</span>
         <button type="button" className="btn btn-ghost btn-sm" onClick={() => onSelect(null)} aria-label="Mitgliederfilter entfernen">×</button>
       </div>
     );
@@ -80,7 +80,7 @@ export function MemberPicker({ base, selected, onSelect }: {
               onMouseDown={(e) => e.preventDefault()} onMouseEnter={() => setActive(i)} onClick={() => pick(hit)}>
               <img src={hit.avatarUrl ?? DEFAULT_AVATAR} alt="" className="h-7 w-7 shrink-0 rounded-full" />
               <span className="min-w-0 flex-1 truncate">
-                <span className="text-[#f2f3f5]">{hit.name}</span> <span className="faint">@{hit.username}</span>
+                <span className="text-ink">{hit.name}</span> <span className="faint">@{hit.username}</span>
               </span>
               {hit.bot && <Badge>Bot</Badge>}
             </li>
