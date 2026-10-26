@@ -29,10 +29,13 @@ interface FrameWindow { __nexoSwitchLook?: (scheme: string, mode: 'dark' | 'ligh
 export function useLiveFrame(frame: RefObject<HTMLIFrameElement | null>, url: (look: Look) => string, look: Look) {
   const [src] = useState(() => url(look));
   const key = `${look.scheme}:${look.mode}`;
-  const first = useRef(key);
+  // The look the preview shows now (the src's at first); compared with the last hand-over, not the first look, so
+  // switching back to the starting look reaches the preview too.
+  const shown = useRef(key);
   // Layout effect: queued in the same task as the switch, before the crossfade takes its snapshot.
   useLayoutEffect(() => {
-    if (key === first.current) return;
+    if (key === shown.current) return;
+    shown.current = key;
     inTransition(() => (frame.current?.contentWindow as FrameWindow | null)?.__nexoSwitchLook?.(look.scheme, look.mode));
   }, [key]); // `look` itself is a new object on every render; `key` is its content
   return src;
@@ -68,7 +71,8 @@ export function PageFrame({ page, label, scale, device, globals, onLoad }: {
   const size = DEVICES[device];
   const frame = useRef<HTMLIFrameElement>(null);
   // Only scheme and mode go into the page; the device is this frame's size.
-  const src = useLiveFrame(frame, (look) => pageFrameUrl(page.key, look), { scheme: globals.scheme, mode: globals.mode as Look['mode'] });
+  // `still`: the preview skips its animations (preview.tsx), so 38 of them stay light to draw and switch.
+  const src = useLiveFrame(frame, (look) => `${pageFrameUrl(page.key, look)}&still=1`, { scheme: globals.scheme, mode: globals.mode as Look['mode'] });
   return (
     <figure className="sb-frame">
       <figcaption>{label ?? page.label}</figcaption>
@@ -91,7 +95,8 @@ export const frameStyles = `
 .sb-group { margin-top: 30px; }
 .sb-group h2 { font-family: var(--font-display); font-size: 17px; margin: 0 0 12px; color: var(--text-strong); }
 .sb-row { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
-.sb-frame { margin: 0; display: grid; gap: 7px; }
+/* Previews out of view are not drawn (38 full pages at 1280 px each held the overview at 30 frames per second). */
+.sb-frame { margin: 0; display: grid; gap: 7px; content-visibility: auto; contain-intrinsic-size: auto 240px; }
 .sb-frame figcaption { font-size: 13px; font-weight: 600; color: var(--text-strong); }
 .sb-frame-window { position: relative; overflow: hidden; padding: 0; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--bg-main); cursor: zoom-in; box-shadow: 0 10px 30px -18px rgba(0,0,0,.6); transition: border-color .15s, transform .15s; }
 .sb-frame-window:hover { border-color: var(--accent); transform: translateY(-2px); }

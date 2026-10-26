@@ -15,12 +15,45 @@ import './docs.css';
 /** Inside the phone frame of `withDevice` (see below); there the story renders normally at phone width. */
 const framed = new URLSearchParams(window.location.search).has('framed');
 
+/**
+ * A preview in the overview or the comparison (`still=1`): the page behaves as with "reduce motion", so it shows its
+ * final state without entrance and chart animations. 38 previews animating at once, and again after every theme
+ * switch, held the overview at a few frames per second. The dashboard asks matchMedia (also through gsap.matchMedia).
+ */
+if (new URLSearchParams(window.location.search).has('still')) {
+  document.documentElement.classList.add('sb-still');
+  const realMatchMedia = window.matchMedia.bind(window);
+  window.matchMedia = (query: string) => {
+    if (!query.includes('prefers-reduced-motion')) return realMatchMedia(query);
+    const matches = query.includes('reduce');
+    return { matches, media: query, onchange: null, addEventListener: () => undefined, removeEventListener: () => undefined,
+      addListener: () => undefined, removeListener: () => undefined, dispatchEvent: () => false } as MediaQueryList;
+  };
+}
+
 /** The toolbar switches; a story lists in `parameters.switches` only those that change something on it. */
 export type Switch = 'scheme' | 'mode' | 'device';
 
 type Globals = Record<string, unknown>;
 const THEME_KEY = 'nexo.dashboardTheme';
 let appliedTheme = '';
+
+/**
+ * The dashboard caches its theme in localStorage and follows other tabs through storage events. In Storybook every
+ * preview is a document of the same origin, so a write in one reached all others: the overview's 38 previews re-rendered
+ * each other 38 × 38 times per switch, and the comparison's previews could take each other's scheme. Here the key is
+ * this document's own: reading it gives this preview's theme, writes are dropped, and switches reach the providers only
+ * through the event switchTheme sends within the document.
+ */
+const realGetItem = Storage.prototype.getItem;
+const realSetItem = Storage.prototype.setItem;
+Storage.prototype.getItem = function getItem(this: Storage, key: string) {
+  return this === window.localStorage && key === THEME_KEY ? JSON.stringify(sample.theme) : realGetItem.call(this, key);
+};
+Storage.prototype.setItem = function setItem(this: Storage, key: string, value: string) {
+  if (this === window.localStorage && key === THEME_KEY) return;
+  realSetItem.call(this, key, value);
+};
 
 /**
  * Decodes every image on the page, also hidden ones: the backdrop holds a walnut and an oak image and hides one per
@@ -40,10 +73,16 @@ function switchTheme(scheme: string, mode: 'dark' | 'light', { now = false } = {
   if (value === appliedTheme) return;
   const first = !appliedTheme;
   appliedTheme = value;
-  try { localStorage.setItem(THEME_KEY, value); } catch { /* private mode */ }
+  // Without CSS transitions while the new colours apply (docs.css .sb-switching): the dashboard's hover transitions
+  // would otherwise all start at once and lag behind the crossfade, and in the overview's previews they piled up by
+  // the thousand. The forced layout applies the new styles before the class goes again, so nothing transitions.
   const apply = () => {
+    const root = document.documentElement;
+    root.classList.add('sb-switching');
     applyTheme(theme);
     flushSync(() => window.dispatchEvent(new StorageEvent('storage', { key: THEME_KEY, newValue: value })));
+    void document.body.offsetHeight;
+    root.classList.remove('sb-switching');
   };
   // The first render only sets the theme up (and decodes the other mode's images once the page is idle).
   if (first) { applyTheme(theme); setTimeout(() => void decodeImages(), 1500); }

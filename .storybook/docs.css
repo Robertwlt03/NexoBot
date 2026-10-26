@@ -97,6 +97,20 @@ html.sb-docs-scroll #storybook-docs {
 .sbdocs.sbdocs-preview pre.prismjs .token.attr-value .token.punctuation { color: var(--sbx-value); }
 .sbdocs.sbdocs-preview pre.prismjs .token:is(.keyword, .operator) { color: var(--sbx-keyword); }
 
+/* While a theme switch applies, no CSS transitions: the crossfade animates (preview.tsx switchTheme). */
+.sb-switching *,
+.sb-switching *::before,
+.sb-switching *::after {
+  transition: none !important;
+}
+/* The overview's and the comparison's previews (still=1) are pictures: no transitions, no running animations. */
+.sb-still *,
+.sb-still *::before,
+.sb-still *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
 /*
  * A theme switch crossfades as one view transition (transition.ts): a little slower than the browser's default. Only
  * the colours change, so the page must not move: the browser's own group animation (which moves the old snapshot to

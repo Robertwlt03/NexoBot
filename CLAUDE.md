@@ -39,3 +39,7 @@ PostgreSQL. Fork of TitanBot (the LICENSE keeps the codebymitch line).
   and `Seiten.stories.tsx`, new components get a story file with a German usage description; it uses the same local
   mock fixtures as the mock preview.
 - Text contrast ≥ 4.5:1 in both modes (`tests/contrast.test.ts` reads the tokens from `dashboard/src/styles.css`).
+- Tests in the user's Chrome (Claude in Chrome): the user opens Chrome themselves; do not try to start it. If the
+  Claude in Chrome extension is missing, ask the user to install it before testing. The desktop app's built-in browser
+  runs an older Chromium and counts as hidden while the user is not looking at it (view transitions are then skipped),
+  so visual checks of animations belong in Chrome.
