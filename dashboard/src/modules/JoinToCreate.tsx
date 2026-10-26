@@ -51,7 +51,7 @@ function TriggerCard({ trigger, onChanged }: { trigger: JoinToCreateTrigger; onC
   return (
     <Card
       icon="mic"
-      title={channel ? `🔊 ${channel.name}` : 'Gelöschter Kanal'}
+      title={channel ? channel.name : 'Gelöschter Kanal'}
       description={`Wer diesem Kanal beitritt, bekommt einen eigenen Sprachkanal${category ? ` in ${category.name.toUpperCase()}` : ''}.`}
       right={(
         <button type="button" className="btn btn-danger btn-sm" disabled={busy !== null}

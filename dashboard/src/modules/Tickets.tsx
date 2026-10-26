@@ -83,7 +83,7 @@ function Overview({ overview, canPost, onPosted, onRefresh }: {
                         </td>
                         <td>{ticket.userName}</td>
                         <td>{ticket.claimedByName ?? <span className="faint">–</span>}</td>
-                        <td>{ticket.priority ?? <span className="faint">–</span>}</td>
+                        <td>{ticket.priority ? <Priority priority={ticket.priority} /> : <span className="faint">–</span>}</td>
                         <td>{new Date(ticket.createdAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}</td>
                       </tr>
                     ))}
@@ -96,6 +96,17 @@ function Overview({ overview, canPost, onPosted, onRefresh }: {
         )}
       </Card>
     </>
+  );
+}
+
+/** Priority as a flag in a status colour: urgent and high stand out, medium and low stay calm. */
+const PRIORITY_TONE: Record<string, string> = { urgent: 'var(--neg)', high: 'var(--warning)', medium: 'var(--text-muted)', low: 'var(--text-faint)' };
+function Priority({ priority }: { priority: { level: string; label: string } }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex" style={{ color: PRIORITY_TONE[priority.level] ?? 'var(--text-muted)' }}><Icon name="flag" size={14} /></span>
+      {priority.label}
+    </span>
   );
 }
 
@@ -148,7 +159,7 @@ export default function TicketsPage() {
                 <div className="stack">
                   <span className="field-label">Vorschau</span>
                   <MessagePreview embed={{ title: 'Support-Tickets', description: value.panelMessage, color: 'var(--blurple)' }} sample={{}} />
-                  <div><span className="btn btn-primary btn-sm pointer-events-none">📩 {value.buttonLabel || DEFAULT_BUTTON_LABEL}</span></div>
+                  <div><span className="btn btn-primary btn-sm pointer-events-none"><Icon name="ticket" size={15} />{value.buttonLabel || DEFAULT_BUTTON_LABEL}</span></div>
                 </div>
               </div>
             </Card>

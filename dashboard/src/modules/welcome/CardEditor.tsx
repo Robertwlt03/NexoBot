@@ -9,6 +9,7 @@ import {
 import { useAction, useGuild, useToast, useUser } from '../../api';
 import { Actions, Badge, Card, Field, Modal, Select, Switch, Tabs } from '../../components/ui';
 import { useConfirm } from '../../components/ConfirmDialog';
+import { Icon } from '../../icons';
 import { loadCardFonts } from './cardFonts';
 import { BackgroundFields, LayerFields } from './CardFields';
 
@@ -349,7 +350,7 @@ export function CardEditor({ kind, value, onChange }: { kind: 'welcome' | 'goodb
                       <button type="button" className="btn btn-ghost btn-sm" title="Nach vorne" aria-label="Nach vorne" disabled={index === 0} onClick={() => moveLayer(layer.id, 1)}>↑</button>
                       <button type="button" className="btn btn-ghost btn-sm" title="Nach hinten" aria-label="Nach hinten" disabled={index === listed.length - 1} onClick={() => moveLayer(layer.id, -1)}>↓</button>
                       <button type="button" className="btn btn-ghost btn-sm" title="Duplizieren" aria-label="Duplizieren" disabled={value.layers.length >= CARD_MAX_LAYERS} onClick={() => duplicate(layer)}>⧉</button>
-                      <button type="button" className="btn btn-ghost btn-sm" title="Löschen" aria-label="Löschen" onClick={() => removeLayer(layer.id)}>✕</button>
+                      <button type="button" className="btn btn-ghost btn-sm" title="Löschen" aria-label="Löschen" onClick={() => removeLayer(layer.id)}><Icon name="x" size={15} /></button>
                     </div>
                   </div>
                 ))}

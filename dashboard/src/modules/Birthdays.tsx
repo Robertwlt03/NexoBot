@@ -47,7 +47,7 @@ export default function BirthdaysPage() {
                   {value.upcoming.map((entry) => (
                     <div className="list-item" key={entry.userId}>
                       <div className="grow"><div className="title">{entry.name}</div><div className="faint">{formatDay(entry)}</div></div>
-                      <Badge on={entry.daysUntil === 0}>{entry.daysUntil === 0 ? 'Heute 🎉' : entry.daysUntil === 1 ? 'Morgen' : `in ${entry.daysUntil} Tagen`}</Badge>
+                      <Badge on={entry.daysUntil === 0}>{entry.daysUntil === 0 ? <><Icon name="cake" size={13} />Heute</> : entry.daysUntil === 1 ? 'Morgen' : `in ${entry.daysUntil} Tagen`}</Badge>
                     </div>
                   ))}
                 </div>
