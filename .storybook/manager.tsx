@@ -6,6 +6,7 @@
 import React, { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import { BrowserIcon, MobileIcon, MoonIcon, SunIcon } from '@storybook/icons';
 import { Select, Separator, ToggleButton } from 'storybook/internal/components';
+import { DOCS_RENDERED, STORY_RENDER_PHASE_CHANGED, STORY_RENDERED } from 'storybook/internal/core-events';
 import { addons, types, useGlobals, useParameter, useStorybookApi, useStorybookState } from 'storybook/manager-api';
 import { THEME_PRESETS } from '../src/shared/theme';
 
@@ -57,6 +58,39 @@ function useSeparator(name: string) {
   return viewMode === 'story' || ORDER.slice(0, ORDER.indexOf(name)).some((other) => switches.includes(other));
 }
 
+const FADE_MS = 160;
+/**
+ * Switching re-renders the preview (guide pages even reload it: Storybook's StoryRender.teardown reloads when a story
+ * is still rendering), which flashes. So the preview fades out, switches, and fades back in once rendering has settled.
+ */
+function fadeSwitch(update: () => void) {
+  const frame = document.getElementById('storybook-preview-iframe');
+  if (!frame || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return update();
+  const channel = addons.getChannel();
+  frame.style.transition = `opacity ${FADE_MS}ms ease`;
+  frame.style.opacity = '0';
+  setTimeout(() => {
+    let settle: ReturnType<typeof setTimeout> | undefined;
+    const show = () => {
+      channel.off(STORY_RENDERED, rendered);
+      channel.off(DOCS_RENDERED, rendered);
+      channel.off(STORY_RENDER_PHASE_CHANGED, phase);
+      clearTimeout(settle);
+      clearTimeout(limit);
+      frame.style.opacity = '1';
+    };
+    // Guide pages render several times (page, reload, every example); wait until nothing renders for a moment.
+    const rendered = () => { clearTimeout(settle); settle = setTimeout(show, 250); };
+    // A re-rendered story reports "completing" right away; STORY_RENDERED only follows after the accessibility check.
+    const phase = ({ newPhase }: { newPhase: string }) => { if (newPhase === 'completing' || newPhase === 'completed') rendered(); };
+    const limit = setTimeout(show, 3000);
+    channel.on(STORY_RENDERED, rendered);
+    channel.on(DOCS_RENDERED, rendered);
+    channel.on(STORY_RENDER_PHASE_CHANGED, phase);
+    update();
+  }, FADE_MS);
+}
+
 const Swatch = ({ colors }: { colors: string[] }) => (
   <span style={{ display: 'inline-flex' }}>
     {colors.map((color, i) => <span key={color + i} style={{ width: 12, height: 12, borderRadius: '50%', background: color, boxShadow: '0 0 0 1px rgba(0,0,0,.2)', marginLeft: i ? -4 : 0 }} />)}
@@ -76,7 +110,7 @@ function SchemePicker() {
       {/* Select keeps its choice internally; the key resets it when the scheme comes from the address. */}
       <Select key={current.id} ariaLabel="Farbvorlage" tooltip="Farbvorlage" size="small" padding="small"
         icon={<Swatch colors={[current.primary, current.secondary]} />} showSelectedOptionTitle={!narrow}
-        defaultOptions={[current.id]} onSelect={(scheme) => updateGlobals({ scheme })}
+        defaultOptions={[current.id]} onSelect={(scheme) => scheme !== current.id && fadeSwitch(() => updateGlobals({ scheme }))}
         options={THEME_PRESETS.map((p) => ({ value: p.id, title: p.name, icon: <Swatch colors={[p.primary, p.secondary]} /> }))}>
         {narrow ? null : 'Farbvorlage'}
       </Select>
@@ -98,7 +132,7 @@ function Pair({ caption, name, options }: { caption: string; name: string; optio
       <div role="group" aria-label={caption} style={{ display: 'flex', gap: 2 }}>
         {options.map((option) => (
           <ToggleButton key={option.value} pressed={option.value === value} size="small" padding={narrow ? 'small' : 'medium'} variant="ghost"
-            ariaLabel={`${caption}: ${option.label}`} onClick={() => updateGlobals({ [name]: option.value })}>
+            ariaLabel={`${caption}: ${option.label}`} onClick={() => option.value !== value && fadeSwitch(() => updateGlobals({ [name]: option.value }))}>
             {option.icon}{!narrow && option.label}
           </ToggleButton>
         ))}
