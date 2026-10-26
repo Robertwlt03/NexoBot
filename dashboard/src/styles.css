@@ -639,10 +639,10 @@ main:has(.page-head > .actions) .engraving-icon { display: none; }
 
 /*
  * Cyberpunk shapes, cut like the Edgerunners site: chamfered instead of rounded corners (corner-shape keeps the border
- * on the cut; browsers without it keep the small radii), one big cut bottom right on cards and buttons, pill shapes
- * become tags with pointed ends (circles stay round, the rail's server icons get their own octagon at the end of
- * this file; a pill that should turn into a tag uses rounded-[999px] instead of rounded-full), and headings in capitals
- * with the site's mint/pink misprint.
+ * on the cut; browsers without it keep the small radii), only top left and bottom right (rule after this block), one
+ * big cut bottom right on cards and buttons, pills become slanted tags (circles stay round; a pill that should turn
+ * into a tag uses rounded-[999px] instead of rounded-full), and headings in capitals with the site's mint/pink
+ * misprint.
  */
 @layer components {
 [data-theme="cyberpunk"] :is(.card, .stat, .modal, .notice, .list-item, .table-wrap, .table-stack tr, .tabs, .tabs-pill, .tab, .tab-count, .filter-chip, .btn, .input, .textarea, .select, .switch, .badge, .chip, .var-list button, .icon-tile, .icon-btn, .save-bar, .toast, .skeleton > span, .bundle-tile, code, [class*="rounded-"]:not(.rounded-full, .rounded-\[22px\])):not(.theme-sample, .theme-sample *) { corner-shape: bevel; }
@@ -651,6 +651,12 @@ main:has(.page-head > .actions) .engraving-icon { display: none; }
 [data-theme="cyberpunk"] :is(.card, .stat, .modal) { border-radius: 3px 3px 18px 3px; }
 [data-theme="cyberpunk"] .btn { border-radius: 2px 2px 12px 2px; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.05em; }
 [data-theme="cyberpunk"] .btn-sm { border-radius: 2px 2px 9px 2px; }
+/* Switches: a flat bar with a cut corner and a square knob; on, the bar turns yellow and the knob black like a primary
+   button. */
+[data-theme="cyberpunk"] .switch { border-radius: 2px 2px 8px 2px; background: var(--bg-input); }
+[data-theme="cyberpunk"] .switch::after { border-radius: 1px 1px 5px 1px; corner-shape: bevel; }
+[data-theme="cyberpunk"] .switch.on { background: var(--accent); border-color: var(--accent); }
+[data-theme="cyberpunk"] .switch.on::after { background: var(--accent-ink); }
 /* The hero is a black panel with a yellow edge and a cyan glow; the shared yellow-into-black gradient turns olive. */
 [data-theme="cyberpunk"] .card-hero { background: radial-gradient(90% 140% at 100% 0%, rgb(0 240 255 / 0.12), transparent 55%), var(--highlight), var(--bg-card); border-color: var(--accent-line); }
 [data-theme="cyberpunk"] :is(h1, h2) { text-transform: uppercase; letter-spacing: 0.02em; }
@@ -660,14 +666,24 @@ main:has(.page-head > .actions) .engraving-icon { display: none; }
 }
 
 /*
+ * Only two corners are cut, top left and bottom right, as on the site's panels: with all four cut, square things (icons,
+ * server and profile pictures) read as stop signs. Pills get small cuts, so their ends slant instead of coming to a
+ * point. Unlayered, so it also wins over the Tailwind rounded-* utilities on the same elements.
+ */
+[data-theme="cyberpunk"] :is(.card, .stat, .modal, .notice, .list-item, .table-wrap, .table-stack tr, .tabs, .tabs-pill, .tab, .tab-count, .filter-chip, .btn, .input, .textarea, .select, .switch, .badge, .chip, .var-list button, .icon-tile, .icon-btn, .save-bar, .toast, .skeleton > span, .bundle-tile, code, [class*="rounded-"]:not(.rounded-full)):not(.theme-sample, .theme-sample *),
+.theme-sample-cyber, .theme-sample-cyber [class*="rounded-"]:not(.rounded-full) { border-top-right-radius: 0; border-bottom-left-radius: 0; }
+[data-theme="cyberpunk"] :is(.badge, .chip, .tab-count, .filter-chip, .rounded-\[999px\]) { border-top-left-radius: 7px; border-bottom-right-radius: 7px; }
+
+/*
  * Cyberpunk server rail (components/Layout.tsx ServerRail): nothing carved, since there is no wood. The markers and the
- * divider are plain flat lines, the open server's marker in yellow; server icons are chamfered octagons; the Nexo button drops its round socket, so the logo plate itself is the button. Unlayered, so it
+ * divider are plain flat lines, the open server's marker in yellow; server icons are cut like everything else (top left
+ * and bottom right); the Nexo button drops its round socket, so the logo plate itself is the button. Unlayered, so it
  * wins over the Tailwind sizes and rings on the same elements.
  */
 [data-theme="cyberpunk"] .rail-groove { background: rgb(var(--ov) / 0.2); box-shadow: none; border-radius: 0; }
 [data-theme="cyberpunk"] .rail-groove.h-8 { background: var(--accent); }
 [data-theme="cyberpunk"] .rail-divider { height: 1px; }
-[data-theme="cyberpunk"] .rounded-\[22px\] { border-radius: 12px; corner-shape: bevel; }
+[data-theme="cyberpunk"] .rounded-\[22px\] { border-radius: 12px 0; corner-shape: bevel; }
 [data-theme="cyberpunk"] .rail-home { background: transparent; box-shadow: none; overflow: visible; }
 [data-theme="cyberpunk"] .rail-home svg { width: 44px; }
 [data-theme="cyberpunk"] .rail-home:hover svg { filter: drop-shadow(0 0 6px rgb(252 238 10 / 0.45)); }
