@@ -125,7 +125,7 @@ export function MeLayout() {
   const current = [...MEMBER_NAV, ...OWNER_NAV].find((entry) => entry.to === location.pathname.replace(/\/$/, ''));
   const navLink = 'relative flex items-center gap-3 rounded-xl border px-3 py-2 text-[14px] font-medium transition-colors hover:no-underline';
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `${navLink} ${isActive ? 'border-white/[.06] bg-white/[.05] text-ink before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r before:bg-accent' : 'border-transparent text-mute hover:bg-white/[.03] hover:text-ink'}`;
+    `${navLink} ${isActive ? 'border-white/[.06] bg-white/[.05] text-ink nav-marker before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r before:bg-accent' : 'border-transparent text-mute hover:bg-white/[.03] hover:text-ink'}`;
 
   return (
     <div className="flex h-full bg-canvas">

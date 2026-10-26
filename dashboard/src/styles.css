@@ -696,12 +696,14 @@ main:has(.page-head > .actions) .engraving-icon { display: none; }
 
 /*
  * Cyberpunk server rail (components/Layout.tsx ServerRail): nothing carved, since there is no wood. The markers and the
- * divider are plain flat lines, the open server's marker in yellow; server icons are cut like everything else (top left
+ * divider are plain flat lines, the open server's marker in yellow (the menu's marker matches it); server icons are cut like everything else (top left
  * and bottom right); the Nexo button drops its round socket, so the logo plate itself is the button. Unlayered, so it
  * wins over the Tailwind sizes and rings on the same elements.
  */
 [data-theme="cyberpunk"] .rail-groove { background: rgb(var(--ov) / 0.2); box-shadow: none; border-radius: 0; }
 [data-theme="cyberpunk"] .rail-groove.h-8 { background: var(--accent); }
+/* The open page's marker in the menu (Layout.tsx, MeLayout.tsx) takes the rail marker's shape: a square 4px bar. */
+[data-theme="cyberpunk"] .nav-marker::before { width: 4px; height: 24px; border-radius: 0; }
 [data-theme="cyberpunk"] .rail-divider { height: 1px; }
 [data-theme="cyberpunk"] .rounded-\[22px\] { border-radius: 12px 0; corner-shape: bevel; }
 [data-theme="cyberpunk"] .rail-home { background: transparent; box-shadow: none; overflow: visible; }

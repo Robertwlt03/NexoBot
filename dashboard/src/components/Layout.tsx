@@ -181,7 +181,7 @@ export function GuildLayout() {
             </div>
           </div>
           <nav ref={navRef} className="nav-scroll relative flex-1 overflow-y-auto px-3 py-3" onClickCapture={guardClick}>
-            <div ref={markerRef} className="invisible absolute left-3 right-3 top-0 rounded-xl border border-white/[.06] bg-white/[.05] before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r before:bg-accent" />
+            <div ref={markerRef} className="invisible absolute left-3 right-3 top-0 rounded-xl border border-white/[.06] bg-white/[.05] nav-marker before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r before:bg-accent" />
             <NavLink end to={`/servers/${guildId}`} className={({ isActive }) => `${navLink} ${isActive ? 'text-ink' : 'text-mute hover:bg-white/[.03] hover:text-ink'}`}>
               <Icon name="home" size={18} /> Übersicht
             </NavLink>
