@@ -1,6 +1,7 @@
 // Event icons for event lists (season page, shop): small multi-colour pictures taken from the banner scenes in
 // EventScene.tsx, so the list and the banner speak the same language. Kept apart from EventScene.tsx, which the
 // tests import for eventTheme() without a React runtime.
+import { useId } from 'react';
 import type { ReactNode } from 'react';
 import type { ShopEvent } from '../../../src/web/dto/profile';
 import { eventTheme, type EventTheme } from './EventScene';
@@ -18,8 +19,8 @@ const egg = (x: number, y: number, rx: number, ry: number, fill: string) => (
   </g>
 );
 
-/** One small picture per event theme on a 24×24 grid. */
-const EVENT_ART: Record<EventTheme, ReactNode> = {
+/** One small picture per event theme on a 24×24 grid; a function gets a unique id for its clip path. */
+const EVENT_ART: Record<EventTheme, ReactNode | ((uid: string) => ReactNode)> = {
   // Two hearts, the lighter one behind.
   love: <><path d={HEART} fill="#f27b93" transform="translate(8.6 1.2) scale(.62)" /><path d={HEART} fill="#e5536f" transform="translate(.6 5.2) scale(.72)" /></>,
   // The violet carnival mask with its gold rim and stick.
@@ -46,17 +47,27 @@ const EVENT_ART: Record<EventTheme, ReactNode> = {
         ))}
     </>
   ),
-  // The Halloween pumpkin from the banner: three lobes, a green stem and a lit face.
-  halloween: (
-    <g transform="translate(1 2.4) scale(.229) translate(-102 -220)">
-      <g stroke="#9c420a" strokeWidth="2.5">
-        <ellipse cx="128" cy="270" rx="26" ry="30" fill="#c2561a" /><ellipse cx="172" cy="270" rx="26" ry="30" fill="#c2561a" />
-        <ellipse cx="150" cy="270" rx="24" ry="32" fill="#dc6a1f" />
-      </g>
-      <path d="M148 240c-1-8 1-14 6-18l5 3c-4 4-5 9-5 15Z" fill="#4d6b2a" />
-      <g fill="#ffcf4a"><path d="M128 266l8-11 4 13Z" /><path d="M172 266l-8-11-4 13Z" /><path d="M128 279q22 18 44 0l-5 2-3-3-5 5-4-4-5 5-5-5-4 4-5-5-3 3Z" /></g>
-    </g>
-  ),
+  // A wide Halloween pumpkin: three lobes without outlines, stem and leaf, and a carved face stretched across it.
+  // The face glows bright on the lit front lobe and turns a muted gold where it runs into the shaded sides.
+  halloween: (uid) => {
+    const face = (
+      <>
+        <path d="M6.4 13.4l2.6-2.8 1.1 3.3z" /><path d="M17.6 13.4l-2.6-2.8-1.1 3.3z" />
+        <path d="M4.8 15.4c2 2.6 4.4 3.6 7.2 3.6s5.2-1 7.2-3.6l-1.3.4-.7 1.1-.9-.9-1 1.2-.9-1-1 1.2-1-1.1-1 1.1-1-1.2-.9 1-1-1.2-.9.9-.7-1.1z" />
+      </>
+    );
+    return (
+      <>
+        <ellipse cx="7.3" cy="14.6" rx="6.1" ry="6.3" fill="#b8501a" /><ellipse cx="16.7" cy="14.6" rx="6.1" ry="6.3" fill="#b8501a" />
+        <ellipse cx="12" cy="14.6" rx="6.2" ry="6.8" fill="#de6d22" />
+        <path d="M11.2 8.7c-.2-2 .3-3.6 1.6-4.8l1.2.8c-1 .9-1.4 2.2-1.3 4z" fill="#4d6b2a" />
+        <path d="M13.4 5.3c1.4-1.2 3.2-1.3 4.6-.4-1.1 1.3-2.9 1.6-4.6.4z" fill="#6f8f3a" />
+        <clipPath id={uid}><ellipse cx="12" cy="14.6" rx="6.2" ry="6.8" /></clipPath>
+        <g fill="#c27f26">{face}</g>
+        <g fill="#ffd257" clipPath={`url(#${uid})`}>{face}</g>
+      </>
+    );
+  },
   // Black Friday: a black price tag with a gold rim, hole and percent sign, like the tags in the banner.
   sale: (
     <>
@@ -88,9 +99,11 @@ const EVENT_ART: Record<EventTheme, ReactNode> = {
 };
 
 export function EventIcon({ event, size = 20 }: { event: Pick<ShopEvent, 'id' | 'name'>; size?: number }) {
+  const uid = useId();
+  const art = EVENT_ART[eventTheme(event)];
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" className="shrink-0">
-      {EVENT_ART[eventTheme(event)]}
+      {typeof art === 'function' ? art(uid) : art}
     </svg>
   );
 }
