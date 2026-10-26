@@ -4,6 +4,7 @@ import { applyTheme, ThemeProvider } from '../dashboard/src/theme';
 import { sample, themeFor } from './sample';
 import '../dashboard/src/tailwind.css';
 import '../dashboard/src/styles.css';
+import './docs.css';
 
 /** Inside the phone frame of `withDevice` (see below); there the story renders normally at phone width. */
 const framed = new URLSearchParams(window.location.search).has('framed');
@@ -58,6 +59,8 @@ const preview: Preview = {
     switches: ['scheme', 'mode', 'device'] satisfies Switch[],
     options: { storySort: { order: ['Start', 'Übersicht', 'Vergleich', 'Discord', 'Grundlagen', 'Komponenten', ['Aktionen', 'Layout', 'Formular', 'Rückmeldung', 'Diagramme', 'Marke', 'Discord'], 'Seiten'] } },
     controls: { expanded: true, sort: 'requiredFirst' },
+    // The example's code as a tab in the addon panel (the panel only opens on component stories, see manager.tsx).
+    docs: { codePanel: true },
   },
 };
 

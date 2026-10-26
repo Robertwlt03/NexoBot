@@ -1,0 +1,24 @@
+/*
+ * Guide pages: "Show code" and "Copy code" sit in a footer bar of the example box, styled like Storybook's own bar
+ * above the example (same border, background and hairline), instead of floating under the box.
+ * The docs pages use Storybook's light docs theme, so these are its light colours. The doubled class beats the
+ * emotion class Storybook injects after this file.
+ */
+.sbdocs.sbdocs-preview:has(+ .sbdocs-preview-actions) {
+  margin-bottom: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.sbdocs.sbdocs-preview-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  margin: 0 0 40px;
+  padding: 0 7px;
+  background: #fff;
+  border: 1px solid rgba(38, 74, 115, 0.15);
+  border-top: 0;
+  border-radius: 0 0 4px 4px;
+  box-shadow: inset 0 1px 0 0 rgba(38, 74, 115, 0.15), 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
