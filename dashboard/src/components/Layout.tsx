@@ -49,12 +49,12 @@ export function ServerRail({ guilds, activeId }: { guilds: ApiGuildSummary[]; ac
     <nav className="flex w-[72px] shrink-0 flex-col items-center gap-2.5 overflow-y-auto border-r border-white/[.05] bg-rail py-4" aria-label="Server">
       <div className="relative flex w-full justify-center">
         <span className={pill(onOverview)} />
-        <button className={`${item} cursor-pointer border-0 bg-surface p-0 ring-1 ring-white/[.06] hover:ring-accent/40`} title="Alle Server" onClick={() => navigate('/servers')}>
+        <button className={`${item} rail-home cursor-pointer border-0 bg-surface p-0 ring-1 ring-white/[.06] hover:ring-accent/40`} title="Alle Server" onClick={() => navigate('/servers')}>
           <NexoLogo className="w-9 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" animated={false} />
         </button>
       </div>
-      {/* Divider between "Alle Server" and the servers: the same groove as the open-server marker. */}
-      <div className="rail-groove my-1 h-[2px] w-7 shrink-0 rounded-full" />
+      {/* Divider between "Alle Server" and the servers: the same groove as the open-server marker (Cyberpunk: hatching). */}
+      <div className="rail-groove rail-divider my-1 h-[2px] w-7 shrink-0 rounded-full" />
       {guilds.filter((g) => g.botPresent).map((guild) => {
         const active = guild.id === activeId;
         return (

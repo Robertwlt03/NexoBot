@@ -640,8 +640,8 @@ main:has(.page-head > .actions) .engraving-icon { display: none; }
 /*
  * Cyberpunk shapes, cut like the Edgerunners site: chamfered instead of rounded corners (corner-shape keeps the border
  * on the cut; browsers without it keep the small radii), one big cut bottom right on cards and buttons, pill shapes
- * become tags with pointed ends (circles and the round server icons in the rail stay round; a pill that should turn
- * into a tag uses rounded-[999px] instead of rounded-full), and headings in capitals
+ * become tags with pointed ends (circles stay round, the rail's server icons get their own octagon at the end of
+ * this file; a pill that should turn into a tag uses rounded-[999px] instead of rounded-full), and headings in capitals
  * with the site's mint/pink misprint.
  */
 @layer components {
@@ -658,3 +658,17 @@ main:has(.page-head > .actions) .engraving-icon { display: none; }
 [data-theme="cyberpunk"] .page-kicker { font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; }
 [data-theme="cyberpunk"] .page-kicker::before { border-radius: 0; transform: rotate(45deg); }
 }
+
+/*
+ * Cyberpunk server rail (components/Layout.tsx ServerRail): nothing carved, since there is no wood. The markers are flat
+ * bars, the open server's in yellow with a glow; the divider is a strip of the header's hatching; server icons are
+ * chamfered octagons; the Nexo button drops its round socket, so the logo plate itself is the button. Unlayered, so it
+ * wins over the Tailwind sizes and rings on the same elements.
+ */
+[data-theme="cyberpunk"] .rail-groove { background: rgb(var(--ov) / 0.35); box-shadow: none; border-radius: 0; }
+[data-theme="cyberpunk"] .rail-groove.h-8 { background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+[data-theme="cyberpunk"] .rail-divider { height: 6px; background: repeating-linear-gradient(115deg, #fcee0a 0 2px, transparent 2px 6px); }
+[data-theme="cyberpunk"] .rounded-\[22px\] { border-radius: 12px; corner-shape: bevel; }
+[data-theme="cyberpunk"] .rail-home { background: transparent; box-shadow: none; overflow: visible; }
+[data-theme="cyberpunk"] .rail-home svg { width: 44px; }
+[data-theme="cyberpunk"] .rail-home:hover svg { filter: drop-shadow(0 0 6px rgb(252 238 10 / 0.45)); }
