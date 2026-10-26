@@ -6,7 +6,7 @@
 import React, { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import { BrowserIcon, MobileIcon, MoonIcon, SunIcon } from '@storybook/icons';
 import { Select, Separator, ToggleButton } from 'storybook/internal/components';
-import { addons, types, useGlobals, useParameter, useStorybookApi } from 'storybook/manager-api';
+import { addons, types, useGlobals, useParameter, useStorybookApi, useStorybookState } from 'storybook/manager-api';
 import { THEME_PRESETS } from '../src/shared/theme';
 
 const NARROW = '(max-width: 640px)';
@@ -47,8 +47,15 @@ function PanelSync() {
 const ORDER = ['scheme', 'mode', 'device'];
 /** The switches the open story lists in `parameters.switches` (all three by default, see preview.tsx). */
 const useSwitches = () => useParameter<string[]>('switches', ORDER);
-/** A separator goes only between our switches: in front of one when an earlier one is shown too. */
-const followsAnother = (switches: string[], name: string) => ORDER.slice(0, ORDER.indexOf(name)).some((other) => switches.includes(other));
+/**
+ * Whether a separator goes in front of this switch: between our switches, and in front of the first one when
+ * Storybook's own tools stand before it (reload and vision filter on single stories; guide pages have none there).
+ */
+function useSeparator(name: string) {
+  const switches = useSwitches();
+  const { viewMode } = useStorybookState();
+  return viewMode === 'story' || ORDER.slice(0, ORDER.indexOf(name)).some((other) => switches.includes(other));
+}
 
 const Swatch = ({ colors }: { colors: string[] }) => (
   <span style={{ display: 'inline-flex' }}>
@@ -60,10 +67,12 @@ const Swatch = ({ colors }: { colors: string[] }) => (
 function SchemePicker() {
   const [globals, updateGlobals] = useGlobals();
   const narrow = useNarrow();
+  const separator = useSeparator('scheme');
   if (!useSwitches().includes('scheme')) return null;
   const current = THEME_PRESETS.find((p) => p.id === globals.scheme) ?? THEME_PRESETS[0];
   return (
     <>
+      {separator && <Separator />}
       {/* Select keeps its choice internally; the key resets it when the scheme comes from the address. */}
       <Select key={current.id} ariaLabel="Farbvorlage" tooltip="Farbvorlage" size="small" padding="small"
         icon={<Swatch colors={[current.primary, current.secondary]} />} showSelectedOptionTitle={!narrow}
@@ -80,11 +89,12 @@ function Pair({ caption, name, options }: { caption: string; name: string; optio
   const [globals, updateGlobals] = useGlobals();
   const narrow = useNarrow();
   const switches = useSwitches();
+  const separator = useSeparator(name);
   if (!switches.includes(name)) return null;
   const value = globals[name] ?? options[0].value;
   return (
     <>
-      {followsAnother(switches, name) && <Separator />}
+      {separator && <Separator />}
       <div role="group" aria-label={caption} style={{ display: 'flex', gap: 2 }}>
         {options.map((option) => (
           <ToggleButton key={option.value} pressed={option.value === value} size="small" padding={narrow ? 'small' : 'medium'} variant="ghost"
