@@ -209,7 +209,7 @@ export function GuildLayout() {
           <span className="truncate text-sm font-medium text-ink">{current?.label ?? 'Übersicht'}</span>
         </header>
         <div className="relative flex-1 overflow-y-auto px-4 pb-32 pt-9 md:px-10">
-          <PageBackdrop art={ICON_PATHS[current?.icon ?? 'home']} />
+          <PageBackdrop art={ICON_PATHS[current?.icon ?? 'home']} label={current?.label ?? 'Übersicht'} />
           <div ref={pageRef} className="relative mx-auto max-w-[1040px]">
             {detail.loading && !detail.data && <Spinner />}
             {detail.error && (

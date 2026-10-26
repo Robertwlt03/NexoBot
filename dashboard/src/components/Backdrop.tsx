@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 // Page header backdrop, the same on every page and made of the theme's material: walnut or golden oak with the page's
-// icon and a vine burnt in (assets/wood/CREDITS.md), or for Cyberpunk a black grid with yellow hatching and neon circuit traces.
+// icon and a vine burnt in (assets/wood/CREDITS.md), or for Cyberpunk a black grid with yellow hatching and the icon as a neon sign in target corners.
 // Over the text column it is washed lightly (--scrim, measured for 4.5:1 text), right of it the material shows; it
 // fades out downwards. styles.css switches the layers by data-theme and data-mode.
 import type { ReactNode } from 'react';
@@ -9,8 +9,11 @@ import oak from '../assets/wood/oak.webp';
 import { CircuitArt } from './CircuitArt';
 import { Engraving } from './Engraving';
 
-/** Absolute layer at the top of a scroll area, visible right away. `art` = the page's nav icon (24px grid paths). */
-export function PageBackdrop({ art, column = 1040 }: { art?: ReactNode; column?: number }) {
+/**
+ * Absolute layer at the top of a scroll area, visible right away. `art` = the page's nav icon (24px grid paths), `label`
+ * = the page name (the tag under the icon in Cyberpunk).
+ */
+export function PageBackdrop({ art, label, column = 1040 }: { art?: ReactNode; label?: string; column?: number }) {
   const textEnd = `calc(max(40px, 50% - ${column / 2}px) + 780px)`;
   // Washed toward --scrim-color: the page colour on walnut, the oak's own light golden in the light mode (styles.css).
   const tone = 'var(--scrim-color, var(--bg-main))';
@@ -29,7 +32,7 @@ export function PageBackdrop({ art, column = 1040 }: { art?: ReactNode; column?:
       <div className="absolute inset-0" style={{ background: wash }} />
       {/* Right of the text column; on narrow screens a small version in the corner. */}
       <div className="look-wood absolute inset-0"><Engraving art={art} width={artWidth} /></div>
-      <div className="look-cyber absolute inset-0"><CircuitArt art={art} width={artWidth} /></div>
+      <div className="look-cyber absolute inset-0"><CircuitArt art={art} label={label} width={artWidth} /></div>
     </div>
   );
 }

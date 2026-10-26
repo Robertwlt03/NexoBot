@@ -164,7 +164,7 @@ export function MeLayout() {
           {profile.data && <CoinMilestone balance={profile.data.wallet.balance} />}
         </header>
         <div className="relative flex-1 overflow-y-auto px-4 pb-32 pt-9 md:px-10">
-          <PageBackdrop art={current && GLYPHS[current.icon]} column={1100} />
+          <PageBackdrop art={current && GLYPHS[current.icon]} label={current?.label} column={1100} />
           <div ref={pageRef} className="relative mx-auto max-w-[1100px]">
             {profile.loading && !profile.data && <Spinner />}
             {profile.error && !profile.data && <Notice tone="danger" onRetry={profile.reload}>{profile.error}</Notice>}
