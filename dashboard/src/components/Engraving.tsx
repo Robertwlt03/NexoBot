@@ -54,14 +54,14 @@ const LEAVES = LEAF_SPOTS.map(([i, t, side, size]) => {
  */
 const PAINT: readonly { dx: number; dy: number; scale: number; reach: number; coat: number; dab?: readonly [number, number, number] }[] = [
   { dx: 0, dy: 0, scale: 1, reach: 1, coat: 1 },
-  { dx: 0.04, dy: -0.02, scale: 1.05, reach: 1, coat: 0.95, dab: [0.42, -0.5, 0.045] },
-  { dx: 0, dy: 0, scale: 1, reach: 0.9, coat: 1 },
-  { dx: 0, dy: 0, scale: 1, reach: 1, coat: 0.9 },
+  { dx: 0.08, dy: -0.03, scale: 1.09, reach: 1, coat: 0.92, dab: [0.47, -0.54, 0.07] },
+  { dx: 0, dy: 0, scale: 0.98, reach: 0.78, coat: 1 },
+  { dx: -0.02, dy: 0.01, scale: 1, reach: 1, coat: 0.82 },
   { dx: 0, dy: 0, scale: 1, reach: 1, coat: 1 },
-  { dx: 0.02, dy: 0.03, scale: 0.94, reach: 1, coat: 1 },
-  { dx: -0.04, dy: 0, scale: 1.04, reach: 1, coat: 1 },
-  { dx: 0, dy: 0, scale: 1, reach: 0.86, coat: 0.95 },
-  { dx: 0, dy: 0, scale: 1, reach: 1, coat: 1 },
+  { dx: 0.03, dy: 0.05, scale: 0.88, reach: 1, coat: 1.05 },
+  { dx: -0.08, dy: -0.01, scale: 1.09, reach: 1, coat: 0.97, dab: [-0.55, -0.2, 0.06] },
+  { dx: 0, dy: 0, scale: 1, reach: 0.72, coat: 0.92 },
+  { dx: 0.02, dy: 0, scale: 1.03, reach: 1, coat: 1 },
 ];
 /** Where the brush stopped: everything from the base up to `reach`, ending in a ragged edge. */
 const reachClip = (reach: number) => {
@@ -154,9 +154,9 @@ export function Engraving({ art, width }: { art?: ReactNode; width: string }) {
         <defs>
           <filter id={`${id}-paint`} x="-20%" y="-20%" width="140%" height="140%">
             <feTurbulence type="fractalNoise" baseFrequency="0.35" numOctaves="2" seed="3" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.2" xChannelSelector="R" yChannelSelector="G" result="ragged" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.7" xChannelSelector="R" yChannelSelector="G" result="ragged" />
             <feTurbulence type="fractalNoise" baseFrequency="0.09 0.55" numOctaves="2" seed="11" result="streaks" />
-            <feColorMatrix in="streaks" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -0.5 0 0 0 1.2" result="coat" />
+            <feColorMatrix in="streaks" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -0.85 0 0 0 1.35" result="coat" />
             <feComposite in="ragged" in2="coat" operator="in" />
           </filter>
           {PAINT.map((paint, i) => paint.reach < 1 && <clipPath key={i} id={`${id}-reach-${i}`}><path d={reachClip(paint.reach)} /></clipPath>)}
