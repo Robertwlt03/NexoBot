@@ -8,14 +8,10 @@ const YELLOW = '#fcee0a';
 const CYAN = '#00f0ff';
 const PINK = '#c362c0';
 
-/** Traces on the 600×320 board: right-angled runs with 45° bends, each ending in a pad. */
+/** Traces on the 600×320 board: two short runs with a 45° bend, each ending in a pad; they keep clear of the icon. */
 const TRACES: readonly { d: string; pad: readonly [number, number]; pink?: boolean }[] = [
-  { d: 'M600 30H520L496 54H420', pad: [420, 54] },
-  { d: 'M600 64H548L530 82V128L512 146H470', pad: [470, 146], pink: true },
-  { d: 'M600 186H560L538 208H380', pad: [380, 208] },
-  { d: 'M600 236H574L556 254V300', pad: [556, 300], pink: true },
-  { d: 'M352 0V24L336 40H252', pad: [252, 40] },
-  { d: 'M600 120H584', pad: [584, 120] },
+  { d: 'M600 30H548L524 54H486', pad: [486, 54] },
+  { d: 'M600 236H574L556 254V284', pad: [556, 284], pink: true },
 ];
 
 /** Where the 24px icon sits and how big it is drawn (viewBox units), as on the wood. */
@@ -38,7 +34,7 @@ export function CircuitArt({ art, width }: { art?: ReactNode; width: string }) {
   const id = useId();
   const iconArt = art ? scaleStrokes(art, ICON_LINE / ICON_AT.scale / 2) : null;
   const lines = (glow: boolean) => (
-    <g fill="none" strokeLinecap="round" strokeLinejoin="round" filter={glow ? `url(#${id}-glow)` : undefined} opacity={glow ? 0.9 : 1}>
+    <g fill="none" strokeLinecap="round" strokeLinejoin="round" filter={glow ? `url(#${id}-glow)` : undefined} opacity={glow ? 0.6 : 1}>
       {TRACES.map((trace) => (
         <g key={trace.d}>
           <path d={trace.d} stroke={YELLOW} strokeOpacity={glow ? 0.7 : 0.55} strokeWidth={glow ? 3 : 1.6} />
