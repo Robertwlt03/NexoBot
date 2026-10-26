@@ -1,5 +1,5 @@
 // Item tiles (painted by the card renderer, see ItemPreviewCanvas), the member-area icons and currency helpers.
-import { Fragment } from 'react';
+import { Fragment, useContext, useMemo } from 'react';
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { CURRENCY, RARITY_LABELS, SLOT_LABELS } from '../../../src/shared/cosmetics';
 import { CoinIcon } from '../components/CoinIcon';
@@ -8,7 +8,7 @@ import { ItemPreviewCanvas } from '../components/ProfileCardPreview';
 import type {
   BackgroundData, BadgeGlyph, CosmeticItem, LevelupData, Rarity,
 } from '../../../src/shared/cosmetics';
-import { num } from './api';
+import { MeContext, num, resolveCosmetics } from './api';
 
 // ---------- Glyphs (24px line icons; the badge glyphs double as member-area icons) ----------
 
@@ -207,9 +207,17 @@ function LevelupBanner({ data }: { data: LevelupData }) {
   return <span className="rounded-md px-2.5 py-1 text-[12px] font-bold tracking-wide" style={styles[data.style]}>LEVEL UP</span>;
 }
 
+/** Card layouts in the member area wear the member's own look (equipped frame, background …), not a sample. */
+function LayoutPreview({ item }: { item: CosmeticItem }) {
+  const me = useContext(MeContext);
+  const own = useMemo(() => (me ? resolveCosmetics(me.me.profile.equipped, me.items, me.me.profile.stickerSpot) : null), [me]);
+  return <ItemPreviewCanvas item={item} own={own} />;
+}
+
 function previewOf(item: CosmeticItem): ReactNode {
   // Everything the card shows is painted by the card renderer, so tile and card always match.
   if (item.slot === 'levelup') return <LevelupBanner data={item.data} />;
+  if (item.slot === 'layout') return <LayoutPreview item={item} />;
   return <ItemPreviewCanvas item={item} />;
 }
 

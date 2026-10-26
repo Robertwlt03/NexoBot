@@ -2232,7 +2232,7 @@ export const ITEM_PREVIEW_HEIGHT = 240;
  */
 export function renderItemPreview<I extends ProfileImage>(
   context: ProfileContext<NoInfer<I>>, item: CosmeticItem, subject: { name: string; username: string }, assets: ProfileAssets<I>,
-  w = ITEM_PREVIEW_WIDTH, h = ITEM_PREVIEW_HEIGHT,
+  w = ITEM_PREVIEW_WIDTH, h = ITEM_PREVIEW_HEIGHT, own: ResolvedCosmetics | null = null,
 ): boolean {
   const ctx: Ctx = context;
   const seed = seedFrom(subject.username || subject.name);
@@ -2257,14 +2257,15 @@ export function renderItemPreview<I extends ProfileImage>(
     case 'font': drawName(ctx, subject.name, w / 2, h / 2 + 14, 'center', 44, item.data.font, null, w * 0.86); break;
     case 'title': drawRuns(ctx, [{ text: item.data.text, font: font('inter', 700, 26), color: item.data.color }], w / 2, h / 2 + 9, 'center'); break;
     case 'layout': {
-      // The whole card, scaled down, in this layout with a sample member (the layout is the arrangement itself).
-      const k = (w * 0.94) / W;
+      // The whole card, scaled down, in this layout. With `own` it wears the member's own look (frame, background …)
+      // and only the layout changes; without it a plain sample. A margin on every side, so it reads as a card.
+      const k = (w * 0.84) / W;
       ctx.translate((w - W * k) / 2, (h - H * k) / 2);
       ctx.scale(k, k);
       renderProfileCard(ctx, {
         name: subject.name, username: subject.username, avatarUrl: null, bio: 'Hallo! Schön, dass du da bist.',
         level: 12, xp: 860, xpNeeded: 1370, rank: 3, serverName: 'Nexo', balance: 1250,
-      }, {
+      }, own ? { ...own, effect: null, layout: item.data } : {
         background: null, accent: null, nameStyle: null, frame: null, badges: [{ glyph: 'star', color: '#F5C451' }], title: null,
         xpBar: null, font: null, effect: null, levelup: null, layout: item.data, sticker: null, pet: null,
       }, assets);

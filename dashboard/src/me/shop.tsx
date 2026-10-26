@@ -50,10 +50,13 @@ export function StoreCard({ listing, owned, variant, onOpen, className = '', lar
     <button type="button" onClick={onOpen} data-mode="dark" style={style}
       className={`js-item game-tile group relative flex cursor-pointer flex-col overflow-hidden rounded-[18px] border-0 bg-[#0d0b0a] p-0 text-left font-[inherit] ring-1 ring-white/[.08] transition duration-300 hover:-translate-y-1 hover:ring-[color-mix(in_srgb,var(--tile)_70%,transparent)] hover:shadow-[0_22px_44px_-18px_color-mix(in_srgb,var(--tile)_55%,transparent)] ${large ? '' : 'aspect-[3/4]'} ${className}`}>
       <div className="game-tile-field relative min-h-0 w-full flex-1 overflow-hidden">
-        {item.slot === 'background' ? (
-          // Backgrounds: your own card as it is now, only with this background, tilted like a store preview.
-          <div className={`absolute origin-top-left overflow-hidden rounded-lg shadow-[0_20px_44px_-14px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 ${large ? 'left-[8%] top-[24%] w-[118%] -rotate-[7deg] group-hover:-rotate-[5deg] group-hover:scale-[1.03]' : 'left-[5%] top-[30%] w-[122%] -rotate-[9deg] group-hover:-rotate-[7deg] group-hover:scale-[1.04]'}`}>
-            <TryOnPreview items={[item]} resolution={0.5} />
+        {item.slot === 'background' || item.slot === 'layout' ? (
+          // Backgrounds and layouts: your own card as it is now (your frame, your look), wearing only this item. It
+          // sits inside the tile with room on every side and a slight tilt, so it reads as a card, not a banner.
+          <div className="absolute inset-0 flex items-center justify-center px-[9%]">
+            <div className="w-full -rotate-[5deg] overflow-hidden rounded-lg shadow-[0_20px_44px_-14px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[3deg] group-hover:scale-[1.04]">
+              <TryOnPreview items={[item]} resolution={0.5} />
+            </div>
           </div>
         ) : (
           <ItemVisual item={item} className={`h-full w-full rounded-none !bg-transparent transition-transform duration-500 ${large ? 'scale-[1.25] group-hover:scale-[1.32]' : 'scale-[1.3] group-hover:scale-[1.42]'}`} />
@@ -388,7 +391,8 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 md:p-7">
           {/* The item itself, big, on its rarity light (stacked layouts skip it: the stage above shows it; the gift form needs the room). */}
           <div className={`game-tile-field relative mx-auto aspect-square w-full max-w-[260px] shrink-0 overflow-hidden rounded-[20px] ring-1 ring-white/10 max-lg:hidden ${giftMode ? 'hidden' : ''}`} style={{ '--tile': tint } as CSSProperties} data-mode="dark">
-            <ItemVisual item={item} className="h-full w-full scale-[1.25] rounded-none !bg-transparent" />
+            {/* Small items are zoomed in; a whole card (layout) keeps its margin so it reads as a card. */}
+            <ItemVisual item={item} className={`h-full w-full rounded-none !bg-transparent ${item.slot === 'layout' ? '' : 'scale-[1.25]'}`} />
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[.16em]" style={{ color: `color-mix(in srgb, ${tint} 50%, var(--text-strong))` }}>{RARITY_LABELS[item.rarity]} · {SLOT_LABELS[item.slot]}</p>

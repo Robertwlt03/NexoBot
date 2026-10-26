@@ -84,10 +84,12 @@ function BundleTile({ bundle, items, deal, onOpen }: { bundle: ShopBundle; items
       className="js-item bundle-tile group cursor-pointer border-0 p-[1.5px] text-left font-[inherit] transition duration-300 hover:-translate-y-1">
       <span className="game-tile relative flex h-full flex-col overflow-hidden rounded-[19px] bg-[#0d0b0a]">
         <span className="game-tile-field relative block aspect-[16/9] w-full overflow-hidden">
-          {/* Your own card already wearing the whole bundle, tilted and running off the edge like a store preview. */}
+          {/* Your own card already wearing the whole bundle, slightly tilted with room on every side. */}
           {items.some((item) => item.slot !== 'levelup') ? (
-            <span className="absolute left-[8%] top-[20%] block w-[108%] origin-top-left -rotate-[7deg] overflow-hidden rounded-xl shadow-[0_24px_50px_-16px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[5deg] group-hover:scale-[1.03]">
-              <TryOnPreview items={items.filter((item) => item.slot !== 'levelup')} resolution={0.5} />
+            <span className="absolute inset-0 flex items-center justify-center px-[12%] pt-[6%]">
+              <span className="block w-full -rotate-[4deg] overflow-hidden rounded-xl shadow-[0_24px_50px_-16px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[2deg] group-hover:scale-[1.03]">
+                <TryOnPreview items={items.filter((item) => item.slot !== 'levelup')} resolution={0.5} />
+              </span>
             </span>
           ) : <BundleArt items={items} />}
           <span className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#0d0b0a] to-transparent" />
