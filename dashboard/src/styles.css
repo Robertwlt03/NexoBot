@@ -23,6 +23,8 @@
   --bg-active: rgb(var(--ov) / 0.08);
   --border: rgb(var(--ov) / 0.07);
   --border-strong: rgb(var(--ov) / 0.13);
+  /* Outline of buttons, chips, badges and tab bars: 2:1 on cards, page and sidebar, so they read as controls at a glance. */
+  --border-control: rgb(var(--ov) / 0.24);
   /* Form controls need a 3:1 boundary (WCAG 1.4.11). */
   --border-input: #74675b;
   /* Rarity label colours (me/visuals.tsx). */
@@ -86,6 +88,7 @@
   --ov: 98 56 22;
   --border: rgb(var(--ov) / 0.17);
   --border-strong: rgb(var(--ov) / 0.28);
+  --border-control: rgb(var(--ov) / 0.45);
   /* Hover and pressed tints a bit stronger than on the walnut: 5 % brown is lost on the light surfaces. */
   --bg-hover: rgb(var(--ov) / 0.09);
   --bg-active: rgb(var(--ov) / 0.14);
@@ -111,6 +114,15 @@
   --burn-moss: #6f9a4a;
   --burn-moss-opacity: 0.55;
   --burn-blend: multiply;
+  /* The logo's wooden coin (components/NexoLogo.tsx) turns golden oak with the header. */
+  --coin-1: #f6b764;
+  --coin-2: #d48b3c;
+  --coin-3: #9a5a22;
+  --coin-rim-1: #f9c27a;
+  --coin-rim-2: #b8732f;
+  --coin-rim-3: #5e3210;
+  --coin-ring: #6b3a12;
+  --coin-ring-light: #ffe0aa;
 
   --text-strong: #1f1209;
   --text: #311f10;
@@ -216,6 +228,8 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 .page-desc { color: var(--text-muted); margin-top: 6px; max-width: 680px; }
 /* On the light oak the header text takes the strongest ink, so the wood needs only a light wash (--scrim). */
 [data-mode="light"] .page-head :is(.page-kicker, .page-desc) { color: var(--text-strong); }
+/* A soft glow in the wash colour around the header text lifts the cracks and grain right under the letters. */
+.page-head :is(h1, .page-kicker, .page-desc) { text-shadow: 0 0 2px var(--scrim-color, var(--bg-main)), 0 0 8px var(--scrim-color, var(--bg-main)), 0 0 18px var(--scrim-color, var(--bg-main)); }
 .page-head .actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 /* Header parts that can sit on the page photo get their own calm surface. */
 .page-head .icon-tile, .page-head .actions .btn-secondary { background: color-mix(in srgb, var(--bg-card) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
@@ -280,8 +294,8 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 .switch:disabled { opacity: .45; cursor: not-allowed; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { display: inline-flex; align-items: center; gap: 6px; background: rgb(var(--ov) / .03); border: 1px solid var(--border); border-radius: 999px; padding: 4px 7px 4px 11px; font-size: 13px; color: var(--text); transition: border-color .15s; }
-.chip:hover { border-color: var(--border-strong); }
+.chip { display: inline-flex; align-items: center; gap: 6px; background: rgb(var(--ov) / .03); border: 1px solid var(--border-control); border-radius: 999px; padding: 4px 7px 4px 11px; font-size: 13px; color: var(--text); transition: border-color .15s; }
+.chip:hover { border-color: var(--border-input); }
 .chip .dot { width: 8px; height: 8px; border-radius: 50%; }
 .chip button { background: none; border: 0; color: var(--text-faint); cursor: pointer; padding: 0 2px; font-size: 15px; line-height: 1; }
 .chip button:hover { color: var(--text-strong); }
@@ -297,22 +311,23 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
 .btn-success { background: var(--success); color: #fff; }
 .btn-success:hover:not(:disabled) { background: var(--success-hover); }
-.btn-danger { background: transparent; color: var(--neg); border-color: rgba(248, 113, 113, .35); }
+.btn-danger { background: transparent; color: var(--neg); border-color: color-mix(in srgb, var(--neg) 40%, transparent); }
 .btn-danger:hover:not(:disabled) { background: var(--danger); border-color: var(--danger); color: #fff; }
-.btn-secondary { background: rgb(var(--ov) / .03); border-color: var(--border-strong); color: var(--text-strong); }
-.btn-secondary:hover:not(:disabled) { background: rgb(var(--ov) / .07); border-color: rgb(var(--ov) / .22); }
+.btn-secondary { background: rgb(var(--ov) / .03); border-color: var(--border-control); color: var(--text-strong); }
+.btn-secondary:hover:not(:disabled) { background: rgb(var(--ov) / .07); border-color: var(--border-input); }
 .btn-ghost { background: transparent; color: var(--text); }
 .btn-ghost:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-strong); }
 .btn-sm { padding: 4px 12px; min-height: 32px; font-size: 13px; border-radius: 10px; }
 .icon-btn { background: transparent; border: 0; color: var(--text-muted); cursor: pointer; padding: 7px; border-radius: 10px; display: inline-grid; place-items: center; transition: background .15s, color .15s; }
 .icon-btn:hover { background: var(--bg-hover); color: var(--text-strong); }
 
-.badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; background: rgb(var(--ov) / .04); color: var(--text-muted); border: 1px solid var(--border); }
-.badge-on { color: var(--pos); border-color: rgba(74, 222, 128, .22); background: rgba(74, 222, 128, .06); }
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; background: rgb(var(--ov) / .04); color: var(--text-muted); border: 1px solid var(--border-control); }
+.badge-on { color: var(--pos); border-color: color-mix(in srgb, var(--pos) 48%, transparent); background: rgba(74, 222, 128, .06); }
 .badge-on::before, .badge-warn::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.badge-off { color: var(--text-faint); }
-.badge-brand { background: var(--accent-soft); color: var(--accent-text); border-color: var(--accent-line); }
-.badge-warn { color: var(--warning); border-color: rgba(251, 191, 36, .25); background: rgba(251, 191, 36, .06); }
+/* No tint: the faint text keeps its 4.5:1 on the surface underneath. */
+.badge-off { color: var(--text-faint); background: transparent; }
+.badge-brand { background: var(--accent-soft); color: var(--accent-text); border-color: color-mix(in srgb, var(--accent-text) 45%, transparent); }
+.badge-warn { color: var(--warning); border-color: color-mix(in srgb, var(--warning) 48%, transparent); background: rgba(251, 191, 36, .06); }
 
 /* ---------- Lists & tables ---------- */
 .list { display: flex; flex-direction: column; gap: 6px; }
@@ -328,7 +343,7 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 .table tr:last-child td { border-bottom: 0; }
 
 /* ---------- Tabs, paging, stats, action rows ---------- */
-.tabs { position: relative; display: inline-flex; gap: 2px; padding: 4px; background: color-mix(in srgb, var(--bg-card) 90%, transparent); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 16px; max-width: 100%; overflow-x: auto; }
+.tabs { position: relative; display: inline-flex; gap: 2px; padding: 4px; background: color-mix(in srgb, var(--bg-card) 90%, transparent); backdrop-filter: blur(10px); border: 1px solid var(--border-control); border-radius: 14px; margin-bottom: 16px; max-width: 100%; overflow-x: auto; }
 .tabs-pill { position: absolute; top: 4px; bottom: 4px; left: 0; border-radius: 10px; background: var(--bg-card-hover); border: 1px solid var(--border-strong); box-shadow: 0 6px 16px -10px rgba(0, 0, 0, .8); visibility: hidden; }
 .tab { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 7px; border: 0; background: none; color: var(--text-muted); font: inherit; font-size: 13.5px; font-weight: 500; padding: 7px 14px; border-radius: 10px; cursor: pointer; white-space: nowrap; transition: color .15s; }
 .tab:hover, .tab[aria-selected="true"] { color: var(--text-strong); }
@@ -422,6 +437,24 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 .wood-light { display: none; }
 [data-mode="light"] .wood-dark { display: none; }
 [data-mode="light"] .wood-light { display: block; }
+/*
+ * The oak's own colour varies little across the board; the walnut has light and dark patches. A soft-light layer adds
+ * that: a little lighter behind the text column (which also calms the grain under the letters), darker toward the
+ * engraving on the right and along the lower edge. Soft-light keeps the grain and the golden colour.
+ */
+.wood-shade {
+  --shade-light: 0.5;
+  --shade-dark: 0.55;
+  background:
+    radial-gradient(55% 120% at 24% 38%, rgb(255 238 205 / var(--shade-light)), transparent 72%),
+    radial-gradient(30% 90% at 90% 14%, rgb(105 52 12 / var(--shade-dark)), transparent 72%),
+    radial-gradient(48% 70% at 52% 112%, rgb(105 52 12 / calc(var(--shade-dark) * 0.8)), transparent 72%),
+    radial-gradient(30% 80% at -4% 100%, rgb(105 52 12 / calc(var(--shade-dark) * 0.6)), transparent 72%),
+    linear-gradient(90deg, transparent 62%, rgb(95 46 10 / calc(var(--shade-dark) * 0.5)));
+  mix-blend-mode: soft-light;
+}
+/* On phones the text runs across the whole board: faint dark patches, a bit more light. */
+@media (max-width: 767px) { .wood-shade { --shade-dark: 0.2; --shade-light: 0.7; } }
 
 /* ---------- Bundle tiles (me/bundles.tsx): holographic frame that slowly circles the tile ---------- */
 .bundle-tile { position: relative; display: block; border-radius: 20px; background: conic-gradient(from var(--holo-angle), var(--tile), #ffd889, #8fe3ff, #f7a8c4, var(--tile)); box-shadow: 0 24px 60px -30px color-mix(in srgb, var(--tile) 70%, transparent); }

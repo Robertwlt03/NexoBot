@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { THEME_PRESETS, contrast, themeVariables } from '../src/shared/theme.js';
+import { THEME_PRESETS, contrast, mix, themeVariables } from '../src/shared/theme.js';
 
 // Reads the mode tokens straight from the dashboard stylesheet, so a colour tweak there cannot silently drop below WCAG AA.
 const css = readFileSync(new URL('../dashboard/src/styles.css', import.meta.url), 'utf8');
@@ -23,6 +23,12 @@ for (const [mode, t] of Object.entries(MODES)) {
   });
   test(`${mode} mode: form control borders reach 3:1`, () => {
     for (const bg of ['--bg-card', '--bg-input']) assert.ok(contrast(t['--border-input'], t[bg]) >= 3, `${mode}: border on ${bg}`);
+  });
+  test(`${mode} mode: button, chip, badge and tab bar outlines reach 2:1 on cards, page and sidebar`, () => {
+    const block = css.slice(css.indexOf(`${mode === 'dark' ? ':root, [data-mode="dark"]' : '[data-mode="light"]'} {`)).split('}')[0];
+    const ov = block.match(/--ov:\s*(\d+) (\d+) (\d+);/)!.slice(1).map((n) => Number(n).toString(16).padStart(2, '0')).join('');
+    const alpha = Number(block.match(/--border-control:\s*rgb\(var\(--ov\) \/ ([\d.]+)\)/)![1]);
+    for (const bg of ['--bg-card', '--bg-main', '--bg-sidebar']) assert.ok(contrast(mix(t[bg], `#${ov}`, alpha), t[bg]) >= 2, `${mode}: outline on ${bg}`);
   });
 }
 

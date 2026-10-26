@@ -19,6 +19,8 @@ export function PageBackdrop({ art, column = 1040 }: { art?: ReactNode; column?:
       {/* Walnut in the dark mode, golden oak in the light mode (styles.css switches them). */}
       <img src={walnut} alt="" fetchPriority="high" className="wood-dark absolute inset-0 h-full w-full object-cover" />
       <img src={oak} alt="" className="wood-light absolute inset-0 h-full w-full object-cover" />
+      {/* Uneven tone in the oak, like the light and dark patches in the walnut (styles.css .wood-shade). */}
+      <div className="wood-light wood-shade absolute inset-0" />
       <div className="absolute inset-0" style={{ background: wash }} />
       {/* Right of the text column; on narrow screens a small version in the corner. */}
       <Engraving art={art} width={`min(600px, max(220px, calc(100% - ${textEnd} + 140px)))`} />
