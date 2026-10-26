@@ -24,40 +24,11 @@ const sparkle = (x: number, y: number, r: number, fill: string) => (
   <path key={`${x}-${y}`} d={`M${x} ${y - r}Q${x + r * 0.18} ${y - r * 0.18} ${x + r} ${y}Q${x + r * 0.18} ${y + r * 0.18} ${x} ${y + r}Q${x - r * 0.18} ${y + r * 0.18} ${x - r} ${y}Q${x - r * 0.18} ${y - r * 0.18} ${x} ${y - r}Z`} fill={fill} />
 );
 
-/** A firework burst: rays fading in from the centre, a bright dot at each tip and a warm spark in the middle. */
-function burst(uid: string, key: string, cx: number, cy: number, r: number, [inner, outer]: [string, string], rays: number, width: number) {
-  const id = `${uid}-${key}`;
-  const dirs = Array.from({ length: rays }, (_, i) => {
-    const a = (i / rays) * Math.PI * 2 + 0.13;
-    return [Math.cos(a), Math.sin(a)];
-  });
-  return (
-    <g key={key}>
-      <radialGradient id={id} gradientUnits="userSpaceOnUse" cx={cx} cy={cy} r={r}>
-        <stop offset=".25" stopColor={inner} stopOpacity="0" /><stop offset=".65" stopColor={inner} /><stop offset="1" stopColor={outer} />
-      </radialGradient>
-      <path d={dirs.map(([x, y]) => `M${cx + x * r * 0.28} ${cy + y * r * 0.28}L${cx + x * r * 0.86} ${cy + y * r * 0.86}`).join('')}
-        stroke={`url(#${id})`} strokeWidth={width} strokeLinecap="round" />
-      {dirs.map(([x, y], i) => <circle key={i} cx={cx + x * r} cy={cy + y * r} r={width * 0.8} fill={outer} />)}
-      <circle cx={cx} cy={cy} r={width * 1.2} fill="#fff4d2" />
-    </g>
-  );
-}
-
-/** Snow lying along the lower edge of a pine tier: a band from xl to xr at y with soft scallops on top. */
-function snowBand(xl: number, xr: number, y: number) {
-  const n = Math.max(3, Math.round((xr - xl) / 1.7));
-  const step = (xr - xl) / n;
-  let d = `M${xl - 0.3} ${y + 0.25}`;
-  for (let i = 0; i < n; i += 1) d += `q${step / 2} -${1.5 + (i % 2) * 0.35} ${step} 0`;
-  return `${d}l.3 .35H${xl}Z`;
-}
-
 /** One small picture per event theme on a 24×24 grid; a function gets a unique id for its gradients and clip paths. */
 const EVENT_ART: Record<EventTheme, ReactNode | ((uid: string) => ReactNode)> = {
   // Two hearts, the lighter one behind.
   love: <><path d={HEART} fill="#f27b93" transform="translate(8.6 1.2) scale(.62)" /><path d={HEART} fill="#e5536f" transform="translate(.6 5.2) scale(.72)" /></>,
-  // The carnival mask in violet with a gold rim, gold-ringed eyes, a jewel and a magenta-violet feather.
+  // The carnival mask in violet with a gold rim, gold-ringed eyes, a jewel and three feathers in violet and magenta.
   carnival: (uid) => (
     <g transform="rotate(-6 12 12) translate(1.6 2.4) scale(.18) translate(-4 -8)">
       <defs>
@@ -67,13 +38,14 @@ const EVENT_ART: Record<EventTheme, ReactNode | ((uid: string) => ReactNode)> = 
         <linearGradient id={`${uid}-gold`} gradientUnits="userSpaceOnUse" x1="10" y1="36" x2="110" y2="96">
           <stop offset="0" stopColor="#fbe39a" /><stop offset=".5" stopColor="#d79b2c" /><stop offset="1" stopColor="#f3cf6a" />
         </linearGradient>
-        <linearGradient id={`${uid}-plume`} gradientUnits="userSpaceOnUse" x1="8" y1="8" x2="30" y2="48">
-          <stop offset="0" stopColor="#f27bb8" /><stop offset="1" stopColor="#8a3bd0" />
-        </linearGradient>
       </defs>
-      <path d="M34 44C26 30 25 16 34 6c5 12 5 26 0 38Z" fill="#c25bc6" />
-      <path d="M28 46C12 40 3 24 8 8c11 8 23 22 20 38Z" fill={`url(#${uid}-plume)`} />
-      <path d="M27 45L10 11" stroke={`url(#${uid}-gold)`} strokeWidth="2.4" strokeLinecap="round" />
+      {/* Three feathers in the autumn leaf style: two-tone halves, here in violet and magenta. */}
+      {([[-38, 18, 30, 1.45, '#d77fe0', '#b45ec4'], [6, 34, 24, 1.5, '#a964e8', '#8746cc'], [-14, 26, 22, 1.7, '#c06cd9', '#9a4cc0']] as const)
+        .map(([angle, x, y, scale, lit, shade]) => (
+          <g key={angle} transform={`translate(${x} ${y}) rotate(${angle}) scale(${scale})`}>
+            <path d={LEAF} fill={lit} /><path d={LEAF_SHADE} fill={shade} />
+          </g>
+        ))}
       <path d="M100 76l14 40" stroke={`url(#${uid}-gold)`} strokeWidth="7" strokeLinecap="round" />
       <path d={MASK} fill={`url(#${uid}-mask)`} stroke={`url(#${uid}-gold)`} strokeWidth="5" strokeLinejoin="round" />
       <path d={MASK_EYE} fill="#1b0a30" stroke="#e8b84a" strokeWidth="2" />
@@ -138,35 +110,51 @@ const EVENT_ART: Record<EventTheme, ReactNode | ((uid: string) => ReactNode)> = 
       {sparkle(19.4, 4.6, 2.2, '#f6d77a')}
     </>
   ),
-  // A snowy pine on a snow drift: three tiers with snow along each edge, a gold star on top, flakes around it.
-  winter: (uid) => (
+  // A pine like a flat Christmas icon: three tiers lit on the left and shaded on the right (as the autumn leaves),
+  // a gold garland with red baubles, a gold star, a brown trunk and a snow drift at its foot.
+  winter: () => (
     <>
-      <defs>
-        <linearGradient id={`${uid}-pine`} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#4f9a5c" /><stop offset="1" stopColor="#2c6440" />
-        </linearGradient>
-        <linearGradient id={`${uid}-snow`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ffffff" /><stop offset="1" stopColor="#cfe1f0" />
-        </linearGradient>
-      </defs>
-      <g fill="#d3e5f4">{[[3, 5.4, 0.75], [20.6, 7.2, 0.7], [2.4, 12.4, 0.6], [21.4, 13.6, 0.65], [18.2, 2.8, 0.55], [5.6, 2.6, 0.5]].map(([x, y, r]) => <circle key={`${x}`} cx={x} cy={y} r={r} />)}</g>
-      <rect x="10.9" y="17.6" width="2.2" height="3.4" rx=".5" fill="#6b4a33" />
-      <path d="M12 9.6L19.4 18.2H4.6Z" fill={`url(#${uid}-pine)`} /><path d={snowBand(4.6, 19.4, 18.2)} fill={`url(#${uid}-snow)`} />
-      <path d="M12 6l5.8 7H6.2Z" fill={`url(#${uid}-pine)`} /><path d={snowBand(6.2, 17.8, 13)} fill={`url(#${uid}-snow)`} />
-      <path d="M12 2.8l4.2 5.4H7.8Z" fill={`url(#${uid}-pine)`} /><path d={snowBand(7.8, 16.2, 8.2)} fill={`url(#${uid}-snow)`} />
-      <path d="M1.2 23.2c2.6-2.6 6.2-3.5 10.8-3.5s8.2.9 10.8 3.5Z" fill={`url(#${uid}-snow)`} />
+      <rect x="10.9" y="17.6" width="2.2" height="3.6" rx=".5" fill="#7a5233" />
+      {([[10.2, 4.4, 18.2], [6.4, 6.2, 13.4], [3.2, 7.8, 8.8]] as const).map(([top, half, base]) => (
+        <g key={top}>
+          <path d={`M12 ${top}L${12 - half} ${base}H12Z`} fill="#4e9a5b" />
+          <path d={`M12 ${top}L${12 + half} ${base}H12Z`} fill="#2f7444" />
+        </g>
+      ))}
+      <path d="M8.6 12.4q3.4-.6 6.6-2.8M6.8 17.2q5.4-.6 10.6-3.6" stroke="#f2c14e" strokeWidth=".7" strokeLinecap="round" fill="none" />
+      <g fill="#e04b4b"><circle cx="10.4" cy="7.6" r=".8" /><circle cx="13.6" cy="13.4" r=".8" /><circle cx="9" cy="15.2" r=".8" /><circle cx="15.8" cy="17" r=".8" /></g>
       <path d="M12 .6l.7 1.5 1.6.2-1.2 1.1.3 1.6-1.4-.8-1.4.8.3-1.6-1.2-1.1 1.6-.2Z" fill="#f2c14e" />
+      <path d="M2 23.3c2.4-2.2 5.8-3.1 10-3.1s7.6.9 10 3.1Z" fill="#e8f1f8" />
+      <path d="M2 23.3c2.4-1.2 5.8-1.7 10-1.7s7.6.5 10 1.7Z" fill="#c9dcec" />
     </>
   ),
-  // Fireworks: a big gold burst, a pink and a blue one, rays fading in from the centre, and a few twinkles.
-  newyear: (uid) => (
-    <>
-      {burst(uid, 'gold', 10.6, 9.6, 8.2, ['#ffe08a', '#d99a16'], 16, 0.8)}
-      {burst(uid, 'pink', 18.6, 16.6, 4.7, ['#ffb7c8', '#e0406a'], 12, 0.7)}
-      {burst(uid, 'blue', 5.2, 18.8, 3.7, ['#acdcff', '#2f86cf'], 10, 0.65)}
-      {sparkle(20.4, 4.2, 1.6, '#f2c14e')}{sparkle(2.6, 6.4, 1.2, '#f27b93')}{sparkle(12.4, 21.4, 1.1, '#7cc4f2')}
-    </>
-  ),
+  // Fireworks like a flat New Year icon: one burst of dashed rays, long and short in turn, in gold, coral and teal,
+  // dots between them and a gold twinkle in the middle.
+  newyear: () => {
+    const colours = ['#e0a52a', '#e5645a', '#3a9e95'];
+    const at = (angle: number, r: number) => [12 + Math.cos(angle) * r, 12 + Math.sin(angle) * r];
+    return (
+      <>
+        {Array.from({ length: 16 }, (_, i) => {
+          const angle = (i / 16) * Math.PI * 2 - Math.PI / 2;
+          const colour = colours[i % 3];
+          const segments = i % 2 ? [[3.4, 5.8]] : [[2.8, 6.2], [7.4, 9.4]];
+          const [dx, dy] = at(angle, i % 2 ? 7.6 : 10.8);
+          return (
+            <g key={i}>
+              {segments.map(([from, to]) => {
+                const [x1, y1] = at(angle, from);
+                const [x2, y2] = at(angle, to);
+                return <path key={from} d={`M${x1} ${y1}L${x2} ${y2}`} stroke={colour} strokeWidth="1.1" strokeLinecap="round" />;
+              })}
+              <circle cx={dx} cy={dy} r=".7" fill={colour} />
+            </g>
+          );
+        })}
+        {sparkle(12, 12, 2, '#f2c14e')}
+      </>
+    );
+  },
   // A violet gift with a gold ribbon and bow, as in the party banner.
   party: (
     <g transform="translate(2 1.6) scale(.217) translate(-114 -214)">
