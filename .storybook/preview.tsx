@@ -61,6 +61,8 @@ const preview: Preview = {
     controls: { expanded: true, sort: 'requiredFirst' },
     // The example's code as a tab in the addon panel (the panel only opens on component stories, see manager.tsx).
     docs: { codePanel: true },
+    // Code snippets keep a tag's attributes on one line while it fits, instead of one attribute per line.
+    jsx: { maxInlineAttributesLineLength: 90 },
   },
 };
 
