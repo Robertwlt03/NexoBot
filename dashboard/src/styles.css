@@ -557,7 +557,7 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 /* A thin yellow line along the top edge, like the site's nav strip; its own layer above the wash over the text column. */
 .cyber-stripe { background: linear-gradient(rgb(252 238 10 / 0.5), rgb(252 238 10 / 0.5)) left 0 top 0 / 100% 1px no-repeat; }
 /*
- * The page icon in its target corners (components/CircuitArt.tsx): fixed size, 112px from 768px and 72px below (and a
+ * The page icon in its target corners (components/CircuitArt.tsx): fixed size, 96px from 768px and 72px below (and a
  * little higher, so it ends before the description), at the height of the page header and flush with the right edge of
  * the content column (--column from Backdrop.tsx; the
  * column's side padding is 16px, 40px from 768px).
@@ -567,8 +567,8 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 .cyber-hud svg { width: 72px; height: 72px; }
 .cyber-hud-tag { font-family: var(--font-display); font-size: 10px; line-height: 1; letter-spacing: 0.14em; color: var(--text-faint); white-space: nowrap; }
 @media (min-width: 768px) {
-  .cyber-hud-at { --pad: 40px; top: 24px; }
-  .cyber-hud svg { width: 112px; height: 112px; }
+  .cyber-hud-at { --pad: 40px; top: 16px; }
+  .cyber-hud svg { width: 96px; height: 96px; }
 }
 [data-mode="light"] .wood-dark { display: none; }
 [data-mode="light"] .wood-light { display: block; }
@@ -671,8 +671,8 @@ main:has(.page-head > .actions) .engraving-icon { display: none; }
 [data-theme="cyberpunk"] .switch.on::after { background: var(--accent-ink); }
 /* The hero is a black panel with a yellow edge and a cyan glow; the shared yellow-into-black gradient turns olive. */
 [data-theme="cyberpunk"] .card-hero { background: radial-gradient(90% 140% at 100% 0%, rgb(0 240 255 / 0.12), transparent 55%), var(--highlight), var(--bg-card); border-color: var(--accent-line); }
-/* Header text and buttons stay left of the icon in its target corners (components/CircuitArt.tsx, 112px wide). */
-@media (min-width: 768px) { [data-theme="cyberpunk"] .page-head { padding-right: 136px; } }
+/* Header text and buttons stay left of the icon in its target corners (components/CircuitArt.tsx, 96px wide). */
+@media (min-width: 768px) { [data-theme="cyberpunk"] .page-head { padding-right: 120px; } }
 /* On phones the description runs below the icon; the kicker and the title keep its 72px clear beside it. */
 @media (max-width: 767px) { [data-theme="cyberpunk"] .page-head :is(.page-kicker, h1) { padding-right: 84px; } }
 /* Between phone and tablet the buttons still sit beside the title, so they keep the icon's room too. */
