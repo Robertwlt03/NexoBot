@@ -19,7 +19,8 @@ import { Glyph, ItemVisual, Bernis, Price, RARITY_TILE, RarityLabel, backgroundS
 import { ProductDialog } from './ProductDialog';
 import { BundleSection } from './bundles';
 import { Celebration } from './Celebration';
-import { EventBackdrop, EventIcon, SCENE_ROOM, eventTheme } from './EventScene';
+import { EventBackdrop, SCENE_ROOM, eventTheme } from './EventScene';
+import { EventIcon } from './EventIcon';
 import { Icon } from '../icons';
 
 export type ShopVariant = 'shop' | 'blackmarket';

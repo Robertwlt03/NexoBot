@@ -4,7 +4,7 @@ import { useApi } from '../api';
 import { Card, Notice, PageHeader, Spinner } from '../components/ui';
 import { countdown, formatDate, num, startsIn, useMe, useNow } from './api';
 import { CommunityGoals } from './CommunityGoals';
-import { EventIcon } from './EventScene';
+import { EventIcon } from './EventIcon';
 import { Bernis, CoinStacks, Glyph, ItemVisual } from './visuals';
 
 const EARN: [string, number][] = [
