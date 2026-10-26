@@ -162,6 +162,66 @@
   --color-warn: #6f3204;
 }
 
+/*
+ * Cyberpunk: night blue surfaces, neon cyan as the accent, hot pink as the second colour, a pixel grid and glowing
+ * traces instead of wood (components/Backdrop.tsx). Always dark; the dark islands inside the page (banner, item tiles)
+ * take the same tokens, so nothing falls back to walnut.
+ */
+[data-theme="cyberpunk"], [data-theme="cyberpunk"] [data-mode="dark"]:not([data-theme]) {
+  --bg-app: #070818;
+  --bg-sidebar: #0d1026;
+  --bg-main: #090b1d;
+  --bg-card: #121530;
+  --bg-card-hover: #191d3d;
+  --bg-input: #0c0f24;
+  --ov: 170 205 255;
+  --bg-hover: rgb(var(--ov) / 0.06);
+  --bg-active: rgb(var(--ov) / 0.1);
+  --border: rgb(var(--ov) / 0.1);
+  --border-strong: rgb(var(--ov) / 0.18);
+  --border-control: rgb(var(--ov) / 0.3);
+  --border-input: #66739e;
+  --scrim: 74%;
+  --scrim-color: #090b1d;
+  --card-shadow: 0 0 0 1px rgb(34 211 238 / 0.05), 0 18px 40px -26px rgb(34 211 238 / 0.35);
+  /* The logo coin turns into a dark chip with neon rims (components/NexoLogo.tsx). */
+  --coin-1: #1b2350;
+  --coin-2: #121735;
+  --coin-3: #0a0d22;
+  --coin-rim-1: #67e8f9;
+  --coin-rim-2: #8b5cf6;
+  --coin-rim-3: #f472b6;
+  --coin-ring: #22d3ee;
+  --coin-ring-light: #f472b6;
+
+  --text-strong: #eef4ff;
+  --text: #c9d4f0;
+  --text-muted: #a3aed0;
+  --text-faint: #8f9bc2;
+
+  --pos: #3ee6a0;
+  --neg: #ff7a93;
+  --warning: #fcd34d;
+  --shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.9), 0 0 40px -20px rgb(34 211 238 / 0.35);
+  --highlight: linear-gradient(180deg, rgb(34 211 238 / 0.05), rgb(34 211 238 / 0) 120px);
+  color-scheme: dark;
+
+  --color-white: #eef4ff;
+  --color-rail: #070818;
+  --color-canvas: #090b1d;
+  --color-panel: #0d1026;
+  --color-surface: #121530;
+  --color-raised: #191d3d;
+  --color-field: #0c0f24;
+  --color-ink: #eef4ff;
+  --color-body: #c9d4f0;
+  --color-mute: #a3aed0;
+  --color-faint: #8f9bc2;
+  --color-pos: #3ee6a0;
+  --color-neg: #ff7a93;
+  --color-warn: #fcd34d;
+}
+
 /* Mode-independent tokens. */
 :root {
   --accent: #8fb36b;
@@ -194,6 +254,13 @@
   /* Headings in the homepage font (Unbounded, loaded in tailwind.css), text stays Inter. */
   --font-display: "Unbounded Variable", "Unbounded", var(--font);
   --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+/* Cyberpunk is cut sharper: smaller corners (after the shared tokens, which set the rounder defaults). */
+[data-theme="cyberpunk"] {
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 12px;
 }
 
 /* Element defaults live in the base layer so Tailwind utilities can override them. */
@@ -476,6 +543,18 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 
 /* Header wood per mode (components/Backdrop.tsx). */
 .wood-light { display: none; }
+/* Theme looks: the wood layers and the burnt engraving belong to the wood themes, the grid and traces to Cyberpunk. */
+.look-cyber { display: none; }
+[data-theme="cyberpunk"] :is(.wood-dark, .wood-light, .look-wood) { display: none; }
+[data-theme="cyberpunk"] .look-cyber { display: block; }
+.cyber-grid {
+  background:
+    radial-gradient(55% 120% at 100% 0%, rgb(244 114 182 / 0.3), transparent 60%),
+    radial-gradient(50% 110% at 0% 0%, rgb(34 211 238 / 0.2), transparent 60%),
+    linear-gradient(rgb(34 211 238 / 0.13) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, rgb(34 211 238 / 0.13) 1px, transparent 1px) 0 0 / 28px 28px,
+    #0b0e26;
+}
 [data-mode="light"] .wood-dark { display: none; }
 [data-mode="light"] .wood-light { display: block; }
 /*

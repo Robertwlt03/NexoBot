@@ -1,36 +1,29 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULT_THEME, THEME_PRESETS, contrast, normalizeTheme, themeVariables, themeWarnings } from '../src/shared/theme.js';
+import { DEFAULT_THEME, THEME_PRESETS, contrast, normalizeTheme, themeVariables } from '../src/shared/theme.js';
 
-test('every preset reads well on the dark and the light surfaces', () => {
+test('every theme: readable text on its accent buttons, and on the light surface for light themes', () => {
   for (const preset of THEME_PRESETS) {
-    for (const mode of ['dark', 'light'] as const) {
-      const theme = { preset: preset.id, primary: preset.primary, secondary: preset.secondary, mode };
-      assert.deepEqual(themeWarnings(theme), [], `${preset.name} ${mode}`);
-      const vars = themeVariables(theme);
-      assert.ok(contrast(vars['--accent'], vars['--accent-ink']) >= 4.5, `${preset.name} ${mode}: text on accent`);
-      if (mode === 'light') assert.ok(contrast(vars['--accent-text'], '#fffaf3') >= 4.5, `${preset.name}: accent text on the light surface`);
-    }
+    const vars = themeVariables(normalizeTheme({ preset: preset.id }));
+    assert.ok(contrast(vars['--accent'], vars['--accent-ink']) >= 4.5, `${preset.name}: text on accent`);
+    if (preset.mode === 'light') assert.ok(contrast(vars['--accent-text'], '#fffaf3') >= 4.5, `${preset.name}: accent text on the light surface`);
   }
 });
 
-test('normalizeTheme accepts presets and valid custom colours, rejects the rest', () => {
-  assert.deepEqual(normalizeTheme({ preset: 'smaragd' }), { preset: 'smaragd', primary: '#34d399', secondary: '#5eead4', mode: 'dark' });
-  assert.equal(normalizeTheme({ preset: 'smaragd', mode: 'light' }).mode, 'light');
-  assert.equal(normalizeTheme({ preset: 'smaragd', mode: 'neon' }).mode, 'dark');
-  assert.deepEqual(normalizeTheme({ preset: 'custom', primary: '#FF8800', secondary: '#112233' }), { preset: 'custom', primary: '#ff8800', secondary: '#112233', mode: 'dark' });
-  assert.deepEqual(normalizeTheme({ preset: 'custom', primary: 'red', secondary: '#112233' }), DEFAULT_THEME);
+test('normalizeTheme takes a theme id; older colour presets and custom colours become the wood theme of their mode', () => {
+  assert.deepEqual(normalizeTheme({ preset: 'cyberpunk' }), { preset: 'cyberpunk', primary: '#22d3ee', secondary: '#f472b6', mode: 'dark' });
+  assert.equal(normalizeTheme({ preset: 'cyberpunk', mode: 'light' }).mode, 'dark');
+  assert.equal(normalizeTheme({ preset: 'eiche' }).mode, 'light');
+  assert.equal(normalizeTheme({ preset: 'smaragd', mode: 'light' }).preset, 'eiche');
+  assert.equal(normalizeTheme({ preset: 'custom', primary: '#FF8800', secondary: '#112233', mode: 'dark' }).preset, 'walnuss');
   assert.deepEqual(normalizeTheme(null), DEFAULT_THEME);
-});
-
-test('a dark custom primary triggers a contrast warning', () => {
-  assert.ok(themeWarnings({ preset: 'custom', primary: '#1e1b4b', secondary: '#67e8f9', mode: 'dark' }).length > 0);
 });
 
 test('multi-series chart palette: four colours that stay distinguishable (also with red-green colour blindness)', async () => {
   const { chartPalette, distances } = await import('../src/shared/theme.js');
-  for (const preset of THEME_PRESETS) for (const mode of ['dark', 'light'] as const) {
-    const palette = chartPalette({ preset: preset.id, primary: preset.primary, secondary: preset.secondary, mode });
+  for (const preset of THEME_PRESETS) {
+    const { mode } = preset;
+    const palette = chartPalette(normalizeTheme({ preset: preset.id }));
     assert.equal(palette.length, 4, preset.name);
     // On the light cards every mark reaches 3:1 (WCAG 1.4.11).
     if (mode === 'light') for (const color of palette) assert.ok(contrast(color, '#f2e2c7') >= 3, `${preset.name} light: ${color}`);

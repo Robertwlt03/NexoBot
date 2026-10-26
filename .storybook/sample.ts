@@ -2,7 +2,7 @@
 // The sample API for Storybook. Pages fetch from /dashboard/api like in production; here the answers come from the
 // local dashboard/mock-fixtures.ts (the same data as the mock preview) and /me/theme follows the toolbar.
 // One module for preview.tsx and the stories, so there is a single theme state and a single fetch hook.
-import { THEME_PRESETS, type DashboardTheme, type ThemeMode } from '../src/shared/theme';
+import { THEME_PRESETS, normalizeTheme, type DashboardTheme, type ThemeMode } from '../src/shared/theme';
 
 interface Fixtures {
   resolve: (path: string, query: URLSearchParams) => unknown;
@@ -13,9 +13,14 @@ interface Fixtures {
 // The fixtures are local only (not in git, like the mock preview); without them the pages show their error state.
 export const fixtures = Object.values(import.meta.glob('../dashboard/mock-fixtures.ts', { eager: true }))[0] as Fixtures | undefined;
 
+/**
+ * The toolbar's theme and light/dark as a stored theme. The wood themes come as a pair (Walnuss dark, Eiche light), so
+ * the light/dark switch moves between them; other themes have one mode and ignore it.
+ */
 export function themeFor(scheme: string, mode: ThemeMode): DashboardTheme {
   const preset = THEME_PRESETS.find((p) => p.id === scheme) ?? THEME_PRESETS[0];
-  return { preset: preset.id, primary: preset.primary, secondary: preset.secondary, mode };
+  if (preset.look === 'wood') return normalizeTheme({ preset: mode === 'light' ? 'eiche' : 'walnuss' });
+  return normalizeTheme({ preset: preset.id });
 }
 
 /** What the sample API answers right now; the decorator in preview.tsx sets it from the toolbar. */

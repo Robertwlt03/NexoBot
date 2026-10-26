@@ -1,4 +1,5 @@
-// Applies the member's personal dashboard colours (src/shared/theme.ts) as CSS variables on <html>.
+// Applies the member's dashboard theme (src/shared/theme.ts): data-theme and data-mode on <html> switch the token
+// blocks and header art in styles.css, the accent colours go on as CSS variables.
 // The last theme is cached in localStorage so the page starts in the right colours; the account copy wins on login.
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -10,6 +11,7 @@ const CACHE_KEY = 'nexo.dashboardTheme';
 export function applyTheme(theme: DashboardTheme) {
   const root = document.documentElement;
   root.dataset.mode = theme.mode;
+  root.dataset.theme = theme.preset;
   for (const [name, value] of Object.entries(themeVariables(theme))) root.style.setProperty(name, value);
 }
 

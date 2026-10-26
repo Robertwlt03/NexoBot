@@ -1,64 +1,76 @@
-// Personal dashboard colours (per user, stored with the member profile). The user picks a primary and a secondary
-// colour (or a preset); every other tone the design system needs is derived here so contrast and the calm premium
-// look survive any choice. Import-free: shared by the API (validation) and the dashboard (applying the theme).
+// Personal dashboard theme (per user, stored with the member profile). A theme is a complete look - surfaces, header
+// art, accent colours and its own light or dark mode - chosen from a fixed list; there are no free colours any more.
+// Import-free: shared by the API (validation) and the dashboard (applying the theme).
 
 export type ThemeMode = 'dark' | 'light';
+/** What the page header and ornaments are made of (styles.css and components/Backdrop.tsx switch on it). */
+export type ThemeLook = 'wood' | 'cyber';
 
 export interface DashboardTheme {
-  /** Preset id, or 'custom' for freely chosen colours. */
+  /** Theme id from THEME_PRESETS. */
   preset: string;
+  /** The theme's own colours and mode (derived from the preset, kept in the stored value for older clients). */
   primary: string;
   secondary: string;
-  /** Warm dark (default) or warm light surfaces. */
   mode: ThemeMode;
 }
 
-export interface ThemePreset { id: string; name: string; primary: string; secondary: string }
+export interface ThemePreset {
+  id: string;
+  name: string;
+  /** One sentence for the design page. */
+  description: string;
+  mode: ThemeMode;
+  look: ThemeLook;
+  primary: string;
+  secondary: string;
+  /** Card surface, darkest surface accent text sits on, and the page canvas (mirror styles.css). */
+  surface: string;
+  sidebar: string;
+  canvas: string;
+  /** Muted body tone the muted accent text is mixed toward. */
+  muted: string;
+}
 
-/** Curated pairs that work in both modes. The first one is the default: Walnuss & Moos (moss green, walnut amber). */
+/** The themes members choose from. The first one is the default. */
 export const THEME_PRESETS: readonly ThemePreset[] = [
-  { id: 'walnuss', name: 'Walnuss & Moos', primary: '#8fb36b', secondary: '#c98a4b' },
-  { id: 'werkbank', name: 'Werkbank', primary: '#d39b5c', secondary: '#8fa7b3' },
-  { id: 'nexo', name: 'Nexo', primary: '#a99bff', secondary: '#67e8f9' },
-  { id: 'ozean', name: 'Ozean', primary: '#60a5fa', secondary: '#22d3ee' },
-  { id: 'smaragd', name: 'Smaragd', primary: '#34d399', secondary: '#5eead4' },
-  { id: 'mint', name: 'Mint', primary: '#6ee7b7', secondary: '#93c5fd' },
-  { id: 'bernstein', name: 'Bernstein', primary: '#fbbf24', secondary: '#fb923c' },
-  { id: 'koralle', name: 'Koralle', primary: '#fb7185', secondary: '#fdba74' },
-  { id: 'rose', name: 'Rosé', primary: '#f9a8d4', secondary: '#c4b5fd' },
-  { id: 'sonnenuntergang', name: 'Sonnenuntergang', primary: '#f472b6', secondary: '#fbbf24' },
-  { id: 'blurple', name: 'Discord', primary: '#8b95f8', secondary: '#c4b5fd' },
-  { id: 'graphit', name: 'Graphit', primary: '#e4e4e7', secondary: '#a1a1aa' },
+  {
+    id: 'walnuss', name: 'Walnuss', description: 'Dunkles Walnussholz mit Moosgrün, ruhig am Abend.', mode: 'dark', look: 'wood',
+    primary: '#8fb36b', secondary: '#c98a4b', surface: '#231a13', sidebar: '#1b140e', canvas: '#16110c', muted: '#ae9e87',
+  },
+  {
+    id: 'eiche', name: 'Eiche', description: 'Goldene Eiche mit Moosgrün, warm und hell am Tag.', mode: 'light', look: 'wood',
+    primary: '#8fb36b', secondary: '#c98a4b', surface: '#f2e2c7', sidebar: '#e0c095', canvas: '#e9d0ad', muted: '#432b1a',
+  },
+  {
+    id: 'cyberpunk', name: 'Cyberpunk', description: 'Nachtblau mit Neon-Türkis und Pink, Raster und Leuchtlinien statt Holz.', mode: 'dark', look: 'cyber',
+    primary: '#22d3ee', secondary: '#f472b6', surface: '#121530', sidebar: '#0d1026', canvas: '#090b1d', muted: '#9aa6c8',
+  },
 ];
 
-export const DEFAULT_THEME: DashboardTheme = { preset: 'walnuss', primary: THEME_PRESETS[0].primary, secondary: THEME_PRESETS[0].secondary, mode: 'dark' };
+const presetOf = (id: string) => THEME_PRESETS.find((p) => p.id === id) ?? THEME_PRESETS[0];
+const themeOf = (p: ThemePreset): DashboardTheme => ({ preset: p.id, primary: p.primary, secondary: p.secondary, mode: p.mode });
 
-const HEX = /^#[0-9a-f]{6}$/i;
-export const isHexColor = (value: unknown): value is string => typeof value === 'string' && HEX.test(value);
+export const DEFAULT_THEME: DashboardTheme = themeOf(THEME_PRESETS[0]);
 
-/** Normalises stored/untrusted input; unknown presets with valid colours become 'custom'. */
+/** The look (wood, cyber …) of a stored theme. */
+export const themeLook = (theme: DashboardTheme): ThemeLook => presetOf(theme.preset).look;
+
+/**
+ * Normalises stored/untrusted input to one of the themes. Older values (colour presets, custom colours) become the
+ * wood theme of their mode: Eiche for light, Walnuss for dark.
+ */
 export function normalizeTheme(raw: unknown): DashboardTheme {
   if (!raw || typeof raw !== 'object') return { ...DEFAULT_THEME };
   const value = raw as Record<string, unknown>;
-  const mode: ThemeMode = value.mode === 'light' ? 'light' : 'dark';
   const preset = THEME_PRESETS.find((p) => p.id === value.preset);
-  if (preset && value.preset !== 'custom') return { preset: preset.id, primary: preset.primary, secondary: preset.secondary, mode };
-  if (isHexColor(value.primary) && isHexColor(value.secondary)) {
-    return { preset: 'custom', primary: value.primary.toLowerCase(), secondary: value.secondary.toLowerCase(), mode };
-  }
-  return { ...DEFAULT_THEME, mode };
+  if (preset) return themeOf(preset);
+  return themeOf(presetOf(value.mode === 'light' ? 'eiche' : 'walnuss'));
 }
 
 // ---------- Colour math ----------
 
 type Rgb = [number, number, number];
-// Surfaces of both modes (mirror styles.css).
-const SURFACE = '#231a13';
-const CANVAS = '#16110c';
-const LIGHT_SURFACE = '#f2e2c7';
-/** The darkest light surface accent text sits on (the sidebar); accent text is darkened against this one. */
-const LIGHT_SIDEBAR = '#e0c095';
-const LIGHT_CANVAS = '#e9d0ad';
 
 function rgb(hex: string): Rgb {
   const n = Number.parseInt(hex.slice(1), 16);
@@ -103,15 +115,15 @@ function darkenUntil(color: string, bg: string, ratio: number): string {
 
 /** Everything the dashboard needs, as CSS custom properties. */
 export function themeVariables(theme: DashboardTheme): Record<string, string> {
+  const look = presetOf(theme.preset);
   const light = theme.mode === 'light';
-  // On the light surfaces the chosen colours are darkened just enough to stay readable (UI parts 3:1, text 4.8:1).
-  const primary = light ? darkenUntil(theme.primary, LIGHT_SURFACE, 3) : theme.primary;
-  const secondary = light ? darkenUntil(theme.secondary, LIGHT_SURFACE, 2.2) : theme.secondary;
-  const surface = light ? LIGHT_SURFACE : SURFACE;
-  const canvas = light ? LIGHT_CANVAS : CANVAS;
+  // On the light surfaces the theme colours are darkened just enough to stay readable (UI parts 3:1, text 4.8:1).
+  const primary = light ? darkenUntil(theme.primary, look.surface, 3) : theme.primary;
+  const secondary = light ? darkenUntil(theme.secondary, look.surface, 2.2) : theme.secondary;
+  const { surface, canvas } = look;
   const ink = contrast(primary, '#ffffff') >= 4.5 ? '#ffffff' : mix(primary, '#000000', 0.86);
   const strong = mix(primary, '#000000', 0.18);
-  const tint = light ? darkenUntil(theme.primary, LIGHT_SIDEBAR, 4.8) : mix(primary, '#ffffff', 0.45);
+  const tint = light ? darkenUntil(theme.primary, look.sidebar, 4.8) : mix(primary, '#ffffff', 0.45);
   const values: Record<string, string> = {
     '--accent': primary,
     '--accent-strong': strong,
@@ -121,7 +133,7 @@ export function themeVariables(theme: DashboardTheme): Record<string, string> {
     '--accent-line': rgba(primary, light ? 0.32 : 0.28),
     '--accent-glow': rgba(primary, light ? 0.4 : 0.6),
     '--accent-text': tint,
-    '--accent-text-muted': mix(tint, light ? '#432b1a' : '#ae9e87', 0.45),
+    '--accent-text-muted': mix(tint, look.muted, 0.45),
     '--accent-2': secondary,
     '--ring': `0 0 0 3px ${rgba(primary, 0.22)}`,
     '--brand-gradient': `linear-gradient(135deg, ${mix(primary, canvas, light ? 0.8 : 0.74)} 0%, ${mix(primary, canvas, light ? 0.9 : 0.86)} 45%, ${surface} 100%)`,
@@ -188,6 +200,9 @@ export function chartPrimary(color: string, mode: ThemeMode = 'dark'): string {
   const [L, C, h] = oklch(color);
   return onSurface(fromOklch(Math.min(CHART_L[1], Math.max(CHART_L[0], L)), Math.max(CHART_MIN_C, C), h), mode);
 }
+/** The light card surface chart marks are darkened against (Eiche). */
+const LIGHT_SURFACE = '#f2e2c7';
+
 /**
  * On the light cards chart marks are darkened to 3:1 (WCAG 1.4.11); the band is set for the dark surface. Only the
  * OKLCH lightness goes down, so hue and chroma (and with them the gaps between series) stay.
@@ -275,16 +290,6 @@ export function heatRamp(primary: string): string[] {
   return [0.46, 0.56, 0.66, 0.76, 0.86].map((L) => fromOklch(L, chroma, h));
 }
 
-/** Contrast notes for the editor (German). Empty when everything reads well. */
-export function themeWarnings(theme: DashboardTheme): string[] {
-  const notes: string[] = [];
-  if (theme.mode === 'dark' && contrast(theme.primary, SURFACE) < 3) notes.push('Die Primärfarbe ist auf dunklem Grund schwer zu erkennen – nimm einen helleren Ton.');
-  const vars = themeVariables(theme);
-  if (contrast(theme.primary, vars['--accent-ink']) < 4.5) notes.push('Text auf Buttons in der Primärfarbe ist schwer lesbar – nimm einen helleren oder dunkleren Ton.');
-  if (theme.mode === 'dark' && contrast(theme.secondary, SURFACE) < 2) notes.push('Die Sekundärfarbe verschwindet fast im Hintergrund.');
-  return notes;
-}
-
 // ---------- Message colours (Nexo cards in Discord) ----------
 
 /** What a card's colour means; every scheme has one colour per role. */
@@ -292,7 +297,7 @@ export const MESSAGE_ROLES = ['nexo', 'amber', 'gold', 'success', 'info', 'warn'
 export type MessageRole = typeof MESSAGE_ROLES[number];
 export type MessagePalette = Record<MessageRole, string>;
 
-/** Walnuss & Moos: the bot's hand-picked palette (config/bot.ts embeds.colors), the look everyone gets by default. */
+/** Walnuss and Eiche: the bot's hand-picked palette (config/bot.ts embeds.colors), the look everyone gets by default. */
 export const DEFAULT_MESSAGE_PALETTE: MessagePalette = {
   nexo: '#8fb36b', amber: '#e8a33d', gold: '#f5c451', success: '#4ade80', info: '#7da0c4',
   warn: '#f59e0b', danger: '#ef4444', calm: '#94a3b8', pink: '#f472b6',
@@ -308,7 +313,8 @@ const ROLE_HUES: Record<Exclude<MessageRole, 'nexo' | 'amber' | 'calm'>, number>
  * their hue but take the scheme's lightness and saturation (pastel schemes get pastel states, vivid ones vivid).
  */
 export function messagePalette(theme: DashboardTheme): MessagePalette {
-  if (theme.preset === DEFAULT_THEME.preset) return { ...DEFAULT_MESSAGE_PALETTE };
+  // The wood themes speak with the bot's own palette; other themes tint the cards in their colours.
+  if (presetOf(theme.preset).look === 'wood') return { ...DEFAULT_MESSAGE_PALETTE };
   const [L, C] = oklch(theme.primary);
   const lightness = Math.min(0.8, Math.max(0.66, L));
   const chroma = Math.min(0.17, Math.max(0.07, C));

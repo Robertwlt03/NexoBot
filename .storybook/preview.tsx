@@ -216,7 +216,7 @@ const preview: Preview = {
   tags: ['autodocs'],
   // The toolbar controls for these globals are our own (manager.tsx), so the default dropdowns are switched off.
   globalTypes: {
-    scheme: { description: 'Farbvorlage' },
+    scheme: { description: 'Theme' },
     mode: { description: 'Hell oder dunkel' },
     device: { description: 'Desktop oder Handy' },
   },

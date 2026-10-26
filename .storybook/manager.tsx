@@ -97,22 +97,24 @@ const Swatch = ({ colors }: { colors: string[] }) => (
   </span>
 );
 
-/** A choice from a list: the current scheme with its colours, the list shows all twelve. */
+/** A choice from a list: the current theme with its colours. Walnuss and Eiche are one entry, "Holz" (light/dark picks). */
 function SchemePicker() {
   const [globals, updateGlobals] = useGlobals();
   const narrow = useNarrow();
   const separator = useSeparator('scheme');
   if (!useSwitches().includes('scheme')) return null;
-  const current = THEME_PRESETS.find((p) => p.id === globals.scheme) ?? THEME_PRESETS[0];
+  const choices = THEME_PRESETS.filter((p) => p.id !== 'eiche');
+  const current = choices.find((p) => p.id === globals.scheme) ?? choices[0];
+  const title = (p: (typeof choices)[number]) => (p.look === 'wood' ? 'Holz' : p.name);
   return (
     <>
       {separator && <Separator />}
       {/* Select keeps its choice internally; the key resets it when the scheme comes from the address. */}
-      <Select key={current.id} ariaLabel="Farbvorlage" tooltip="Farbvorlage" size="small" padding="small"
+      <Select key={current.id} ariaLabel="Theme" tooltip="Theme" size="small" padding="small"
         icon={<Swatch colors={[current.primary, current.secondary]} />} showSelectedOptionTitle={!narrow}
         defaultOptions={[current.id]} onSelect={(scheme) => scheme !== current.id && updateGlobals({ scheme })}
-        options={THEME_PRESETS.map((p) => ({ value: p.id, title: p.name, icon: <Swatch colors={[p.primary, p.secondary]} /> }))}>
-        {narrow ? null : 'Farbvorlage'}
+        options={choices.map((p) => ({ value: p.id, title: title(p), icon: <Swatch colors={[p.primary, p.secondary]} /> }))}>
+        {narrow ? null : 'Theme'}
       </Select>
     </>
   );

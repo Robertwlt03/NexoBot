@@ -1,8 +1,10 @@
-// "Dashboard-Design": the member's own primary and secondary colour (preset or custom), previewed live across the
-// whole dashboard while editing and saved on the Discord account (applies on every device).
+// "Dashboard-Design": the member's theme - a complete look with its own surfaces, header art and colours - previewed
+// live across the whole dashboard while choosing and saved on the Discord account (applies on every device).
 import { useEffect, useState } from 'react';
-import { DEFAULT_THEME, THEME_PRESETS, themeWarnings, type DashboardTheme, type ThemeMode } from '../../../src/shared/theme';
-import { Badge, Card, ColorInput, Field, Notice, PageHeader, SaveBar, Switch, Tabs } from '../components/ui';
+import { THEME_PRESETS, type DashboardTheme, type ThemePreset } from '../../../src/shared/theme';
+import walnut from '../assets/wood/walnut.webp';
+import oak from '../assets/wood/oak.webp';
+import { Badge, Card, PageHeader, SaveBar, Switch, Tabs } from '../components/ui';
 import { Sparkline } from '../components/charts';
 import { useTheme } from '../theme';
 import { Glyph } from './visuals';
@@ -10,42 +12,39 @@ import { useDraft } from './api';
 
 const SAMPLE = [12, 18, 15, 24, 21, 30, 27, 36, 33, 41];
 
-function PresetTile({ preset, selected, onSelect }: { preset: (typeof THEME_PRESETS)[number]; selected: boolean; onSelect: () => void }) {
+/** The header material of each theme for the small preview. */
+const HEADER: Record<string, string> = {
+  walnuss: `url(${walnut}) center / cover`,
+  eiche: `url(${oak}) center / cover`,
+  cyberpunk: 'radial-gradient(60% 120% at 100% 0%, rgb(244 114 182 / .35), transparent 60%), linear-gradient(rgb(34 211 238 / .16) 1px, transparent 1px) 0 0 / 10px 10px, linear-gradient(90deg, rgb(34 211 238 / .16) 1px, transparent 1px) 0 0 / 10px 10px, #0b0e26',
+};
+
+/** A theme as a small page: its header material, a card on its canvas and its accent. */
+function ThemeTile({ preset, selected, onSelect }: { preset: ThemePreset; selected: boolean; onSelect: () => void }) {
+  const ink = preset.mode === 'light' ? '#1f1209' : '#eef0f5';
   return (
     <button type="button" onClick={onSelect} aria-pressed={selected}
-      className={`group relative flex cursor-pointer flex-col gap-3 rounded-2xl border bg-surface p-3 text-left transition hover:border-white/20 ${selected ? 'border-accent ring-1 ring-accent' : 'border-white/[.06]'}`}>
-      <span className="h-14 w-full rounded-xl" style={{ background: `linear-gradient(135deg, ${preset.primary}, ${preset.secondary})` }} />
-      <span className="flex items-center gap-2">
-        <span className="h-3 w-3 rounded-full" style={{ background: preset.primary }} />
-        <span className="h-3 w-3 rounded-full" style={{ background: preset.secondary }} />
-        <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium text-ink">{preset.name}</span>
-        {selected && <span className="text-accent"><Glyph name="check" size={16} /></span>}
+      className={`group flex cursor-pointer flex-col gap-3 rounded-2xl border bg-surface p-3 text-left transition hover:border-[var(--border-input)] ${selected ? 'border-accent ring-1 ring-accent' : 'border-[var(--border-control)]'}`}>
+      <span className="relative block aspect-[16/9] w-full overflow-hidden rounded-xl" style={{ background: preset.canvas }}>
+        <span className="absolute inset-x-0 top-0 h-[46%]" style={{ background: HEADER[preset.id] }} />
+        <span className="absolute inset-x-0 top-[30%] h-[16%]" style={{ background: `linear-gradient(to bottom, transparent, ${preset.canvas})` }} />
+        <span className="absolute left-[8%] top-[12%] h-[7%] w-[34%] rounded-full" style={{ background: ink }} />
+        <span className="absolute inset-x-[8%] bottom-[10%] top-[52%] rounded-lg" style={{ background: preset.surface, boxShadow: `0 0 0 1px ${preset.mode === 'light' ? 'rgba(98,56,22,.25)' : 'rgba(255,255,255,.08)'}` }}>
+          <span className="absolute left-[7%] top-[22%] h-[14%] w-[40%] rounded-full" style={{ background: ink, opacity: 0.7 }} />
+          <span className="absolute bottom-[20%] left-[7%] h-[24%] w-[30%] rounded-md" style={{ background: preset.primary }} />
+          <span className="absolute bottom-[20%] left-[42%] h-[24%] w-[18%] rounded-md" style={{ background: preset.secondary, opacity: 0.85 }} />
+        </span>
       </span>
-    </button>
-  );
-}
-
-const MODES: { id: ThemeMode; label: string; hint: string; canvas: string; card: string; line: string; ink: string; wood: string }[] = [
-  { id: 'dark', label: 'Dunkel', hint: 'Tiefes Walnussholz, ruhig am Abend', canvas: '#16110c', card: '#231a13', line: '#3d3127', ink: '#f3ebe0', wood: 'linear-gradient(135deg, #6b3f22, #3a2112)' },
-  { id: 'light', label: 'Hell', hint: 'Goldene Eiche, warm und angenehm am Tag', canvas: '#e9d0ad', card: '#f2e2c7', line: '#d3b083', ink: '#1f1209', wood: 'linear-gradient(135deg, #f0ad55, #a86529)' },
-];
-
-function ModeTile({ mode, selected, onSelect }: { mode: (typeof MODES)[number]; selected: boolean; onSelect: () => void }) {
-  return (
-    <button type="button" onClick={onSelect} aria-pressed={selected}
-      className={`flex cursor-pointer items-center gap-4 rounded-2xl border bg-surface p-3 text-left transition hover:border-white/20 ${selected ? 'border-accent ring-1 ring-accent' : 'border-white/[.06]'}`}>
-      {/* Mini page in the mode's own colours. */}
-      <span className="relative h-16 w-24 shrink-0 overflow-hidden rounded-xl" style={{ background: mode.canvas, border: `1px solid ${mode.line}` }}>
-        <span className="absolute inset-x-0 top-0 h-6" style={{ background: `linear-gradient(90deg, ${mode.canvas}, transparent), ${mode.wood}` }} />
-        <span className="absolute bottom-2 left-2 right-2 h-6 rounded-md" style={{ background: mode.card, border: `1px solid ${mode.line}` }} />
-        <span className="absolute left-2 top-2 h-1.5 w-8 rounded-full" style={{ background: mode.ink }} />
-        <span className="absolute bottom-4 left-4 h-1.5 w-6 rounded-full bg-accent" />
+      <span className="flex items-start gap-2">
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+            {preset.name}
+            <span className="rounded-full border border-[var(--border-control)] px-2 py-px text-[11px] font-medium text-mute">{preset.mode === 'light' ? 'Hell' : 'Dunkel'}</span>
+          </span>
+          <span className="mt-1 block text-[13px] leading-snug text-mute">{preset.description}</span>
+        </span>
+        {selected && <span className="text-accent-text"><Glyph name="check" size={18} /></span>}
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[14.5px] font-medium text-ink">{mode.label}</span>
-        <span className="block text-[12.5px] text-mute">{mode.hint}</span>
-      </span>
-      {selected && <span className="text-accent"><Glyph name="check" size={18} /></span>}
     </button>
   );
 }
@@ -61,51 +60,22 @@ export default function DesignPage() {
   useEffect(() => { preview(form.dirty ? value : null); }, [form.dirty, value, preview]);
   useEffect(() => () => preview(null), [preview]);
 
-  const pick = (next: DashboardTheme) => form.setDraft(next);
-  const warnings = themeWarnings(value);
+  const pick = (preset: ThemePreset) => form.setDraft({ preset: preset.id, primary: preset.primary, secondary: preset.secondary, mode: preset.mode });
 
   return (
     <>
       <PageHeader kicker="Mein Profil" title="Dashboard-Design"
-        description="Hell oder dunkel und deine eigenen Farben. Gilt nur für dich – auf allen Geräten, auf denen du dich mit Discord anmeldest." />
+        description="Wähle ein Theme: jedes bringt seine eigene Welt mit, vom Holz im Kopfbereich bis zu den Farben. Gilt nur für dich, auf allen Geräten, auf denen du dich mit Discord anmeldest." />
 
-      <Card title="Erscheinungsbild" description="Dunkles Walnussholz für den Abend oder goldene Eiche für den Tag – beides mit Moosgrün.">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {MODES.map((mode) => (
-            <ModeTile key={mode.id} mode={mode} selected={value.mode === mode.id} onSelect={() => pick({ ...value, mode: mode.id })} />
-          ))}
-        </div>
-      </Card>
-
-      <Card title="Vorlagen" description="Abgestimmte Farbpaare, die in beiden Erscheinungsbildern gut aussehen.">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+      <Card title="Themes" description="Ein Klick zeigt das Theme sofort im ganzen Dashboard. Gespeichert wird es erst mit „Änderungen speichern“.">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {THEME_PRESETS.map((preset) => (
-            <PresetTile key={preset.id} preset={preset} selected={value.preset === preset.id}
-              onSelect={() => pick({ ...value, preset: preset.id, primary: preset.primary, secondary: preset.secondary })} />
+            <ThemeTile key={preset.id} preset={preset} selected={value.preset === preset.id} onSelect={() => pick(preset)} />
           ))}
         </div>
       </Card>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card title="Eigene Farben" description="Primär für Buttons, Auswahl und Hervorhebungen; Sekundär für Verläufe und Glanz.">
-          <div className="stack">
-            <div className="grid-2">
-              <Field label="Primärfarbe"><ColorInput value={value.primary} onChange={(primary) => pick({ ...value, preset: 'custom', primary })} /></Field>
-              <Field label="Sekundärfarbe"><ColorInput value={value.secondary} onChange={(secondary) => pick({ ...value, preset: 'custom', secondary })} /></Field>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => pick({ ...value, preset: 'custom', primary: value.secondary, secondary: value.primary })}>
-                <Glyph name="shuffle" size={14} /> Tauschen
-              </button>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => pick({ ...DEFAULT_THEME, mode: value.mode })} disabled={value.preset === DEFAULT_THEME.preset}>
-                Auf Standard zurücksetzen
-              </button>
-            </div>
-            {warnings.length > 0 && <Notice tone="warn">{warnings.join(' ')}</Notice>}
-            <p className="faint">Diagramme mit mehreren Linien behalten eine feste, gut unterscheidbare Farbpalette; Diagramme mit einer Linie und Heatmaps folgen deiner Primärfarbe.</p>
-          </div>
-        </Card>
-
+      <div className="mt-4">
         <div className="card card-hero">
           <p className="page-kicker">Vorschau</p>
           <div className="mt-2 flex items-end gap-3">
