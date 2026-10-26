@@ -86,7 +86,7 @@ function NextEvent({ events }: { events: ShopEvent[] }) {
   return (
     <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-[13.5px] text-mute">
       {/* The season's tint, mixed with the text colour so the icon keeps its contrast in both modes. */}
-      <span className="inline-flex" style={{ color: `color-mix(in srgb, ${tint} 70%, var(--text-strong))` }}><Glyph name={glyph} size={16} /></span>
+      <span className="inline-flex" style={{ color: `color-mix(in srgb, ${tint} 70%, var(--text-strong))` }}><Glyph name={glyph} size={18} /></span>
       Nächstes Event: <span className="text-ink">{next.name}</span>
       <span>{startsIn(next.startsAt, now)}{next.discount > 0 ? `, −${next.discount} %` : ''}</span>
       <Link to="/me/saison" className="ml-auto text-accent-text">Alle Events</Link>
