@@ -46,6 +46,15 @@ export function ThemeProvider({ loggedIn, children }: { loggedIn: boolean; child
   const theme = draft ?? saved;
 
   useEffect(() => { applyTheme(theme); }, [theme]);
+  // Another tab saved a theme (or Storybook's toolbar switched it): follow it without reloading.
+  useEffect(() => {
+    const follow = (event: StorageEvent) => {
+      if (event.key !== CACHE_KEY || !event.newValue) return;
+      try { setSaved(normalizeTheme(JSON.parse(event.newValue))); } catch { /* not ours */ }
+    };
+    window.addEventListener('storage', follow);
+    return () => window.removeEventListener('storage', follow);
+  }, []);
   useEffect(() => {
     if (!loggedIn) return;
     api<DashboardTheme>('/me/theme')

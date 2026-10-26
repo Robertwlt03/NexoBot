@@ -41,6 +41,7 @@ function Comparison({ seite, globals, onPage }: Args & { globals: { mode: string
 
 export default {
   title: 'Vergleich',
+  tags: ['!autodocs'],
   // Shows every colour scheme itself, so the scheme switch would change nothing.
   parameters: { ownDevice: true, switches: ['mode', 'device'] },
   args: { seite: 'server-uebersicht' },

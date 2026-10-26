@@ -16,7 +16,7 @@ function page(key: string): StoryObj {
   };
 }
 
-export default { title: 'Seiten', tags: ['seite'] } satisfies Meta;
+export default { title: 'Seiten', tags: ['seite', '!autodocs'] } satisfies Meta;
 
 export const Startseite = page('startseite');
 export const Serverauswahl = page('serverauswahl');

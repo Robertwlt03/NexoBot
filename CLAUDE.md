@@ -34,6 +34,12 @@ PostgreSQL. Fork of TitanBot (the LICENSE keeps the codebymitch line).
   The mock config and `dashboard/mock-fixtures.ts` are local only (`.git/info/exclude`) and must match the checked-out
   code; on a branch whose code they do not fit, the mock server fails to start.
 - Storybook (`npm run storybook`, port 6006, launch config "storybook"): board with every page, comparison across the
-  twelve colour schemes, Discord messages and building blocks. New dashboard pages go into `dashboard/stories/pages.ts`
-  and `Seiten.stories.tsx`; it uses the same local mock fixtures as the mock preview.
+  twelve colour schemes, Discord messages built with the bot's code (`.storybook/discordCards.ts`), foundations and a
+  docs page per component (`dashboard/stories/components/`). New dashboard pages go into `dashboard/stories/pages.ts`
+  and `Seiten.stories.tsx`, new components get a story file with a German usage description; it uses the same local
+  mock fixtures as the mock preview.
 - Text contrast ≥ 4.5:1 in both modes (`tests/contrast.test.ts` reads the tokens from `dashboard/src/styles.css`).
+- Tests in the user's Chrome (Claude in Chrome): the user opens Chrome themselves; do not try to start it. If the
+  Claude in Chrome extension is missing, ask the user to install it before testing. The desktop app's built-in browser
+  runs an older Chromium and counts as hidden while the user is not looking at it (view transitions are then skipped),
+  so visual checks of animations belong in Chrome.
