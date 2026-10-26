@@ -85,14 +85,11 @@
 .sbdocs.sbdocs-preview pre.prismjs .token.attr-value .token.punctuation { color: var(--sbx-value); }
 .sbdocs.sbdocs-preview pre.prismjs .token:is(.keyword, .operator) { color: var(--sbx-keyword); }
 
-/* A theme switch lets colours glide for a moment instead of jumping (preview.tsx fadeColours). */
-.sb-colour-fade,
-.sb-colour-fade *,
-.sb-colour-fade *::before,
-.sb-colour-fade *::after {
-  transition-property: background-color, color, border-color, fill, stroke, box-shadow, outline-color !important;
-  transition-duration: 0.35s !important;
-  transition-timing-function: ease !important;
+/* A theme switch crossfades as one view transition (transition.ts): a little slower than the browser's default. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.32s;
+  animation-timing-function: ease;
 }
 
 /*

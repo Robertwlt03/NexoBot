@@ -1,11 +1,13 @@
 // Toolbar switches (colour scheme, light/dark, desktop/phone) for every story. The sample API lives in sample.ts.
 import { useEffect, useRef, useState, type PropsWithChildren } from 'react';
+import { flushSync } from 'react-dom';
 import type { Decorator, Preview } from '@storybook/react-vite';
 import { DocsContainer, type DocsContainerProps } from '@storybook/addon-docs/blocks';
 import { themes } from 'storybook/theming';
 import { applyTheme, ThemeProvider } from '../dashboard/src/theme';
 import { sample, themeFor } from './sample';
-import { useLiveFrame } from '../dashboard/stories/frames';
+import { useLiveFrame, type Look } from '../dashboard/stories/frames';
+import { inTransition } from './transition';
 import '../dashboard/src/tailwind.css';
 import '../dashboard/src/styles.css';
 import './docs.css';
@@ -16,37 +18,45 @@ const framed = new URLSearchParams(window.location.search).has('framed');
 /** The toolbar switches; a story lists in `parameters.switches` only those that change something on it. */
 export type Switch = 'scheme' | 'mode' | 'device';
 
+type Globals = Record<string, unknown>;
 const THEME_KEY = 'nexo.dashboardTheme';
 let appliedTheme = '';
-let fadeTimer: ReturnType<typeof setTimeout> | undefined;
-
-/** Lets colours glide to the new theme for a moment (docs.css .sb-colour-fade), unless reduced motion is on. */
-function fadeColours() {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  document.documentElement.classList.add('sb-colour-fade');
-  clearTimeout(fadeTimer);
-  fadeTimer = setTimeout(() => document.documentElement.classList.remove('sb-colour-fade'), 450);
-}
 
 /**
  * Colour scheme and light/dark, switched live: nothing remounts or reloads. The CSS variables change in place, and
  * every ThemeProvider (the one around the building blocks here and the one inside a page) follows through the same
- * storage event another dashboard tab would send (dashboard/src/theme.tsx), so charts recolour too.
+ * storage event another dashboard tab would send (dashboard/src/theme.tsx), so charts recolour too. A switch crossfades
+ * as one view transition (transition.ts); flushSync commits the React state inside it.
  */
-function switchTheme(scheme: string, mode: 'dark' | 'light') {
+function switchTheme(scheme: string, mode: 'dark' | 'light', { now = false } = {}) {
   const theme = themeFor(scheme, mode);
   sample.theme = theme;
   const value = JSON.stringify(theme);
   if (value === appliedTheme) return;
-  if (appliedTheme) fadeColours();
+  const first = !appliedTheme;
   appliedTheme = value;
   try { localStorage.setItem(THEME_KEY, value); } catch { /* private mode */ }
-  applyTheme(theme);
-  // After this render: the providers update their state then.
-  queueMicrotask(() => window.dispatchEvent(new StorageEvent('storage', { key: THEME_KEY, newValue: value })));
+  const update = () => {
+    applyTheme(theme);
+    flushSync(() => window.dispatchEvent(new StorageEvent('storage', { key: THEME_KEY, newValue: value })));
+  };
+  // The first render only sets the theme up; nothing to fade from yet.
+  if (first) applyTheme(theme);
+  else if (now) update();
+  else inTransition(update);
 }
 
-type Globals = Record<string, unknown>;
+/**
+ * For the overviews and the phone frame (frames.tsx useLiveFrame): they switch the previews in their iframes directly,
+ * inside their own crossfade. Much faster than letting each preview's Storybook re-render the page; its globals are
+ * updated quietly, so a later render agrees with what is shown.
+ */
+(window as unknown as { __nexoSwitchLook?: (scheme: string, mode: 'dark' | 'light') => void }).__nexoSwitchLook = (scheme, mode) => {
+  (window as unknown as { __STORYBOOK_PREVIEW__?: { storyStoreValue?: { userGlobals: { update(g: Globals): void } } } })
+    .__STORYBOOK_PREVIEW__?.storyStoreValue?.userGlobals.update({ scheme, mode });
+  switchTheme(scheme, mode, { now: true });
+};
+
 interface DocsRender { type: string; rerender?: () => Promise<void>; keepsLook?: boolean }
 interface PreviewWeb { currentRender?: DocsRender; storyStoreValue?: { userGlobals: { get(): Globals } } }
 
@@ -81,7 +91,7 @@ const withTheme: Decorator = (Story, context) => {
 };
 
 /** The phone frame of `withDevice`: loads once, then takes scheme and mode live like the overview previews. */
-function PhoneFrame({ id, scheme, mode }: { id: string; scheme: string; mode: string }) {
+function PhoneFrame({ id, scheme, mode }: { id: string } & Look) {
   const frame = useRef<HTMLIFrameElement>(null);
   const src = useLiveFrame(frame, (g) => `iframe.html?id=${id}&viewMode=story&framed=1&globals=scheme:${g.scheme};mode:${g.mode}`, { scheme, mode });
   return (
@@ -106,18 +116,19 @@ const withDevice: Decorator = (Story, context) => {
 };
 
 /**
- * Guide pages in the toolbar's Modus (Dunkel/Hell), like the examples on them: the container follows the data-mode
- * attribute that applyTheme sets (switchTheme), and so does docs.css.
+ * Guide pages in the toolbar's Modus (Dunkel/Hell), like the examples on them: the container follows the theme
+ * switch's storage event (switchTheme), so it changes inside the same crossfade; docs.css follows data-mode.
  */
 function ThemedDocs({ context, children }: PropsWithChildren<DocsContainerProps>) {
   const store = (context as unknown as { store?: { userGlobals?: { get(): Record<string, unknown> } } }).store;
   const [mode, setMode] = useState(() => store?.userGlobals?.get().mode ?? 'dark');
   useEffect(() => {
-    const root = document.documentElement;
-    const follow = () => setMode(root.dataset.mode ?? 'dark');
-    const observer = new MutationObserver(follow);
-    observer.observe(root, { attributes: true, attributeFilter: ['data-mode'] });
-    return () => observer.disconnect();
+    const follow = (event: StorageEvent) => {
+      if (event.key !== THEME_KEY || !event.newValue) return;
+      try { setMode((JSON.parse(event.newValue) as { mode?: string }).mode ?? 'dark'); } catch { /* not ours */ }
+    };
+    window.addEventListener('storage', follow);
+    return () => window.removeEventListener('storage', follow);
   }, []);
   return <DocsContainer context={context} theme={mode === 'light' ? themes.light : themes.dark}>{children}</DocsContainer>;
 }

@@ -1,6 +1,10 @@
 // Live page previews for the overviews: each page runs in its own iframe at real size (desktop 1280 px or phone
 // 390 px wide) and is scaled down, so media queries and layouts behave exactly like in the browser.
-import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { inTransition } from '../../.storybook/transition';
+
+/** Colour scheme and light/dark of a preview. */
+export interface Look { scheme: string; mode: 'dark' | 'light' }
 import { pageFrameUrl, type PageEntry } from './pages';
 
 export const DEVICES = {
@@ -15,21 +19,22 @@ export function openStory(id: string, globals: { scheme: string; mode: string; d
   top.location.href = `${top.location.pathname}?path=/story/${id}&globals=scheme:${globals.scheme};mode:${globals.mode};device:${globals.device ?? 'desktop'}`;
 }
 
-type FramePreview = { onUpdateGlobals(update: { globals: Record<string, string> }): Promise<void> };
+interface FrameWindow { __nexoSwitchLook?: (scheme: string, mode: 'dark' | 'light') => void }
 
 /**
- * A preview running in an iframe loads once; later toolbar changes are handed to its Storybook directly, so it
- * re-renders in place (colours change live) instead of reloading. Returns the iframe's fixed src.
+ * A preview running in an iframe loads once; later scheme and mode changes are handed to it directly (preview.tsx
+ * __nexoSwitchLook), so it recolours in place instead of reloading or re-rendering, inside the page's crossfade
+ * (transition.ts). Returns the iframe's fixed src.
  */
-export function useLiveFrame(frame: RefObject<HTMLIFrameElement | null>, url: (globals: Record<string, string>) => string, globals: Record<string, string>) {
-  const [src] = useState(() => url(globals));
-  const key = JSON.stringify(globals);
+export function useLiveFrame(frame: RefObject<HTMLIFrameElement | null>, url: (look: Look) => string, look: Look) {
+  const [src] = useState(() => url(look));
+  const key = `${look.scheme}:${look.mode}`;
   const first = useRef(key);
-  useEffect(() => {
+  // Layout effect: queued in the same task as the switch, before the crossfade takes its snapshot.
+  useLayoutEffect(() => {
     if (key === first.current) return;
-    const preview = (frame.current?.contentWindow as { __STORYBOOK_PREVIEW__?: FramePreview } | null)?.__STORYBOOK_PREVIEW__;
-    void preview?.onUpdateGlobals({ globals });
-  }, [key]); // `globals` itself is a new object on every render; `key` is its content
+    inTransition(() => (frame.current?.contentWindow as FrameWindow | null)?.__nexoSwitchLook?.(look.scheme, look.mode));
+  }, [key]); // `look` itself is a new object on every render; `key` is its content
   return src;
 }
 
@@ -63,7 +68,7 @@ export function PageFrame({ page, label, scale, device, globals, onLoad }: {
   const size = DEVICES[device];
   const frame = useRef<HTMLIFrameElement>(null);
   // Only scheme and mode go into the page; the device is this frame's size.
-  const src = useLiveFrame(frame, (g) => pageFrameUrl(page.key, g as { scheme: string; mode: string }), { scheme: globals.scheme, mode: globals.mode });
+  const src = useLiveFrame(frame, (look) => pageFrameUrl(page.key, look), { scheme: globals.scheme, mode: globals.mode as Look['mode'] });
   return (
     <figure className="sb-frame">
       <figcaption>{label ?? page.label}</figcaption>

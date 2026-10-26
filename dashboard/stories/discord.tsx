@@ -125,14 +125,14 @@ export const discordStyles = `
 .dc-btn.primary { background: #5865f2; } .dc-btn.success { background: #248046; } .dc-btn.danger { background: #da373c; } .dc-btn.link { background: #4e5058; }
 .dc-btn.link::after { content: "↗"; font-size: 13px; opacity: .85; } .dc-btn.off { opacity: .5; }
 .dc-eph { margin-top: 6px; font-size: 12px; color: #949ba4; } .dc-eph span { color: #00a8fc; }
-.dc-channel.light { background: #ffffff; color: #313338; }
-.dc-channel.light .dc-head { background: #ffffff; color: #060607; border-bottom-color: #e3e5e8; }
-.dc-channel.light .dc-author b, .dc-channel.light .dc-title { color: #060607; }
-.dc-channel.light .dc-card { background: #f2f3f5; border-color: #e3e5e8; }
-.dc-channel.light .dc-kicker, .dc-channel.light .dc-small, .dc-channel.light .dc-time, .dc-channel.light .dc-eph { color: #5c5e66; }
-.dc-channel.light .dc-sep { background: #e3e5e8; } .dc-channel.light .dc-bar { color: #4e5058; }
-.dc-channel.light .dc-mention { background: rgba(88,101,242,.15); color: #505cdc; } .dc-channel.light .dc-ts { background: rgba(6,6,7,.06); }
-.dc-channel.light .dc-btn.link { background: #6d6f78; } .dc-channel.light .dc-eph span { color: #006ce7; }
-.dc-channel.light .dc-h3 { color: #060607; } .dc-channel.light .dc-code { background: #e3e5e8; } .dc-channel.light .dc-quote { border-left-color: #c4c9ce; }
-.dc-channel.light .dc-code-block summary { color: #006ce7; } .dc-channel.light .dc-code-block pre { background: #f2f3f5; color: #313338; }
+:root[data-mode="light"] .dc-channel { background: #ffffff; color: #313338; }
+:root[data-mode="light"] .dc-channel .dc-head { background: #ffffff; color: #060607; border-bottom-color: #e3e5e8; }
+:root[data-mode="light"] .dc-channel .dc-author b, :root[data-mode="light"] .dc-channel .dc-title { color: #060607; }
+:root[data-mode="light"] .dc-channel .dc-card { background: #f2f3f5; border-color: #e3e5e8; }
+:root[data-mode="light"] .dc-channel .dc-kicker, :root[data-mode="light"] .dc-channel .dc-small, :root[data-mode="light"] .dc-channel .dc-time, :root[data-mode="light"] .dc-channel .dc-eph { color: #5c5e66; }
+:root[data-mode="light"] .dc-channel .dc-sep { background: #e3e5e8; } :root[data-mode="light"] .dc-channel .dc-bar { color: #4e5058; }
+:root[data-mode="light"] .dc-channel .dc-mention { background: rgba(88,101,242,.15); color: #505cdc; } :root[data-mode="light"] .dc-channel .dc-ts { background: rgba(6,6,7,.06); }
+:root[data-mode="light"] .dc-channel .dc-btn.link { background: #6d6f78; } :root[data-mode="light"] .dc-channel .dc-eph span { color: #006ce7; }
+:root[data-mode="light"] .dc-channel .dc-h3 { color: #060607; } :root[data-mode="light"] .dc-channel .dc-code { background: #e3e5e8; } :root[data-mode="light"] .dc-channel .dc-quote { border-left-color: #c4c9ce; }
+:root[data-mode="light"] .dc-channel .dc-code-block summary { color: #006ce7; } :root[data-mode="light"] .dc-channel .dc-code-block pre { background: #f2f3f5; color: #313338; }
 `;
