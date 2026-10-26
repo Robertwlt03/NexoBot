@@ -498,6 +498,9 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 @media (max-width: 767px) { .wood-shade { --shade-dark: 0.2; --shade-light: 0.7; } }
 
 /* ---------- Bundle tiles (me/bundles.tsx): holographic frame that slowly circles the tile ---------- */
+/* Every profile-card preview (shop tiles, bundles, banner, dialog stage): corners that scale with the card, the same
+   roundness as on the bundle tiles at any size (3.6 % of the width; the card is 2.84 times wider than tall). */
+.card-shape { border-radius: 3.6% / 10.2%; overflow: hidden; }
 .bundle-tile { position: relative; display: block; border-radius: 20px; background: conic-gradient(from var(--holo-angle), var(--tile), #ffd889, #8fe3ff, #f7a8c4, var(--tile)); box-shadow: 0 24px 60px -30px color-mix(in srgb, var(--tile) 70%, transparent); }
 .bundle-tile:hover { box-shadow: 0 30px 70px -24px color-mix(in srgb, var(--tile) 85%, transparent); }
 @media (prefers-reduced-motion: no-preference) {

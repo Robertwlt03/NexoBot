@@ -48,13 +48,13 @@ export function StoreCard({ listing, owned, variant, onOpen, className = '', lar
   const style = { '--tile': tint } as CSSProperties;
   return (
     <button type="button" onClick={onOpen} data-mode="dark" style={style}
-      className={`js-item game-tile group relative flex cursor-pointer flex-col overflow-hidden rounded-[18px] border-0 bg-[#0d0b0a] p-0 text-left font-[inherit] ring-1 ring-white/[.08] transition duration-300 hover:-translate-y-1 hover:ring-[color-mix(in_srgb,var(--tile)_70%,transparent)] hover:shadow-[0_22px_44px_-18px_color-mix(in_srgb,var(--tile)_55%,transparent)] ${large ? '' : 'aspect-[3/4]'} ${className}`}>
+      className={`js-item game-tile group relative flex cursor-pointer flex-col overflow-hidden rounded-[20px] border-0 bg-[#0d0b0a] p-0 text-left font-[inherit] ring-1 ring-white/[.08] transition duration-300 hover:-translate-y-1 hover:ring-[color-mix(in_srgb,var(--tile)_70%,transparent)] hover:shadow-[0_22px_44px_-18px_color-mix(in_srgb,var(--tile)_55%,transparent)] ${large ? '' : 'aspect-[3/4]'} ${className}`}>
       <div className="game-tile-field relative min-h-0 w-full flex-1 overflow-hidden">
         {item.slot === 'background' || item.slot === 'layout' ? (
           // Backgrounds and layouts: your own card as it is now (your frame, your look), wearing only this item. It
           // sits inside the tile with room on every side and a slight tilt, so it reads as a card, not a banner.
           <div className="absolute inset-0 flex items-center justify-center px-[9%]">
-            <div className="w-full -rotate-[5deg] overflow-hidden rounded-lg shadow-[0_20px_44px_-14px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[3deg] group-hover:scale-[1.04]">
+            <div className="card-shape w-full -rotate-[5deg] shadow-[0_20px_44px_-14px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[3deg] group-hover:scale-[1.04]">
               <TryOnPreview items={[item]} resolution={0.5} />
             </div>
           </div>
@@ -169,7 +169,7 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
             )}
           </div>
           <div className="hidden max-w-[440px] @xl:block">
-            <ProfileCardPreview subject={cardSubject(user, me, null, me.profile.bio)} cosmetics={look} className="w-full rounded-2xl shadow-[0_30px_60px_-20px_rgba(0,0,0,.8)] ring-1 ring-white/10" />
+            <ProfileCardPreview subject={cardSubject(user, me, null, me.profile.bio)} cosmetics={look} className="card-shape w-full shadow-[0_30px_60px_-20px_rgba(0,0,0,.8)] ring-1 ring-white/10" />
           </div>
         </div>
       </section>

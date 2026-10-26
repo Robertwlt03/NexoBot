@@ -87,7 +87,7 @@ function BundleTile({ bundle, items, deal, onOpen }: { bundle: ShopBundle; items
           {/* Your own card already wearing the whole bundle, slightly tilted with room on every side. */}
           {items.some((item) => item.slot !== 'levelup') ? (
             <span className="absolute inset-0 flex items-center justify-center px-[12%] pt-[6%]">
-              <span className="block w-full -rotate-[4deg] overflow-hidden rounded-xl shadow-[0_24px_50px_-16px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[2deg] group-hover:scale-[1.03]">
+              <span className="card-shape block w-full -rotate-[4deg] shadow-[0_24px_50px_-16px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[2deg] group-hover:scale-[1.03]">
                 <TryOnPreview items={items.filter((item) => item.slot !== 'levelup')} resolution={0.5} />
               </span>
             </span>
