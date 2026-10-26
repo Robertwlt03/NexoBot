@@ -71,8 +71,8 @@
 }
 
 /*
- * Douglas fir & moss, light: warm browns from the fir in the page header (its own colours, not lightened), a darker
- * rail and sidebar, ink in the fir's dark grain. Chosen per member on the design page.
+ * Golden oak & moss, light: warm browns from the oak in the page header (its own colours, not lightened), a darker
+ * rail and sidebar, ink in the oak's dark grain. Chosen per member on the design page.
  */
 [data-mode="light"] {
   --bg-app: #d4ad7e;
@@ -81,7 +81,7 @@
   --bg-card: #f2e2c7;
   --bg-card-hover: #ead4b2;
   --bg-input: #f7ebd6;
-  /* Overlay ink: the fir's brown, for hairlines, hover tints and chips. */
+  /* Overlay ink: the oak's brown, for hairlines, hover tints and chips. */
   --ov: 98 56 22;
   --border: rgb(var(--ov) / 0.17);
   --border-strong: rgb(var(--ov) / 0.28);
@@ -90,13 +90,14 @@
   --rarity-epic: #4c1d9e;
   --rarity-legendary: #613a03;
   --rarity-mythic: #8c0d27;
-  /* The header's fir keeps its own colour: the text column is washed toward the fir's light earlywood (honey), not
-     toward the page, and 60 % of it keeps 4.6:1 for the muted text over the darkest grain (measured at 360–1700 px). */
+  /* The header's oak keeps its own colour: the text column is washed toward a light honey, not toward the page.
+     60 % keeps 4.6:1 for the muted text over the darkest grain (measured at 360–1700 px); only the hairline cracks,
+     the darkest 2 % of the wood, stay darker. */
   --scrim: 60%;
   --scrim-color: #ecce9e;
   /* Light surfaces need a shadow for depth; the dark mode separates by tone. */
   --card-shadow: 0 1px 2px rgba(98, 56, 22, 0.09), 0 12px 30px -14px rgba(98, 56, 22, 0.32);
-  /* The vine and icon burnt into the fir (components/Engraving.tsx): a brown burn the grain shows through. */
+  /* The vine and icon burnt into the oak (components/Engraving.tsx): a brown burn the grain shows through. */
   --burn-scorch: #5e2c0c;
   --burn-scorch-opacity: 0.3;
   --burn-groove: rgba(74, 34, 10, 0.55);

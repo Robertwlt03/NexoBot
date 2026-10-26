@@ -4,7 +4,7 @@ import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode }
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { THEME_PRESETS, chartPalette, themeVariables, type DashboardTheme, type ThemeMode } from '../../src/shared/theme';
 import walnut from '../src/assets/wood/walnut.webp';
-import fir from '../src/assets/wood/fir.webp';
+import oak from '../src/assets/wood/oak.webp';
 import { ICON_PATHS, Icon, type IconName } from '../src/icons';
 
 const GROUPS: { title: string; text: string; tokens: string[] }[] = [
@@ -240,10 +240,10 @@ function Combo({ theme, name }: { theme: DashboardTheme; name: string }) {
     <div data-mode={theme.mode} style={{ ...themeVariables(theme), display: 'grid', background: 'var(--bg-app)', color: 'var(--text)', borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border-strong)' } as CSSProperties}>
       {/* The header wood with its wash, as behind every page title. */}
       <div style={{ position: 'relative', height: 72, display: 'grid', alignContent: 'center', padding: '0 16px' }}>
-        <img src={light ? fir : walnut} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src={light ? oak : walnut} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, color-mix(in srgb, ${tone} var(--scrim), transparent) 70%, color-mix(in srgb, ${tone} 18%, transparent))` }} />
         <b style={{ position: 'relative', color: 'var(--text-strong)', fontFamily: 'var(--font-display)', fontSize: 16 }}>{name}</b>
-        <span style={{ position: 'relative', color: 'var(--text-muted)', fontSize: 12 }}>{light ? 'Hell · Douglasie' : 'Dunkel · Nussbaum'}</span>
+        <span style={{ position: 'relative', color: 'var(--text-muted)', fontSize: 12 }}>{light ? 'Hell · Eiche' : 'Dunkel · Nussbaum'}</span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '64px 1fr', background: 'var(--bg-main)' }}>
         <div style={{ background: 'var(--bg-sidebar)', padding: '12px 8px', display: 'grid', gap: 6, alignContent: 'start' }}>

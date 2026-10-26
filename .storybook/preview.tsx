@@ -56,7 +56,7 @@ Storage.prototype.setItem = function setItem(this: Storage, key: string, value: 
 };
 
 /**
- * Decodes every image on the page, also hidden ones: the backdrop holds a walnut and a fir image and hides one per
+ * Decodes every image on the page, also hidden ones: the backdrop holds a walnut and an oak image and hides one per
  * mode, and a browser decodes a hidden image only when it first shows, which stalled the first light/dark switch.
  */
 const decodeImages = () => Promise.all([...document.images].map((image) => image.decode().catch(() => undefined)));

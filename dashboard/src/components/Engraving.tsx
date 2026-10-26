@@ -1,7 +1,7 @@
 // The page icon and a vine burnt into the header wood (see Backdrop.tsx), the leaves touched with moss.
 // Pyrography look in three passes: a soft scorch around every line, a faint light edge where light catches the cut,
 // and the dark groove itself. The colours come from styles.css (--burn-*): near black on the walnut, a brown burn on
-// the light fir that the grain shows through (multiplied into the wood, like a real burn).
+// the golden oak that the grain shows through (multiplied into the wood, like a real burn).
 import { Children, cloneElement, isValidElement, useId } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 
