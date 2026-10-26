@@ -6,6 +6,8 @@ import type { ShopEvent } from '../../../src/web/dto/profile';
 import { eventTheme, type EventTheme } from './EventScene';
 
 const LEAF = 'M0-11C7-6 7 5 0 11-7 5-7-6 0-11Z';
+/** The right half of LEAF: its shaded side. */
+const LEAF_SHADE = 'M0-11C7-6 7 5 0 11Z';
 const HEART = 'M12 21C5 16.5 2 12.6 2 8.6 2 5.5 4.4 3 7.4 3c1.9 0 3.6 1 4.6 2.6C13 4 14.7 3 16.6 3 19.6 3 22 5.5 22 8.6c0 4-3 7.9-10 12.4Z';
 const MASK = 'M14 54c2-14 20-16 46-6 26-10 44-8 46 6 2 18-14 28-28 24-8-2-12-8-18-8s-10 6-18 8c-14 4-30-6-28-24Z';
 const MASK_EYE = 'M30 58c6-8 18-6 22 2-6 6-18 6-22-2Z';
@@ -32,14 +34,16 @@ const EVENT_ART: Record<EventTheme, ReactNode> = {
   easter: <>{egg(9, 13.5, 5.2, 6.6, '#f2a7c3')}{egg(16.6, 15.6, 4.3, 5.4, '#7dc4e8')}</>,
   // The summer sun with its ring of rays.
   summer: <><path d="M19.4 12L22.4 12M18.41 15.7L21.01 17.2M15.7 18.41L17.2 21.01M12 19.4L12 22.4M8.3 18.41L6.8 21.01M5.59 15.7L2.99 17.2M4.6 12L1.6 12M5.59 8.3L2.99 6.8M8.3 5.59L6.8 2.99M12 4.6L12 1.6M15.7 5.59L17.2 2.99M18.41 8.3L21.01 6.8" stroke="#e09a22" strokeWidth="1.8" strokeLinecap="round" /><circle cx="12" cy="12" r="5.6" fill="#f2b33d" stroke="#d08a1a" strokeWidth="1" /></>,
-  // Three autumn leaves fanned out, in the scene's rust, ochre and brown.
+  // Three autumn leaves fanned from one point, ochre, rust and brown; each lit on the left, shaded on the right.
+  // The middle leaf is drawn last, so it sits in front.
   autumn: (
     <>
-      {([[-40, 7, 14.2, '#c98a2a'], [40, 17, 14.2, '#8a3414'], [0, 12, 11.4, '#b0561f']] as const).map(([angle, x, y, fill]) => (
-        <g key={angle} transform={`translate(${x} ${y}) rotate(${angle}) scale(.62)`}>
-          <path d={LEAF} fill={fill} /><path d="M0-9V10" stroke="#00000040" strokeWidth="1.4" />
-        </g>
-      ))}
+      {([[-44, 6.8, 13.4, 0.58, '#e0a43a', '#c98a2a'], [44, 17.2, 13.4, 0.58, '#a8401a', '#8a3414'], [0, 12, 10.8, 0.66, '#d0682a', '#b0561f']] as const)
+        .map(([angle, x, y, scale, lit, shade]) => (
+          <g key={angle} transform={`translate(${x} ${y}) rotate(${angle}) scale(${scale})`}>
+            <path d={LEAF} fill={lit} /><path d={LEAF_SHADE} fill={shade} />
+          </g>
+        ))}
     </>
   ),
   // The Halloween pumpkin from the banner: three lobes, a green stem and a lit face.
