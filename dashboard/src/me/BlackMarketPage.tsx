@@ -79,7 +79,7 @@ export default function BlackMarketPage() {
   return (
     <>
       <PageHeader kicker="Mein Profil" title="Black Market" description="Jede Woche neue Karten: Artikel aus dem Shop zum Sonderpreis und mythische Exklusive, die es nur hier gibt. Montags um Mitternacht wird neu gemischt." />
-      {/* The black market stays dark in both modes. */}
+      {/* The black market (banner and cards) stays dark in both modes. */}
       <div data-mode="dark">
         <section className="relative mb-6 overflow-hidden rounded-[20px] border border-rose-500/20 bg-[#070608] p-6 md:p-8">
           <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,rgba(255,255,255,.028)_0_1px,transparent_1px_3px)]" />
@@ -99,11 +99,14 @@ export default function BlackMarketPage() {
             </div>
           </div>
         </section>
+      </div>
 
-        <div className="mb-4 flex items-center gap-3">
-          <p className="min-w-0 flex-1 text-[13.5px] text-mute">{hidden.length ? `${listings.length - hidden.length} von ${listings.length} aufgedeckt` : 'Alle Karten aufgedeckt'}</p>
-          {hidden.length > 0 && <button type="button" className="btn btn-secondary btn-sm" onClick={revealAll}>Alle aufdecken</button>}
-        </div>
+      {/* The count and button sit on the page, so they follow its mode. */}
+      <div className="mb-4 flex items-center gap-3">
+        <p className="min-w-0 flex-1 text-[13.5px] text-mute">{hidden.length ? `${listings.length - hidden.length} von ${listings.length} aufgedeckt` : 'Alle Karten aufgedeckt'}</p>
+        {hidden.length > 0 && <button type="button" className="btn btn-secondary btn-sm" onClick={revealAll}>Alle aufdecken</button>}
+      </div>
+      <div data-mode="dark">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4">
           {listings.map((l) => (
             <RevealCard key={l.item.id} listing={l} revealed={isRevealed(l.item.id)} owned={owned.has(l.item.id)}

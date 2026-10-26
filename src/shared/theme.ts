@@ -126,7 +126,7 @@ export function themeVariables(theme: DashboardTheme): Record<string, string> {
     '--ring': `0 0 0 3px ${rgba(primary, 0.22)}`,
     '--brand-gradient': `linear-gradient(135deg, ${mix(primary, canvas, light ? 0.8 : 0.74)} 0%, ${mix(primary, canvas, light ? 0.9 : 0.86)} 45%, ${surface} 100%)`,
     '--hero-glow': `radial-gradient(120% 140% at 100% 0%, ${rgba(strong, light ? 0.16 : 0.32)}, transparent 55%), radial-gradient(90% 120% at 0% 100%, ${rgba(secondary, light ? 0.08 : 0.1)}, transparent 60%)`,
-    '--chart-primary': chartPrimary(theme.primary),
+    '--chart-primary': chartPrimary(theme.primary, theme.mode),
   };
   // Tailwind tokens (tailwind.css) mirror the same values.
   values['--color-accent'] = primary;
@@ -184,9 +184,22 @@ const CHART_L: [number, number] = [0.55, 0.64];
 const CHART_MIN_C = 0.11;
 
 /** Single-series charts and sparklines follow the primary colour, moved into the chart lightness band. */
-export function chartPrimary(color: string): string {
+export function chartPrimary(color: string, mode: ThemeMode = 'dark'): string {
   const [L, C, h] = oklch(color);
-  return fromOklch(Math.min(CHART_L[1], Math.max(CHART_L[0], L)), Math.max(CHART_MIN_C, C), h);
+  return onSurface(fromOklch(Math.min(CHART_L[1], Math.max(CHART_L[0], L)), Math.max(CHART_MIN_C, C), h), mode);
+}
+/**
+ * On the light cards chart marks are darkened to 3:1 (WCAG 1.4.11); the band is set for the dark surface. Only the
+ * OKLCH lightness goes down, so hue and chroma (and with them the gaps between series) stay.
+ */
+function onSurface(color: string, mode: ThemeMode): string {
+  if (mode !== 'light') return color;
+  const [L, C, h] = oklch(color);
+  for (let step = L; step > 0.2; step -= 0.01) {
+    const next = fromOklch(step, C, h);
+    if (contrast(next, LIGHT_SURFACE) >= 3) return next;
+  }
+  return fromOklch(0.2, C, h);
 }
 
 /** Smallest angle between two hues in degrees. */
@@ -234,7 +247,7 @@ const HUE_POOL = Array.from({ length: 36 }, (_, i) => i * 10)
 /** The best next colour: the first calm base colour that separates from all chosen ones, else the most separated pool colour. */
 function nextSeries(chosen: string[]): string {
   const score = (color: string) => Math.min(...chosen.map((other) => separation(color, other)));
-  const calm = EXTRA_SERIES.map(chartPrimary).find((color) => oklch(color)[1] >= CHART_MIN_C && score(color) >= 1);
+  const calm = EXTRA_SERIES.map((color) => chartPrimary(color)).find((color) => oklch(color)[1] >= CHART_MIN_C && score(color) >= 1);
   if (calm) return calm;
   return HUE_POOL.reduce((best, color) => (score(color) > score(best) ? color : best));
 }
@@ -249,7 +262,10 @@ export function chartPalette(theme: DashboardTheme): string[] {
   const secondary = chartPrimary(theme.secondary);
   palette.push(separation(palette[0], secondary) >= 1 ? secondary : nextSeries(palette));
   while (palette.length < 4) palette.push(nextSeries(palette));
-  return palette;
+  if (theme.mode !== 'light') return palette;
+  // All series step down by the same lightness, so the lighter/darker differences between them stay.
+  const drop = Math.max(...palette.map((color) => oklch(color)[0] - oklch(onSurface(color, 'light'))[0]));
+  return palette.map((color) => { const [L, C, h] = oklch(color); return fromOklch(L - drop, C, h); });
 }
 
 /** Five-step sequential ramp (less → more) in the primary hue for heatmaps (monotone OKLCH lightness). */

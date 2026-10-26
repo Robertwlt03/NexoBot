@@ -79,5 +79,5 @@ export const useTheme = () => useContext(ThemeContext);
 /** Chart colours following the member's theme: single series, multi-series palette and heatmap ramp (light mode: low = light). */
 export function useChartTheme() {
   const { theme } = useTheme();
-  return useMemo(() => ({ primary: chartPrimary(theme.primary), palette: chartPalette(theme), heat: theme.mode === 'light' ? heatRamp(theme.primary).reverse() : heatRamp(theme.primary) }), [theme]);
+  return useMemo(() => ({ primary: chartPrimary(theme.primary, theme.mode), palette: chartPalette(theme), heat: theme.mode === 'light' ? heatRamp(theme.primary).reverse() : heatRamp(theme.primary) }), [theme]);
 }

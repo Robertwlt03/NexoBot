@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { AchievementsResponse } from '../../../src/web/dto/profile';
 import { useApi } from '../api';
 import { Card, Empty, Notice, PageHeader, Spinner, Stats } from '../components/ui';
@@ -60,7 +61,7 @@ export default function AchievementsPage() {
                   <span className="ml-auto flex min-w-0 items-center gap-2 text-right text-[12.5px] text-mute">
                     <span className="min-w-0">
                       {a.itemId && <span className="block truncate">+ {item ? `Abzeichen „${item.name}“` : 'Abzeichen'}</span>}
-                      {title?.slot === 'title' && <span className="block truncate">+ Titel <span style={{ color: title.data.color }}>„{title.data.text}“</span></span>}
+                      {title?.slot === 'title' && <span className="block truncate">+ Titel <span className="title-tint" style={{ '--tint': title.data.color } as CSSProperties}>„{title.data.text}“</span></span>}
                     </span>
                   </span>
                 )}
