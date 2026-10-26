@@ -40,6 +40,11 @@
   --burn-groove: rgba(16, 8, 3, 0.9);
   --burn-edge: rgba(255, 222, 180, 0.18);
   --burn-moss: #8aa866;
+  /* Ticket priority (modules/Tickets.tsx): red, orange, amber, blue like Jira; 3:1 or more on every surface. */
+  --prio-urgent: #f87171;
+  --prio-high: #fb923c;
+  --prio-medium: #facc15;
+  --prio-low: #7dd3fc;
   --burn-moss-opacity: 0.7;
   --burn-blend: normal;
   --card-shadow: none;
@@ -112,6 +117,10 @@
   /* The leaves are not multiplied (their own layer), so they stay green; a soft sage, since colour on a light wood
      already stands out more than on the dark walnut. */
   --burn-moss: #6f9a4a;
+  --prio-urgent: #a3123f;
+  --prio-high: #b04208;
+  --prio-medium: #866000;
+  --prio-low: #0b5b8c;
   --burn-moss-opacity: 0.55;
   --burn-blend: multiply;
   /* The logo's wooden coin (components/NexoLogo.tsx) turns golden oak with the header. */

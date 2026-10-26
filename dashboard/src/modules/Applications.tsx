@@ -263,11 +263,11 @@ export default function ApplicationsPage() {
               </div>
             </Card>
 
-            <Card icon="flag" title="Globale Fragen" description="Gelten für jede Bewerbung ohne eigene Fragen.">
+            <Card icon="help" title="Globale Fragen" description="Gelten für jede Bewerbung ohne eigene Fragen.">
               <QuestionsEditor value={value.questions} onChange={(questions) => settings.set({ questions })} />
             </Card>
 
-            <Card icon="users" title="Bewerbungen" description="Rollen, auf die sich Mitglieder bewerben können.">
+            <Card icon="tag" title="Bewerbungen" description="Rollen, auf die sich Mitglieder bewerben können.">
               {value.roles.length === 0 ? (
                 <Empty title="Noch keine Bewerbungen">Leg oben rechts eine an, damit sich Mitglieder mit /apply bewerben können.</Empty>
               ) : (

@@ -12,10 +12,10 @@ import type { IconName } from '../icons';
 
 const FEATURE_INFO: Record<AutomodFeatureId, { title: string; description: string; icon: IconName }> = {
   spam: { title: 'Spam-Filter', description: 'Blockt Nachrichten, die Discord als Spam erkennt.', icon: 'shield' },
-  links: { title: 'Link-Filter', description: 'Blockt Links. GIFs und Discord-Links bleiben erlaubt.', icon: 'external' },
-  invites: { title: 'Einladungs-Filter', description: 'Blockt Einladungen zu anderen Discord-Servern.', icon: 'send' },
-  badwords: { title: 'Schimpfwort-Filter', description: 'Discords Listen (Englisch) plus deine eigene Wortliste.', icon: 'x' },
-  mentions: { title: 'Massen-Erwähnungen', description: 'Blockt Nachrichten mit zu vielen Erwähnungen.', icon: 'users' },
+  links: { title: 'Link-Filter', description: 'Blockt Links. GIFs und Discord-Links bleiben erlaubt.', icon: 'link' },
+  invites: { title: 'Einladungs-Filter', description: 'Blockt Einladungen zu anderen Discord-Servern.', icon: 'userPlus' },
+  badwords: { title: 'Schimpfwort-Filter', description: 'Discords Listen (Englisch) plus deine eigene Wortliste.', icon: 'chatOff' },
+  mentions: { title: 'Massen-Erwähnungen', description: 'Blockt Nachrichten mit zu vielen Erwähnungen.', icon: 'at' },
 };
 
 function FeatureCard<K extends AutomodFeatureId>({ id, value, onChange, children }: {
@@ -114,7 +114,7 @@ export default function AutomodPage() {
                 </div>
               </Card>
 
-              <Card icon="check" title="Regeln in Discord" description="So stehen Nexos Regeln gerade in den Servereinstellungen unter „AutoMod“.">
+              <Card icon="list" title="Regeln in Discord" description="So stehen Nexos Regeln gerade in den Servereinstellungen unter „AutoMod“.">
                 {value.rules.length === 0 ? (
                   <Empty title="Noch keine Regeln">Schalte oben einen Filter ein und speichere.</Empty>
                 ) : (

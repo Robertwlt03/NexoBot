@@ -63,7 +63,7 @@ export default function LoggingPage() {
                 </div>
               </Card>
 
-              <Card icon="check" title="Ereignisse" description={value.enabled ? "Wähle aus, welche Ereignisse protokolliert werden." : "Wähle aus, welche Ereignisse protokolliert werden. Greift erst, wenn die Protokollierung an ist."}>
+              <Card icon="list" title="Ereignisse" description={value.enabled ? "Wähle aus, welche Ereignisse protokolliert werden." : "Wähle aus, welche Ereignisse protokolliert werden. Greift erst, wenn die Protokollierung an ist."}>
                 <div className="auto-grid">
                   {value.categories.map((category) => {
                     const types = category.events.map((event) => event.type);
@@ -87,7 +87,7 @@ export default function LoggingPage() {
                 </div>
               </Card>
 
-              <Card icon="x" title="Ignorieren" description="Ereignisse von diesen Nutzern und aus diesen Kanälen werden nicht protokolliert.">
+              <Card icon="ban" title="Ignorieren" description="Ereignisse von diesen Nutzern und aus diesen Kanälen werden nicht protokolliert.">
                 <div className="grid-2">
                   <Field label="Nutzer" hint="Rechtsklick auf einen Nutzer → „Nutzer-ID kopieren“ (Entwicklermodus).">
                     <UserIdList value={value.ignore.users} names={value.userNames}

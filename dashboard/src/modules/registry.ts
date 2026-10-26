@@ -32,7 +32,7 @@ export const MODULES: ModuleDef[] = [
   { id: 'birthdays', label: 'Geburtstage', description: 'Geburtstagskanal, Rolle und gespeicherte Geburtstage', icon: 'cake', group: 'Engagement', component: lazy(() => import('./Birthdays')) },
   { id: 'counting', label: 'Zählspiel', description: 'Zählkanal, Regeln und Bestenliste', icon: 'hash', group: 'Engagement', component: lazy(() => import('./Counting')) },
   { id: 'jointocreate', label: 'Join-to-Create', description: 'Temporäre Sprachkanäle mit Vorlagen und Limits', icon: 'mic', group: 'Server & Tools', component: lazy(() => import('./JoinToCreate')) },
-  { id: 'serverstats', label: 'Server-Statistiken', description: 'Zähler-Kanäle für Mitglieder, Bots und mehr', icon: 'stats', group: 'Server & Tools', component: lazy(() => import('./ServerStats')) },
+  { id: 'serverstats', label: 'Server-Statistiken', description: 'Zähler-Kanäle für Mitglieder, Bots und mehr', icon: 'gauge', group: 'Server & Tools', component: lazy(() => import('./ServerStats')) },
   { id: 'music', label: 'Musik', description: 'Musik-Einstellungen wie 24/7-Modus', icon: 'music', group: 'Server & Tools', component: lazy(() => import('./Music')) },
   { id: 'reports', label: 'Meldungen', description: 'Kanal für Nutzermeldungen', icon: 'flag', group: 'Server & Tools', component: lazy(() => import('./Reports')) },
 ];

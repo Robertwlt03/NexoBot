@@ -7,7 +7,7 @@ import {
   Badge, Card, ChannelSelect, Empty, Field, MessagePreview, Notice, NumberInput, PageHeader, RoleSelect,
   SettingsPage, Spinner, Stats, SwitchRow, TableWrap, TextArea, TextInput,
 } from '../components/ui';
-import { Icon } from '../icons';
+import { Icon, type IconName } from '../icons';
 
 const PANEL_STATE: Record<TicketPanelState, { label: string; on: boolean; hint: string }> = {
   active: { label: 'Aktiv', on: true, hint: 'Das Panel ist gepostet. Text- und Button-Änderungen landen beim Speichern direkt im Panel.' },
@@ -99,12 +99,18 @@ function Overview({ overview, canPost, onPosted, onRefresh }: {
   );
 }
 
-/** Priority as a flag in a status colour: urgent and high stand out, medium and low stay calm. */
-const PRIORITY_TONE: Record<string, string> = { urgent: 'var(--neg)', high: 'var(--warning)', medium: 'var(--text-muted)', low: 'var(--text-faint)' };
+/** Priority read like Jira: each level has its own shape (double up, up, equals, down) and its own colour. */
+const PRIORITY: Record<string, { icon: IconName; tone: string }> = {
+  urgent: { icon: 'priorityUrgent', tone: 'var(--prio-urgent)' },
+  high: { icon: 'priorityHigh', tone: 'var(--prio-high)' },
+  medium: { icon: 'priorityMedium', tone: 'var(--prio-medium)' },
+  low: { icon: 'priorityLow', tone: 'var(--prio-low)' },
+};
 function Priority({ priority }: { priority: { level: string; label: string } }) {
+  const look = PRIORITY[priority.level] ?? PRIORITY.medium;
   return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="inline-flex" style={{ color: PRIORITY_TONE[priority.level] ?? 'var(--text-muted)' }}><Icon name="flag" size={14} /></span>
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+      <span className="inline-flex" style={{ color: look.tone }}><Icon name={look.icon} size={18} /></span>
       {priority.label}
     </span>
   );

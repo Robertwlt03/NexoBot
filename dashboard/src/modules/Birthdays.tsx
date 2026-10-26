@@ -41,7 +41,7 @@ export default function BirthdaysPage() {
               )}
             </Card>
 
-            <Card icon="gift" title="Nächste Geburtstage">
+            <Card icon="calendar" title="Nächste Geburtstage">
               {value.upcoming.length === 0 ? <Empty title="Noch keine Geburtstage">Mitglieder tragen ihren Geburtstag mit /birthday set ein.</Empty> : (
                 <div className="list">
                   {value.upcoming.map((entry) => (

@@ -87,7 +87,7 @@ export default function CountingPage() {
         </div>
       </Card>
 
-      <Card icon="users" title="Bestenliste" description={`Wer am meisten richtig gezählt hat (Top ${COUNTING_LEADERBOARD_LIMIT}${value.players > COUNTING_LEADERBOARD_LIMIT ? ` von ${value.players}` : ''}).`}>
+      <Card icon="trophy" title="Bestenliste" description={`Wer am meisten richtig gezählt hat (Top ${COUNTING_LEADERBOARD_LIMIT}${value.players > COUNTING_LEADERBOARD_LIMIT ? ` von ${value.players}` : ''}).`}>
         <RankList
           rows={value.leaderboard.map((entry) => ({ ...entry, value: <strong>{entry.count.toLocaleString('de-DE')} {entry.count === 1 ? 'Zahl' : 'Zahlen'}</strong> }))}
           loading={status.loading} error={status.error}

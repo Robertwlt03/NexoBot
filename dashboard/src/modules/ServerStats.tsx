@@ -39,7 +39,7 @@ export default function ServerStatsPage() {
       {error && !data && <Notice tone="danger" onRetry={reload}>{error}</Notice>}
       {data && (
         <>
-          <Card icon="stats" title="Zähler" description="Die Namen werden automatisch alle 15 Minuten aktualisiert. Pro Typ ist ein Zähler möglich.">
+          <Card icon="gauge" title="Zähler" description="Die Namen werden automatisch alle 15 Minuten aktualisiert. Pro Typ ist ein Zähler möglich.">
             {data.counters.length === 0 ? <Empty title="Noch keine Zähler">Erstelle unten deinen ersten Zähler.</Empty> : (
               <div className="list">
                 {data.counters.map((counter) => (

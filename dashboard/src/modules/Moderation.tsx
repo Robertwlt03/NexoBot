@@ -108,7 +108,7 @@ function WarningsTab() {
   });
 
   return (
-    <Card icon="flag" title="Verwarnungen" description="Aktive Verwarnungen aus /mod warn. Neue Verwarnungen vergibst du in Discord.">
+    <Card icon="alert" title="Verwarnungen" description="Aktive Verwarnungen aus /mod warn. Neue Verwarnungen vergibst du in Discord.">
       <div className="grid-2 mb-4">
         <IdFilter label="Nutzer" value={filter.userId} onChange={(userId) => setFilter({ userId, page: 1 })} />
         {validId(filter.userId) && data?.warnings[0] && (
@@ -197,7 +197,7 @@ function NotesTab() {
         </Actions>
       </Card>
 
-      <Card icon="clipboard" title="Nutzernotizen" description="Alle Notizen auf diesem Server, die neuesten zuerst.">
+      <Card icon="note" title="Nutzernotizen" description="Alle Notizen auf diesem Server, die neuesten zuerst.">
         <div className="grid-2 mb-4">
           <IdFilter label="Nutzer" value={filter.userId} onChange={(userId) => setFilter({ userId, page: 1 })} />
           {validId(filter.userId) && data?.notes[0] && (
