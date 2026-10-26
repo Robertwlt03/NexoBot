@@ -1,16 +1,17 @@
 // Header art of the Cyberpunk theme, the counterpart of Engraving.tsx on the wood: the page's own icon as a cyan neon
-// sign, locked in by four yellow target corners like a HUD, with a small tag below (NC/ + the page name, flush right so long names grow to the left). A soft blur
-// under the icon gives the glow.
+// sign, locked in by four yellow target corners like a HUD, with a small tag above (NC/ + the page name, flush right so
+// long names grow to the left). Kept small and high, so it stays inside the page header and never runs under the first
+// card. A soft blur under the icon gives the glow.
 import { Children, cloneElement, isValidElement, useId } from 'react';
 import type { ReactNode } from 'react';
 
 const YELLOW = '#fcee0a';
 const CYAN = '#00f0ff';
 
-/** Where the 24px icon sits on the 600×320 board and how big it is drawn (viewBox units), as on the wood. */
-const ICON_AT = { x: 430, y: 70, scale: 5.8 } as const;
-/** The target corners: 18 units outside the icon, 28 long. */
-const BOX = { x: 412, y: 52, size: 24 * ICON_AT.scale + 36, arm: 28 } as const;
+/** Where the 24px icon sits on the 600×320 board and how big it is drawn (viewBox units). */
+const ICON_AT = { x: 472, y: 54, scale: 3.6 } as const;
+/** The target corners: 18 units outside the icon, 22 long; the box ends at y 158. */
+const BOX = { x: 454, y: 36, size: 24 * ICON_AT.scale + 36, arm: 22 } as const;
 const CORNERS = (() => {
   const { x, y, size, arm } = BOX;
   const r = x + size;
@@ -49,9 +50,9 @@ export function CircuitArt({ art, label, width }: { art?: ReactNode; label?: str
       <defs>
         <filter id={`${id}-glow`} x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="4" /></filter>
       </defs>
-      {iconArt && <path d={CORNERS} fill="none" stroke={YELLOW} strokeWidth="3" />}
+      {iconArt && <path d={CORNERS} fill="none" stroke={YELLOW} strokeWidth="2.5" />}
       {iconArt && label && (
-        <text x={BOX.x + BOX.size} y={BOX.y + BOX.size + 30} textAnchor="end" fill={YELLOW} fontSize="18" letterSpacing="2" style={{ fontFamily: 'var(--font-display)' }}>
+        <text x={BOX.x + BOX.size} y={BOX.y - 10} textAnchor="end" fill={YELLOW} fontSize="15" letterSpacing="2" style={{ fontFamily: 'var(--font-display)' }}>
           NC/{label.toUpperCase().replace(/\s+/g, '_')}
         </text>
       )}

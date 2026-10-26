@@ -663,6 +663,8 @@ main:has(.page-head > .actions) .engraving-icon { display: none; }
 [data-theme="cyberpunk"] .switch.on::after { background: var(--accent-ink); }
 /* The hero is a black panel with a yellow edge and a cyan glow; the shared yellow-into-black gradient turns olive. */
 [data-theme="cyberpunk"] .card-hero { background: radial-gradient(90% 140% at 100% 0%, rgb(0 240 255 / 0.12), transparent 55%), var(--highlight), var(--bg-card); border-color: var(--accent-line); }
+/* The header buttons stay left of the icon in its target corners (components/CircuitArt.tsx). */
+@media (min-width: 768px) { [data-theme="cyberpunk"] .page-head:has(> .actions) { padding-right: 150px; } }
 [data-theme="cyberpunk"] :is(h1, h2) { text-transform: uppercase; letter-spacing: 0.02em; }
 [data-theme="cyberpunk"] .page-head h1 { text-shadow: 2px 2px 0 rgb(93 227 155 / 0.75), -2px -2px 0 rgb(195 98 192 / 0.75), 0 0 8px var(--scrim-color); }
 /* The kicker as the "EDGERUNNERS" label of the logo: fading hatching running into a yellow tag with black capitals. */
