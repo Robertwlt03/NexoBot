@@ -6,6 +6,10 @@
 @source not inline("list-item");
 @import "@fontsource-variable/unbounded";
 @import "@fontsource-variable/inter";
+/* Display font of the Cyberpunk theme (styles.css). */
+@import "@fontsource/chakra-petch/500.css";
+@import "@fontsource/chakra-petch/600.css";
+@import "@fontsource/chakra-petch/700.css";
 
 @theme {
   --font-display: "Unbounded Variable", "gg sans", "Inter", sans-serif;

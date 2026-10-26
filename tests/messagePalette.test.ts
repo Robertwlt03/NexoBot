@@ -19,7 +19,7 @@ test('the wood themes keep the bot palette, every other one has a colour for eac
     for (const role of MESSAGE_ROLES) assert.match(palette[role], /^#[0-9a-f]{6}$/, `${preset.id} ${role}`);
   }
   const ocean = messagePalette(scheme('cyberpunk'));
-  assert.equal(ocean.nexo, '#22d3ee');
+  assert.equal(ocean.nexo, '#fcee0a');
   // Danger stays red and success green, whatever the scheme.
   assert.ok(hueDistance(oklch(ocean.danger)[2], 25) < 15);
   assert.ok(hueDistance(oklch(ocean.success)[2], 150) < 15);
@@ -37,7 +37,7 @@ test('cards take the scheme colour of their role, banners follow, other pictures
   assert.equal(json.accent_color, danger);
   assert.match(json.components[0].items![0].media.url, new RegExp(`danger\\.png\\?c=${palette.danger.slice(1)}&v=2`));
   assert.equal(json.components[2].items![0].media.url, 'https://example.com/card.png');
-  assert.equal((painted.embeds[0] as { color: number }).color, 0x22d3ee);
+  assert.equal((painted.embeds[0] as { color: number }).color, 0xfcee0a);
 });
 
 test('banners render as PNG in any colour', async () => {

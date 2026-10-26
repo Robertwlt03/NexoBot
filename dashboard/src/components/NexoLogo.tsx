@@ -1,5 +1,6 @@
 // The Nexo logo: a turned wooden coin ("Holztaler") with the Nexo robot stuck on it as a die-cut sticker. The coin is
-// walnut, in the light mode golden oak like the page header (--coin-* in styles.css).
+// walnut, in the light mode golden oak like the page header (--coin-* in styles.css). The Cyberpunk theme swaps the
+// coin for a chamfered black plate like the Edgerunners panels (styles.css .look-wood / .look-cyber); the sticker stays.
 // Inline SVG so GSAP can animate the robot's parts: blinking, a pulsing antenna, chest lights and a moon that
 // circles the orbit (in front of the head on the lower half, behind it above); the sticker itself floats gently.
 import { useId, useRef } from 'react';
@@ -39,6 +40,15 @@ const CRACKS = [
   { d: 'M887.5 179.5L883.8 189.2L872.6 195.0L870.3 207.1L855.8 207.3L848.3 221.8L845.5 229.9L837.5 238.9L827.1 244.3L822.4 247.6L815.3 260.0L806.8 265.6L798.9 272.5L792.3 284.8L786.1 292.6L778.6 297.8L770.3 303.9L764.9 313.8L755.0 317.5L746.8 326.1L739.2 333.9L732.3 341.3L724.0 347.9L716.2 355.3L709.7 364.0L702.1 371.2L695.4 379.5L685.5 384.0L679.8 394.2L680.9 394.8L686.3 384.9L696.3 380.7L704.4 373.7L712.5 366.8L720.7 360.1L729.1 354.1L737.0 347.1L746.8 341.7L752.8 332.6L762.1 329.5L771.3 323.4L782.1 319.7L791.5 314.2L799.4 305.0L806.9 296.0L813.2 290.6L825.4 289.2L829.8 277.0L841.9 279.8L854.4 270.8L856.5 257.9L866.1 255.2L878.4 248.5L884.2 245.7L890.3 238.1L902.9 235.1L910.5 230.6L923.6 227.6Z', lip: 'M887.5 179.5L883.8 189.2L872.6 195.0L870.3 207.1L855.8 207.3L848.3 221.8L845.5 229.9L837.5 238.9L827.1 244.3L822.4 247.6L815.3 260.0L806.8 265.6L798.9 272.5L792.3 284.8L786.1 292.6L778.6 297.8L770.3 303.9L764.9 313.8L755.0 317.5L746.8 326.1L739.2 333.9L732.3 341.3L724.0 347.9L716.2 355.3L709.7 364.0L702.1 371.2L695.4 379.5', main: true },
   { d: 'M81.7 767.2L87.0 764.0L91.9 760.3L96.7 757.3L101.8 754.6L107.5 752.5L113.1 748.8L117.6 744.9L124.1 743.0L127.1 735.8L131.4 733.4L137.3 732.2L143.2 728.8L147.3 723.7L151.9 720.4L157.2 717.8L163.1 716.0L168.4 713.2L174.8 712.1L179.3 707.6L184.1 704.0L183.4 703.0L178.5 706.7L174.3 711.0L168.0 711.9L162.3 713.9L156.5 715.8L150.7 718.1L145.3 721.5L141.1 726.1L135.9 727.5L129.3 728.4L123.8 733.1L120.0 738.2L114.8 739.9L110.3 744.5L104.7 745.5L99.1 747.7L92.9 749.5L87.2 752.4L82.0 755.1L76.6 757.3Z', lip: 'M81.7 767.2L87.0 764.0L91.9 760.3L96.7 757.3L101.8 754.6L107.5 752.5L113.1 748.8L117.6 744.9L124.1 743.0L127.1 735.8L131.4 733.4L137.3 732.2L143.2 728.8L147.3 723.7L151.9 720.4L157.2 717.8L163.1 716.0L168.4 713.2L174.8 712.1', main: false },
 ];
+
+/** The Cyberpunk plate: big cuts top left and bottom right, small ones on the other corners; the frame sits 34 inside. */
+const PLATE = 'M174 24H952L1000 72V850L850 1000H72L24 952V174Z';
+const FRAME = 'M188 58H938L966 86V836L836 966H86L58 938V188Z';
+/** The site's yellow hatching, bottom left inside the frame. */
+const HATCH = Array.from({ length: 15 }, (_, k) => {
+  const x = 112 + k * 20;
+  return `M${x} 930H${x + 12}L${x + 32} 892H${x + 20}Z`;
+}).join('');
 
 function orbitPoint(angle: number) {
   const x = ORBIT.rx * Math.cos(angle);
@@ -135,11 +145,33 @@ export function NexoLogo({ className, animated = true, followPointer = false, ti
           <rect width="1024" height="1024" fill="#FFFFFF" />
           {CRACKS.map((crack) => <path key={crack.main ? "main" : "hair"} d={crack.d} fill="#000000" />)}
         </mask>
+        <clipPath id={`${id}-plate`}><path d={PLATE} /></clipPath>
+        <radialGradient id={`${id}-glow`} cx="88%" cy="10%" r="60%">
+          <stop offset="0" stopColor="#00F0FF" stopOpacity=".28" /><stop offset="1" stopColor="#00F0FF" stopOpacity="0" />
+        </radialGradient>
+        <pattern id={`${id}-grid`} width="64" height="64" patternUnits="userSpaceOnUse">
+          <path d="M64 0H0V64" fill="none" stroke="#E6ECF5" strokeOpacity=".07" strokeWidth="3" />
+        </pattern>
         <clipPath id={`${id}-face`}><circle cx="512" cy="512" r="491" /></clipPath>
       </defs>
 
+      {/* Cyberpunk: the black plate with a faint grid and a cyan glow, the yellow frame printed slightly off in mint and
+          pink like the site's headlines, hatching bottom left and a notch on top. */}
+      <g className="look-cyber">
+        <path d={PLATE} fill="#0b0c0f" />
+        <g clipPath={ref('plate')}>
+          <rect width="1024" height="1024" fill={ref('grid')} />
+          <rect width="1024" height="1024" fill={ref('glow')} />
+        </g>
+        <path d={FRAME} fill="none" stroke="#5DE39B" strokeWidth="16" transform="translate(13 13)" />
+        <path d={FRAME} fill="none" stroke="#C362C0" strokeWidth="16" transform="translate(-13 -13)" />
+        <path d={FRAME} fill="none" stroke="#FCEE0A" strokeWidth="22" />
+        <path d={HATCH} fill="#FCEE0A" />
+        <path d="M452 58H572L512 112Z" fill="#FCEE0A" />
+      </g>
+
       {/* The coin: rim, end grain with growth rings, an engraved groove and a soft sheen; the cracks are cut out. */}
-      <g mask={ref('cut')}>
+      <g className="look-wood" mask={ref('cut')}>
       <circle cx="512" cy="512" r="492" fill={ref('rim')} />
       <circle cx="512" cy="512" r="452" fill={ref('wood')} />
       <g clipPath={ref('coin')}>

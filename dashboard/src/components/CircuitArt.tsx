@@ -1,11 +1,12 @@
 // Header art of the Cyberpunk theme, the counterpart of Engraving.tsx on the wood: circuit traces running in from the
-// top-right corner and the page's own icon drawn as a neon sign at the same spot as the burnt icon. Cyan for the
-// traces and the icon, a touch of pink on the pads; a soft blur under every line gives the glow.
+// top-right corner and the page's own icon drawn as a neon sign at the same spot as the burnt icon. Edgerunners colours:
+// yellow traces, the icon in cyan, a touch of pink on the pads; a soft blur under every line gives the glow.
 import { Children, cloneElement, isValidElement, useId } from 'react';
 import type { ReactNode } from 'react';
 
-const CYAN = '#22d3ee';
-const PINK = '#f472b6';
+const YELLOW = '#fcee0a';
+const CYAN = '#00f0ff';
+const PINK = '#c362c0';
 
 /** Traces on the 600×320 board: right-angled runs with 45° bends, each ending in a pad. */
 const TRACES: readonly { d: string; pad: readonly [number, number]; pink?: boolean }[] = [
@@ -40,8 +41,8 @@ export function CircuitArt({ art, width }: { art?: ReactNode; width: string }) {
     <g fill="none" strokeLinecap="round" strokeLinejoin="round" filter={glow ? `url(#${id}-glow)` : undefined} opacity={glow ? 0.9 : 1}>
       {TRACES.map((trace) => (
         <g key={trace.d}>
-          <path d={trace.d} stroke={CYAN} strokeOpacity={glow ? 0.7 : 0.55} strokeWidth={glow ? 3 : 1.6} />
-          <circle cx={trace.pad[0]} cy={trace.pad[1]} r={glow ? 6 : 4} fill={glow ? 'none' : '#090b1d'} stroke={trace.pink ? PINK : CYAN} strokeWidth={1.8} />
+          <path d={trace.d} stroke={YELLOW} strokeOpacity={glow ? 0.7 : 0.55} strokeWidth={glow ? 3 : 1.6} />
+          <circle cx={trace.pad[0]} cy={trace.pad[1]} r={glow ? 6 : 4} fill={glow ? 'none' : '#0b0c0f'} stroke={trace.pink ? PINK : YELLOW} strokeWidth={1.8} />
         </g>
       ))}
       {iconArt && (

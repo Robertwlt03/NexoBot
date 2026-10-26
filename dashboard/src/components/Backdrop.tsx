@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 // Page header backdrop, the same on every page and made of the theme's material: walnut or golden oak with the page's
-// icon and a vine burnt in (assets/wood/CREDITS.md), or for Cyberpunk a night-blue pixel grid with neon circuit traces.
+// icon and a vine burnt in (assets/wood/CREDITS.md), or for Cyberpunk a black grid with yellow hatching and neon circuit traces.
 // Over the text column it is washed lightly (--scrim, measured for 4.5:1 text), right of it the material shows; it
 // fades out downwards. styles.css switches the layers by data-theme and data-mode.
 import type { ReactNode } from 'react';
@@ -19,7 +19,7 @@ export function PageBackdrop({ art, column = 1040 }: { art?: ReactNode; column?:
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[320px] overflow-hidden"
       style={{ maskImage: 'linear-gradient(to bottom, #000 45%, transparent)' }}>
-      {/* Cyberpunk: glow from both corners and a fine pixel grid. */}
+      {/* Cyberpunk: black grid, cyan glow, yellow hatching on a yellow base line. */}
       <div className="look-cyber cyber-grid absolute inset-0" />
       {/* Walnut in the dark mode, golden oak in the light mode (styles.css switches them). */}
       <img src={walnut} alt="" fetchPriority="high" className="wood-dark absolute inset-0 h-full w-full object-cover" />

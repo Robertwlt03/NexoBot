@@ -11,7 +11,7 @@ test('every theme: readable text on its accent buttons, and on the light surface
 });
 
 test('normalizeTheme takes a theme id; older colour presets and custom colours become the wood theme of their mode', () => {
-  assert.deepEqual(normalizeTheme({ preset: 'cyberpunk' }), { preset: 'cyberpunk', primary: '#22d3ee', secondary: '#f472b6', mode: 'dark' });
+  assert.deepEqual(normalizeTheme({ preset: 'cyberpunk' }), { preset: 'cyberpunk', primary: '#fcee0a', secondary: '#00f0ff', mode: 'dark' });
   assert.equal(normalizeTheme({ preset: 'cyberpunk', mode: 'light' }).mode, 'dark');
   assert.equal(normalizeTheme({ preset: 'eiche' }).mode, 'light');
   assert.equal(normalizeTheme({ preset: 'smaragd', mode: 'light' }).preset, 'eiche');

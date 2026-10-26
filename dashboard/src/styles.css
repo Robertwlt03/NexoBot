@@ -163,63 +163,56 @@
 }
 
 /*
- * Cyberpunk: night blue surfaces, neon cyan as the accent, hot pink as the second colour, a pixel grid and glowing
- * traces instead of wood (components/Backdrop.tsx). Always dark; the dark islands inside the page (banner, item tiles)
- * take the same tokens, so nothing falls back to walnut.
+ * Cyberpunk, after the Edgerunners site (cyberpunk.net/en/edgerunners): near-black surfaces, neon yellow as the accent,
+ * cyan as the second colour, chamfered corners and yellow hatching instead of wood (components/Backdrop.tsx, the
+ * shapes at the end of this file). Always dark; the dark islands inside the page (banner, item tiles) take the same
+ * tokens, so nothing falls back to walnut.
  */
 [data-theme="cyberpunk"], [data-theme="cyberpunk"] [data-mode="dark"]:not([data-theme]) {
-  --bg-app: #070818;
-  --bg-sidebar: #0d1026;
-  --bg-main: #090b1d;
-  --bg-card: #121530;
-  --bg-card-hover: #191d3d;
-  --bg-input: #0c0f24;
-  --ov: 170 205 255;
+  --bg-app: #08090b;
+  --bg-sidebar: #0f1114;
+  --bg-main: #0c0d10;
+  --bg-card: #15171b;
+  --bg-card-hover: #1c1f24;
+  --bg-input: #101216;
+  --ov: 230 236 245;
   --bg-hover: rgb(var(--ov) / 0.06);
   --bg-active: rgb(var(--ov) / 0.1);
-  --border: rgb(var(--ov) / 0.1);
-  --border-strong: rgb(var(--ov) / 0.18);
+  --border: rgb(var(--ov) / 0.09);
+  --border-strong: rgb(var(--ov) / 0.16);
   --border-control: rgb(var(--ov) / 0.3);
-  --border-input: #66739e;
+  --border-input: #6b717c;
   --scrim: 74%;
-  --scrim-color: #090b1d;
-  --card-shadow: 0 0 0 1px rgb(34 211 238 / 0.05), 0 18px 40px -26px rgb(34 211 238 / 0.35);
-  /* The logo coin turns into a dark chip with neon rims (components/NexoLogo.tsx). */
-  --coin-1: #1b2350;
-  --coin-2: #121735;
-  --coin-3: #0a0d22;
-  --coin-rim-1: #67e8f9;
-  --coin-rim-2: #8b5cf6;
-  --coin-rim-3: #f472b6;
-  --coin-ring: #22d3ee;
-  --coin-ring-light: #f472b6;
+  --scrim-color: #0c0d10;
+  --card-shadow: 0 18px 40px -28px rgb(0 0 0 / 0.9);
 
-  --text-strong: #eef4ff;
-  --text: #c9d4f0;
-  --text-muted: #a3aed0;
-  --text-faint: #8f9bc2;
+  --text-strong: #f4f4f4;
+  --text: #d6d6d6;
+  --text-muted: #a8adb5;
+  --text-faint: #969ba4;
 
-  --pos: #3ee6a0;
-  --neg: #ff7a93;
-  --warning: #fcd34d;
-  --shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.9), 0 0 40px -20px rgb(34 211 238 / 0.35);
-  --highlight: linear-gradient(180deg, rgb(34 211 238 / 0.05), rgb(34 211 238 / 0) 120px);
+  /* Mint and pink from the headline misprint, orange from the site's warning stripes. */
+  --pos: #5de39b;
+  --neg: #ff5c7a;
+  --warning: #ff9d3c;
+  --shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.9), 0 0 40px -22px rgb(252 238 10 / 0.3);
+  --highlight: linear-gradient(180deg, rgb(252 238 10 / 0.035), rgb(252 238 10 / 0) 120px);
   color-scheme: dark;
 
-  --color-white: #eef4ff;
-  --color-rail: #070818;
-  --color-canvas: #090b1d;
-  --color-panel: #0d1026;
-  --color-surface: #121530;
-  --color-raised: #191d3d;
-  --color-field: #0c0f24;
-  --color-ink: #eef4ff;
-  --color-body: #c9d4f0;
-  --color-mute: #a3aed0;
-  --color-faint: #8f9bc2;
-  --color-pos: #3ee6a0;
-  --color-neg: #ff7a93;
-  --color-warn: #fcd34d;
+  --color-white: #f4f4f4;
+  --color-rail: #08090b;
+  --color-canvas: #0c0d10;
+  --color-panel: #0f1114;
+  --color-surface: #15171b;
+  --color-raised: #1c1f24;
+  --color-field: #101216;
+  --color-ink: #f4f4f4;
+  --color-body: #d6d6d6;
+  --color-mute: #a8adb5;
+  --color-faint: #969ba4;
+  --color-pos: #5de39b;
+  --color-neg: #ff5c7a;
+  --color-warn: #ff9d3c;
 }
 
 /* Mode-independent tokens. */
@@ -256,11 +249,13 @@
   --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
-/* Cyberpunk is cut sharper: smaller corners (after the shared tokens, which set the rounder defaults). */
+/* Cyberpunk is cut sharper: smaller corners and a squared display font (after the shared tokens, which set the rounder
+   defaults). */
 [data-theme="cyberpunk"] {
-  --radius-sm: 6px;
-  --radius: 10px;
-  --radius-lg: 12px;
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 10px;
+  --font-display: "Chakra Petch", var(--font);
 }
 
 /* Element defaults live in the base layer so Tailwind utilities can override them. */
@@ -547,13 +542,17 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 .look-cyber { display: none; }
 [data-theme="cyberpunk"] :is(.wood-dark, .wood-light, .look-wood) { display: none; }
 [data-theme="cyberpunk"] .look-cyber { display: block; }
+/* Black board with a faint grid, a cyan glow top right, and the site's yellow hatching hanging from a yellow line along
+   the top edge (the board fades out downwards, so it sits on top like the site's nav strip). */
 .cyber-grid {
   background:
-    radial-gradient(55% 120% at 100% 0%, rgb(244 114 182 / 0.3), transparent 60%),
-    radial-gradient(50% 110% at 0% 0%, rgb(34 211 238 / 0.2), transparent 60%),
-    linear-gradient(rgb(34 211 238 / 0.13) 1px, transparent 1px) 0 0 / 28px 28px,
-    linear-gradient(90deg, rgb(34 211 238 / 0.13) 1px, transparent 1px) 0 0 / 28px 28px,
-    #0b0e26;
+    repeating-linear-gradient(115deg, #fcee0a 0 3px, transparent 3px 9px) left 32px top 2px / 180px 14px no-repeat,
+    linear-gradient(#fcee0a, #fcee0a) left 0 top 0 / 100% 2px no-repeat,
+    radial-gradient(55% 120% at 100% 0%, rgb(0 240 255 / 0.16), transparent 60%),
+    radial-gradient(45% 100% at 0% 0%, rgb(252 238 10 / 0.08), transparent 60%),
+    linear-gradient(rgb(230 236 245 / 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, rgb(230 236 245 / 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
+    #0b0c0f;
 }
 [data-mode="light"] .wood-dark { display: none; }
 [data-mode="light"] .wood-light { display: block; }
@@ -632,4 +631,23 @@ main:has(.page-head > .actions) .engraving-icon { display: none; }
   .table-stack td:first-child::before { display: none; }
   .table-stack td:not([data-label]) { justify-content: flex-end; }
   .table-stack td:empty { display: none; }
+}
+
+/*
+ * Cyberpunk shapes, cut like the Edgerunners site: chamfered instead of rounded corners (corner-shape keeps the border
+ * on the cut; browsers without it keep the small radii), one big cut bottom right on cards and buttons, pill shapes
+ * become tags with pointed ends (circles and the round server icons in the rail stay round), and headings in capitals
+ * with the site's mint/pink misprint.
+ */
+@layer components {
+[data-theme="cyberpunk"] :is(.card, .btn, .input, .textarea, .select, .badge, .chip, .icon-tile, .icon-btn, [class*="rounded-"]:not(.rounded-full, .rounded-\[22px\])) { corner-shape: bevel; }
+[data-theme="cyberpunk"] .card { border-radius: 3px 3px 18px 3px; }
+[data-theme="cyberpunk"] .btn { border-radius: 2px 2px 12px 2px; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.05em; }
+[data-theme="cyberpunk"] .btn-sm { border-radius: 2px 2px 9px 2px; }
+/* The hero is a black panel with a yellow edge and a cyan glow; the shared yellow-into-black gradient turns olive. */
+[data-theme="cyberpunk"] .card-hero { background: radial-gradient(90% 140% at 100% 0%, rgb(0 240 255 / 0.12), transparent 55%), var(--highlight), var(--bg-card); border-color: var(--accent-line); }
+[data-theme="cyberpunk"] :is(h1, h2) { text-transform: uppercase; letter-spacing: 0.02em; }
+[data-theme="cyberpunk"] .page-head h1 { text-shadow: 2px 2px 0 rgb(93 227 155 / 0.75), -2px -2px 0 rgb(195 98 192 / 0.75), 0 0 8px var(--scrim-color); }
+[data-theme="cyberpunk"] .page-kicker { font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; }
+[data-theme="cyberpunk"] .page-kicker::before { border-radius: 0; transform: rotate(45deg); }
 }

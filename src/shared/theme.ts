@@ -43,8 +43,8 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
     primary: '#8fb36b', secondary: '#c98a4b', surface: '#f2e2c7', sidebar: '#e0c095', canvas: '#e9d0ad', muted: '#432b1a',
   },
   {
-    id: 'cyberpunk', name: 'Cyberpunk', description: 'Nachtblau mit Neon-Türkis und Pink, Raster und Leuchtlinien statt Holz.', mode: 'dark', look: 'cyber',
-    primary: '#22d3ee', secondary: '#f472b6', surface: '#121530', sidebar: '#0d1026', canvas: '#090b1d', muted: '#9aa6c8',
+    id: 'cyberpunk', name: 'Cyberpunk', description: 'Schwarz mit Neongelb und Türkis, abgeschrägte Ecken und Schraffur wie bei Edgerunners.', mode: 'dark', look: 'cyber',
+    primary: '#fcee0a', secondary: '#00f0ff', surface: '#15171b', sidebar: '#0f1114', canvas: '#0c0d10', muted: '#a8adb5',
   },
 ];
 
