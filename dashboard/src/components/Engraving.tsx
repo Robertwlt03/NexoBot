@@ -1,10 +1,11 @@
-// The page icon and a vine burnt into the walnut header (see Backdrop.tsx), the leaves touched with moss.
+// The page icon and a vine burnt into the header wood (see Backdrop.tsx), the leaves touched with moss.
 // Pyrography look in three passes: a soft scorch around every line, a faint light edge where light catches the cut,
-// and the dark groove itself.
+// and the dark groove itself. The colours come from styles.css (--burn-*): near black on the walnut, a brown burn on
+// the golden oak that the grain shows through (multiplied into the wood, like a real burn). The moss sits on its own
+// layer between them and is never multiplied, so the leaves stay green on the light oak as well.
 import { Children, cloneElement, isValidElement, useId } from 'react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
-const MOSS = '#8aa866';
 const LINE = { fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 
 type P = readonly [number, number];
@@ -43,6 +44,30 @@ const LEAVES = LEAF_SPOTS.map(([i, t, side, size]) => {
   const deg = ((angle + side * LEAF_SPREAD) * 180) / Math.PI + 90;
   return { key: `${i}-${t}`, transform: `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${deg.toFixed(1)}) scale(${size})`, size };
 });
+
+/**
+ * The moss was painted in by hand after the burning: carefully, but not quite exact. Per leaf (same order as
+ * LEAF_SPOTS), in the leaf's unit box: offset and size of the paint against the burnt outline (larger = a hair over
+ * the line, smaller = a thin bare edge), how far up from the base the brush reached (1 = the whole leaf), how thick
+ * the coat is, and an optional tiny dab beside it. Most leaves are neat; the slips are small enough to find only
+ * on a second look.
+ */
+const PAINT: readonly { dx: number; dy: number; scale: number; reach: number; coat: number; dab?: readonly [number, number, number] }[] = [
+  { dx: 0, dy: 0, scale: 1, reach: 1, coat: 1 },
+  { dx: 0.08, dy: -0.03, scale: 1.09, reach: 1, coat: 0.92, dab: [0.47, -0.54, 0.07] },
+  { dx: 0, dy: 0, scale: 0.98, reach: 0.78, coat: 1 },
+  { dx: -0.02, dy: 0.01, scale: 1, reach: 1, coat: 0.82 },
+  { dx: 0, dy: 0, scale: 1, reach: 1, coat: 1 },
+  { dx: 0.03, dy: 0.05, scale: 0.88, reach: 1, coat: 1.05 },
+  { dx: -0.08, dy: -0.01, scale: 1.09, reach: 1, coat: 0.97, dab: [-0.55, -0.2, 0.06] },
+  { dx: 0, dy: 0, scale: 1, reach: 0.72, coat: 0.92 },
+  { dx: 0.02, dy: 0, scale: 1.03, reach: 1, coat: 1 },
+];
+/** Where the brush stopped: everything from the base up to `reach`, ending in a ragged edge. */
+const reachClip = (reach: number) => {
+  const top = -reach;
+  return `M-0.7 0.3 L-0.7 ${top + 0.05} L-0.35 ${top - 0.04} L-0.1 ${top + 0.06} L0.15 ${top - 0.05} L0.4 ${top + 0.03} L0.7 ${top - 0.02} L0.7 0.3 Z`;
+};
 
 /** Curls branching off between the leaves, on the side with room. */
 const CURL_SPOTS: readonly [segment: number, t: number, side: 1 | -1][] = [[0, 0.42, 1], [2, 0.5, -1], [3, 0.5, 1]];
@@ -93,7 +118,7 @@ export function Engraving({ art, width }: { art?: ReactNode; width: string }) {
   // Default icon line = 2 on the grid → ICON_LINE on the board; details keep their ratio to that.
   const iconArt = art ? scaleStrokes(art, (ICON_LINE / ICON_AT.scale / 2) * DOT_BOOST) : null;
   const lines = (stroke: string, grow: number) => (
-    <g {...LINE} stroke={stroke}>
+    <g {...LINE} style={{ stroke }}>
       <path d={VINE} strokeWidth={VINE_LINE * grow} />
       {CURLS.map((d) => <path key={d} d={d} strokeWidth={VINE_LINE * 0.6 * grow} />)}
       {LEAVES.map((leaf) => (
@@ -109,17 +134,49 @@ export function Engraving({ art, width }: { art?: ReactNode; width: string }) {
       )}
     </g>
   );
-  return (
+  const layer = (blend: string, children: ReactNode) => (
     <svg viewBox="0 0 600 320" preserveAspectRatio="xMaxYMin meet" aria-hidden="true"
-      className="absolute right-0 top-0 h-full" style={{ width }}>
-      <defs>
-        <filter id={`${id}-scorch`} x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.6" /></filter>
-      </defs>
-      <g filter={`url(#${id}-scorch)`} opacity={0.55}>{lines('#1a0d05', 2.4)}</g>
-      {/* Moss in the leaves: above the scorch, under the cut lines. */}
-      {LEAVES.map((leaf) => <path key={`m${leaf.key}`} d={LEAF} transform={leaf.transform} fill={MOSS} fillOpacity={0.7} />)}
-      <g transform="translate(0.7 0.9)">{lines('rgba(255, 222, 180, 0.18)', 1)}</g>
-      {lines('rgba(16, 8, 3, 0.9)', 1)}
+      className="absolute right-0 top-0 h-full" style={{ width, mixBlendMode: blend as CSSProperties['mixBlendMode'] }}>
+      {children}
     </svg>
+  );
+  return (
+    <>
+      {layer('var(--burn-blend)', <>
+        <defs>
+          <filter id={`${id}-scorch`} x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.6" /></filter>
+        </defs>
+        <g filter={`url(#${id}-scorch)`} style={{ opacity: 'var(--burn-scorch-opacity)' }}>{lines('var(--burn-scorch)', 2.4)}</g>
+      </>)}
+      {/* Moss painted into the leaves by hand: above the scorch, under the cut lines. The filter gives the brush edge
+          and the coat a faint unevenness. */}
+      {layer('normal', <>
+        <defs>
+          <filter id={`${id}-paint`} x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.35" numOctaves="2" seed="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.7" xChannelSelector="R" yChannelSelector="G" result="ragged" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.09 0.55" numOctaves="2" seed="11" result="streaks" />
+            <feColorMatrix in="streaks" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -0.85 0 0 0 1.35" result="coat" />
+            <feComposite in="ragged" in2="coat" operator="in" />
+          </filter>
+          {PAINT.map((paint, i) => paint.reach < 1 && <clipPath key={i} id={`${id}-reach-${i}`}><path d={reachClip(paint.reach)} /></clipPath>)}
+        </defs>
+        <g filter={`url(#${id}-paint)`} style={{ fill: 'var(--burn-moss)' }}>
+          {LEAVES.map((leaf, i) => {
+            const paint = PAINT[i];
+            return (
+              <g key={`m${leaf.key}`} transform={leaf.transform} style={{ fillOpacity: `calc(var(--burn-moss-opacity) * ${paint.coat})` }}>
+                <path d={LEAF} transform={`translate(${paint.dx} ${paint.dy}) scale(${paint.scale})`} clipPath={paint.reach < 1 ? `url(#${id}-reach-${i})` : undefined} />
+                {paint.dab && <ellipse cx={paint.dab[0]} cy={paint.dab[1]} rx={paint.dab[2]} ry={paint.dab[2] * 0.7} />}
+              </g>
+            );
+          })}
+        </g>
+      </>)}
+      {layer('var(--burn-blend)', <>
+        <g transform="translate(0.7 0.9)">{lines('var(--burn-edge)', 1)}</g>
+        {lines('var(--burn-groove)', 1)}
+      </>)}
+    </>
   );
 }

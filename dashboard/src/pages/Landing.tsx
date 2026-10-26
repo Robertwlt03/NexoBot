@@ -302,12 +302,12 @@ function ChatMessage({ bot, name, initial, color, children }: { bot?: boolean; n
     <div className="js-msg js-intro flex gap-3">
       {bot
         ? <NexoLogo className="h-10 w-10 shrink-0" animated={false} />
-        : <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-semibold text-white ${color}`}>{initial}</span>}
+        : <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[19px] font-bold text-[#fff] ${color}`}>{initial}</span>}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 text-sm font-semibold text-white">
           {name}
-          {bot && <span className="rounded bg-blurple px-1 py-px text-[10px] font-semibold uppercase leading-tight text-white">App</span>}
-          <span className="ml-1 text-xs font-normal text-dc-muted">Heute um 18:42</span>
+          {bot && <span className="rounded bg-blurple px-1 py-px text-[10px] font-semibold uppercase leading-tight text-[#fff]">App</span>}
+          <span className="ml-1 text-xs font-normal text-[#a3a9b1]">Heute um 18:42</span>
         </div>
         {children}
       </div>

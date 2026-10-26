@@ -7,7 +7,7 @@ import {
   Badge, Card, ChannelSelect, Empty, Field, MessagePreview, Notice, NumberInput, PageHeader, RoleSelect,
   SettingsPage, Spinner, Stats, SwitchRow, TableWrap, TextArea, TextInput,
 } from '../components/ui';
-import { Icon } from '../icons';
+import { Icon, type IconName } from '../icons';
 
 const PANEL_STATE: Record<TicketPanelState, { label: string; on: boolean; hint: string }> = {
   active: { label: 'Aktiv', on: true, hint: 'Das Panel ist gepostet. Text- und Button-Änderungen landen beim Speichern direkt im Panel.' },
@@ -83,7 +83,7 @@ function Overview({ overview, canPost, onPosted, onRefresh }: {
                         </td>
                         <td>{ticket.userName}</td>
                         <td>{ticket.claimedByName ?? <span className="faint">–</span>}</td>
-                        <td>{ticket.priority ?? <span className="faint">–</span>}</td>
+                        <td>{ticket.priority ? <Priority priority={ticket.priority} /> : <span className="faint">–</span>}</td>
                         <td>{new Date(ticket.createdAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}</td>
                       </tr>
                     ))}
@@ -96,6 +96,23 @@ function Overview({ overview, canPost, onPosted, onRefresh }: {
         )}
       </Card>
     </>
+  );
+}
+
+/** Priority read like Jira: each level has its own shape (double up, up, equals, down) and its own colour. */
+const PRIORITY: Record<string, { icon: IconName; tone: string }> = {
+  urgent: { icon: 'priorityUrgent', tone: 'var(--prio-urgent)' },
+  high: { icon: 'priorityHigh', tone: 'var(--prio-high)' },
+  medium: { icon: 'priorityMedium', tone: 'var(--prio-medium)' },
+  low: { icon: 'priorityLow', tone: 'var(--prio-low)' },
+};
+function Priority({ priority }: { priority: { level: string; label: string } }) {
+  const look = PRIORITY[priority.level] ?? PRIORITY.medium;
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+      <span className="inline-flex" style={{ color: look.tone }}><Icon name={look.icon} size={18} /></span>
+      {priority.label}
+    </span>
   );
 }
 
@@ -148,7 +165,7 @@ export default function TicketsPage() {
                 <div className="stack">
                   <span className="field-label">Vorschau</span>
                   <MessagePreview embed={{ title: 'Support-Tickets', description: value.panelMessage, color: 'var(--blurple)' }} sample={{}} />
-                  <div><span className="btn btn-primary btn-sm pointer-events-none">📩 {value.buttonLabel || DEFAULT_BUTTON_LABEL}</span></div>
+                  <div><span className="btn btn-primary btn-sm pointer-events-none"><Icon name="ticket" size={15} />{value.buttonLabel || DEFAULT_BUTTON_LABEL}</span></div>
                 </div>
               </div>
             </Card>

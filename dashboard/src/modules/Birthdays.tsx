@@ -41,13 +41,13 @@ export default function BirthdaysPage() {
               )}
             </Card>
 
-            <Card icon="gift" title="Nächste Geburtstage">
+            <Card icon="calendar" title="Nächste Geburtstage">
               {value.upcoming.length === 0 ? <Empty title="Noch keine Geburtstage">Mitglieder tragen ihren Geburtstag mit /birthday set ein.</Empty> : (
                 <div className="list">
                   {value.upcoming.map((entry) => (
                     <div className="list-item" key={entry.userId}>
                       <div className="grow"><div className="title">{entry.name}</div><div className="faint">{formatDay(entry)}</div></div>
-                      <Badge on={entry.daysUntil === 0}>{entry.daysUntil === 0 ? 'Heute 🎉' : entry.daysUntil === 1 ? 'Morgen' : `in ${entry.daysUntil} Tagen`}</Badge>
+                      <Badge on={entry.daysUntil === 0}>{entry.daysUntil === 0 ? <><Icon name="cake" size={13} />Heute</> : entry.daysUntil === 1 ? 'Morgen' : `in ${entry.daysUntil} Tagen`}</Badge>
                     </div>
                   ))}
                 </div>

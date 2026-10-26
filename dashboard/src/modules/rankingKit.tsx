@@ -1,5 +1,5 @@
 // Shared leaderboard list with paging (leveling, economy, counting).
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Empty, Notice, Pager, Spinner } from '../components/ui';
 
 export interface RankRow {
@@ -13,7 +13,8 @@ export interface RankRow {
   meta?: ReactNode;
 }
 
-const MEDALS = ['🥇', '🥈', '🥉'];
+/** Gold, silver and bronze for the first three places (a ring around the number, see .rank-medal in styles.css). */
+const MEDALS = ['#c9a227', '#9aa3ad', '#b0703a'];
 const DEFAULT_AVATAR = 'https://cdn.discordapp.com/embed/avatars/0.png';
 
 export function RankList({ rows, loading, error, emptyTitle, emptyText, page, pages, onPage, onSelect, selectLabel = 'Bearbeiten' }: {
@@ -29,7 +30,9 @@ export function RankList({ rows, loading, error, emptyTitle, emptyText, page, pa
       <div className="list">
         {rows.map((row) => (
           <div className="list-item" key={row.userId}>
-            <span className="w-8 text-center font-bold">{MEDALS[row.rank - 1] ?? `#${row.rank}`}</span>
+            {MEDALS[row.rank - 1]
+              ? <span className="rank-medal" style={{ '--medal': MEDALS[row.rank - 1] } as CSSProperties}>{row.rank}</span>
+              : <span className="w-8 text-center font-bold">#{row.rank}</span>}
             <img src={row.avatarUrl ?? DEFAULT_AVATAR} alt="" className="h-8 w-8 rounded-full" />
             <div className="grow">
               {onSelect ? (

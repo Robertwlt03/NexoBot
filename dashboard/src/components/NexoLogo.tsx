@@ -1,4 +1,5 @@
-// The Nexo logo: a turned walnut coin ("Holztaler") with the Nexo robot stuck on it as a die-cut sticker.
+// The Nexo logo: a turned wooden coin ("Holztaler") with the Nexo robot stuck on it as a die-cut sticker. The coin is
+// walnut, in the light mode golden oak like the page header (--coin-* in styles.css).
 // Inline SVG so GSAP can animate the robot's parts: blinking, a pulsing antenna, chest lights and a moon that
 // circles the orbit (in front of the head on the lower half, behind it above); the sticker itself floats gently.
 import { useId, useRef } from 'react';
@@ -101,10 +102,10 @@ export function NexoLogo({ className, animated = true, followPointer = false, ti
     <svg ref={root} className={className} viewBox="0 0 1024 1024" role="img" aria-label={title} xmlns="http://www.w3.org/2000/svg">
       <defs>
         <radialGradient id={`${id}-wood`} cx="42%" cy="38%" r="70%">
-          <stop offset="0" stopColor="#8A5A34" /><stop offset=".55" stopColor="#5E3A1F" /><stop offset="1" stopColor="#3A2212" />
+          <stop offset="0" style={{ stopColor: 'var(--coin-1, #8A5A34)' }} /><stop offset=".55" style={{ stopColor: 'var(--coin-2, #5E3A1F)' }} /><stop offset="1" style={{ stopColor: 'var(--coin-3, #3A2212)' }} />
         </radialGradient>
         <linearGradient id={`${id}-rim`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#A8744A" /><stop offset=".5" stopColor="#6A4022" /><stop offset="1" stopColor="#2E1A0C" />
+          <stop offset="0" style={{ stopColor: 'var(--coin-rim-1, #A8744A)' }} /><stop offset=".5" style={{ stopColor: 'var(--coin-rim-2, #6A4022)' }} /><stop offset="1" style={{ stopColor: 'var(--coin-rim-3, #2E1A0C)' }} />
         </linearGradient>
         <clipPath id={`${id}-coin`}><circle cx="512" cy="512" r="452" /></clipPath>
         {/* Fine fibres of the wood, tinted brown. */}
@@ -142,7 +143,7 @@ export function NexoLogo({ className, animated = true, followPointer = false, ti
       <circle cx="512" cy="512" r="492" fill={ref('rim')} />
       <circle cx="512" cy="512" r="452" fill={ref('wood')} />
       <g clipPath={ref('coin')}>
-        {RINGS.map((ring, i) => <path key={i} d={ring.d} fill="none" stroke={i % 3 ? '#2E1A0C' : '#C08A5B'} strokeOpacity={i % 3 ? 0.28 : 0.16} strokeWidth={ring.w} />)}
+        {RINGS.map((ring, i) => <path key={i} d={ring.d} fill="none" style={{ stroke: i % 3 ? 'var(--coin-ring, #2E1A0C)' : 'var(--coin-ring-light, #C08A5B)' }} strokeOpacity={i % 3 ? 0.28 : 0.16} strokeWidth={ring.w} />)}
         <rect x="0" y="0" width="1024" height="1024" filter={ref('grain')} opacity=".55" />
         <ellipse cx="380" cy="300" rx="300" ry="190" fill="#FFF3E0" opacity=".07" transform="rotate(-30 380 300)" />
       </g>

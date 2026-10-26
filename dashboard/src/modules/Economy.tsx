@@ -45,7 +45,7 @@ function MoneyTools({ initialId, money, onChanged }: { initialId: string; money:
   const where = type === 'wallet' ? 'Geldbörse' : 'Bank';
 
   return (
-    <Card icon="users" title="Kontostand ändern" description="Gib Mitgliedern Geld oder zieh es ab – wie im /economy dashboard.">
+    <Card icon="user" title="Kontostand ändern" description="Gib Mitgliedern Geld oder zieh es ab – wie im /economy dashboard.">
       <div className="stack">
         <Field label="Nutzer-ID" hint="Rechtsklick auf ein Mitglied → „Nutzer-ID kopieren“ (Entwicklermodus) oder in der Bestenliste auf „Bearbeiten“ klicken.">
           <div className="input-group">
@@ -99,7 +99,7 @@ function Leaderboard({ version, money, onSelect }: { version: number; money: Mon
   const [page, setPage] = useState(1);
   const board = useApi<EconomyLeaderboard>(`/guilds/${guild.id}/economy/leaderboard?page=${page}&v=${version}`);
   return (
-    <Card icon="stats" title="Bestenliste" description="Die reichsten Mitglieder dieses Servers (Geldbörse + Bank). Kontostände gelten pro Server."
+    <Card icon="trophy" title="Bestenliste" description="Die reichsten Mitglieder dieses Servers (Geldbörse + Bank). Kontostände gelten pro Server."
       right={<button type="button" className="btn btn-secondary btn-sm" onClick={board.reload}><Icon name="refresh" size={16} /> Aktualisieren</button>}>
       {board.data && board.data.total > 0 && (
         <Stats items={[
@@ -134,7 +134,7 @@ export default function EconomyPage() {
           const money: Money = (amount) => `${value.currency.symbol}${amount.toLocaleString('de-DE')}`;
           return (
             <>
-              <Card icon="gift" title="Premium-Rolle" description="Diese Rolle bekommt, wer im Shop das Item „Premium-Rolle“ kauft.">
+              <Card icon="crown" title="Premium-Rolle" description="Diese Rolle bekommt, wer im Shop das Item „Premium-Rolle“ kauft.">
                 <Field label="Rolle" hint="Ohne Rolle kann das Item nicht gekauft werden. Nexos Rolle muss darüber stehen.">
                   <RoleSelect value={value.premiumRoleId} assignableOnly placeholder="Keine Premium-Rolle"
                     onChange={(premiumRoleId) => settings.set({ premiumRoleId })} />

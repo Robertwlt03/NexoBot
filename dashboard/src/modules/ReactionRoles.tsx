@@ -38,7 +38,7 @@ function PanelEditor({ initial, onCancel, onSave, busy, withRoles }: {
         <div className="field">
           <span className="field-label">Rollen ({value.roleIds.length}/{MAX_ROLES})</span>
           <MultiRoleSelect value={value.roleIds} onChange={(roleIds) => set({ roleIds })} assignableOnly max={MAX_ROLES} />
-          <span className="field-hint">Im Menü steht der Rollenname, jede Option bekommt das Emoji 🎭.</span>
+          <span className="field-hint">Im Menü steht der Rollenname, jede Option bekommt das Masken-Emoji.</span>
         </div>
       )}
       {withRoles && (

@@ -22,8 +22,8 @@ export interface OpenTicket {
   userId: string;
   userName: string;
   claimedByName: string | null;
-  /** e.g. "🔴 Hoch", null when no priority is set. */
-  priority: string | null;
+  /** Level key from the bot config (low, medium, high, urgent) and its label; null when no priority is set. */
+  priority: { level: string; label: string } | null;
   reason: string | null;
   createdAt: string;
 }

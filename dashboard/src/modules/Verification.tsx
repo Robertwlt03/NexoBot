@@ -24,7 +24,7 @@ function PanelPreview({ message, buttonText }: { message: string; buttonText: st
   return (
     <div className="flex flex-col gap-1.5">
       <MessagePreview embed={{ title: 'Server-Verifizierung', description: message, color: '#57F287' }} sample={{}} />
-      <div className="ml-[70px] inline-flex items-center gap-1.5 self-start rounded-(--radius-sm) bg-(--success) px-3.5 py-1.5 text-sm font-medium text-[#fff]"><span>✅</span>{buttonText || 'Verifizieren'}</div>
+      <div className="ml-[70px] inline-flex items-center gap-1.5 self-start rounded-(--radius-sm) bg-(--success) px-3.5 py-1.5 text-sm font-medium text-[#fff]"><Icon name="check" size={15} />{buttonText || 'Verifizieren'}</div>
     </div>
   );
 }

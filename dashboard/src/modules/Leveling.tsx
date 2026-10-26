@@ -88,7 +88,7 @@ function MemberTools({ initialId, disabled, onChanged }: { initialId: string; di
     : action === 'remove' ? `${member?.name} werden ${amount} Level abgezogen.` : '';
 
   return (
-    <Card icon="users" title="Mitglied bearbeiten" description="Setze Level oder gib/zieh Level ab – wie /levelset, /leveladd und /levelremove.">
+    <Card icon="user" title="Mitglied bearbeiten" description="Setze Level oder gib/zieh Level ab – wie /levelset, /leveladd und /levelremove.">
       <div className="stack">
         {disabled && <Notice tone="warn">Das Level-System ist deaktiviert. Level lassen sich erst ändern, wenn es aktiv und gespeichert ist.</Notice>}
         <Field label="Nutzer-ID" hint="Rechtsklick auf ein Mitglied → „Nutzer-ID kopieren“ (Entwicklermodus) oder in der Bestenliste auf „Bearbeiten“ klicken.">
@@ -138,7 +138,7 @@ function Leaderboard({ version, onSelect }: { version: number; onSelect: (userId
   const [page, setPage] = useState(1);
   const board = useApi<LevelingLeaderboard>(`/guilds/${guild.id}/leveling/leaderboard?page=${page}&v=${version}`);
   return (
-    <Card icon="stats" title="Bestenliste" description={`Die aktivsten Mitglieder nach Gesamt-XP (Top ${LEVELING_LEADERBOARD_MAX}).`}
+    <Card icon="trophy" title="Bestenliste" description={`Die aktivsten Mitglieder nach Gesamt-XP (Top ${LEVELING_LEADERBOARD_MAX}).`}
       right={<button type="button" className="btn btn-secondary btn-sm" onClick={board.reload}><Icon name="refresh" size={16} /> Aktualisieren</button>}>
       <RankList
         rows={board.data?.entries.map((entry) => ({
@@ -228,7 +228,7 @@ export default function LevelingPage() {
               <RewardsEditor value={value.roleRewards} onChange={(roleRewards) => settings.set({ roleRewards })} />
             </Card>
 
-            <Card icon="x" title="Ausnahmen" description="Hier gibt es keine XP." disabled={!value.enabled}>
+            <Card icon="ban" title="Ausnahmen" description="Hier gibt es keine XP." disabled={!value.enabled}>
               <div className="grid-2">
                 <Field label="Ignorierte Kanäle">
                   <MultiChannelSelect value={value.ignoredChannels} onChange={(ignoredChannels) => settings.set({ ignoredChannels })} />

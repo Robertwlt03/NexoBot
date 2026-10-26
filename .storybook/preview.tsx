@@ -83,6 +83,12 @@ function switchTheme(scheme: string, mode: 'dark' | 'light', { now = false } = {
     flushSync(() => window.dispatchEvent(new StorageEvent('storage', { key: THEME_KEY, newValue: value })));
     void document.body.offsetHeight;
     root.classList.remove('sb-switching');
+    // A guide page's examples that run in iframes of their own (Dialog, SaveBar) switch along, in the same crossfade.
+    if (root.classList.contains('sb-docs-scroll')) {
+      for (const frame of document.querySelectorAll<HTMLIFrameElement>('.docs-story iframe')) {
+        (frame.contentWindow as unknown as LookWindow | null)?.__nexoSwitchLook?.(scheme, mode);
+      }
+    }
   };
   // The first render only sets the theme up (and decodes the other mode's images once the page is idle).
   if (first) { applyTheme(theme); setTimeout(() => void decodeImages(), 1500); }
@@ -95,7 +101,22 @@ function switchTheme(scheme: string, mode: 'dark' | 'light', { now = false } = {
  * inside their own crossfade. Much faster than letting each preview's Storybook re-render the page; its globals are
  * updated quietly, so a later render agrees with what is shown.
  */
-(window as unknown as { __nexoSwitchLook?: (scheme: string, mode: 'dark' | 'light') => void }).__nexoSwitchLook = (scheme, mode) => {
+interface LookWindow {
+  __nexoSwitchLook?: (scheme: string, mode: 'dark' | 'light') => void;
+  __nexoLook?: () => { scheme: string; mode: 'dark' | 'light' };
+}
+(window as unknown as LookWindow).__nexoLook = () => ({ scheme: sample.theme.preset, mode: sample.theme.mode });
+
+/**
+ * A guide page's example that runs in an iframe of its own starts in the guide page's look: Storybook loads it without
+ * globals in the address, so it would otherwise always show the default scheme in dark.
+ */
+const parentLook = (() => {
+  if (window.parent === window || new URLSearchParams(window.location.search).has('globals')) return null;
+  try { return (window.parent as unknown as LookWindow).__nexoLook?.() ?? null; } catch { return null; }
+})();
+
+(window as unknown as LookWindow).__nexoSwitchLook = (scheme, mode) => {
   (window as unknown as { __STORYBOOK_PREVIEW__?: { storyStoreValue?: { userGlobals: { update(g: Globals): void } } } })
     .__STORYBOOK_PREVIEW__?.storyStoreValue?.userGlobals.update({ scheme, mode });
   switchTheme(scheme, mode, { now: true });
@@ -180,8 +201,13 @@ function ThemedDocs({ context, children }: PropsWithChildren<DocsContainerProps>
   useLayoutEffect(() => {
     document.documentElement.classList.add('sb-docs-scroll');
     document.getElementById('storybook-docs')?.scrollTo(0, 0);
+    // The guide page applies its look itself (data-mode, for docs.css and its examples), also when all its examples
+    // run in iframes and no story decorator runs in this document; then later switches keep the page too.
+    const globals = store?.userGlobals?.get() ?? {};
+    switchTheme(String(globals.scheme ?? 'walnuss'), (globals.mode ?? 'dark') as 'dark' | 'light');
+    keepGuidePageOnLookSwitch();
     return () => document.documentElement.classList.remove('sb-docs-scroll');
-  }, [context]);
+  }, [context]); // `store` belongs to `context`
   return <DocsContainer context={context} theme={mode === 'light' ? themes.light : themes.dark}>{children}</DocsContainer>;
 }
 
@@ -194,7 +220,7 @@ const preview: Preview = {
     mode: { description: 'Hell oder dunkel' },
     device: { description: 'Desktop oder Handy' },
   },
-  initialGlobals: { scheme: 'walnuss', mode: 'dark', device: 'desktop' },
+  initialGlobals: { scheme: parentLook?.scheme ?? 'walnuss', mode: parentLook?.mode ?? 'dark', device: 'desktop' },
   // withDevice is the outer one: it frames the whole story, the frame then applies the theme itself.
   decorators: [withTheme, withDevice],
   parameters: {
@@ -203,7 +229,9 @@ const preview: Preview = {
     options: { storySort: { order: ['Start', 'Übersicht', 'Vergleich', 'Discord', 'Grundlagen', 'Komponenten', ['Aktionen', 'Layout', 'Formular', 'Rückmeldung', 'Diagramme', 'Marke', 'Discord'], 'Seiten'] } },
     controls: { expanded: true, sort: 'requiredFirst' },
     // The example's code as a tab in the addon panel (the panel only opens on component stories, see manager.tsx).
-    docs: { codePanel: true, container: ThemedDocs },
+    // Every example box on a guide page gets the bar on top (zoom, open), not only the first; the code buttons sit in
+    // its footer (docs.css).
+    docs: { codePanel: true, container: ThemedDocs, canvas: { withToolbar: 'open' } },
     // Code snippets keep a tag's attributes on one line while it fits, instead of one attribute per line.
     jsx: { maxInlineAttributesLineLength: 90 },
   },

@@ -6,6 +6,7 @@ import { NOTE_MAX_LENGTH, NOTE_TYPE_LABELS } from '../../../src/web/dto/moderati
 import { useAction, useApi, useGuild } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
 import { Actions, Card, Empty, Field, Notice, PageHeader, Pager, Select, Spinner, TableWrap, Tabs, TextArea, TextInput } from '../components/ui';
+import { Icon, type IconName } from '../icons';
 
 const ID_PATTERN = /^\d{17,20}$/;
 const formatDate = (value: string | number) => new Date(value).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
@@ -107,7 +108,7 @@ function WarningsTab() {
   });
 
   return (
-    <Card icon="flag" title="Verwarnungen" description="Aktive Verwarnungen aus /mod warn. Neue Verwarnungen vergibst du in Discord.">
+    <Card icon="alert" title="Verwarnungen" description="Aktive Verwarnungen aus /mod warn. Neue Verwarnungen vergibst du in Discord.">
       <div className="grid-2 mb-4">
         <IdFilter label="Nutzer" value={filter.userId} onChange={(userId) => setFilter({ userId, page: 1 })} />
         {validId(filter.userId) && data?.warnings[0] && (
@@ -141,6 +142,13 @@ function WarningsTab() {
 // ---------- User notes ----------
 
 const NOTE_TYPES = Object.entries(NOTE_TYPE_LABELS).map(([value, label]) => ({ value: value as NoteType, label }));
+/** Icon and status colour per note type in the list. */
+const NOTE_ICONS: Record<NoteType, { icon: IconName; tone: string }> = {
+  warning: { icon: 'alert', tone: 'var(--warning)' },
+  positive: { icon: 'check', tone: 'var(--pos)' },
+  neutral: { icon: 'note', tone: 'var(--text-muted)' },
+  alert: { icon: 'bell', tone: 'var(--neg)' },
+};
 
 function NotesTab() {
   const { guild } = useGuild();
@@ -189,7 +197,7 @@ function NotesTab() {
         </Actions>
       </Card>
 
-      <Card icon="clipboard" title="Nutzernotizen" description="Alle Notizen auf diesem Server, die neuesten zuerst.">
+      <Card icon="note" title="Nutzernotizen" description="Alle Notizen auf diesem Server, die neuesten zuerst.">
         <div className="grid-2 mb-4">
           <IdFilter label="Nutzer" value={filter.userId} onChange={(userId) => setFilter({ userId, page: 1 })} />
           {validId(filter.userId) && data?.notes[0] && (
@@ -204,7 +212,12 @@ function NotesTab() {
             {data?.notes.map((note) => (
               <tr key={`${note.userId}-${note.id}`}>
                 <td><button type="button" className="btn btn-ghost btn-sm" title="Nach Nutzer filtern" onClick={() => { setFilter({ userId: note.userId, page: 1 }); setDraft((prev) => ({ ...prev, userId: note.userId })); }}>{note.userName}</button></td>
-                <td>{NOTE_TYPE_LABELS[note.type]}</td>
+                <td>
+                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                    <span className="inline-flex" style={{ color: NOTE_ICONS[note.type].tone }}><Icon name={NOTE_ICONS[note.type].icon} size={14} /></span>
+                    {NOTE_TYPE_LABELS[note.type]}
+                  </span>
+                </td>
                 <td className="whitespace-pre-wrap">{note.content}</td>
                 <td>{note.author}</td>
                 <td className="faint">{formatDate(note.timestamp)}</td>

@@ -123,7 +123,7 @@ export const ticketsModule: DashboardModule = {
             userId: ticket.userId,
             userName: displayName(guild, client, ticket.userId),
             claimedByName: ticket.claimedBy ? displayName(guild, client, ticket.claimedBy) : null,
-            priority: priority ? `${priority.emoji} ${priority.label}` : null,
+            priority: priority ? { level: ticket.priority as string, label: priority.label } : null,
             reason: ticket.reason ?? null,
             createdAt: ticket.createdAt,
           };

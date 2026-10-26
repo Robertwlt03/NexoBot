@@ -43,7 +43,8 @@ export function ServerRail({ guilds, activeId }: { guilds: ApiGuildSummary[]; ac
   const navigate = useNavigate();
   const onOverview = useLocation().pathname.replace(/\/$/, '') === '/servers';
   const item = 'group relative grid h-11 w-11 place-items-center overflow-hidden rounded-[22px] bg-surface transition-all duration-200 hover:rounded-[14px]';
-  const pill = (active: boolean) => `absolute left-0 top-1/2 w-[3px] -translate-y-1/2 rounded-r bg-ink transition-all duration-200 ${active ? 'h-8' : 'h-0 group-hover:h-4'}`;
+  // Groove beside each rail button: a short rounded nub at rest, grows on hover and to full height for the open one.
+  const pill = (active: boolean) => `rail-groove absolute left-0 top-1/2 w-1 -translate-y-1/2 rounded-r-full transition-all duration-200 ${active ? 'h-8' : 'h-[2px] group-hover:h-4'}`;
   return (
     <nav className="flex w-[72px] shrink-0 flex-col items-center gap-2.5 overflow-y-auto border-r border-white/[.05] bg-rail py-4" aria-label="Server">
       <div className="relative flex w-full justify-center">
@@ -52,7 +53,8 @@ export function ServerRail({ guilds, activeId }: { guilds: ApiGuildSummary[]; ac
           <NexoLogo className="w-9 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" animated={false} />
         </button>
       </div>
-      <div className="my-1 h-px w-7 bg-white/10" />
+      {/* Divider between "Alle Server" and the servers: the same groove as the open-server marker. */}
+      <div className="rail-groove my-1 h-[2px] w-7 shrink-0 rounded-full" />
       {guilds.filter((g) => g.botPresent).map((guild) => {
         const active = guild.id === activeId;
         return (

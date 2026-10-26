@@ -29,13 +29,15 @@ test('a dark custom primary triggers a contrast warning', () => {
 
 test('multi-series chart palette: four colours that stay distinguishable (also with red-green colour blindness)', async () => {
   const { chartPalette, distances } = await import('../src/shared/theme.js');
-  for (const preset of THEME_PRESETS) {
-    const palette = chartPalette({ preset: preset.id, primary: preset.primary, secondary: preset.secondary, mode: 'dark' });
+  for (const preset of THEME_PRESETS) for (const mode of ['dark', 'light'] as const) {
+    const palette = chartPalette({ preset: preset.id, primary: preset.primary, secondary: preset.secondary, mode });
     assert.equal(palette.length, 4, preset.name);
+    // On the light cards every mark reaches 3:1 (WCAG 1.4.11).
+    if (mode === 'light') for (const color of palette) assert.ok(contrast(color, '#f2e2c7') >= 3, `${preset.name} light: ${color}`);
     for (let i = 0; i < palette.length - 1; i += 1) {
       // Same floors as the data-viz palette validator: normal vision ΔE ≥ 15, colour-blind ΔE ≥ 6 (legends/tooltips add a second cue).
       const d = distances(palette[i], palette[i + 1]);
-      assert.ok(d.normal >= 15 && d.protan >= 6 && d.deutan >= 6, `${preset.name}: ${palette[i]} vs ${palette[i + 1]} ${JSON.stringify(d)}`);
+      assert.ok(d.normal >= 15 && d.protan >= 6 && d.deutan >= 6, `${preset.name} ${mode}: ${palette[i]} vs ${palette[i + 1]} ${JSON.stringify(d)}`);
     }
   }
 });

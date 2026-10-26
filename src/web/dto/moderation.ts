@@ -42,10 +42,10 @@ export interface WarningsPage extends Paged {
 export type NoteType = 'warning' | 'positive' | 'neutral' | 'alert';
 
 export const NOTE_TYPE_LABELS: Record<NoteType, string> = {
-  warning: '⚠️ Warnung',
-  positive: '✅ Positiv',
-  neutral: '📝 Neutral',
-  alert: '🚨 Alarm',
+  warning: 'Warnung',
+  positive: 'Positiv',
+  neutral: 'Neutral',
+  alert: 'Alarm',
 };
 
 export interface UserNoteDto {

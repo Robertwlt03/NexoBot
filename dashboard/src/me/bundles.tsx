@@ -85,7 +85,7 @@ function BundleTile({ bundle, items, onOpen }: { bundle: ShopBundle; items: Cosm
           <span className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#0d0b0a] to-transparent" />
           {/* Shop-tile tags as in games: slanted labels bleeding off the edge – what it is on the left, the deal on the right. */}
           <span className="absolute left-0 top-4 z-10 flex drop-shadow-[0_6px_10px_rgba(0,0,0,.6)]">
-            <span className="-ml-2 -skew-x-12 py-1 pl-5 pr-3" style={{ background: 'color-mix(in srgb, var(--tile) 70%, #000)' }}>
+            <span className="-ml-2 -skew-x-12 py-1 pl-5 pr-3" style={{ background: 'color-mix(in srgb, var(--tile) 45%, #000)' }}>
               <span className="block skew-x-12 text-[12.5px] font-black uppercase italic tracking-[.12em] text-white">Paket</span>
             </span>
             <span className="-skew-x-12 bg-[#0d0b0a]/85 px-2.5 py-1">

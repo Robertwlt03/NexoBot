@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { THEME_PRESETS, contrast, themeVariables } from '../src/shared/theme.js';
+import { THEME_PRESETS, contrast, mix, themeVariables } from '../src/shared/theme.js';
 
 // Reads the mode tokens straight from the dashboard stylesheet, so a colour tweak there cannot silently drop below WCAG AA.
 const css = readFileSync(new URL('../dashboard/src/styles.css', import.meta.url), 'utf8');
@@ -24,14 +24,27 @@ for (const [mode, t] of Object.entries(MODES)) {
   test(`${mode} mode: form control borders reach 3:1`, () => {
     for (const bg of ['--bg-card', '--bg-input']) assert.ok(contrast(t['--border-input'], t[bg]) >= 3, `${mode}: border on ${bg}`);
   });
+  test(`${mode} mode: button, chip, badge and tab bar outlines reach 2:1 on cards, page and sidebar`, () => {
+    const block = css.slice(css.indexOf(`${mode === 'dark' ? ':root, [data-mode="dark"]' : '[data-mode="light"]'} {`)).split('}')[0];
+    const ov = block.match(/--ov:\s*(\d+) (\d+) (\d+);/)!.slice(1).map((n) => Number(n).toString(16).padStart(2, '0')).join('');
+    const alpha = Number(block.match(/--border-control:\s*rgb\(var\(--ov\) \/ ([\d.]+)\)/)![1]);
+    for (const bg of ['--bg-card', '--bg-main', '--bg-sidebar']) assert.ok(contrast(mix(t[bg], `#${ov}`, alpha), t[bg]) >= 2, `${mode}: outline on ${bg}`);
+  });
 }
 
-test('accent text of every preset reads at 4.5:1 on the cards of both modes', () => {
+test('accent text of every preset reads at 4.5:1 on the page, sidebar and cards of both modes', () => {
   for (const preset of THEME_PRESETS) {
     for (const [mode, t] of Object.entries(MODES)) {
       const vars = themeVariables({ preset: preset.id, primary: preset.primary, secondary: preset.secondary, mode: mode as 'dark' | 'light' });
-      assert.ok(contrast(vars['--accent-text'], t['--bg-card']) >= 4.5, `${preset.name} ${mode}: accent text`);
-      assert.ok(contrast(vars['--accent-text-muted'], t['--bg-card']) >= 4.5, `${preset.name} ${mode}: muted accent text`);
+      for (const bg of ['--bg-main', '--bg-sidebar', '--bg-card']) {
+        assert.ok(contrast(vars['--accent-text'], t[bg]) >= 4.5, `${preset.name} ${mode}: accent text on ${bg}`);
+        assert.ok(contrast(vars['--accent-text-muted'], t[bg]) >= 4.5, `${preset.name} ${mode}: muted accent text on ${bg}`);
+      }
     }
   }
+});
+
+test('white text on the success button reads at 4.5:1', () => {
+  const success = css.match(/--success:\s*(#[0-9a-f]{6});/i)?.[1];
+  assert.ok(success && contrast('#ffffff', success) >= 4.5, `success ${success}`);
 });

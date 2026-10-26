@@ -246,8 +246,9 @@ const KIND_TYPES: Record<ChannelKind, number[]> = {
   category: [CHANNEL_TYPES.category],
 };
 
+/** Text channels keep Discord's "#"; voice and category lists hold only their own kind, so they need no marker. */
 const channelPrefix = (channel: ApiChannel) =>
-  channel.type === CHANNEL_TYPES.voice || channel.type === CHANNEL_TYPES.stage ? '🔊 ' : channel.type === CHANNEL_TYPES.category ? '' : '# ';
+  channel.type === CHANNEL_TYPES.text || channel.type === CHANNEL_TYPES.announcement ? '# ' : '';
 
 function channelsOfKind(channels: ApiChannel[], kind: ChannelKind) {
   const allowed = KIND_TYPES[kind];

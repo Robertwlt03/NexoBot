@@ -14,7 +14,7 @@ function CreateModal({ list, onClose, onCreated }: { list: GiveawayList; onClose
   const set = (patch: Partial<GiveawayCreate>) => setDraft((prev) => ({ ...prev, ...patch }));
 
   const submit = async () => {
-    const result = await run(`/guilds/${guild.id}/giveaways`, draft, 'Gewinnspiel gestartet. 🎉');
+    const result = await run(`/guilds/${guild.id}/giveaways`, draft, 'Gewinnspiel gestartet.');
     if (result) onCreated();
   };
 
