@@ -85,7 +85,14 @@
 .sbdocs.sbdocs-preview pre.prismjs .token.attr-value .token.punctuation { color: var(--sbx-value); }
 .sbdocs.sbdocs-preview pre.prismjs .token:is(.keyword, .operator) { color: var(--sbx-keyword); }
 
-/* A theme switch crossfades as one view transition (transition.ts): a little slower than the browser's default. */
+/*
+ * A theme switch crossfades as one view transition (transition.ts): a little slower than the browser's default. Only
+ * the colours change, so the page must not move: the browser's own group animation (which moves the old snapshot to
+ * the new position) started with an offset in scrolled guide pages, and the two halves slid over each other.
+ */
+::view-transition-group(root) {
+  animation: none;
+}
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 0.32s;
