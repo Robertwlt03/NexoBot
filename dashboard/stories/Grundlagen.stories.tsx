@@ -1,8 +1,10 @@
 // The foundations the components are built from: colour tokens, type, shapes, icons and the colour schemes. Values are
 // read live from the page (styles.css plus the toolbar's scheme and mode), so this page never goes stale.
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { THEME_PRESETS } from '../../src/shared/theme';
+import { THEME_PRESETS, chartPalette, themeVariables, type DashboardTheme, type ThemeMode } from '../../src/shared/theme';
+import walnut from '../src/assets/wood/walnut.webp';
+import fir from '../src/assets/wood/fir.webp';
 import { ICON_PATHS, Icon, type IconName } from '../src/icons';
 
 const GROUPS: { title: string; text: string; tokens: string[] }[] = [
@@ -196,6 +198,102 @@ function Schemes() {
   );
 }
 
+// ---------- Every scheme in both modes ----------
+
+/** Contrast of an element's text on the first opaque background behind it (itself or an ancestor; light tints are skipped). */
+function useRatio<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [ratio, setRatio] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let host: HTMLElement | null = el;
+    while (host && (channels(getComputedStyle(host).backgroundColor)[3] ?? 1) < 1) host = host.parentElement;
+    if (host) setRatio(contrast(getComputedStyle(el).color, getComputedStyle(host).backgroundColor));
+  }, []);
+  return [ref, ratio] as const;
+}
+const Ratio = ({ value }: { value: number | null }) => value === null ? null : (
+  <span style={{ fontSize: 11, fontVariantNumeric: 'tabular-nums', color: value >= 4.5 ? 'var(--text-faint)' : 'var(--neg)', fontWeight: value >= 4.5 ? 400 : 700 }}>
+    {value.toFixed(1)}:1
+  </span>
+);
+function Line({ token, label }: { token: string; label: string }) {
+  const [ref, ratio] = useRatio<HTMLSpanElement>();
+  return <span style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><span ref={ref} style={{ color: `var(${token})` }}>{label}</span><Ratio value={ratio} /></span>;
+}
+function Button({ kind, label }: { kind: string; label: string }) {
+  const [ref, ratio] = useRatio<HTMLButtonElement>();
+  return <span style={{ display: 'grid', justifyItems: 'center', gap: 2 }}><button ref={ref} type="button" className={`btn btn-sm ${kind}`}>{label}</button><Ratio value={ratio} /></span>;
+}
+
+const COMBO_TEXT: [string, string][] = [
+  ['--text-strong', 'Überschrift'], ['--text', 'Fließtext'], ['--text-muted', 'Nebentext'], ['--text-faint', 'Hinweis'],
+  ['--accent-text', 'Akzenttext'], ['--accent-text-muted', 'Akzent leise'], ['--pos', 'Erfolg'], ['--neg', 'Fehler'], ['--warning', 'Warnung'],
+];
+
+/** One scheme in one mode, with its own tokens: data-mode switches styles.css's block, the inline style the accent. */
+function Combo({ theme, name }: { theme: DashboardTheme; name: string }) {
+  const light = theme.mode === 'light';
+  const tone = light ? 'var(--scrim-color)' : 'var(--bg-main)';
+  return (
+    <div data-mode={theme.mode} style={{ ...themeVariables(theme), display: 'grid', background: 'var(--bg-app)', color: 'var(--text)', borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border-strong)' } as CSSProperties}>
+      {/* The header wood with its wash, as behind every page title. */}
+      <div style={{ position: 'relative', height: 72, display: 'grid', alignContent: 'center', padding: '0 16px' }}>
+        <img src={light ? fir : walnut} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, color-mix(in srgb, ${tone} var(--scrim), transparent) 70%, color-mix(in srgb, ${tone} 18%, transparent))` }} />
+        <b style={{ position: 'relative', color: 'var(--text-strong)', fontFamily: 'var(--font-display)', fontSize: 16 }}>{name}</b>
+        <span style={{ position: 'relative', color: 'var(--text-muted)', fontSize: 12 }}>{light ? 'Hell · Douglasie' : 'Dunkel · Nussbaum'}</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '64px 1fr', background: 'var(--bg-main)' }}>
+        <div style={{ background: 'var(--bg-sidebar)', padding: '12px 8px', display: 'grid', gap: 6, alignContent: 'start' }}>
+          <span style={{ height: 8, borderRadius: 4, background: 'var(--accent)' }} />
+          <span style={{ height: 8, borderRadius: 4, background: 'var(--border-strong)' }} />
+          <span style={{ height: 8, borderRadius: 4, background: 'var(--border-strong)' }} />
+        </div>
+        <div style={{ padding: 12, display: 'grid', gap: 10 }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', boxShadow: 'var(--card-shadow)', padding: 12, display: 'grid', gap: 4, fontSize: 13 }}>
+            {COMBO_TEXT.map(([token, label]) => <Line key={token} token={token} label={label} />)}
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            <span className="badge badge-brand">Akzent</span><span className="badge badge-on">An</span><span className="badge badge-warn">Achtung</span><span className="badge badge-off">Aus</span>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'start' }}>
+            <Button kind="btn-primary" label="Speichern" /><Button kind="btn-secondary" label="Vorschau" />
+            <Button kind="btn-success" label="OK" /><Button kind="btn-danger" label="Löschen" />
+          </div>
+          <input className="input" defaultValue="Eingabefeld" aria-label="Eingabefeld" />
+          <div style={{ display: 'flex', height: 14, borderRadius: 4, overflow: 'hidden' }} title="Diagrammfarben">
+            {chartPalette(theme).map((color) => <span key={color} style={{ flex: 1, background: color }} />)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Combinations() {
+  return (
+    <div style={page}>
+      <div>
+        <h1>Farbkombinationen</h1>
+        <p style={{ color: 'var(--text-muted)', marginTop: 6, maxWidth: 760 }}>
+          Alle zwölf Farbvorlagen im dunklen und im hellen Modus auf einer Seite: Holz mit Lasur, Flächen, die Textstufen mit ihrem Kontrast auf der Karte, Abzeichen, Knöpfe (Kontrast der Schrift auf dem Knopf), ein Eingabefeld und die Diagrammfarben. Werte unter 4.5:1 sind rot markiert.
+        </p>
+      </div>
+      <div style={grid(620)}>
+        {THEME_PRESETS.map((preset) => (
+          <section key={preset.id} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(290px, 100%), 1fr))', gap: 10 }}>
+            {(['dark', 'light'] as ThemeMode[]).map((mode) => (
+              <Combo key={mode} name={preset.name} theme={{ preset: preset.id, primary: preset.primary, secondary: preset.secondary, mode }} />
+            ))}
+          </section>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default { title: 'Grundlagen', tags: ['!autodocs'], parameters: { switches: ['scheme', 'mode'] } } satisfies Meta;
 
 export const Farben: StoryObj = { render: () => <Colours /> };
@@ -203,3 +301,4 @@ export const Schrift: StoryObj = { parameters: { switches: ['mode'] }, render: (
 export const Formen: StoryObj = { parameters: { switches: ['mode'] }, render: () => <Shapes /> };
 export const IconSet: StoryObj = { name: 'Icons', parameters: { switches: ['mode'] }, render: () => <Icons /> };
 export const Farbvorlagen: StoryObj = { parameters: { switches: ['mode'] }, render: () => <Schemes /> };
+export const Farbkombinationen: StoryObj = { parameters: { switches: [] }, render: () => <Combinations /> };

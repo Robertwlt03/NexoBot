@@ -27,7 +27,7 @@ function PresetTile({ preset, selected, onSelect }: { preset: (typeof THEME_PRES
 
 const MODES: { id: ThemeMode; label: string; hint: string; canvas: string; card: string; line: string; ink: string; wood: string }[] = [
   { id: 'dark', label: 'Dunkel', hint: 'Tiefes Walnussholz, ruhig am Abend', canvas: '#16110c', card: '#231a13', line: '#3d3127', ink: '#f3ebe0', wood: 'linear-gradient(135deg, #6b3f22, #3a2112)' },
-  { id: 'light', label: 'Hell', hint: 'Helle Douglasie, warm und angenehm am Tag', canvas: '#e9d6ba', card: '#f2e4cf', line: '#d6bb94', ink: '#22150b', wood: 'linear-gradient(135deg, #dcb07a, #b98552)' },
+  { id: 'light', label: 'Hell', hint: 'Helle Douglasie, warm und angenehm am Tag', canvas: '#e9d0ad', card: '#f2e2c7', line: '#d3b083', ink: '#1f1209', wood: 'linear-gradient(135deg, #e3a862, #b3692a)' },
 ];
 
 function ModeTile({ mode, selected, onSelect }: { mode: (typeof MODES)[number]; selected: boolean; onSelect: () => void }) {

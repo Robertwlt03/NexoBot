@@ -10,7 +10,9 @@ import { Engraving } from './Engraving';
 /** Absolute layer at the top of a scroll area, visible right away. `art` = the page's nav icon (24px grid paths). */
 export function PageBackdrop({ art, column = 1040 }: { art?: ReactNode; column?: number }) {
   const textEnd = `calc(max(40px, 50% - ${column / 2}px) + 780px)`;
-  const wash = `linear-gradient(90deg, color-mix(in srgb, var(--bg-main) var(--scrim), transparent) ${textEnd}, color-mix(in srgb, var(--bg-main) 18%, transparent) calc(${textEnd} + 320px))`;
+  // Washed toward --scrim-color: the page colour on walnut, the fir's own light honey in the light mode (styles.css).
+  const tone = 'var(--scrim-color, var(--bg-main))';
+  const wash = `linear-gradient(90deg, color-mix(in srgb, ${tone} var(--scrim), transparent) ${textEnd}, color-mix(in srgb, ${tone} 18%, transparent) calc(${textEnd} + 320px))`;
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[320px] overflow-hidden"
       style={{ maskImage: 'linear-gradient(to bottom, #000 45%, transparent)' }}>
