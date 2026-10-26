@@ -660,14 +660,13 @@ main:has(.page-head > .actions) .engraving-icon { display: none; }
 }
 
 /*
- * Cyberpunk server rail (components/Layout.tsx ServerRail): nothing carved, since there is no wood. The markers are flat
- * bars, the open server's in yellow with a glow; the divider is a strip of the header's hatching; server icons are
- * chamfered octagons; the Nexo button drops its round socket, so the logo plate itself is the button. Unlayered, so it
+ * Cyberpunk server rail (components/Layout.tsx ServerRail): nothing carved, since there is no wood. The markers and the
+ * divider are plain flat lines, the open server's marker in yellow; server icons are chamfered octagons; the Nexo button drops its round socket, so the logo plate itself is the button. Unlayered, so it
  * wins over the Tailwind sizes and rings on the same elements.
  */
-[data-theme="cyberpunk"] .rail-groove { background: rgb(var(--ov) / 0.35); box-shadow: none; border-radius: 0; }
-[data-theme="cyberpunk"] .rail-groove.h-8 { background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
-[data-theme="cyberpunk"] .rail-divider { height: 6px; background: repeating-linear-gradient(115deg, #fcee0a 0 2px, transparent 2px 6px); }
+[data-theme="cyberpunk"] .rail-groove { background: rgb(var(--ov) / 0.2); box-shadow: none; border-radius: 0; }
+[data-theme="cyberpunk"] .rail-groove.h-8 { background: var(--accent); }
+[data-theme="cyberpunk"] .rail-divider { height: 1px; }
 [data-theme="cyberpunk"] .rounded-\[22px\] { border-radius: 12px; corner-shape: bevel; }
 [data-theme="cyberpunk"] .rail-home { background: transparent; box-shadow: none; overflow: visible; }
 [data-theme="cyberpunk"] .rail-home svg { width: 44px; }

@@ -53,7 +53,7 @@ export function ServerRail({ guilds, activeId }: { guilds: ApiGuildSummary[]; ac
           <NexoLogo className="w-9 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" animated={false} />
         </button>
       </div>
-      {/* Divider between "Alle Server" and the servers: the same groove as the open-server marker (Cyberpunk: hatching). */}
+      {/* Divider between "Alle Server" and the servers: the same groove as the open-server marker (Cyberpunk: a flat line). */}
       <div className="rail-groove rail-divider my-1 h-[2px] w-7 shrink-0 rounded-full" />
       {guilds.filter((g) => g.botPresent).map((guild) => {
         const active = guild.id === activeId;
