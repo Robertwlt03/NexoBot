@@ -94,3 +94,37 @@
   transition-duration: 0.35s !important;
   transition-timing-function: ease !important;
 }
+
+/*
+ * Narrow guide pages (phone, narrow window): the props table has four columns that squeeze names, types and controls
+ * into slivers. Below 700 px each property becomes a block instead: name, type and description, default, control.
+ */
+@media (max-width: 700px) {
+  .sbdocs.sbdocs-wrapper { padding-left: 16px; padding-right: 16px; }
+  /* Long inline code in the text may break (code blocks keep their lines). */
+  .sbdocs-content :not(pre) > code { white-space: normal; overflow-wrap: anywhere; }
+  .docblock-argstable.docblock-argstable,
+  .docblock-argstable > tbody { display: block; width: 100%; }
+  /* Only the last heading cell stays: it holds the "reset controls" button. */
+  .docblock-argstable > thead { display: block; }
+  .docblock-argstable > thead > tr { display: flex; justify-content: flex-end; }
+  .docblock-argstable > thead th:not(:last-child) { display: none; }
+  /* One frame around all properties and a line between them, instead of a box per cell. */
+  .docblock-argstable > tbody { border: 1px solid var(--sbx-line); border-radius: 4px; background: var(--sbx-frame); overflow: hidden; }
+  .docblock-argstable > tbody > tr { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 14px 16px; }
+  .docblock-argstable > tbody > tr + tr { border-top: 1px solid var(--sbx-line); }
+  .docblock-argstable > tbody > tr > td {
+    display: block;
+    width: auto !important;
+    max-width: none !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+  .docblock-argstable > tbody > tr > td:nth-child(3):not(:only-child)::before {
+    content: "Standard: ";
+    color: var(--sbx-muted);
+    font-size: 12px;
+  }
+}

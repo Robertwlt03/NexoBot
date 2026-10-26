@@ -34,7 +34,7 @@ export const Logo: Story = {};
 
 /** Die Größen in Seitenleiste, Avatar und Favicon. */
 export const Klein: Story = {
-  render: () => <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}><NexoLogo className="w-16" animated={false} /><NexoLogo className="w-9" animated={false} /><NexoLogo className="w-6" animated={false} /></div>,
+  render: () => <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center' }}><NexoLogo className="w-16" animated={false} /><NexoLogo className="w-9" animated={false} /><NexoLogo className="w-6" animated={false} /></div>,
 };
 
 /** Bernis-Münzen in drei Größen. */
@@ -43,7 +43,7 @@ export const Muenzen: Story = {
   render: () => (
     <div style={{ display: 'grid', gap: 14 }}>
       {[48, 24, 16].map((size) => (
-        <div key={size} style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
+        <div key={size} style={{ display: 'flex', flexWrap: 'wrap', gap: 18, alignItems: 'center' }}>
           {COIN_TIERS.map(({ tier, label }) => <span key={tier} style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}><CoinIcon tier={tier} size={size} />{size === 48 ? label : null}</span>)}
         </div>
       ))}

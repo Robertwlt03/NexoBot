@@ -105,7 +105,7 @@ function Type() {
       </div>
       <div style={{ display: 'grid', gap: 10 }}>
         {rows.map((row) => (
-          <div key={row.tag} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 240px) minmax(0, 1fr)', gap: 16, alignItems: 'baseline', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+          <div key={row.tag} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: '6px 16px', alignItems: 'baseline', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
             <code style={{ color: 'var(--text-muted)', fontSize: 12 }}>{row.css}</code>
             <span style={row.style}>{row.sample}</span>
           </div>

@@ -28,7 +28,7 @@ const meta = {
     },
   },
   args: { label: 'Begrüßung', hint: 'Höchstens 120 Zeichen.', error: null, children: null },
-  argTypes: { children: { control: false } },
+  argTypes: { children: { control: false }, error: { control: 'text' } },
 } satisfies Meta<typeof Field>;
 export default meta;
 type Story = StoryObj<typeof meta>;
