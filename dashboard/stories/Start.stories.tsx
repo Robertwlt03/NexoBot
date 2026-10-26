@@ -17,8 +17,7 @@ const AREAS = [
 ];
 
 const SWITCHES = [
-  { title: 'Theme · Auswahl', text: `Klick auf „Theme“ mit den zwei Farbtupfern öffnet die Themes aus „Dashboard-Design“: Holz und ${THEME_PRESETS.filter((p) => p.look !== 'wood').map((p) => p.name).join(', ')}. Die aktive hat ein Häkchen.` },
-  { title: 'Modus · Schalter', text: 'Dunkel oder Hell. Beim Holz wechselt er zwischen Walnuss und Eiche; Themes mit nur einem Modus, wie Cyberpunk, bleiben, wie sie sind. Auf der Discord-Seite wechselt auch der Chat zwischen Discords dunklem und hellem Aussehen.' },
+  { title: 'Theme · Auswahl', text: `Klick auf „Theme“ mit den zwei Farbtupfern öffnet die Themes aus „Dashboard-Design“: ${THEME_PRESETS.map((p) => `${p.name} (${p.mode === 'light' ? 'hell' : 'dunkel'})`).join(', ')}. Jedes Theme bringt seinen Modus mit, einen eigenen Hell/Dunkel-Schalter gibt es nicht mehr. Auf der Discord-Seite folgt auch der Chat dem Modus des Themes.` },
   { title: 'Gerät · Schalter', text: 'Desktop mit 1280 Pixeln Breite oder Handy mit 390 Pixeln; die gedrückte ist aktiv. Auf „Handy“ zeigt jede Seite das echte Handy-Layout in einem Handy-Rahmen.' },
 ];
 
@@ -53,8 +52,8 @@ function Start({ globals }: { globals: Globals }) {
         </header>
 
         <div>
-          <h2 style={{ fontSize: 20, marginBottom: 12 }}>Die drei Schalter oben in der Leiste</h2>
-          <p style={{ color: 'var(--text-muted)', marginBottom: 14 }}>Die Leiste zeigt nur die Schalter, die auf der offenen Seite etwas ändern. Auf dieser Textseite ist das nur der Modus; im Vergleich fehlen Theme und Modus, weil er alle Themes zeigt; Logo, Münzen und Profilkarte haben feste Farben. Die Wahl bleibt beim Wechsel erhalten.</p>
+          <h2 style={{ fontSize: 20, marginBottom: 12 }}>Die zwei Schalter oben in der Leiste</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: 14 }}>Die Leiste zeigt nur die Schalter, die auf der offenen Seite etwas ändern. Auf dieser Textseite ist das nur das Theme; im Vergleich fehlt es, weil er alle Themes zeigt; Logo, Münzen und Profilkarte haben feste Farben. Die Wahl bleibt beim Wechsel erhalten.</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14 }}>
             {SWITCHES.map((s) => <Box key={s.title} title={s.title}>{s.text}</Box>)}
           </div>

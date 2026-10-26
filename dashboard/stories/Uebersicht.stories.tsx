@@ -14,7 +14,7 @@ function Board({ globals }: { globals: { scheme: string; mode: string; device: D
       <style>{frameStyles}</style>
       {cover}
       <h1>Alle Seiten</h1>
-      <p className="sb-lead">{PAGES.length} Seiten des Dashboards mit Beispieldaten. Theme, Modus und Gerät stellst du oben in der Leiste um, sie gelten für alle Vorschauen. Ein Klick öffnet eine Seite groß.</p>
+      <p className="sb-lead">{PAGES.length} Seiten des Dashboards mit Beispieldaten. Theme und Gerät stellst du oben in der Leiste um, sie gelten für alle Vorschauen. Ein Klick öffnet eine Seite groß.</p>
       <div className="sb-bar">
         <label>Größe <input type="range" min={0.15} max={0.6} step={0.01} value={scale} onChange={(e) => setScale(Number(e.target.value))} /></label>
         <span>{device === 'phone' ? 'Handy' : 'Desktop'} · {DEVICES[device].width} px</span>
