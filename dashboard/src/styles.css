@@ -369,6 +369,12 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 /* Marker of the open server in the rail (components/Layout.tsx): a groove cut into the rail, filled with the
    sidebar colour, dark inner edge on top, a light lip below. */
 .rail-groove { background: var(--bg-sidebar); box-shadow: inset 1px 1px 2px rgb(0 0 0 / .45), inset -1px -1px 0 rgb(255 255 255 / .2); }
+/* On the light rail the sidebar colour is lighter than the rail, which reads as raised: a deeper shadow inside the
+   cut, the fill shaded toward the wall, and the light lip outside, below the edge. */
+[data-mode="light"] .rail-groove {
+  background: linear-gradient(90deg, rgb(98 56 22 / .3), rgb(98 56 22 / .08)), var(--bg-sidebar);
+  box-shadow: inset 2px 0 3px rgb(70 38 12 / .55), inset 0 2px 2px rgb(70 38 12 / .4), 0 1px 0 rgb(255 248 235 / .6);
+}
 
 /* A title in its own colour (achievements list); on the light surfaces mixed toward the ink so it stays readable. */
 .title-tint { color: var(--tint); }
