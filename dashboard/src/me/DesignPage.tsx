@@ -25,7 +25,7 @@ function ThemeTile({ preset, selected, onSelect }: { preset: ThemePreset; select
   return (
     <button type="button" onClick={onSelect} aria-pressed={selected}
       className={`group flex cursor-pointer flex-col gap-3 rounded-2xl border bg-surface p-3 text-left transition hover:border-[var(--border-input)] ${selected ? 'border-accent ring-1 ring-accent' : 'border-[var(--border-control)]'}`}>
-      <span className="relative block aspect-[16/9] w-full overflow-hidden rounded-xl" style={{ background: preset.canvas }}>
+      <span className={`theme-sample relative block aspect-[16/9] w-full overflow-hidden rounded-xl ${preset.look === 'cyber' ? 'theme-sample-cyber' : ''}`} style={{ background: preset.canvas }}>
         <span className="absolute inset-x-0 top-0 h-[46%]" style={{ background: HEADER[preset.id] }} />
         <span className="absolute inset-x-0 top-[30%] h-[16%]" style={{ background: `linear-gradient(to bottom, transparent, ${preset.canvas})` }} />
         <span className="absolute left-[8%] top-[12%] h-[7%] w-[34%] rounded-full" style={{ background: ink }} />
@@ -39,7 +39,7 @@ function ThemeTile({ preset, selected, onSelect }: { preset: ThemePreset; select
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2 text-[15px] font-semibold text-ink">
             {preset.name}
-            <span className="rounded-full border border-[var(--border-control)] px-2 py-px text-[11px] font-medium text-mute">{preset.mode === 'light' ? 'Hell' : 'Dunkel'}</span>
+            <span className="rounded-[999px] border border-[var(--border-control)] px-2 py-px text-[11px] font-medium text-mute">{preset.mode === 'light' ? 'Hell' : 'Dunkel'}</span>
           </span>
           <span className="mt-1 block text-[13px] leading-snug text-mute">{preset.description}</span>
         </span>

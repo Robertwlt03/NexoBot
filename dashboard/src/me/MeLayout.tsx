@@ -60,7 +60,7 @@ function WalletPill({ balance }: { balance: number }) {
   const { flight, done } = useCoinFlight(balance, pill);
   return (
     <>
-      <span ref={pill} className="inline-flex items-center gap-1.5 rounded-full border border-white/[.08] bg-white/[.04] px-3 py-1 text-[13px] font-medium text-ink">
+      <span ref={pill} className="inline-flex items-center gap-1.5 rounded-[999px] border border-white/[.08] bg-white/[.04] px-3 py-1 text-[13px] font-medium text-ink">
         <Bernis amount={shown} nowrap max={2} />
       </span>
       <CoinFlight flight={flight} pill={pill} onDone={done} />

@@ -246,6 +246,7 @@ function Combo({ theme, name }: { theme: DashboardTheme; name: string }) {
           ? <span className="cyber-grid" style={{ position: 'absolute', inset: 0 }} />
           : <img src={light ? oak : walnut} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
         <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, color-mix(in srgb, ${tone} var(--scrim), transparent) 70%, color-mix(in srgb, ${tone} 18%, transparent))` }} />
+        {cyber && <span className="cyber-stripe" style={{ position: 'absolute', inset: 0 }} />}
         <b style={{ position: 'relative', color: 'var(--text-strong)', fontFamily: 'var(--font-display)', fontSize: 16 }}>{name}</b>
         <span style={{ position: 'relative', color: light ? 'var(--text-strong)' : 'var(--text-muted)', fontSize: 12 }}>{cyber ? 'Dunkel · Neongelb und Schraffur' : light ? 'Hell · Eiche' : 'Dunkel · Nussbaum'}</span>
       </div>

@@ -30,6 +30,7 @@ export function PageBackdrop({ art, label, column = 1040 }: { art?: ReactNode; l
       {/* Uneven tone in the oak, like the light and dark patches in the walnut (styles.css .wood-shade). */}
       <div className="wood-light wood-shade absolute inset-0" />
       <div className="absolute inset-0" style={{ background: wash }} />
+      <div className="look-cyber cyber-stripe absolute inset-x-0 top-0 h-4" />
       {/* Right of the text column; on narrow screens a small version in the corner. */}
       <div className="look-wood absolute inset-0"><Engraving art={art} width={artWidth} /></div>
       <div className="look-cyber absolute inset-0"><CircuitArt art={art} label={label} width={artWidth} /></div>

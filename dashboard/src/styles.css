@@ -542,17 +542,21 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 .look-cyber { display: none; }
 [data-theme="cyberpunk"] :is(.wood-dark, .wood-light, .look-wood) { display: none; }
 [data-theme="cyberpunk"] .look-cyber { display: block; }
-/* Black board with a faint grid, a cyan glow top right, and the site's yellow hatching hanging from a yellow line along
-   the top edge (the board fades out downwards, so it sits on top like the site's nav strip). */
+/* Black board with a faint grid and a cyan glow top right. */
 .cyber-grid {
   background:
-    repeating-linear-gradient(115deg, #fcee0a 0 3px, transparent 3px 9px) left 32px top 2px / 180px 14px no-repeat,
-    linear-gradient(#fcee0a, #fcee0a) left 0 top 0 / 100% 2px no-repeat,
     radial-gradient(55% 120% at 100% 0%, rgb(0 240 255 / 0.16), transparent 60%),
     radial-gradient(45% 100% at 0% 0%, rgb(252 238 10 / 0.08), transparent 60%),
     linear-gradient(rgb(230 236 245 / 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
     linear-gradient(90deg, rgb(230 236 245 / 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
     #0b0c0f;
+}
+/* The site's yellow hatching hanging from a yellow line along the top edge, like its nav strip; its own layer above the
+   wash over the text column, so it keeps its full yellow (components/Backdrop.tsx). */
+.cyber-stripe {
+  background:
+    repeating-linear-gradient(115deg, #fcee0a 0 3px, transparent 3px 9px) left 32px top 2px / 180px 14px no-repeat,
+    linear-gradient(#fcee0a, #fcee0a) left 0 top 0 / 100% 2px no-repeat;
 }
 [data-mode="light"] .wood-dark { display: none; }
 [data-mode="light"] .wood-light { display: block; }
@@ -636,12 +640,15 @@ main:has(.page-head > .actions) .engraving-icon { display: none; }
 /*
  * Cyberpunk shapes, cut like the Edgerunners site: chamfered instead of rounded corners (corner-shape keeps the border
  * on the cut; browsers without it keep the small radii), one big cut bottom right on cards and buttons, pill shapes
- * become tags with pointed ends (circles and the round server icons in the rail stay round), and headings in capitals
+ * become tags with pointed ends (circles and the round server icons in the rail stay round; a pill that should turn
+ * into a tag uses rounded-[999px] instead of rounded-full), and headings in capitals
  * with the site's mint/pink misprint.
  */
 @layer components {
-[data-theme="cyberpunk"] :is(.card, .btn, .input, .textarea, .select, .badge, .chip, .icon-tile, .icon-btn, [class*="rounded-"]:not(.rounded-full, .rounded-\[22px\])) { corner-shape: bevel; }
-[data-theme="cyberpunk"] .card { border-radius: 3px 3px 18px 3px; }
+[data-theme="cyberpunk"] :is(.card, .stat, .modal, .notice, .list-item, .table-wrap, .table-stack tr, .tabs, .tabs-pill, .tab, .tab-count, .filter-chip, .btn, .input, .textarea, .select, .switch, .badge, .chip, .var-list button, .icon-tile, .icon-btn, .save-bar, .toast, .skeleton > span, .bundle-tile, code, [class*="rounded-"]:not(.rounded-full, .rounded-\[22px\])):not(.theme-sample, .theme-sample *) { corner-shape: bevel; }
+/* The theme previews on the design page keep their own look whatever theme is active (me/DesignPage.tsx). */
+.theme-sample-cyber, .theme-sample-cyber [class*="rounded-"]:not(.rounded-full) { corner-shape: bevel; }
+[data-theme="cyberpunk"] :is(.card, .stat, .modal) { border-radius: 3px 3px 18px 3px; }
 [data-theme="cyberpunk"] .btn { border-radius: 2px 2px 12px 2px; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.05em; }
 [data-theme="cyberpunk"] .btn-sm { border-radius: 2px 2px 9px 2px; }
 /* The hero is a black panel with a yellow edge and a cyan glow; the shared yellow-into-black gradient turns olive. */
