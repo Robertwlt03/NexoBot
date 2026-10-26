@@ -27,7 +27,7 @@ function PresetTile({ preset, selected, onSelect }: { preset: (typeof THEME_PRES
 
 const MODES: { id: ThemeMode; label: string; hint: string; canvas: string; card: string; line: string; ink: string; wood: string }[] = [
   { id: 'dark', label: 'Dunkel', hint: 'Tiefes Walnussholz, ruhig am Abend', canvas: '#16110c', card: '#231a13', line: '#3d3127', ink: '#f3ebe0', wood: 'linear-gradient(135deg, #6b3f22, #3a2112)' },
-  { id: 'light', label: 'Hell', hint: 'Helle Eiche und Birke, angenehm am Tag', canvas: '#efe8dd', card: '#faf6ef', line: '#ddd0bd', ink: '#2e241b', wood: 'linear-gradient(135deg, #ecdcc6, #cfb592)' },
+  { id: 'light', label: 'Hell', hint: 'Helle Douglasie, warm und angenehm am Tag', canvas: '#f8efe2', card: '#fffaf2', line: '#e6d3b8', ink: '#2f2014', wood: 'linear-gradient(135deg, #e6b67e, #c98a4e)' },
 ];
 
 function ModeTile({ mode, selected, onSelect }: { mode: (typeof MODES)[number]; selected: boolean; onSelect: () => void }) {
@@ -69,7 +69,7 @@ export default function DesignPage() {
       <PageHeader kicker="Mein Profil" title="Dashboard-Design"
         description="Hell oder dunkel und deine eigenen Farben. Gilt nur für dich – auf allen Geräten, auf denen du dich mit Discord anmeldest." />
 
-      <Card title="Erscheinungsbild" description="Dunkles Walnussholz für den Abend oder helle Eiche für den Tag – beides mit Moosgrün.">
+      <Card title="Erscheinungsbild" description="Dunkles Walnussholz für den Abend oder helle Douglasie für den Tag – beides mit Moosgrün.">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {MODES.map((mode) => (
             <ModeTile key={mode.id} mode={mode} selected={value.mode === mode.id} onSelect={() => pick({ ...value, mode: mode.id })} />
