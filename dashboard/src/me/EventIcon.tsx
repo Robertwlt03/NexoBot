@@ -115,46 +115,36 @@ const EVENT_ART: Record<EventTheme, ReactNode | ((uid: string) => ReactNode)> = 
   winter: () => (
     <>
       <rect x="10.9" y="17.6" width="2.2" height="3.6" rx=".5" fill="#7a5233" />
-      {([[10.2, 4.4, 18.2], [6.4, 6.2, 13.4], [3.2, 7.8, 8.8]] as const).map(([top, half, base]) => (
+      {/* Bottom tier widest, each tier above narrower, drawn bottom first so the upper ones overlap. */}
+      {([[10.2, 7.8, 18.2], [6.4, 6.2, 13.4], [2.8, 4.4, 8.8]] as const).map(([top, half, base]) => (
         <g key={top}>
           <path d={`M12 ${top}L${12 - half} ${base}H12Z`} fill="#4e9a5b" />
           <path d={`M12 ${top}L${12 + half} ${base}H12Z`} fill="#2f7444" />
         </g>
       ))}
-      <path d="M8.6 12.4q3.4-.6 6.6-2.8M6.8 17.2q5.4-.6 10.6-3.6" stroke="#f2c14e" strokeWidth=".7" strokeLinecap="round" fill="none" />
-      <g fill="#e04b4b"><circle cx="10.4" cy="7.6" r=".8" /><circle cx="13.6" cy="13.4" r=".8" /><circle cx="9" cy="15.2" r=".8" /><circle cx="15.8" cy="17" r=".8" /></g>
+      <path d="M5.62 17.2Q10.54 16.7 15.45 14.2M6.96 12.6Q10.49 11.8 14.03 9.2" stroke="#f2c14e" strokeWidth=".7" strokeLinecap="round" fill="none" />
+      <g fill="#e04b4b"><circle cx="10.6" cy="7.6" r=".8" /><circle cx="13.4" cy="12.2" r=".8" /><circle cx="9.2" cy="15" r=".8" /><circle cx="15.6" cy="17" r=".8" /></g>
       <path d="M12 .6l.7 1.5 1.6.2-1.2 1.1.3 1.6-1.4-.8-1.4.8.3-1.6-1.2-1.1 1.6-.2Z" fill="#f2c14e" />
       <path d="M2 23.3c2.4-2.2 5.8-3.1 10-3.1s7.6.9 10 3.1Z" fill="#e8f1f8" />
       <path d="M2 23.3c2.4-1.2 5.8-1.7 10-1.7s7.6.5 10 1.7Z" fill="#c9dcec" />
     </>
   ),
-  // Fireworks like a flat New Year icon: one burst of dashed rays, long and short in turn, in gold, coral and teal,
-  // dots between them and a gold twinkle in the middle.
-  newyear: () => {
-    const colours = ['#e0a52a', '#e5645a', '#3a9e95'];
-    const at = (angle: number, r: number) => [12 + Math.cos(angle) * r, 12 + Math.sin(angle) * r];
-    return (
-      <>
-        {Array.from({ length: 16 }, (_, i) => {
-          const angle = (i / 16) * Math.PI * 2 - Math.PI / 2;
-          const colour = colours[i % 3];
-          const segments = i % 2 ? [[3.4, 5.8]] : [[2.8, 6.2], [7.4, 9.4]];
-          const [dx, dy] = at(angle, i % 2 ? 7.6 : 10.8);
+  // Fireworks: three calm bursts, each in one colour (gold, coral, blue): even rays with a dot at every tip.
+  newyear: () => (
+    <>
+      {([[10.6, 8.4, 6.6, 12, '#d99a1e', 0.9], [18.4, 17.2, 4, 10, '#e0604f', 0.8], [5.4, 18.4, 3.4, 9, '#3a86c8', 0.75]] as const)
+        .map(([cx, cy, r, rays, colour, width]) => {
+          const dirs = Array.from({ length: rays }, (_, i) => [Math.cos((i / rays) * Math.PI * 2), Math.sin((i / rays) * Math.PI * 2)]);
           return (
-            <g key={i}>
-              {segments.map(([from, to]) => {
-                const [x1, y1] = at(angle, from);
-                const [x2, y2] = at(angle, to);
-                return <path key={from} d={`M${x1} ${y1}L${x2} ${y2}`} stroke={colour} strokeWidth="1.1" strokeLinecap="round" />;
-              })}
-              <circle cx={dx} cy={dy} r=".7" fill={colour} />
+            <g key={colour} fill={colour}>
+              <path d={dirs.map(([x, y]) => `M${cx + x * r * 0.32} ${cy + y * r * 0.32}L${cx + x * r * 0.78} ${cy + y * r * 0.78}`).join('')}
+                stroke={colour} strokeWidth={width} strokeLinecap="round" />
+              {dirs.map(([x, y], i) => <circle key={i} cx={cx + x * r} cy={cy + y * r} r={width * 0.6} />)}
             </g>
           );
         })}
-        {sparkle(12, 12, 2, '#f2c14e')}
-      </>
-    );
-  },
+    </>
+  ),
   // A violet gift with a gold ribbon and bow, as in the party banner.
   party: (
     <g transform="translate(2 1.6) scale(.217) translate(-114 -214)">
