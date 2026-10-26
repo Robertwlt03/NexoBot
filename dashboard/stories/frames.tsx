@@ -1,6 +1,6 @@
 // Live page previews for the overviews: each page runs in its own iframe at real size (desktop 1280 px or phone
 // 390 px wide) and is scaled down, so media queries and layouts behave exactly like in the browser.
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { pageFrameUrl, type PageEntry } from './pages';
 
 export const DEVICES = {
@@ -13,6 +13,24 @@ export type Device = keyof typeof DEVICES;
 export function openStory(id: string, globals: { scheme: string; mode: string; device?: string }) {
   const top = window.top ?? window;
   top.location.href = `${top.location.pathname}?path=/story/${id}&globals=scheme:${globals.scheme};mode:${globals.mode};device:${globals.device ?? 'desktop'}`;
+}
+
+type FramePreview = { onUpdateGlobals(update: { globals: Record<string, string> }): Promise<void> };
+
+/**
+ * A preview running in an iframe loads once; later toolbar changes are handed to its Storybook directly, so it
+ * re-renders in place (colours change live) instead of reloading. Returns the iframe's fixed src.
+ */
+export function useLiveFrame(frame: RefObject<HTMLIFrameElement | null>, url: (globals: Record<string, string>) => string, globals: Record<string, string>) {
+  const [src] = useState(() => url(globals));
+  const key = JSON.stringify(globals);
+  const first = useRef(key);
+  useEffect(() => {
+    if (key === first.current) return;
+    const preview = (frame.current?.contentWindow as { __STORYBOOK_PREVIEW__?: FramePreview } | null)?.__STORYBOOK_PREVIEW__;
+    void preview?.onUpdateGlobals({ globals });
+  }, [key]); // `globals` itself is a new object on every render; `key` is its content
+  return src;
 }
 
 /**
@@ -43,12 +61,15 @@ export function PageFrame({ page, label, scale, device, globals, onLoad }: {
   page: PageEntry; label?: string; scale: number; device: Device; globals: { scheme: string; mode: string }; onLoad?: () => void;
 }) {
   const size = DEVICES[device];
+  const frame = useRef<HTMLIFrameElement>(null);
+  // Only scheme and mode go into the page; the device is this frame's size.
+  const src = useLiveFrame(frame, (g) => pageFrameUrl(page.key, g as { scheme: string; mode: string }), { scheme: globals.scheme, mode: globals.mode });
   return (
     <figure className="sb-frame">
       <figcaption>{label ?? page.label}</figcaption>
       <button type="button" className="sb-frame-window" style={{ width: size.width * scale, height: size.height * scale }}
         onClick={() => openStory(`seiten--${page.key}`, { ...globals, device })} title={`${page.label} groß öffnen`}>
-        <iframe src={pageFrameUrl(page.key, globals)} title={page.label} tabIndex={-1} onLoad={onLoad}
+        <iframe ref={frame} src={src} title={page.label} tabIndex={-1} onLoad={onLoad}
           style={{ width: size.width, height: size.height, transform: `scale(${scale})` }} />
       </button>
     </figure>

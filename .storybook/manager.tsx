@@ -60,8 +60,8 @@ function useSeparator(name: string) {
 
 const FADE_MS = 160;
 /**
- * Switching re-renders the preview (guide pages even reload it: Storybook's StoryRender.teardown reloads when a story
- * is still rendering), which flashes. So the preview fades out, switches, and fades back in once rendering has settled.
+ * Desktop/phone swaps the whole layout (the story moves into a phone frame), which would flash: the preview fades
+ * out, switches, and fades back in once rendering has settled. Scheme and mode switch live without it (preview.tsx).
  */
 function fadeSwitch(update: () => void) {
   const frame = document.getElementById('storybook-preview-iframe');
@@ -110,7 +110,7 @@ function SchemePicker() {
       {/* Select keeps its choice internally; the key resets it when the scheme comes from the address. */}
       <Select key={current.id} ariaLabel="Farbvorlage" tooltip="Farbvorlage" size="small" padding="small"
         icon={<Swatch colors={[current.primary, current.secondary]} />} showSelectedOptionTitle={!narrow}
-        defaultOptions={[current.id]} onSelect={(scheme) => scheme !== current.id && fadeSwitch(() => updateGlobals({ scheme }))}
+        defaultOptions={[current.id]} onSelect={(scheme) => scheme !== current.id && updateGlobals({ scheme })}
         options={THEME_PRESETS.map((p) => ({ value: p.id, title: p.name, icon: <Swatch colors={[p.primary, p.secondary]} /> }))}>
         {narrow ? null : 'Farbvorlage'}
       </Select>
@@ -132,7 +132,11 @@ function Pair({ caption, name, options }: { caption: string; name: string; optio
       <div role="group" aria-label={caption} style={{ display: 'flex', gap: 2 }}>
         {options.map((option) => (
           <ToggleButton key={option.value} pressed={option.value === value} size="small" padding={narrow ? 'small' : 'medium'} variant="ghost"
-            ariaLabel={`${caption}: ${option.label}`} onClick={() => option.value !== value && fadeSwitch(() => updateGlobals({ [name]: option.value }))}>
+            ariaLabel={`${caption}: ${option.label}`} onClick={() => {
+              if (option.value === value) return;
+              const update = () => updateGlobals({ [name]: option.value });
+              if (name === 'device') fadeSwitch(update); else update();
+            }}>
             {option.icon}{!narrow && option.label}
           </ToggleButton>
         ))}

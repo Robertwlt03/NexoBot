@@ -1,11 +1,11 @@
 // Toolbar switches (colour scheme, light/dark, desktop/phone) for every story. The sample API lives in sample.ts.
-import { useEffect, useState, type PropsWithChildren } from 'react';
+import { useEffect, useRef, useState, type PropsWithChildren } from 'react';
 import type { Decorator, Preview } from '@storybook/react-vite';
 import { DocsContainer, type DocsContainerProps } from '@storybook/addon-docs/blocks';
-import { GLOBALS_UPDATED } from 'storybook/internal/core-events';
 import { themes } from 'storybook/theming';
 import { applyTheme, ThemeProvider } from '../dashboard/src/theme';
 import { sample, themeFor } from './sample';
+import { useLiveFrame } from '../dashboard/stories/frames';
 import '../dashboard/src/tailwind.css';
 import '../dashboard/src/styles.css';
 import './docs.css';
@@ -16,18 +16,79 @@ const framed = new URLSearchParams(window.location.search).has('framed');
 /** The toolbar switches; a story lists in `parameters.switches` only those that change something on it. */
 export type Switch = 'scheme' | 'mode' | 'device';
 
+const THEME_KEY = 'nexo.dashboardTheme';
+let appliedTheme = '';
+let fadeTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** Lets colours glide to the new theme for a moment (docs.css .sb-colour-fade), unless reduced motion is on. */
+function fadeColours() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.documentElement.classList.add('sb-colour-fade');
+  clearTimeout(fadeTimer);
+  fadeTimer = setTimeout(() => document.documentElement.classList.remove('sb-colour-fade'), 450);
+}
+
 /**
- * Colour scheme and light/dark; stories remount on a change so pages fetch the new theme from the sample API. The
- * ThemeProvider gives the building blocks outside a page (charts) the theme too; inside a page the app's own wins.
+ * Colour scheme and light/dark, switched live: nothing remounts or reloads. The CSS variables change in place, and
+ * every ThemeProvider (the one around the building blocks here and the one inside a page) follows through the same
+ * storage event another dashboard tab would send (dashboard/src/theme.tsx), so charts recolour too.
  */
-const withTheme: Decorator = (Story, context) => {
-  const theme = themeFor(context.globals.scheme, context.globals.mode);
+function switchTheme(scheme: string, mode: 'dark' | 'light') {
+  const theme = themeFor(scheme, mode);
   sample.theme = theme;
-  sample.loggedOut = Boolean(context.parameters.loggedOut);
-  try { localStorage.setItem('nexo.dashboardTheme', JSON.stringify(theme)); } catch { /* private mode */ }
+  const value = JSON.stringify(theme);
+  if (value === appliedTheme) return;
+  if (appliedTheme) fadeColours();
+  appliedTheme = value;
+  try { localStorage.setItem(THEME_KEY, value); } catch { /* private mode */ }
   applyTheme(theme);
-  return <ThemeProvider key={`${theme.preset}-${theme.mode}-${sample.loggedOut}`} loggedIn={false}><Story /></ThemeProvider>;
+  // After this render: the providers update their state then.
+  queueMicrotask(() => window.dispatchEvent(new StorageEvent('storage', { key: THEME_KEY, newValue: value })));
+}
+
+type Globals = Record<string, unknown>;
+interface DocsRender { type: string; rerender?: () => Promise<void>; keepsLook?: boolean }
+interface PreviewWeb { currentRender?: DocsRender; storyStoreValue?: { userGlobals: { get(): Globals } } }
+
+/** Everything but scheme and mode: the globals that do change what a guide page shows. */
+const layoutGlobals = ({ scheme: _scheme, mode: _mode, ...rest }: Globals) => JSON.stringify(rest);
+
+/**
+ * On a guide page Storybook re-renders the whole page for every globals change (and reloads it when an example is
+ * still rendering, see StoryRender.teardown). Scheme and mode only change colours, so for those the page stays and
+ * switches live; any other change still re-renders it.
+ */
+function keepGuidePageOnLookSwitch() {
+  const preview = (window as unknown as { __STORYBOOK_PREVIEW__?: PreviewWeb }).__STORYBOOK_PREVIEW__;
+  const render = preview?.currentRender;
+  if (!preview?.storyStoreValue || render?.type !== 'docs' || !render.rerender || render.keepsLook) return;
+  const rerender = render.rerender;
+  let layout = layoutGlobals(preview.storyStoreValue.userGlobals.get());
+  render.keepsLook = true;
+  render.rerender = async () => {
+    const globals = preview.storyStoreValue!.userGlobals.get();
+    if (layoutGlobals(globals) === layout) return switchTheme(String(globals.scheme), globals.mode as 'dark' | 'light');
+    layout = layoutGlobals(globals);
+    return rerender();
+  };
+}
+
+const withTheme: Decorator = (Story, context) => {
+  switchTheme(context.globals.scheme, context.globals.mode);
+  if (context.viewMode === 'docs') keepGuidePageOnLookSwitch();
+  sample.loggedOut = Boolean(context.parameters.loggedOut);
+  return <ThemeProvider key={String(sample.loggedOut)} loggedIn={false}><Story /></ThemeProvider>;
 };
+
+/** The phone frame of `withDevice`: loads once, then takes scheme and mode live like the overview previews. */
+function PhoneFrame({ id, scheme, mode }: { id: string; scheme: string; mode: string }) {
+  const frame = useRef<HTMLIFrameElement>(null);
+  const src = useLiveFrame(frame, (g) => `iframe.html?id=${id}&viewMode=story&framed=1&globals=scheme:${g.scheme};mode:${g.mode}`, { scheme, mode });
+  return (
+    <iframe ref={frame} title="Handy-Ansicht" src={src}
+      style={{ width: 'min(390px, 100%)', height: 'min(844px, calc(100vh - 2 * min(24px, 4vw)))', border: '1px solid var(--border-strong)', borderRadius: 28, background: 'var(--bg-main)', boxShadow: '0 24px 60px -24px rgba(0,0,0,.6)' }} />
+  );
+}
 
 /**
  * Desktop or phone. On "Handy" the story runs in a 390 px wide frame, so the dashboard's own phone layout (media
@@ -36,28 +97,28 @@ const withTheme: Decorator = (Story, context) => {
 const withDevice: Decorator = (Story, context) => {
   const switches: Switch[] = context.parameters.switches;
   if (context.globals.device !== 'phone' || framed || context.viewMode === 'docs' || context.parameters.ownDevice || !switches.includes('device')) return <Story />;
-  const { scheme, mode } = context.globals;
-  applyTheme(themeFor(scheme, mode));
+  switchTheme(context.globals.scheme, context.globals.mode);
   return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 'min(24px, 4vw)', background: 'var(--bg-app)' }}>
-      <iframe title="Handy-Ansicht" src={`iframe.html?id=${context.id}&viewMode=story&framed=1&globals=scheme:${scheme};mode:${mode}`}
-        style={{ width: 'min(390px, 100%)', height: 'min(844px, calc(100vh - 2 * min(24px, 4vw)))', border: '1px solid var(--border-strong)', borderRadius: 28, background: 'var(--bg-main)', boxShadow: '0 24px 60px -24px rgba(0,0,0,.6)' }} />
+      <PhoneFrame key={context.id} id={context.id} scheme={context.globals.scheme} mode={context.globals.mode} />
     </div>
   );
 };
 
 /**
- * Guide pages in the toolbar's Modus (Dunkel/Hell), like the examples on them; docs.css follows the same switch through
- * the data-mode attribute that applyTheme sets.
+ * Guide pages in the toolbar's Modus (Dunkel/Hell), like the examples on them: the container follows the data-mode
+ * attribute that applyTheme sets (switchTheme), and so does docs.css.
  */
 function ThemedDocs({ context, children }: PropsWithChildren<DocsContainerProps>) {
   const store = (context as unknown as { store?: { userGlobals?: { get(): Record<string, unknown> } } }).store;
   const [mode, setMode] = useState(() => store?.userGlobals?.get().mode ?? 'dark');
   useEffect(() => {
-    const update = ({ globals }: { globals: Record<string, unknown> }) => setMode(globals.mode ?? 'dark');
-    context.channel.on(GLOBALS_UPDATED, update);
-    return () => context.channel.off(GLOBALS_UPDATED, update);
-  }, [context.channel]);
+    const root = document.documentElement;
+    const follow = () => setMode(root.dataset.mode ?? 'dark');
+    const observer = new MutationObserver(follow);
+    observer.observe(root, { attributes: true, attributeFilter: ['data-mode'] });
+    return () => observer.disconnect();
+  }, []);
   return <DocsContainer context={context} theme={mode === 'light' ? themes.light : themes.dark}>{children}</DocsContainer>;
 }
 
