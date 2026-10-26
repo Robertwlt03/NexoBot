@@ -343,7 +343,7 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
             <ItemVisual item={item} className="h-full w-full scale-[1.25] rounded-none !bg-transparent" />
           </div>
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[.16em]" style={{ color: tint }}>{RARITY_LABELS[item.rarity]} · {SLOT_LABELS[item.slot]}</p>
+            <p className="text-[11px] font-bold uppercase tracking-[.16em]" style={{ color: `color-mix(in srgb, ${tint} 50%, var(--text-strong))` }}>{RARITY_LABELS[item.rarity]} · {SLOT_LABELS[item.slot]}</p>
             <h2 className="mt-1.5 text-[26px] font-bold leading-tight tracking-tight">{item.name}</h2>
             <p className="mt-2 text-[14px] text-body">{item.description}</p>
           </div>

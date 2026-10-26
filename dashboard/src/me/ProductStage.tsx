@@ -98,8 +98,8 @@ export function ProductStage({ items, tint, kicker }: { items: CosmeticItem[]; t
           : <div className="w-full max-w-[620px] overflow-hidden rounded-2xl shadow-[0_30px_80px_-24px_rgba(0,0,0,.9)] ring-1 ring-white/10"><TryOnPreview items={items} surface={view.surface} /></div>}
         {views.length > 1 && (
           <>
-            <button type="button" aria-label="Vorherige Ansicht" onClick={() => step(-1)} className="icon-btn absolute left-3 top-1/2 z-10 -translate-y-1/2 bg-black/45 text-white backdrop-blur hover:bg-black/60"><Icon name="arrowLeft" size={18} /></button>
-            <button type="button" aria-label="Nächste Ansicht" onClick={() => step(1)} className="icon-btn absolute right-3 top-1/2 z-10 -translate-y-1/2 bg-black/45 text-white backdrop-blur hover:bg-black/60"><Icon name="arrowRight" size={18} /></button>
+            <button type="button" aria-label="Vorherige Ansicht" onClick={() => step(-1)} className="icon-btn absolute left-3 top-1/2 z-10 -translate-y-1/2 bg-black/45 text-[#fff]! backdrop-blur hover:bg-black/60"><Icon name="arrowLeft" size={18} /></button>
+            <button type="button" aria-label="Nächste Ansicht" onClick={() => step(1)} className="icon-btn absolute right-3 top-1/2 z-10 -translate-y-1/2 bg-black/45 text-[#fff]! backdrop-blur hover:bg-black/60"><Icon name="arrowRight" size={18} /></button>
           </>
         )}
       </div>

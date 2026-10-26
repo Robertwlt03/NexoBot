@@ -173,7 +173,7 @@ function BundleDetail({ bundle, parts, deal, onClose }: { bundle: ShopBundle; pa
             <BundleArt items={items} large />
           </div>
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[.16em]" style={{ color: tint }}>Paket · {items.length} Artikel</p>
+            <p className="text-[11px] font-bold uppercase tracking-[.16em]" style={{ color: `color-mix(in srgb, ${tint} 50%, var(--text-strong))` }}>Paket · {items.length} Artikel</p>
             <h2 className="mt-1.5 text-[26px] font-bold leading-tight tracking-tight">{bundle.name}</h2>
             <p className="mt-2 text-[14px] text-body">{bundle.description}</p>
             {deal && <p className="mt-2 text-[13px] font-semibold text-warn">{deal}, schon im Paketpreis enthalten.</p>}
@@ -238,6 +238,7 @@ export function BundleSection({ bundles, listings, event }: { bundles: ShopBundl
   const visible = expanded ? shown : shown.slice(0, 4);
   return (
     // A showcase of its own (dark in both modes), so bundles do not read as just more cards.
+    <>
     <section data-mode="dark" className="relative mt-12 overflow-hidden rounded-[28px] border border-white/[.07] bg-[#120d09] p-5 md:p-7">
       <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#f2a531]/15 blur-[90px]" />
       <div className="pointer-events-none absolute -bottom-28 right-0 h-72 w-96 rounded-full bg-[#8fb36b]/12 blur-[100px]" />
@@ -259,7 +260,9 @@ export function BundleSection({ bundles, listings, event }: { bundles: ShopBundl
           </button>
         </div>
       )}
-      {open && <BundleDetail bundle={open} parts={partsOf(open)} deal={eventDeal(partsOf(open), event)} onClose={() => setOpenId(null)} />}
     </section>
+    {/* Outside the dark showcase, so the dialog follows the page mode like the item dialog. */}
+    {open && <BundleDetail bundle={open} parts={partsOf(open)} deal={eventDeal(partsOf(open), event)} onClose={() => setOpenId(null)} />}
+    </>
   );
 }
