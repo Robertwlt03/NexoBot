@@ -23,6 +23,11 @@ const THEME_KEY = 'nexo.dashboardTheme';
 let appliedTheme = '';
 
 /**
+ * Decodes every image on the page, also hidden ones: the backdrop holds a walnut and an oak image and hides one per
+ * mode, and a browser decodes a hidden image only when it first shows, which stalled the first light/dark switch.
+ */
+const decodeImages = () => Promise.all([...document.images].map((image) => image.decode().catch(() => undefined)));
+/**
  * Colour scheme and light/dark, switched live: nothing remounts or reloads. The CSS variables change in place, and
  * every ThemeProvider (the one around the building blocks here and the one inside a page) follows through the same
  * storage event another dashboard tab would send (dashboard/src/theme.tsx), so charts recolour too. A switch crossfades
@@ -36,14 +41,14 @@ function switchTheme(scheme: string, mode: 'dark' | 'light', { now = false } = {
   const first = !appliedTheme;
   appliedTheme = value;
   try { localStorage.setItem(THEME_KEY, value); } catch { /* private mode */ }
-  const update = () => {
+  const apply = () => {
     applyTheme(theme);
     flushSync(() => window.dispatchEvent(new StorageEvent('storage', { key: THEME_KEY, newValue: value })));
   };
-  // The first render only sets the theme up; nothing to fade from yet.
-  if (first) applyTheme(theme);
-  else if (now) update();
-  else inTransition(update);
+  // The first render only sets the theme up (and decodes the other mode's images once the page is idle).
+  if (first) { applyTheme(theme); setTimeout(() => void decodeImages(), 1500); }
+  else if (now) apply();
+  else inTransition(async () => { await decodeImages(); apply(); });
 }
 
 /**
