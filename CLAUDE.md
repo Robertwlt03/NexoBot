@@ -5,7 +5,10 @@ PostgreSQL. Fork of TitanBot (the LICENSE keeps the codebymitch line).
 
 ## Communication and style
 
-- Code, comments and commit messages in English; talk to the user in German.
+- Code, comments and commit messages in English; always answer the user in German.
+- Write answers so they can be read aloud: whole German sentences that follow on from each other, with the reasons
+  and connections spelled out ("weil", "deshalb", "danach"). No clipped keyword lists or telegram style; use a list
+  only for real steps or options, and then each point as a full sentence.
 - Commit footer: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 - PR body footer: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 
