@@ -16,7 +16,7 @@ const SAMPLE = [12, 18, 15, 24, 21, 30, 27, 36, 33, 41];
 const HEADER: Record<string, string> = {
   walnuss: `url(${walnut}) center / cover`,
   eiche: `url(${oak}) center / cover`,
-  cyberpunk: 'repeating-linear-gradient(115deg, #fcee0a 0 2px, transparent 2px 6px) left 10px top 2px / 60px 7px no-repeat, linear-gradient(#fcee0a, #fcee0a) left 0 top 0 / 100% 2px no-repeat, radial-gradient(60% 120% at 100% 0%, rgb(0 240 255 / .22), transparent 60%), #0b0c0f',
+  cyberpunk: 'var(--hatch-fade) left 10px top 2px / 120px 7px no-repeat, linear-gradient(#fcee0a, #fcee0a) left 0 top 0 / 100% 2px no-repeat, radial-gradient(60% 120% at 100% 0%, rgb(0 240 255 / .22), transparent 60%), #0b0c0f',
 };
 
 /** A theme as a small page: its header material, a card on its canvas and its accent. */
@@ -77,7 +77,7 @@ export default function DesignPage() {
 
       <div className="mt-4">
         <div className="card card-hero">
-          <p className="page-kicker">Vorschau</p>
+          <p className="page-kicker"><span>Vorschau</span></p>
           <div className="mt-2 flex items-end gap-3">
             <span className="text-[44px] font-extralight leading-none tracking-[-0.04em] text-ink tabular-nums">2.480</span>
             <span className="pb-1 text-[13px] text-[var(--accent-text-muted)]">so sehen Hervorhebungen aus</span>

@@ -44,11 +44,12 @@ const CRACKS = [
 /** The Cyberpunk plate: big cuts top left and bottom right, small ones on the other corners; the frame sits 34 inside. */
 const PLATE = 'M174 24H952L1000 72V850L850 1000H72L24 952V174Z';
 const FRAME = 'M188 58H938L966 86V836L836 966H86L58 938V188Z';
-/** The site's yellow hatching, bottom left inside the frame. */
-const HATCH = Array.from({ length: 15 }, (_, k) => {
+/** The Edgerunners hatching bottom left inside the frame: stripes that grow wider until they close into a solid bar. */
+const HATCH = Array.from({ length: 11 }, (_, k) => {
   const x = 112 + k * 20;
-  return `M${x} 930H${x + 12}L${x + 32} 892H${x + 20}Z`;
-}).join('');
+  const w = 3 + 16 * (k / 10) ** 1.2;
+  return `M${x} 930H${x + w}L${x + w + 20} 892H${x + 20}Z`;
+}).join('') + 'M332 930H452L472 892H352Z';
 
 function orbitPoint(angle: number) {
   const x = ORBIT.rx * Math.cos(angle);
