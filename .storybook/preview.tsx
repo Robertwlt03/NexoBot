@@ -1,5 +1,5 @@
 // Toolbar switches (colour scheme, light/dark, desktop/phone) for every story. The sample API lives in sample.ts.
-import { useEffect, useRef, useState, type PropsWithChildren } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type PropsWithChildren } from 'react';
 import { flushSync } from 'react-dom';
 import type { Decorator, Preview } from '@storybook/react-vite';
 import { DocsContainer, type DocsContainerProps } from '@storybook/addon-docs/blocks';
@@ -135,6 +135,14 @@ function ThemedDocs({ context, children }: PropsWithChildren<DocsContainerProps>
     window.addEventListener('storage', follow);
     return () => window.removeEventListener('storage', follow);
   }, []);
+  // The guide page scrolls inside #storybook-docs, not the document (docs.css .sb-docs-scroll): the theme crossfade
+  // snapshots the unscrolled document, which older Chromium (the Claude app's built-in browser) got wrong for a
+  // scrolled one, showing the old and new page offset or switching it in halves. Each guide page starts at the top.
+  useLayoutEffect(() => {
+    document.documentElement.classList.add('sb-docs-scroll');
+    document.getElementById('storybook-docs')?.scrollTo(0, 0);
+    return () => document.documentElement.classList.remove('sb-docs-scroll');
+  }, [context]);
   return <DocsContainer context={context} theme={mode === 'light' ? themes.light : themes.dark}>{children}</DocsContainer>;
 }
 

@@ -36,6 +36,18 @@
   --sbx-keyword: #cf222e;
 }
 
+/* Guide pages scroll inside #storybook-docs instead of the document (preview.tsx ThemedDocs explains why). */
+html.sb-docs-scroll,
+html.sb-docs-scroll body {
+  height: 100%;
+  overflow: hidden;
+}
+html.sb-docs-scroll #storybook-docs {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 /* The page text in Storybook's colour; it would otherwise inherit the dashboard's text colour from styles.css. */
 .sbdocs.sbdocs-wrapper { color: var(--sbx-prose); }
 
