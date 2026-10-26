@@ -11,7 +11,7 @@ import { useUser } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
 import { ProfileCardPreview } from '../components/ProfileCardPreview';
 import { ProductStage, TryOnPreview } from './ProductStage';
-import { Empty, Field, Notice, Select, Switch, Tabs, TextInput } from '../components/ui';
+import { Empty, Field, Notice, Select, Switch, TextInput } from '../components/ui';
 import {
   cardSubject, countdown, equipItem, formatDate, isEquipped, reducedMotion, resolveCosmetics, startsIn, useEquip, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
@@ -215,16 +215,25 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
   }, { scope: root, dependencies: [slot, rarity, sort, affordable, deals, listings.length], revertOnUpdate: true });
 
   const counts = useMemo(() => new Map(COSMETIC_SLOTS.map((s) => [s, listings.filter((l) => l.item.slot === s).length])), [listings]);
+  const kinds: [CosmeticSlot | 'all', string, number][] = [['all', 'Alle', listings.length], ...COSMETIC_SLOTS.filter((s) => counts.get(s)).map((s): [CosmeticSlot, string, number] => [s, SLOT_LABELS[s], counts.get(s) ?? 0])];
   const open = listings.find((l) => l.item.id === openId);
 
   return (
     <div ref={root}>
       {filters && (
         <>
-          <Tabs value={slot} onChange={setSlot} items={[
-            { id: 'all', label: 'Alle', count: listings.length },
-            ...COSMETIC_SLOTS.filter((s) => counts.get(s)).map((s) => ({ id: s, label: SLOT_LABELS[s], count: counts.get(s) })),
-          ]} />
+          {/* Item kinds as chips that wrap onto a second line, so every kind is one click away (no sideways scrolling).
+              Phones get the same choice as a dropdown, where the chips would fill half the screen. */}
+          <div className="filter-chips mb-4 max-sm:hidden" role="group" aria-label="Art">
+            {kinds.map(([id, label, count]) => (
+              <button key={id} type="button" className="filter-chip" aria-pressed={slot === id} onClick={() => setSlot(id)}>
+                {label} <span className="tab-count">{count}</span>
+              </button>
+            ))}
+          </div>
+          <div className="mb-3 sm:hidden">
+            <Select value={slot} onChange={setSlot} options={kinds.map(([id, label, count]) => ({ value: id, label: `${label} (${count})` }))} />
+          </div>
           <div className="mb-5 grid grid-cols-2 items-center gap-3 md:grid-cols-[1fr_170px_170px_auto_auto]">
             <div className="col-span-2 md:col-span-1"><TextInput value={query} onChange={setQuery} placeholder="Artikel suchen …" /></div>
             <Select value={rarity} onChange={setRarity} options={[{ value: 'all', label: 'Alle Seltenheiten' }, ...RARITIES.map((r) => ({ value: r, label: RARITY_LABELS[r] }))]} />
