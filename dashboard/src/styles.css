@@ -217,9 +217,8 @@
 
 /* Mode-independent tokens. */
 :root {
-  /* Cyberpunk hatching that fades in, after the Edgerunners logo: slanted stripes that grow wider until they close into
-     solid yellow. --hatch-fade ends in a solid tab (header), --hatch-lead runs into the kicker label. */
-  --hatch-fade: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 16'%3E%3Cpath fill='%23fcee0a' d='M0 16h1.0l8 -16h-1.0zM12 16h1.4l8 -16h-1.4zM24 16h1.9l8 -16h-1.9zM36 16h2.4l8 -16h-2.4zM48 16h3.0l8 -16h-3.0zM60 16h3.7l8 -16h-3.7zM72 16h4.3l8 -16h-4.3zM84 16h5.0l8 -16h-5.0zM96 16h5.7l8 -16h-5.7zM108 16h6.4l8 -16h-6.4zM120 16h7.1l8 -16h-7.1zM132 16h7.9l8 -16h-7.9zM144 16h8.7l8 -16h-8.7zM156 16h9.4l8 -16h-9.4zM168 16h10.2l8 -16h-10.2zM180 16h11.0l8 -16h-11.0zM192 16h100l8 -16h-100z'/%3E%3C/svg%3E");
+  /* Cyberpunk hatching that fades in, after the Edgerunners logo: slanted stripes that grow wider until they run into
+     the kicker label. */
   --hatch-lead: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 14'%3E%3Cpath fill='%23fcee0a' d='M0 14h1.0l6 -14h-1.0zM8 14h1.6l6 -14h-1.6zM16 14h2.5l6 -14h-2.5zM24 14h3.4l6 -14h-3.4zM32 14h4.4l6 -14h-4.4zM40 14h5.4l6 -14h-5.4zM48 14h6.5l6 -14h-6.5z'/%3E%3C/svg%3E");
   --accent: #8fb36b;
   --accent-strong: #759358;
@@ -555,12 +554,21 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
     linear-gradient(90deg, rgb(230 236 245 / 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
     #0b0c0f;
 }
-/* The site's fading yellow hatching hanging from a yellow line along the top edge, like its nav strip; its own layer above the
-   wash over the text column, so it keeps its full yellow (components/Backdrop.tsx). */
-.cyber-stripe {
-  background:
-    var(--hatch-fade) left 32px top 2px / 300px 16px no-repeat,
-    linear-gradient(#fcee0a, #fcee0a) left 0 top 0 / 100% 2px no-repeat;
+/* A thin yellow line along the top edge, like the site's nav strip; its own layer above the wash over the text column. */
+.cyber-stripe { background: linear-gradient(rgb(252 238 10 / 0.5), rgb(252 238 10 / 0.5)) left 0 top 0 / 100% 1px no-repeat; }
+/*
+ * The page icon in its target corners (components/CircuitArt.tsx): fixed size, 112px from 768px and 72px below (and a
+ * little higher, so it ends before the description), at the height of the page header and flush with the right edge of
+ * the content column (--column from Backdrop.tsx; the
+ * column's side padding is 16px, 40px from 768px).
+ */
+.cyber-hud-at { --pad: 16px; top: 14px; right: max(var(--pad), calc(50% - var(--column) / 2)); }
+.cyber-hud { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; color: rgb(var(--ov) / 0.35); }
+.cyber-hud svg { width: 72px; height: 72px; }
+.cyber-hud-tag { font-family: var(--font-display); font-size: 10px; line-height: 1; letter-spacing: 0.14em; color: var(--text-faint); white-space: nowrap; }
+@media (min-width: 768px) {
+  .cyber-hud-at { --pad: 40px; top: 24px; }
+  .cyber-hud svg { width: 112px; height: 112px; }
 }
 [data-mode="light"] .wood-dark { display: none; }
 [data-mode="light"] .wood-light { display: block; }
@@ -663,8 +671,12 @@ main:has(.page-head > .actions) .engraving-icon { display: none; }
 [data-theme="cyberpunk"] .switch.on::after { background: var(--accent-ink); }
 /* The hero is a black panel with a yellow edge and a cyan glow; the shared yellow-into-black gradient turns olive. */
 [data-theme="cyberpunk"] .card-hero { background: radial-gradient(90% 140% at 100% 0%, rgb(0 240 255 / 0.12), transparent 55%), var(--highlight), var(--bg-card); border-color: var(--accent-line); }
-/* The header buttons stay left of the icon in its target corners (components/CircuitArt.tsx). */
-@media (min-width: 768px) { [data-theme="cyberpunk"] .page-head:has(> .actions) { padding-right: 150px; } }
+/* Header text and buttons stay left of the icon in its target corners (components/CircuitArt.tsx, 112px wide). */
+@media (min-width: 768px) { [data-theme="cyberpunk"] .page-head { padding-right: 136px; } }
+/* On phones the description runs below the icon; the kicker and the title keep its 72px clear beside it. */
+@media (max-width: 767px) { [data-theme="cyberpunk"] .page-head :is(.page-kicker, h1) { padding-right: 84px; } }
+/* Between phone and tablet the buttons still sit beside the title, so they keep the icon's room too. */
+@media (min-width: 600px) and (max-width: 767px) { [data-theme="cyberpunk"] .page-head .actions { padding-right: 84px; } }
 [data-theme="cyberpunk"] :is(h1, h2) { text-transform: uppercase; letter-spacing: 0.02em; }
 [data-theme="cyberpunk"] .page-head h1 { text-shadow: 2px 2px 0 rgb(93 227 155 / 0.75), -2px -2px 0 rgb(195 98 192 / 0.75), 0 0 8px var(--scrim-color); }
 /* The kicker as the "EDGERUNNERS" label of the logo: fading hatching running into a yellow tag with black capitals. */

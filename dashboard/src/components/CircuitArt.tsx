@@ -1,24 +1,20 @@
 // Header art of the Cyberpunk theme, the counterpart of Engraving.tsx on the wood: the page's own icon as a cyan neon
-// sign, locked in by four yellow target corners like a HUD, with a small tag above (NC/ + the page name, flush right so
-// long names grow to the left). Kept small and high, so it stays inside the page header and never runs under the first
-// card. A soft blur under the icon gives the glow.
+// sign, locked in by four muted target corners like a HUD, with a small tag above (NC/ + the page name, flush right so
+// long names grow to the left). Fixed size in CSS pixels (styles.css .cyber-hud), so it stays legible on small screens
+// instead of shrinking with the header; Backdrop.tsx lines it up with the right edge of the content column. A soft blur
+// under the icon gives the glow.
 import { Children, cloneElement, isValidElement, useId } from 'react';
 import type { ReactNode } from 'react';
 
-const YELLOW = '#fcee0a';
 const CYAN = '#00f0ff';
 
-/** Where the 24px icon sits on the 600×320 board and how big it is drawn (viewBox units). */
-const ICON_AT = { x: 472, y: 54, scale: 3.6 } as const;
-/** The target corners: 18 units outside the icon, 22 long; the box ends at y 158. */
-const BOX = { x: 454, y: 36, size: 24 * ICON_AT.scale + 36, arm: 22 } as const;
-const CORNERS = (() => {
-  const { x, y, size, arm } = BOX;
-  const r = x + size;
-  const b = y + size;
-  return `M${x} ${y + arm}V${y}H${x + arm}M${r - arm} ${y}H${r}V${y + arm}M${r} ${b - arm}V${b}H${r - arm}M${x + arm} ${b}H${x}V${b - arm}`;
-})();
-const ICON_LINE = 2.6;
+/** The 120×120 board: target corners around it, the 24px icon in the middle with 20 units of room. */
+const SIZE = 120;
+const ARM = 20;
+const ICON_SCALE = (SIZE - 40) / 24;
+const CORNERS = `M1 ${ARM}V1H${ARM}M${SIZE - ARM} 1H${SIZE - 1}V${ARM}M${SIZE - 1} ${SIZE - ARM}V${SIZE - 1}H${SIZE - ARM}M${ARM} ${SIZE - 1}H1V${SIZE - ARM}`;
+/** Icon line width on the 24px grid. */
+const ICON_LINE = 1.4;
 
 /** Details with their own strokeWidth on the 24px grid keep their ratio to the rest of the icon. */
 function scaleStrokes(node: ReactNode, factor: number): ReactNode {
@@ -32,32 +28,27 @@ function scaleStrokes(node: ReactNode, factor: number): ReactNode {
   });
 }
 
-export function CircuitArt({ art, label, width }: { art?: ReactNode; label?: string; width: string }) {
+export function CircuitArt({ art, label }: { art?: ReactNode; label?: string }) {
   const id = useId();
-  const iconArt = art ? scaleStrokes(art, ICON_LINE / ICON_AT.scale / 2) : null;
-  const lines = (glow: boolean) => (
-    <g fill="none" strokeLinecap="round" strokeLinejoin="round" filter={glow ? `url(#${id}-glow)` : undefined} opacity={glow ? 0.6 : 1}>
-      {iconArt && (
-        <g className="engraving-icon" transform={`translate(${ICON_AT.x} ${ICON_AT.y}) scale(${ICON_AT.scale})`} stroke={CYAN}
-          strokeWidth={(glow ? ICON_LINE * 2.2 : ICON_LINE) / ICON_AT.scale} strokeOpacity={glow ? 0.8 : 1}>
-          {iconArt}
-        </g>
-      )}
+  if (!art) return null;
+  const iconArt = scaleStrokes(art, ICON_LINE / 2);
+  const icon = (glow: boolean) => (
+    <g className="engraving-icon" transform={`translate(20 20) scale(${ICON_SCALE})`} fill="none" stroke={CYAN} strokeLinecap="round" strokeLinejoin="round"
+      strokeWidth={glow ? ICON_LINE * 2.2 : ICON_LINE} strokeOpacity={glow ? 0.5 : 1} filter={glow ? `url(#${id}-glow)` : undefined}>
+      {iconArt}
     </g>
   );
   return (
-    <svg viewBox="0 0 600 320" preserveAspectRatio="xMaxYMin meet" aria-hidden="true" className="absolute right-0 top-0 h-full" style={{ width }}>
-      <defs>
-        <filter id={`${id}-glow`} x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="4" /></filter>
-      </defs>
-      {iconArt && <path d={CORNERS} fill="none" stroke={YELLOW} strokeWidth="2.5" />}
-      {iconArt && label && (
-        <text x={BOX.x + BOX.size} y={BOX.y - 10} textAnchor="end" fill={YELLOW} fontSize="15" letterSpacing="2" style={{ fontFamily: 'var(--font-display)' }}>
-          NC/{label.toUpperCase().replace(/\s+/g, '_')}
-        </text>
-      )}
-      {lines(true)}
-      {lines(false)}
-    </svg>
+    <div className="cyber-hud">
+      {label && <span className="cyber-hud-tag">NC/{label.toUpperCase().replace(/\s+/g, '_')}</span>}
+      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} aria-hidden="true">
+        <defs>
+          <filter id={`${id}-glow`} x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.2" /></filter>
+        </defs>
+        <path d={CORNERS} fill="none" stroke="currentColor" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+        {icon(true)}
+        {icon(false)}
+      </svg>
+    </div>
   );
 }

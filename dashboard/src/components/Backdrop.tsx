@@ -1,9 +1,9 @@
 /// <reference types="vite/client" />
 // Page header backdrop, the same on every page and made of the theme's material: walnut or golden oak with the page's
-// icon and a vine burnt in (assets/wood/CREDITS.md), or for Cyberpunk a black grid with yellow hatching and the icon as a neon sign in target corners.
+// icon and a vine burnt in (assets/wood/CREDITS.md), or for Cyberpunk a black grid with a thin yellow line and the icon as a neon sign in target corners.
 // Over the text column it is washed lightly (--scrim, measured for 4.5:1 text), right of it the material shows; it
 // fades out downwards. styles.css switches the layers by data-theme and data-mode.
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import walnut from '../assets/wood/walnut.webp';
 import oak from '../assets/wood/oak.webp';
 import { CircuitArt } from './CircuitArt';
@@ -33,7 +33,8 @@ export function PageBackdrop({ art, label, column = 1040 }: { art?: ReactNode; l
       <div className="look-cyber cyber-stripe absolute inset-x-0 top-0 h-4" />
       {/* Right of the text column; on narrow screens a small version in the corner. */}
       <div className="look-wood absolute inset-0"><Engraving art={art} width={artWidth} /></div>
-      <div className="look-cyber absolute inset-0"><CircuitArt art={art} label={label} width={artWidth} /></div>
+      {/* Cyberpunk: the icon in its target corners at a fixed size, flush with the right edge of the content column. */}
+      <div className="look-cyber cyber-hud-at absolute" style={{ '--column': `${column}px` } as CSSProperties}><CircuitArt art={art} label={label} /></div>
     </div>
   );
 }
