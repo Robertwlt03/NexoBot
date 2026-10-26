@@ -4,7 +4,7 @@ import { useApi } from '../api';
 import { Card, Notice, PageHeader, Spinner } from '../components/ui';
 import { countdown, formatDate, num, startsIn, useMe, useNow } from './api';
 import { CommunityGoals } from './CommunityGoals';
-import { EVENT_THEMES, eventTheme } from './EventScene';
+import { EventIcon } from './EventScene';
 import { Bernis, CoinStacks, Glyph, ItemVisual } from './visuals';
 
 const EARN: [string, number][] = [
@@ -26,11 +26,9 @@ function EventList({ running, upcoming }: { running: ShopEvent[]; upcoming: Shop
     <Card title="Events" description="Während eines Events gibt es im Shop Rabatte, eigene Artikel und auf jedem Server ein Gemeinschaftsziel.">
       <ul className="m-0 list-none divide-y divide-white/[.06] p-0">
         {rows.map(({ event, live }) => {
-          const { tint, glyph } = EVENT_THEMES[eventTheme(event)];
           return (
             <li key={event.id} className="flex items-center gap-3 py-2.5 text-[13.5px]">
-              {/* The season's tint, mixed with the text colour so the icon keeps its contrast in both modes. */}
-              <span className="shrink-0" style={{ color: `color-mix(in srgb, ${tint} 70%, var(--text-strong))` }}><Glyph name={glyph} size={16} /></span>
+              <EventIcon event={event} />
               {/* Name and dates on the left, discount and timing on the right; each side wraps on its own on phones. */}
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-ink">{event.name}</span>

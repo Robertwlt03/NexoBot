@@ -19,7 +19,7 @@ import { Glyph, ItemVisual, Bernis, Price, RARITY_TILE, RarityLabel, backgroundS
 import { ProductDialog } from './ProductDialog';
 import { BundleSection } from './bundles';
 import { Celebration } from './Celebration';
-import { EVENT_THEMES, EventBackdrop, SCENE_ROOM, eventTheme } from './EventScene';
+import { EventBackdrop, EventIcon, SCENE_ROOM, eventTheme } from './EventScene';
 import { Icon } from '../icons';
 
 export type ShopVariant = 'shop' | 'blackmarket';
@@ -82,11 +82,9 @@ function NextEvent({ events }: { events: ShopEvent[] }) {
   const now = useNow(60_000);
   const next = events[0];
   if (!next) return null;
-  const { tint, glyph } = EVENT_THEMES[eventTheme(next)];
   return (
     <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-[13.5px] text-mute">
-      {/* The season's tint, mixed with the text colour so the icon keeps its contrast in both modes. */}
-      <span className="inline-flex" style={{ color: `color-mix(in srgb, ${tint} 70%, var(--text-strong))` }}><Glyph name={glyph} size={18} /></span>
+      <EventIcon event={next} />
       Nächstes Event: <span className="text-ink">{next.name}</span>
       <span>{startsIn(next.startsAt, now)}{next.discount > 0 ? `, −${next.discount} %` : ''}</span>
       <Link to="/me/saison" className="ml-auto text-accent-text">Alle Events</Link>
