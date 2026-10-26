@@ -1,5 +1,8 @@
 // Toolbar switches (colour scheme, light/dark, desktop/phone) for every story. The sample API lives in sample.ts.
+import { useEffect, useState, type PropsWithChildren } from 'react';
 import type { Decorator, Preview } from '@storybook/react-vite';
+import { DocsContainer, type DocsContainerProps } from '@storybook/addon-docs/blocks';
+import { GLOBALS_UPDATED } from 'storybook/internal/core-events';
 import { themes } from 'storybook/theming';
 import { applyTheme, ThemeProvider } from '../dashboard/src/theme';
 import { sample, themeFor } from './sample';
@@ -43,6 +46,21 @@ const withDevice: Decorator = (Story, context) => {
   );
 };
 
+/**
+ * Guide pages in the toolbar's Modus (Dunkel/Hell), like the examples on them; docs.css follows the same switch through
+ * the data-mode attribute that applyTheme sets.
+ */
+function ThemedDocs({ context, children }: PropsWithChildren<DocsContainerProps>) {
+  const store = (context as unknown as { store?: { userGlobals?: { get(): Record<string, unknown> } } }).store;
+  const [mode, setMode] = useState(() => store?.userGlobals?.get().mode ?? 'dark');
+  useEffect(() => {
+    const update = ({ globals }: { globals: Record<string, unknown> }) => setMode(globals.mode ?? 'dark');
+    context.channel.on(GLOBALS_UPDATED, update);
+    return () => context.channel.off(GLOBALS_UPDATED, update);
+  }, [context.channel]);
+  return <DocsContainer context={context} theme={mode === 'light' ? themes.light : themes.dark}>{children}</DocsContainer>;
+}
+
 const preview: Preview = {
   // Every component gets a docs page; the overviews, pages and foundations opt out with '!autodocs'.
   tags: ['autodocs'],
@@ -61,8 +79,7 @@ const preview: Preview = {
     options: { storySort: { order: ['Start', 'Übersicht', 'Vergleich', 'Discord', 'Grundlagen', 'Komponenten', ['Aktionen', 'Layout', 'Formular', 'Rückmeldung', 'Diagramme', 'Marke', 'Discord'], 'Seiten'] } },
     controls: { expanded: true, sort: 'requiredFirst' },
     // The example's code as a tab in the addon panel (the panel only opens on component stories, see manager.tsx).
-    // Guide pages follow the system's light/dark setting like Storybook's own frame does (docs.css matches it).
-    docs: { codePanel: true, theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? themes.dark : themes.light },
+    docs: { codePanel: true, container: ThemedDocs },
     // Code snippets keep a tag's attributes on one line while it fits, instead of one attribute per line.
     jsx: { maxInlineAttributesLineLength: 90 },
   },

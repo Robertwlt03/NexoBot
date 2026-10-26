@@ -44,8 +44,11 @@ function PanelSync() {
   return null;
 }
 
-/** True when the open story lists this switch in `parameters.switches` (all three by default, see preview.tsx). */
-const useSwitch = (name: string) => useParameter<string[]>('switches', ['scheme', 'mode', 'device']).includes(name);
+const ORDER = ['scheme', 'mode', 'device'];
+/** The switches the open story lists in `parameters.switches` (all three by default, see preview.tsx). */
+const useSwitches = () => useParameter<string[]>('switches', ORDER);
+/** A separator goes only between our switches: in front of one when an earlier one is shown too. */
+const followsAnother = (switches: string[], name: string) => ORDER.slice(0, ORDER.indexOf(name)).some((other) => switches.includes(other));
 
 const Swatch = ({ colors }: { colors: string[] }) => (
   <span style={{ display: 'inline-flex' }}>
@@ -57,11 +60,10 @@ const Swatch = ({ colors }: { colors: string[] }) => (
 function SchemePicker() {
   const [globals, updateGlobals] = useGlobals();
   const narrow = useNarrow();
-  if (!useSwitch('scheme')) return null;
+  if (!useSwitches().includes('scheme')) return null;
   const current = THEME_PRESETS.find((p) => p.id === globals.scheme) ?? THEME_PRESETS[0];
   return (
     <>
-      <Separator />
       {/* Select keeps its choice internally; the key resets it when the scheme comes from the address. */}
       <Select key={current.id} ariaLabel="Farbvorlage" tooltip="Farbvorlage" size="small" padding="small"
         icon={<Swatch colors={[current.primary, current.secondary]} />} showSelectedOptionTitle={!narrow}
@@ -77,11 +79,12 @@ function SchemePicker() {
 function Pair({ caption, name, options }: { caption: string; name: string; options: { value: string; label: string; icon: ReactNode }[] }) {
   const [globals, updateGlobals] = useGlobals();
   const narrow = useNarrow();
-  if (!useSwitch(name)) return null;
+  const switches = useSwitches();
+  if (!switches.includes(name)) return null;
   const value = globals[name] ?? options[0].value;
   return (
     <>
-      <Separator />
+      {followsAnother(switches, name) && <Separator />}
       <div role="group" aria-label={caption} style={{ display: 'flex', gap: 2 }}>
         {options.map((option) => (
           <ToggleButton key={option.value} pressed={option.value === value} size="small" padding={narrow ? 'small' : 'medium'} variant="ghost"

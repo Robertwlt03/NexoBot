@@ -1,10 +1,26 @@
 /*
  * Guide pages: "Show code" and "Copy code" sit in a footer bar of the example box, styled like Storybook's own bar
  * above the example, and the code opens as a quiet card indented in the box (GitHub's syntax colours, ≥ 4.5:1 on the
- * card). The guide pages follow the system's light/dark setting (preview.tsx), so these colours do too: they are
- * those of Storybook's light and dark docs themes. The doubled class beats the emotion class Storybook injects later.
+ * card). The guide pages follow the toolbar's Modus (preview.tsx), and so do these colours through data-mode: they
+ * are those of Storybook's dark and light docs themes. The doubled class beats the emotion class Storybook injects
+ * later.
  */
 :root {
+  --sbx-prose: #c9cccf;
+  --sbx-frame: #222325;
+  --sbx-line: rgba(255, 255, 255, 0.1);
+  --sbx-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.2);
+  --sbx-card: #1a1b1d;
+  --sbx-card-line: rgba(255, 255, 255, 0.08);
+  --sbx-text: #e6edf3;
+  --sbx-muted: #9198a1;
+  --sbx-tag: #7ee787;
+  --sbx-component: #ffa657;
+  --sbx-attr: #79c0ff;
+  --sbx-value: #a5d6ff;
+  --sbx-keyword: #ff7b72;
+}
+:root[data-mode="light"] {
   --sbx-prose: #2e3438;
   --sbx-frame: #fff;
   --sbx-line: rgba(38, 74, 115, 0.15);
@@ -18,23 +34,6 @@
   --sbx-attr: #0550ae;
   --sbx-value: #0a3069;
   --sbx-keyword: #cf222e;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --sbx-prose: #c9cccf;
-    --sbx-frame: #222325;
-    --sbx-line: rgba(255, 255, 255, 0.1);
-    --sbx-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.2);
-    --sbx-card: #1a1b1d;
-    --sbx-card-line: rgba(255, 255, 255, 0.08);
-    --sbx-text: #e6edf3;
-    --sbx-muted: #9198a1;
-    --sbx-tag: #7ee787;
-    --sbx-component: #ffa657;
-    --sbx-attr: #79c0ff;
-    --sbx-value: #a5d6ff;
-    --sbx-keyword: #ff7b72;
-  }
 }
 
 /* The page text in Storybook's colour; it would otherwise inherit the dashboard's text colour from styles.css. */
