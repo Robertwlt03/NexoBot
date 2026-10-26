@@ -19,16 +19,66 @@ const egg = (x: number, y: number, rx: number, ry: number, fill: string) => (
   </g>
 );
 
-/** One small picture per event theme on a 24×24 grid; a function gets a unique id for its clip path. */
+/** Four-pointed twinkle. */
+const sparkle = (x: number, y: number, r: number, fill: string) => (
+  <path key={`${x}-${y}`} d={`M${x} ${y - r}Q${x + r * 0.18} ${y - r * 0.18} ${x + r} ${y}Q${x + r * 0.18} ${y + r * 0.18} ${x} ${y + r}Q${x - r * 0.18} ${y + r * 0.18} ${x - r} ${y}Q${x - r * 0.18} ${y - r * 0.18} ${x} ${y - r}Z`} fill={fill} />
+);
+
+/** A firework burst: rays fading in from the centre, a bright dot at each tip and a warm spark in the middle. */
+function burst(uid: string, key: string, cx: number, cy: number, r: number, [inner, outer]: [string, string], rays: number, width: number) {
+  const id = `${uid}-${key}`;
+  const dirs = Array.from({ length: rays }, (_, i) => {
+    const a = (i / rays) * Math.PI * 2 + 0.13;
+    return [Math.cos(a), Math.sin(a)];
+  });
+  return (
+    <g key={key}>
+      <radialGradient id={id} gradientUnits="userSpaceOnUse" cx={cx} cy={cy} r={r}>
+        <stop offset=".25" stopColor={inner} stopOpacity="0" /><stop offset=".65" stopColor={inner} /><stop offset="1" stopColor={outer} />
+      </radialGradient>
+      <path d={dirs.map(([x, y]) => `M${cx + x * r * 0.28} ${cy + y * r * 0.28}L${cx + x * r * 0.86} ${cy + y * r * 0.86}`).join('')}
+        stroke={`url(#${id})`} strokeWidth={width} strokeLinecap="round" />
+      {dirs.map(([x, y], i) => <circle key={i} cx={cx + x * r} cy={cy + y * r} r={width * 0.8} fill={outer} />)}
+      <circle cx={cx} cy={cy} r={width * 1.2} fill="#fff4d2" />
+    </g>
+  );
+}
+
+/** Snow lying along the lower edge of a pine tier: a band from xl to xr at y with soft scallops on top. */
+function snowBand(xl: number, xr: number, y: number) {
+  const n = Math.max(3, Math.round((xr - xl) / 1.7));
+  const step = (xr - xl) / n;
+  let d = `M${xl - 0.3} ${y + 0.25}`;
+  for (let i = 0; i < n; i += 1) d += `q${step / 2} -${1.5 + (i % 2) * 0.35} ${step} 0`;
+  return `${d}l.3 .35H${xl}Z`;
+}
+
+/** One small picture per event theme on a 24×24 grid; a function gets a unique id for its gradients and clip paths. */
 const EVENT_ART: Record<EventTheme, ReactNode | ((uid: string) => ReactNode)> = {
   // Two hearts, the lighter one behind.
   love: <><path d={HEART} fill="#f27b93" transform="translate(8.6 1.2) scale(.62)" /><path d={HEART} fill="#e5536f" transform="translate(.6 5.2) scale(.72)" /></>,
-  // The violet carnival mask with its gold rim and stick.
-  carnival: (
-    <g transform="translate(1.4 5.4) rotate(-8 10 6) scale(.19) translate(-12 -38)">
-      <path d="M100 76l14 40" stroke="#c98a10" strokeWidth="7" strokeLinecap="round" />
-      <path d={MASK} fill="#6d28b0" stroke="#e8b84a" strokeWidth="5" strokeLinejoin="round" />
-      <path d={MASK_EYE} fill="#170826" /><path d={MASK_EYE} transform="matrix(-1 0 0 1 120 0)" fill="#170826" />
+  // The carnival mask in violet with a gold rim, gold-ringed eyes, a jewel and a magenta-violet feather.
+  carnival: (uid) => (
+    <g transform="rotate(-6 12 12) translate(1.6 2.4) scale(.18) translate(-4 -8)">
+      <defs>
+        <linearGradient id={`${uid}-mask`} gradientUnits="userSpaceOnUse" x1="14" y1="40" x2="106" y2="80">
+          <stop offset="0" stopColor="#9d52e3" /><stop offset="1" stopColor="#57199a" />
+        </linearGradient>
+        <linearGradient id={`${uid}-gold`} gradientUnits="userSpaceOnUse" x1="10" y1="36" x2="110" y2="96">
+          <stop offset="0" stopColor="#fbe39a" /><stop offset=".5" stopColor="#d79b2c" /><stop offset="1" stopColor="#f3cf6a" />
+        </linearGradient>
+        <linearGradient id={`${uid}-plume`} gradientUnits="userSpaceOnUse" x1="8" y1="8" x2="30" y2="48">
+          <stop offset="0" stopColor="#f27bb8" /><stop offset="1" stopColor="#8a3bd0" />
+        </linearGradient>
+      </defs>
+      <path d="M34 44C26 30 25 16 34 6c5 12 5 26 0 38Z" fill="#c25bc6" />
+      <path d="M28 46C12 40 3 24 8 8c11 8 23 22 20 38Z" fill={`url(#${uid}-plume)`} />
+      <path d="M27 45L10 11" stroke={`url(#${uid}-gold)`} strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M100 76l14 40" stroke={`url(#${uid}-gold)`} strokeWidth="7" strokeLinecap="round" />
+      <path d={MASK} fill={`url(#${uid}-mask)`} stroke={`url(#${uid}-gold)`} strokeWidth="5" strokeLinejoin="round" />
+      <path d={MASK_EYE} fill="#1b0a30" stroke="#e8b84a" strokeWidth="2" />
+      <path d={MASK_EYE} transform="matrix(-1 0 0 1 120 0)" fill="#1b0a30" stroke="#e8b84a" strokeWidth="2" />
+      <circle cx="60" cy="52" r="5" fill={`url(#${uid}-gold)`} /><circle cx="60" cy="52" r="2.4" fill="#f27bb8" />
     </g>
   ),
   // Two painted eggs, pink and blue, with white zigzag bands.
@@ -68,26 +118,55 @@ const EVENT_ART: Record<EventTheme, ReactNode | ((uid: string) => ReactNode)> = 
       </>
     );
   },
-  // Black Friday: a black price tag with a gold rim, hole and percent sign, like the tags in the banner.
-  sale: (
+  // Black Friday: a black tag with a polished gold rim, a gold eyelet, a gold percent sign and a twinkle.
+  sale: (uid) => (
     <>
-      <path d="M2.5 11.6V3.5a1 1 0 0 1 1-1h8.1l9.6 9.6-9.1 9.1Z" fill="#16130f" stroke="#e8b84a" strokeWidth="1.4" strokeLinejoin="round" />
-      <circle cx="7" cy="7" r="1.6" fill="#e8b84a" />
-      <path d="M10.4 15.4l4.6-4.6" stroke="#e8b84a" strokeWidth="1.3" strokeLinecap="round" />
-      <circle cx="10.9" cy="11.1" r="1" fill="#e8b84a" /><circle cx="14.5" cy="15.1" r="1" fill="#e8b84a" />
+      <defs>
+        <linearGradient id={`${uid}-gold`} gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="21" y2="21">
+          <stop offset="0" stopColor="#fdeaa8" /><stop offset=".4" stopColor="#d49a2a" /><stop offset=".62" stopColor="#f8d97c" /><stop offset="1" stopColor="#a8701a" />
+        </linearGradient>
+        <linearGradient id={`${uid}-body`} gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="19" y2="19">
+          <stop offset="0" stopColor="#30281d" /><stop offset="1" stopColor="#0b0907" />
+        </linearGradient>
+      </defs>
+      <path d="M2.5 11.6V3.5a1 1 0 0 1 1-1h8.1l9.6 9.6-9.1 9.1Z" fill={`url(#${uid}-body)`} stroke={`url(#${uid}-gold)`} strokeWidth="1.6" strokeLinejoin="round" />
+      <circle cx="7" cy="7" r="1.8" fill={`url(#${uid}-gold)`} /><circle cx="7" cy="7" r=".75" fill="#0b0907" />
+      <g fill={`url(#${uid}-gold)`}>
+        <path d="M10.2 15.6l5-5 .9.9-5 5z" />
+        <circle cx="10.9" cy="11.2" r="1.1" /><circle cx="14.7" cy="15.1" r="1.1" />
+      </g>
+      {sparkle(19.4, 4.6, 2.2, '#f6d77a')}
     </>
   ),
-  // A snowy pine with a white tip and a few flakes.
-  winter: (
+  // A snowy pine on a snow drift: three tiers with snow along each edge, a gold star on top, flakes around it.
+  winter: (uid) => (
     <>
-      <path d="M12 1.8l5 7h-2.5l4 5.6h-2.7L20 20H4l4.2-5.6H5.5l4-5.6H7Z" fill="#3d7a4a" />
-      <rect x="10.9" y="20" width="2.2" height="2.6" rx=".5" fill="#6b4a33" />
-      <path d="M12 1.8l2.1 2.9L12 4l-2.1.7Z" fill="#eef4fa" />
-      <g fill="#eef4fa"><circle cx="9.6" cy="12.6" r=".9" /><circle cx="14.6" cy="16.6" r=".9" /><circle cx="13.2" cy="9.4" r=".8" /><circle cx="8.4" cy="17.6" r=".8" /></g>
+      <defs>
+        <linearGradient id={`${uid}-pine`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#4f9a5c" /><stop offset="1" stopColor="#2c6440" />
+        </linearGradient>
+        <linearGradient id={`${uid}-snow`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffffff" /><stop offset="1" stopColor="#cfe1f0" />
+        </linearGradient>
+      </defs>
+      <g fill="#d3e5f4">{[[3, 5.4, 0.75], [20.6, 7.2, 0.7], [2.4, 12.4, 0.6], [21.4, 13.6, 0.65], [18.2, 2.8, 0.55], [5.6, 2.6, 0.5]].map(([x, y, r]) => <circle key={`${x}`} cx={x} cy={y} r={r} />)}</g>
+      <rect x="10.9" y="17.6" width="2.2" height="3.4" rx=".5" fill="#6b4a33" />
+      <path d="M12 9.6L19.4 18.2H4.6Z" fill={`url(#${uid}-pine)`} /><path d={snowBand(4.6, 19.4, 18.2)} fill={`url(#${uid}-snow)`} />
+      <path d="M12 6l5.8 7H6.2Z" fill={`url(#${uid}-pine)`} /><path d={snowBand(6.2, 17.8, 13)} fill={`url(#${uid}-snow)`} />
+      <path d="M12 2.8l4.2 5.4H7.8Z" fill={`url(#${uid}-pine)`} /><path d={snowBand(7.8, 16.2, 8.2)} fill={`url(#${uid}-snow)`} />
+      <path d="M1.2 23.2c2.6-2.6 6.2-3.5 10.8-3.5s8.2.9 10.8 3.5Z" fill={`url(#${uid}-snow)`} />
+      <path d="M12 .6l.7 1.5 1.6.2-1.2 1.1.3 1.6-1.4-.8-1.4.8.3-1.6-1.2-1.1 1.6-.2Z" fill="#f2c14e" />
     </>
   ),
-  // Fireworks: a big gold burst, a pink and a blue one.
-  newyear: <><path d="M13.7 9.5L18.5 9.5M13.27 11.1L17.43 13.5M12.1 12.27L14.5 16.43M10.5 12.7L10.5 17.5M8.9 12.27L6.5 16.43M7.73 11.1L3.57 13.5M7.3 9.5L2.5 9.5M7.73 7.9L3.57 5.5M8.9 6.73L6.5 2.57M10.5 6.3L10.5 1.5M12.1 6.73L14.5 2.57M13.27 7.9L17.43 5.5" stroke="#d49a1a" strokeWidth="1.1" strokeLinecap="round" /><path d="M20.34 16.5L23.1 16.5M20.09 17.42L22.48 18.8M19.42 18.09L20.8 20.48M18.5 18.34L18.5 21.1M17.58 18.09L16.2 20.48M16.91 17.42L14.52 18.8M16.66 16.5L13.9 16.5M16.91 15.58L14.52 14.2M17.58 14.91L16.2 12.52M18.5 14.66L18.5 11.9M19.42 14.91L20.8 12.52M20.09 15.58L22.48 14.2" stroke="#e5536f" strokeWidth="1" strokeLinecap="round" /><path d="M6.36 19L8.4 19M6.18 19.68L7.94 20.7M5.68 20.18L6.7 21.94M5 20.36L5 22.4M4.32 20.18L3.3 21.94M3.82 19.68L2.06 20.7M3.64 19L1.6 19M3.82 18.32L2.06 17.3M4.32 17.82L3.3 16.06M5 17.64L5 15.6M5.68 17.82L6.7 16.06M6.18 18.32L7.94 17.3" stroke="#3a8fd0" strokeWidth=".9" strokeLinecap="round" /></>,
+  // Fireworks: a big gold burst, a pink and a blue one, rays fading in from the centre, and a few twinkles.
+  newyear: (uid) => (
+    <>
+      {burst(uid, 'gold', 10.6, 9.6, 8.2, ['#ffe08a', '#d99a16'], 16, 0.8)}
+      {burst(uid, 'pink', 18.6, 16.6, 4.7, ['#ffb7c8', '#e0406a'], 12, 0.7)}
+      {burst(uid, 'blue', 5.2, 18.8, 3.7, ['#acdcff', '#2f86cf'], 10, 0.65)}
+      {sparkle(20.4, 4.2, 1.6, '#f2c14e')}{sparkle(2.6, 6.4, 1.2, '#f27b93')}{sparkle(12.4, 21.4, 1.1, '#7cc4f2')}
+    </>
+  ),
   // A violet gift with a gold ribbon and bow, as in the party banner.
   party: (
     <g transform="translate(2 1.6) scale(.217) translate(-114 -214)">
