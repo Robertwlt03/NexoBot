@@ -366,8 +366,8 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 
 /* ---------- Feedback ---------- */
 .notice { display: block; padding: 13px 16px; line-height: 1.55; border-radius: var(--radius); background: color-mix(in srgb, var(--bg-card) 92%, transparent); backdrop-filter: blur(10px); border: 1px solid var(--border); border-left: 2px solid var(--accent); color: var(--text); font-size: 13.5px; }
-/* Marker of the open server in the rail (components/Layout.tsx): a groove cut into the rail, filled with the
-   sidebar colour, dark inner edge on top, a light lip below. */
+/* Marker of the open server and the divider in the rail (components/Layout.tsx): a groove cut into the rail, filled
+   with the sidebar colour, dark inner edge on top, a light lip below. */
 .rail-groove { background: var(--bg-sidebar); box-shadow: inset 1px 1px 2px rgb(0 0 0 / .45), inset -1px -1px 0 rgb(255 255 255 / .2); }
 /* On the light rail the fill stays the sidebar colour; the cut reads as sunk through a thin dark rim around it, the
    shadow along the top wall and the light lip outside, below the edge. */
