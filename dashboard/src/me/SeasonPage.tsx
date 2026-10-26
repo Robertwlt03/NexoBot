@@ -1,8 +1,10 @@
-import type { SeasonResponse } from '../../../src/web/dto/profile';
+import type { SeasonResponse, ShopEvent } from '../../../src/web/dto/profile';
 import { SEASON_POINTS } from '../../../src/shared/season';
 import { useApi } from '../api';
 import { Card, Notice, PageHeader, Spinner } from '../components/ui';
-import { countdown, num, useMe, useNow } from './api';
+import { countdown, formatDate, num, startsIn, useMe, useNow } from './api';
+import { CommunityGoals } from './CommunityGoals';
+import { EVENT_THEMES, eventTheme } from './EventScene';
 import { Bernis, CoinStacks, Glyph, ItemVisual } from './visuals';
 
 const EARN: [string, number][] = [
@@ -15,8 +17,39 @@ const EARN: [string, number][] = [
   ['Spiel gegen andere gewonnen', SEASON_POINTS.duelWin],
 ];
 
+/** Running and coming shop events: name, dates, discount and when it starts or ends. */
+function EventList({ running, upcoming }: { running: ShopEvent[]; upcoming: ShopEvent[] }) {
+  const now = useNow(60_000);
+  const rows = [...running.map((event) => ({ event, live: true })), ...upcoming.map((event) => ({ event, live: false }))];
+  if (!rows.length) return null;
+  return (
+    <Card title="Events" description="Während eines Events gibt es im Shop Rabatte, eigene Artikel und auf jedem Server ein Gemeinschaftsziel.">
+      <ul className="m-0 list-none divide-y divide-white/[.06] p-0">
+        {rows.map(({ event, live }) => {
+          const { tint, glyph } = EVENT_THEMES[eventTheme(event)];
+          return (
+            <li key={event.id} className="flex items-center gap-3 py-2.5 text-[13.5px]">
+              {/* The season's tint, mixed with the text colour so the icon keeps its contrast in both modes. */}
+              <span className="shrink-0" style={{ color: `color-mix(in srgb, ${tint} 70%, var(--text-strong))` }}><Glyph name={glyph} size={16} /></span>
+              {/* Name and dates on the left, discount and timing on the right; each side wraps on its own on phones. */}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-ink">{event.name}</span>
+                <span className="block text-[12.5px] text-mute">{formatDate(event.startsAt)} – {formatDate(event.endsAt)}</span>
+              </span>
+              <span className="shrink-0 text-right">
+                {event.discount > 0 && <span className="block tabular-nums text-ink">−{event.discount} %</span>}
+                <span className="block whitespace-nowrap text-[12.5px] text-mute">{live ? `läuft noch ${countdown(event.endsAt, now)}` : startsIn(event.startsAt, now)}</span>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </Card>
+  );
+}
+
 export default function SeasonPage() {
-  const { items } = useMe();
+  const { items, shop } = useMe();
   const now = useNow(60_000);
   const { data, error, loading, reload } = useApi<SeasonResponse>('/me/season');
   const next = data?.tiers[data.tier];
@@ -67,6 +100,9 @@ export default function SeasonPage() {
               );
             })}
           </ol>
+
+          <CommunityGoals />
+          <EventList running={shop?.events ?? []} upcoming={shop?.upcoming ?? []} />
 
           <Card title="So sammelst du Saisonpunkte" description="Alles zählt auf allen Servern mit Nexo. Am Monatsende beginnt die nächste Saison bei null.">
             <ul className="grid list-none grid-cols-1 gap-x-6 gap-y-2 p-0 sm:grid-cols-2">

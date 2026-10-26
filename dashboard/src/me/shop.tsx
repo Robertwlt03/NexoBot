@@ -13,7 +13,7 @@ import { ProfileCardPreview } from '../components/ProfileCardPreview';
 import { ProductStage, TryOnPreview } from './ProductStage';
 import { Empty, Field, Notice, Select, Switch, Tabs, TextInput } from '../components/ui';
 import {
-  cardSubject, countdown, equipItem, formatDate, isEquipped, reducedMotion, resolveCosmetics, useEquip, useMe, useMutation, useNow, useWalletUpdate,
+  cardSubject, countdown, equipItem, formatDate, isEquipped, reducedMotion, resolveCosmetics, startsIn, useEquip, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
 import { Glyph, ItemVisual, Bernis, Price, RARITY_TILE, RarityLabel, backgroundStyle } from './visuals';
 import { ProductDialog } from './ProductDialog';
@@ -21,7 +21,6 @@ import { BundleSection } from './bundles';
 import { Celebration } from './Celebration';
 import { EVENT_THEMES, EventBackdrop, SCENE_ROOM, eventTheme } from './EventScene';
 import { Icon } from '../icons';
-import { CommunityGoals } from './CommunityGoals';
 
 export type ShopVariant = 'shop' | 'blackmarket';
 
@@ -32,45 +31,7 @@ const NOT_FOR_SALE: Partial<Record<CosmeticItem['availability'], string>> = {
 };
 const forSale = (item: CosmeticItem) => item.price > 0 && !NOT_FOR_SALE[item.availability];
 
-// ---------- Upcoming events strip ----------
-
-const startsIn = (start: string, now: number) => {
-  const days = Math.floor((Date.parse(start) - now) / 86_400_000);
-  return days >= 1 ? `in ${days} ${days === 1 ? 'Tag' : 'Tagen'}` : `in ${countdown(start, now)}`;
-};
-
-/**
- * Event calendar, folded away at the very bottom: there for the curious, but the shop does not make you wait for the
- * next event — it should arrive as a surprise.
- */
-export function EventCalendar({ events }: { events: ShopEvent[] }) {
-  const now = useNow(60_000);
-  if (!events.length) return null;
-  return (
-    <details className="group mt-12 rounded-2xl border border-white/[.06] bg-surface">
-      <summary className="flex cursor-pointer list-none items-center gap-2.5 px-4 py-3 text-[13.5px] text-mute hover:text-ink [&::-webkit-details-marker]:hidden">
-        <Glyph name="calendar" size={16} /> Event-Kalender
-        <span className="ml-auto flex transition-transform group-open:rotate-90"><Icon name="arrowRight" size={15} /></span>
-      </summary>
-      <ul className="m-0 list-none divide-y divide-white/[.05] border-t border-white/[.06] p-0">
-        {events.map((event) => {
-          const { tint, glyph } = EVENT_THEMES[eventTheme(event)];
-          return (
-            <li key={event.id} className="flex items-center gap-3 px-4 py-2.5 text-[13px]">
-              {/* The season's tint, mixed with the text colour so the icon keeps its contrast in both modes. */}
-              <span className="shrink-0" style={{ color: `color-mix(in srgb, ${tint} 70%, var(--text-strong))` }}><Glyph name={glyph} size={16} /></span>
-              <span className="min-w-0 flex-1 truncate"><span className="text-ink">{event.name}</span> <span className="text-mute">· {formatDate(event.startsAt)} – {formatDate(event.endsAt)}</span></span>
-              {event.discount > 0 && <span className="shrink-0 tabular-nums text-ink">−{event.discount} %</span>}
-              <span className="w-[92px] shrink-0 text-right text-[12px] text-mute">{startsIn(event.startsAt, now)}</span>
-            </li>
-          );
-        })}
-      </ul>
-    </details>
-  );
-}
-
-// ---------- Store card, shelves & storefront ----------
+// ---------- Store card & storefront ----------
 
 
 /**
@@ -116,44 +77,28 @@ export function StoreCard({ listing, owned, variant, onOpen, className = '', lar
   );
 }
 
-/** One horizontal shelf of big cards (scrolls sideways; arrows on wide screens). */
-function Shelf({ title, hint, listings, owned, onOpen, onAll }: {
-  title: string; hint?: string; listings: ShopListing[]; owned: Set<string>; onOpen: (id: string) => void; onAll?: () => void;
-}) {
-  const track = useRef<HTMLDivElement>(null);
-  const scroll = (dir: number) => track.current?.scrollBy({ left: dir * track.current.clientWidth * 0.85, behavior: reducedMotion() ? 'auto' : 'smooth' });
-  if (!listings.length) return null;
+/** One line under the banner: the next event and its discount; the full list lives on the season page. */
+function NextEvent({ events }: { events: ShopEvent[] }) {
+  const now = useNow(60_000);
+  const next = events[0];
+  if (!next) return null;
+  const { tint, glyph } = EVENT_THEMES[eventTheme(next)];
   return (
-    <section className="mt-10">
-      <div className="mb-3.5 flex items-end gap-3">
-        <div className="min-w-0 flex-1">
-          <h2 className="text-[19px] font-semibold tracking-tight">{title}</h2>
-          {hint && <p className="mt-0.5 text-[13px] text-mute">{hint}</p>}
-        </div>
-        {onAll && <button type="button" className="btn btn-ghost btn-sm" onClick={onAll}>Alle anzeigen</button>}
-        <div className="hidden gap-1.5 md:flex">
-          <button type="button" className="icon-btn" aria-label="Zurück blättern" onClick={() => scroll(-1)}><Icon name="arrowLeft" size={18} /></button>
-          <button type="button" className="icon-btn" aria-label="Weiter blättern" onClick={() => scroll(1)}><Icon name="arrowRight" size={18} /></button>
-        </div>
-      </div>
-      {/* A scroller clips everything outside it: room above for the hover lift, below for the rarity glow. */}
-      <div ref={track} className="-mx-4 -my-3 -mb-12 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-14 pt-3 [scrollbar-width:none] md:-mx-2 md:scroll-px-2 md:px-2">
-        {listings.map((l) => (
-          <StoreCard key={l.item.id} listing={l} owned={owned.has(l.item.id)} variant="shop" onOpen={() => onOpen(l.item.id)} className="w-[200px] shrink-0 snap-start md:w-[220px]" />
-        ))}
-      </div>
-    </section>
+    <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-[13.5px] text-mute">
+      {/* The season's tint, mixed with the text colour so the icon keeps its contrast in both modes. */}
+      <span className="inline-flex" style={{ color: `color-mix(in srgb, ${tint} 70%, var(--text-strong))` }}><Glyph name={glyph} size={16} /></span>
+      Nächstes Event: <span className="text-ink">{next.name}</span>
+      <span>{startsIn(next.startsAt, now)}{next.discount > 0 ? `, −${next.discount} %` : ''}</span>
+      <Link to="/me/saison" className="ml-auto text-accent-text">Alle Events</Link>
+    </p>
   );
 }
 
-/** Shop front page: hero with the featured look, shelves per topic, then the full searchable catalog. */
 export function Storefront({ listings, bundles, events, upcoming }: { listings: ShopListing[]; bundles: ShopBundle[]; events: ShopEvent[]; upcoming: ShopEvent[] }) {
   const { me, items } = useMe();
   const user = useUser();
   const now = useNow();
   const [openId, setOpenId] = useState<string | null>(null);
-  const [slot, setSlot] = useState<CosmeticSlot | 'all'>('all');
-  const catalogRef = useRef<HTMLDivElement>(null);
   const owned = useMemo(() => new Set(me.inventory.map((o) => o.itemId)), [me.inventory]);
   const event = events[0];
   const theme = event ? eventTheme(event) : null;
@@ -180,14 +125,6 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
     return resolveCosmetics(equipped, catalog);
   }, [featured, items, me.profile.equipped]);
 
-  const deals = listings.filter((l) => l.discount > 0 && !featured.includes(l));
-  const fresh = [...listings].reverse().filter((l) => !featured.includes(l)).slice(0, 10);
-  const bySlot = COSMETIC_SLOTS.map((s) => ({ slot: s, list: listings.filter((l) => l.item.slot === s) })).filter((g) => g.list.length >= 3)
-    .sort((a, b) => b.list.length - a.list.length);
-  const showAll = (next: CosmeticSlot) => {
-    setSlot(next);
-    catalogRef.current?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
-  };
   const open = listings.find((l) => l.item.id === openId);
 
   return (
@@ -221,7 +158,7 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
           </div>
         </div>
       </section>
-      {event && <CommunityGoals />}
+      <NextEvent events={upcoming} />
       <section className="mt-8">
         <h2 className="mb-3.5 text-[19px] font-semibold tracking-tight">{event ? `Highlights aus „${event.name}“` : 'Empfohlen'}</h2>
         {/* Bento: one 2×2 feature tile, four regular ones. */}
@@ -234,38 +171,26 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
       </section>
 
       <BundleSection bundles={bundles} listings={listings} />
-      <Shelf title={event ? `Mehr aus „${event.name}“` : 'Weitere Empfehlungen'} listings={featured.slice(5)} owned={owned} onOpen={setOpenId} />
-      <Shelf title="Im Angebot" hint="Reduziert, solange das Event läuft." listings={deals} owned={owned} onOpen={setOpenId} />
-      <Shelf title="Neu im Shop" listings={fresh} owned={owned} onOpen={setOpenId} />
-      {bySlot.map((g) => (
-        <Shelf key={g.slot} title={SLOT_PLURAL[g.slot]} listings={g.list} owned={owned} onOpen={setOpenId} onAll={() => showAll(g.slot)} />
-      ))}
 
-      <section ref={catalogRef} className="mt-12 scroll-mt-6">
+      {/* The whole catalogue: kinds as tabs, "new" as the default order, deals as a switch (on while an event discounts). */}
+      <section className="mt-12">
         <h2 className="mb-3 text-[19px] font-semibold tracking-tight">Alle Artikel</h2>
-        <ItemBrowser listings={listings} variant="shop" slot={slot} onSlotChange={setSlot} />
+        <ItemBrowser listings={listings} variant="shop" dealsFirst={!!event && event.discount > 0 && listings.some((l) => l.discount > 0)} />
       </section>
-      <EventCalendar events={upcoming} />
       {open && <ItemDetail listing={open} owned={owned.has(open.item.id)} onClose={() => setOpenId(null)} />}
     </>
   );
 }
 
-const SLOT_PLURAL: Record<CosmeticSlot, string> = {
-  background: 'Hintergründe', accent: 'Akzentfarben', nameStyle: 'Namensfarben', frame: 'Avatar-Rahmen', badge: 'Abzeichen', title: 'Titel',
-  xpBar: 'XP-Balken', font: 'Schriften', effect: 'Effekte', levelup: 'Level-up-Stile', layout: 'Kartenlayouts', sticker: 'Sticker', pet: 'Begleiter',
-};
-
 type Sort = 'new' | 'price-asc' | 'price-desc';
 
-/** Filterable item grid; `filters` adds slot tabs, rarity, sort, "nur leistbar" and search. */
-export function ItemBrowser({ listings, variant, filters = true, slot: slotProp, onSlotChange }: {
-  listings: ShopListing[]; variant: ShopVariant; filters?: boolean; slot?: CosmeticSlot | 'all'; onSlotChange?: (slot: CosmeticSlot | 'all') => void;
+/** Filterable item grid; `filters` adds slot tabs, rarity, sort, "nur leistbar", "nur im Angebot" and search. */
+export function ItemBrowser({ listings, variant, filters = true, dealsFirst = false }: {
+  listings: ShopListing[]; variant: ShopVariant; filters?: boolean; dealsFirst?: boolean;
 }) {
   const { me } = useMe();
-  const [ownSlot, setOwnSlot] = useState<CosmeticSlot | 'all'>('all');
-  const slot = slotProp ?? ownSlot;
-  const setSlot = onSlotChange ?? setOwnSlot;
+  const [slot, setSlot] = useState<CosmeticSlot | 'all'>('all');
+  const [deals, setDeals] = useState(dealsFirst);
   const [rarity, setRarity] = useState<Rarity | 'all'>('all');
   const [sort, setSort] = useState<Sort>('new');
   const [affordable, setAffordable] = useState(false);
@@ -279,15 +204,16 @@ export function ItemBrowser({ listings, variant, filters = true, slot: slotProp,
     const list = listings.filter((l) => (slot === 'all' || l.item.slot === slot)
       && (rarity === 'all' || l.item.rarity === rarity)
       && (!affordable || (forSale(l.item) && !owned.has(l.item.id) && l.finalPrice <= me.wallet.balance))
+      && (!deals || l.discount > 0)
       && (!q || `${l.item.name} ${l.item.description}`.toLowerCase().includes(q)));
     // The API lists items in catalog order, so "Neueste" is the reversed order.
     return sort === 'new' ? [...list].reverse() : [...list].sort((a, b) => (sort === 'price-asc' ? 1 : -1) * (a.finalPrice - b.finalPrice));
-  }, [listings, slot, rarity, affordable, query, sort, owned, me.wallet.balance]);
+  }, [listings, slot, rarity, affordable, deals, query, sort, owned, me.wallet.balance]);
 
   useGSAP(() => {
     if (reducedMotion()) return;
     gsap.fromTo('.js-item', { y: 16, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.45, stagger: 0.025, ease: 'power3.out', clearProps: 'transform' });
-  }, { scope: root, dependencies: [slot, rarity, sort, affordable, listings.length], revertOnUpdate: true });
+  }, { scope: root, dependencies: [slot, rarity, sort, affordable, deals, listings.length], revertOnUpdate: true });
 
   const counts = useMemo(() => new Map(COSMETIC_SLOTS.map((s) => [s, listings.filter((l) => l.item.slot === s).length])), [listings]);
   const open = listings.find((l) => l.item.id === openId);
@@ -300,18 +226,21 @@ export function ItemBrowser({ listings, variant, filters = true, slot: slotProp,
             { id: 'all', label: 'Alle', count: listings.length },
             ...COSMETIC_SLOTS.filter((s) => counts.get(s)).map((s) => ({ id: s, label: SLOT_LABELS[s], count: counts.get(s) })),
           ]} />
-          <div className="mb-5 grid grid-cols-2 items-center gap-3 md:grid-cols-[1fr_170px_170px_auto]">
+          <div className="mb-5 grid grid-cols-2 items-center gap-3 md:grid-cols-[1fr_170px_170px_auto_auto]">
             <div className="col-span-2 md:col-span-1"><TextInput value={query} onChange={setQuery} placeholder="Artikel suchen …" /></div>
             <Select value={rarity} onChange={setRarity} options={[{ value: 'all', label: 'Alle Seltenheiten' }, ...RARITIES.map((r) => ({ value: r, label: RARITY_LABELS[r] }))]} />
             <Select value={sort} onChange={setSort} options={[{ value: 'new', label: 'Neueste zuerst' }, { value: 'price-asc', label: 'Preis aufsteigend' }, { value: 'price-desc', label: 'Preis absteigend' }]} />
             <label className="col-span-2 flex cursor-pointer items-center gap-2.5 text-[13.5px] text-body md:col-span-1">
               <Switch checked={affordable} onChange={setAffordable} label="Nur leistbar" /> Nur leistbar
             </label>
+            <label className="col-span-2 flex cursor-pointer items-center gap-2.5 text-[13.5px] text-body md:col-span-1">
+              <Switch checked={deals} onChange={setDeals} label="Nur im Angebot" /> Nur im Angebot
+            </label>
           </div>
         </>
       )}
       {shown.length === 0
-        ? <Empty title="Nichts gefunden">Probier andere Filter{affordable ? ' oder hol dir erst den Tagesbonus' : ''}.</Empty>
+        ? <Empty title="Nichts gefunden">{deals && !listings.some((l) => l.discount > 0) ? 'Gerade ist nichts reduziert.' : <>Probier andere Filter{affordable ? ' oder hol dir erst den Tagesbonus' : ''}.</>}</Empty>
         : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {shown.map((l) => <StoreCard key={l.item.id} listing={l} owned={owned.has(l.item.id)} variant={variant} onOpen={() => setOpenId(l.item.id)} />)}

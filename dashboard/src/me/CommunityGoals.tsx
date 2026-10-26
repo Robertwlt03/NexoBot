@@ -1,4 +1,4 @@
-// Shared goals of the running events: one bar per server the member is on, below the event banner in the shop.
+// Shared goals of the running events: one bar per server the member is on, on the season page.
 import type { CommunityResponse } from '../../../src/web/dto/profile';
 import { useApi } from '../api';
 import { num } from './api';
@@ -9,7 +9,7 @@ export function CommunityGoals() {
   const goals = data?.goals ?? [];
   if (!goals.length) return null;
   return (
-    <section className="mt-6">
+    <section className="mb-6 mt-6">
       <h2 className="mb-1 text-[19px] font-semibold tracking-tight">Gemeinschaftsziel</h2>
       <p className="mb-3.5 text-[13.5px] text-mute">Schafft ihr auf eurem Server die Nachrichten bis zum Event-Ende, bekommt jeder, der mitgeschrieben hat, eine Belohnung.</p>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

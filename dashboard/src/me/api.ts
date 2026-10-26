@@ -182,6 +182,12 @@ export function useNow(ms = 1000) {
 }
 
 /** "3 T 4 Std" for long spans, "04:12:09" below a day. */
+/** "in 3 Tagen", or the countdown when it is less than a day away. */
+export function startsIn(start: string, now: number): string {
+  const days = Math.floor((Date.parse(start) - now) / 86_400_000);
+  return days >= 1 ? `in ${days} ${days === 1 ? 'Tag' : 'Tagen'}` : `in ${countdown(start, now)}`;
+}
+
 export function countdown(target: string, now: number): string {
   const diff = Math.max(0, Date.parse(target) - now);
   const s = Math.floor(diff / 1000);
