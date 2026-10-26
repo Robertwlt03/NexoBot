@@ -210,16 +210,19 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
 
   /** Items that exist only during the running event (not the ones it merely discounts). */
   const isEventOnly = (l: ShopListing) => !!event && l.item.availability === 'event' && l.item.eventId === event.id;
-  const shown = useMemo(() => {
+  /** Everything but the kind: rarity, "nur leistbar", "nur im Angebot" and the search. The kind counts use this too. */
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = listings.filter((l) => (slot === 'all' || (slot === 'event' ? isEventOnly(l) : l.item.slot === slot))
-      && (rarity === 'all' || l.item.rarity === rarity)
+    return listings.filter((l) => (rarity === 'all' || l.item.rarity === rarity)
       && (!affordable || (forSale(l.item) && !owned.has(l.item.id) && l.finalPrice <= me.wallet.balance))
       && (!deals || l.discount > 0)
       && (!q || `${l.item.name} ${l.item.description}`.toLowerCase().includes(q)));
+  }, [listings, rarity, affordable, deals, query, owned, me.wallet.balance]);
+  const shown = useMemo(() => {
+    const list = filtered.filter((l) => slot === 'all' || (slot === 'event' ? isEventOnly(l) : l.item.slot === slot));
     // The API lists items in catalog order, so "Neueste" is the reversed order.
     return sort === 'new' ? [...list].reverse() : [...list].sort((a, b) => (sort === 'price-asc' ? 1 : -1) * (a.finalPrice - b.finalPrice));
-  }, [listings, slot, rarity, affordable, deals, query, sort, owned, me.wallet.balance, event]);
+  }, [filtered, slot, sort, event]);
 
   useGSAP(() => {
     if (reducedMotion()) return;
@@ -235,13 +238,17 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
   };
   useEffect(() => { setPage(1); }, [slot, rarity, sort, affordable, deals, query]);
 
-  const counts = useMemo(() => new Map(COSMETIC_SLOTS.map((s) => [s, listings.filter((l) => l.item.slot === s).length])), [listings]);
-  const eventOnly = event ? listings.filter(isEventOnly).length : 0;
+  // Which kinds exist comes from the whole catalogue (so the chips do not jump around); how many of each match comes
+  // from the other filters, so the numbers always say what a click would show.
+  const counts = useMemo(() => new Map(COSMETIC_SLOTS.map((s) => [s, filtered.filter((l) => l.item.slot === s).length])), [filtered]);
+  const kindsInShop = COSMETIC_SLOTS.filter((s) => listings.some((l) => l.item.slot === s));
+  const eventOnlyInShop = event ? listings.some(isEventOnly) : false;
   const kinds: [KindFilter, string, number][] = [
-    ['all', 'Alle', listings.length],
-    ...(event && eventOnly ? [['event', event.name, eventOnly] as [KindFilter, string, number]] : []),
-    ...COSMETIC_SLOTS.filter((s) => counts.get(s)).map((s): [CosmeticSlot, string, number] => [s, SLOT_LABELS[s], counts.get(s) ?? 0]),
+    ['all', 'Alle', filtered.length],
+    ...(event && eventOnlyInShop ? [['event', event.name, filtered.filter(isEventOnly).length] as [KindFilter, string, number]] : []),
+    ...kindsInShop.map((s): [CosmeticSlot, string, number] => [s, SLOT_LABELS[s], counts.get(s) ?? 0]),
   ];
+  const narrowed = filtered.length < listings.length;
   const open = listings.find((l) => l.item.id === openId);
 
   return (
@@ -252,7 +259,7 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
               Phones get the same choice as a dropdown, where the chips would fill half the screen. */}
           <div className="filter-chips mb-4 max-sm:hidden" role="group" aria-label="Art">
             {kinds.map(([id, label, count]) => (
-              <button key={id} type="button" className={`filter-chip${id === 'event' ? ' filter-chip-event' : ''}`} aria-pressed={slot === id} onClick={() => setSlot(id)}
+              <button key={id} type="button" className={`filter-chip${id === 'event' ? ' filter-chip-event' : ''}${count === 0 && slot !== id ? ' filter-chip-empty' : ''}`} aria-pressed={slot === id} onClick={() => setSlot(id)}
                 title={id === 'event' ? `Gibt es nur während „${label}“` : undefined}>
                 {id === 'event' && event && <EventIcon event={event} size={16} />}{label} <span className="tab-count">{count}</span>
               </button>
@@ -273,6 +280,15 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
             </label>
           </div>
         </>
+      )}
+      {/* How many items the current kind and filters leave, so the chip numbers and the grid always agree. */}
+      {filters && (
+        <p className="mb-3 text-[13px] text-mute" aria-live="polite">
+          <span className="font-semibold text-ink">{shown.length}</span> Artikel
+          {slot !== 'all' && <> in „{kinds.find(([id]) => id === slot)?.[1]}“</>}
+          {narrowed && <> mit den gewählten Filtern</>}
+          {pages > 1 && <> · Seite {current} von {pages}</>}
+        </p>
       )}
       {shown.length === 0
         ? <Empty title="Nichts gefunden">{deals && !listings.some((l) => l.discount > 0) ? 'Gerade ist nichts reduziert.' : <>Probier andere Filter{affordable ? ' oder hol dir erst den Tagesbonus' : ''}.</>}</Empty>
