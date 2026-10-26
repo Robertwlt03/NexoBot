@@ -26,12 +26,19 @@ for (const [mode, t] of Object.entries(MODES)) {
   });
 }
 
-test('accent text of every preset reads at 4.5:1 on the cards of both modes', () => {
+test('accent text of every preset reads at 4.5:1 on the page, sidebar and cards of both modes', () => {
   for (const preset of THEME_PRESETS) {
     for (const [mode, t] of Object.entries(MODES)) {
       const vars = themeVariables({ preset: preset.id, primary: preset.primary, secondary: preset.secondary, mode: mode as 'dark' | 'light' });
-      assert.ok(contrast(vars['--accent-text'], t['--bg-card']) >= 4.5, `${preset.name} ${mode}: accent text`);
-      assert.ok(contrast(vars['--accent-text-muted'], t['--bg-card']) >= 4.5, `${preset.name} ${mode}: muted accent text`);
+      for (const bg of ['--bg-main', '--bg-sidebar', '--bg-card']) {
+        assert.ok(contrast(vars['--accent-text'], t[bg]) >= 4.5, `${preset.name} ${mode}: accent text on ${bg}`);
+        assert.ok(contrast(vars['--accent-text-muted'], t[bg]) >= 4.5, `${preset.name} ${mode}: muted accent text on ${bg}`);
+      }
     }
   }
+});
+
+test('white text on the success button reads at 4.5:1', () => {
+  const success = css.match(/--success:\s*(#[0-9a-f]{6});/i)?.[1];
+  assert.ok(success && contrast('#ffffff', success) >= 4.5, `success ${success}`);
 });

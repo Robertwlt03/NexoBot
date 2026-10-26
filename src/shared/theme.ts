@@ -55,8 +55,10 @@ type Rgb = [number, number, number];
 // Surfaces of both modes (mirror styles.css).
 const SURFACE = '#231a13';
 const CANVAS = '#16110c';
-const LIGHT_SURFACE = '#fffaf2';
-const LIGHT_CANVAS = '#f8efe2';
+const LIGHT_SURFACE = '#f2e4cf';
+/** The darkest light surface accent text sits on (the sidebar); accent text is darkened against this one. */
+const LIGHT_SIDEBAR = '#e3caa8';
+const LIGHT_CANVAS = '#e9d6ba';
 
 function rgb(hex: string): Rgb {
   const n = Number.parseInt(hex.slice(1), 16);
@@ -109,7 +111,7 @@ export function themeVariables(theme: DashboardTheme): Record<string, string> {
   const canvas = light ? LIGHT_CANVAS : CANVAS;
   const ink = contrast(primary, '#ffffff') >= 4.5 ? '#ffffff' : mix(primary, '#000000', 0.86);
   const strong = mix(primary, '#000000', 0.18);
-  const tint = light ? darkenUntil(theme.primary, LIGHT_SURFACE, 4.8) : mix(primary, '#ffffff', 0.45);
+  const tint = light ? darkenUntil(theme.primary, LIGHT_SIDEBAR, 4.8) : mix(primary, '#ffffff', 0.45);
   const values: Record<string, string> = {
     '--accent': primary,
     '--accent-strong': strong,
@@ -119,7 +121,7 @@ export function themeVariables(theme: DashboardTheme): Record<string, string> {
     '--accent-line': rgba(primary, light ? 0.32 : 0.28),
     '--accent-glow': rgba(primary, light ? 0.4 : 0.6),
     '--accent-text': tint,
-    '--accent-text-muted': mix(tint, light ? '#5a402c' : '#ae9e87', 0.45),
+    '--accent-text-muted': mix(tint, light ? '#493323' : '#ae9e87', 0.45),
     '--accent-2': secondary,
     '--ring': `0 0 0 3px ${rgba(primary, 0.22)}`,
     '--brand-gradient': `linear-gradient(135deg, ${mix(primary, canvas, light ? 0.8 : 0.74)} 0%, ${mix(primary, canvas, light ? 0.9 : 0.86)} 45%, ${surface} 100%)`,

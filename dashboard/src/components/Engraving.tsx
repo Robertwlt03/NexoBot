@@ -1,8 +1,9 @@
-// The page icon and a vine burnt into the walnut header (see Backdrop.tsx), the leaves touched with moss.
+// The page icon and a vine burnt into the header wood (see Backdrop.tsx), the leaves touched with moss.
 // Pyrography look in three passes: a soft scorch around every line, a faint light edge where light catches the cut,
-// and the dark groove itself.
+// and the dark groove itself. The colours come from styles.css (--burn-*): near black on the walnut, a brown burn on
+// the light fir that the grain shows through (multiplied into the wood, like a real burn).
 import { Children, cloneElement, isValidElement, useId } from 'react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 const MOSS = '#8aa866';
 const LINE = { fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
@@ -93,7 +94,7 @@ export function Engraving({ art, width }: { art?: ReactNode; width: string }) {
   // Default icon line = 2 on the grid → ICON_LINE on the board; details keep their ratio to that.
   const iconArt = art ? scaleStrokes(art, (ICON_LINE / ICON_AT.scale / 2) * DOT_BOOST) : null;
   const lines = (stroke: string, grow: number) => (
-    <g {...LINE} stroke={stroke}>
+    <g {...LINE} style={{ stroke }}>
       <path d={VINE} strokeWidth={VINE_LINE * grow} />
       {CURLS.map((d) => <path key={d} d={d} strokeWidth={VINE_LINE * 0.6 * grow} />)}
       {LEAVES.map((leaf) => (
@@ -111,15 +112,15 @@ export function Engraving({ art, width }: { art?: ReactNode; width: string }) {
   );
   return (
     <svg viewBox="0 0 600 320" preserveAspectRatio="xMaxYMin meet" aria-hidden="true"
-      className="absolute right-0 top-0 h-full" style={{ width }}>
+      className="absolute right-0 top-0 h-full" style={{ width, mixBlendMode: 'var(--burn-blend)' as CSSProperties['mixBlendMode'] }}>
       <defs>
         <filter id={`${id}-scorch`} x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.6" /></filter>
       </defs>
-      <g filter={`url(#${id}-scorch)`} opacity={0.55}>{lines('#1a0d05', 2.4)}</g>
+      <g filter={`url(#${id}-scorch)`} style={{ opacity: 'var(--burn-scorch-opacity)' }}>{lines('var(--burn-scorch)', 2.4)}</g>
       {/* Moss in the leaves: above the scorch, under the cut lines. */}
-      {LEAVES.map((leaf) => <path key={`m${leaf.key}`} d={LEAF} transform={leaf.transform} fill={MOSS} fillOpacity={0.7} />)}
-      <g transform="translate(0.7 0.9)">{lines('rgba(255, 222, 180, 0.18)', 1)}</g>
-      {lines('rgba(16, 8, 3, 0.9)', 1)}
+      {LEAVES.map((leaf) => <path key={`m${leaf.key}`} d={LEAF} transform={leaf.transform} fill={MOSS} style={{ fillOpacity: 'var(--burn-moss-opacity)' }} />)}
+      <g transform="translate(0.7 0.9)">{lines('var(--burn-edge)', 1)}</g>
+      {lines('var(--burn-groove)', 1)}
     </svg>
   );
 }
