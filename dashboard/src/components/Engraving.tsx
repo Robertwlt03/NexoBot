@@ -45,6 +45,29 @@ const LEAVES = LEAF_SPOTS.map(([i, t, side, size]) => {
   return { key: `${i}-${t}`, transform: `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${deg.toFixed(1)}) scale(${size})`, size };
 });
 
+/**
+ * The moss was painted in by hand after the burning, so it is not exact. Per leaf (same order as LEAF_SPOTS), in the
+ * leaf's unit box: offset and size of the paint against the burnt outline (larger = over the line, smaller = a bare
+ * edge), how far up from the base the brush reached (1 = the whole leaf), how thick the coat is, and an optional
+ * stray dab next to the leaf. Some leaves are neat, the others each have one slip.
+ */
+const PAINT: readonly { dx: number; dy: number; scale: number; reach: number; coat: number; dab?: readonly [number, number, number] }[] = [
+  { dx: 0, dy: 0, scale: 1, reach: 1, coat: 1 },
+  { dx: 0.14, dy: -0.05, scale: 1.16, reach: 1, coat: 0.9, dab: [0.55, -0.58, 0.12] },
+  { dx: 0, dy: 0, scale: 0.97, reach: 0.6, coat: 1.05 },
+  { dx: -0.05, dy: 0.02, scale: 1, reach: 1, coat: 0.65 },
+  { dx: 0, dy: 0, scale: 1, reach: 1, coat: 1 },
+  { dx: 0.06, dy: 0.08, scale: 0.78, reach: 1, coat: 1.1 },
+  { dx: -0.14, dy: -0.03, scale: 1.18, reach: 1, coat: 0.95, dab: [-0.58, -0.22, 0.1] },
+  { dx: 0, dy: 0, scale: 1, reach: 0.48, coat: 0.9 },
+  { dx: 0.03, dy: 0, scale: 1.06, reach: 1, coat: 1 },
+];
+/** Where the brush stopped: everything from the base up to `reach`, ending in a ragged edge. */
+const reachClip = (reach: number) => {
+  const top = -reach;
+  return `M-0.7 0.3 L-0.7 ${top + 0.05} L-0.35 ${top - 0.04} L-0.1 ${top + 0.06} L0.15 ${top - 0.05} L0.4 ${top + 0.03} L0.7 ${top - 0.02} L0.7 0.3 Z`;
+};
+
 /** Curls branching off between the leaves, on the side with room. */
 const CURL_SPOTS: readonly [segment: number, t: number, side: 1 | -1][] = [[0, 0.42, 1], [2, 0.5, -1], [3, 0.5, 1]];
 const CURLS = CURL_SPOTS.map(([i, t, side]) => {
@@ -124,8 +147,31 @@ export function Engraving({ art, width }: { art?: ReactNode; width: string }) {
         </defs>
         <g filter={`url(#${id}-scorch)`} style={{ opacity: 'var(--burn-scorch-opacity)' }}>{lines('var(--burn-scorch)', 2.4)}</g>
       </>)}
-      {/* Moss in the leaves: above the scorch, under the cut lines. */}
-      {layer('normal', LEAVES.map((leaf) => <path key={`m${leaf.key}`} d={LEAF} transform={leaf.transform} style={{ fill: 'var(--burn-moss)', fillOpacity: 'var(--burn-moss-opacity)' }} />))}
+      {/* Moss painted into the leaves by hand: above the scorch, under the cut lines. The filter roughens the brush
+          edge and leaves the coat streaky. */}
+      {layer('normal', <>
+        <defs>
+          <filter id={`${id}-paint`} x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.35" numOctaves="2" seed="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.4" xChannelSelector="R" yChannelSelector="G" result="ragged" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.09 0.55" numOctaves="2" seed="11" result="streaks" />
+            <feColorMatrix in="streaks" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.3 0 0 0 1.5" result="coat" />
+            <feComposite in="ragged" in2="coat" operator="in" />
+          </filter>
+          {PAINT.map((paint, i) => paint.reach < 1 && <clipPath key={i} id={`${id}-reach-${i}`}><path d={reachClip(paint.reach)} /></clipPath>)}
+        </defs>
+        <g filter={`url(#${id}-paint)`} style={{ fill: 'var(--burn-moss)' }}>
+          {LEAVES.map((leaf, i) => {
+            const paint = PAINT[i];
+            return (
+              <g key={`m${leaf.key}`} transform={leaf.transform} style={{ fillOpacity: `calc(var(--burn-moss-opacity) * ${paint.coat})` }}>
+                <path d={LEAF} transform={`translate(${paint.dx} ${paint.dy}) scale(${paint.scale})`} clipPath={paint.reach < 1 ? `url(#${id}-reach-${i})` : undefined} />
+                {paint.dab && <ellipse cx={paint.dab[0]} cy={paint.dab[1]} rx={paint.dab[2]} ry={paint.dab[2] * 0.7} />}
+              </g>
+            );
+          })}
+        </g>
+      </>)}
       {layer('var(--burn-blend)', <>
         <g transform="translate(0.7 0.9)">{lines('var(--burn-edge)', 1)}</g>
         {lines('var(--burn-groove)', 1)}
