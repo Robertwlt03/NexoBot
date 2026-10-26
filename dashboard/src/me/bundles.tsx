@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { RARITIES, SLOT_LABELS } from '../../../src/shared/cosmetics';
 import type { CosmeticItem } from '../../../src/shared/cosmetics';
-import type { PurchaseResult, ShopBundle, ShopListing } from '../../../src/web/dto/profile';
+import type { PurchaseResult, ShopBundle, ShopEvent, ShopListing } from '../../../src/web/dto/profile';
 import { useConfirm } from '../components/ConfirmDialog';
 import { Notice } from '../components/ui';
 import { equipItem, isEquipped, useEquip, useMe, useMutation, useWalletUpdate } from './api';
@@ -67,7 +67,15 @@ function Contents({ items }: { items: CosmeticItem[] }) {
  * Bundles are the special offers of the shop: a holographic frame that slowly circles the tile, game-style tags
  * (bundle and deal), your card wearing the whole set and what is inside right on the tile.
  */
-function BundleTile({ bundle, items, onOpen }: { bundle: ShopBundle; items: CosmeticItem[]; onOpen: () => void }) {
+/** "−20 % Herbst-Special auf 3 von 6 Artikeln": how much of a bundle the running event discounts; null when none. */
+function eventDeal(parts: ShopListing[], event?: ShopEvent): string | null {
+  if (!event || event.discount === 0) return null;
+  const hit = parts.filter((part) => part.eventId === event.id && part.discount > 0);
+  if (!hit.length) return null;
+  return `−${event.discount} % ${event.name} auf ${hit.length === parts.length ? 'alle Artikel' : `${hit.length} von ${parts.length} Artikeln`}`;
+}
+
+function BundleTile({ bundle, items, deal, onOpen }: { bundle: ShopBundle; items: CosmeticItem[]; deal: string | null; onOpen: () => void }) {
   const tint = tintOf(items);
   const saving = bundle.owned === 0 ? bundle.fullPrice - bundle.price : 0;
   const percent = saving > 0 ? Math.round((saving / bundle.fullPrice) * 100) : 0;
@@ -76,10 +84,12 @@ function BundleTile({ bundle, items, onOpen }: { bundle: ShopBundle; items: Cosm
       className="js-item bundle-tile group cursor-pointer border-0 p-[1.5px] text-left font-[inherit] transition duration-300 hover:-translate-y-1">
       <span className="game-tile relative flex h-full flex-col overflow-hidden rounded-[19px] bg-[#0d0b0a]">
         <span className="game-tile-field relative block aspect-[16/9] w-full overflow-hidden">
-          {/* Your own card already wearing the whole bundle, tilted and running off the edge like a store preview. */}
+          {/* Your own card already wearing the whole bundle, slightly tilted with room on every side. */}
           {items.some((item) => item.slot !== 'levelup') ? (
-            <span className="absolute left-[8%] top-[20%] block w-[108%] origin-top-left -rotate-[7deg] overflow-hidden rounded-xl shadow-[0_24px_50px_-16px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[5deg] group-hover:scale-[1.03]">
-              <TryOnPreview items={items.filter((item) => item.slot !== 'levelup')} resolution={0.5} />
+            <span className="absolute inset-0 flex items-center justify-center px-[12%] pt-[6%]">
+              <span className="card-shape block w-full -rotate-[4deg] shadow-[0_24px_50px_-16px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[2deg] group-hover:scale-[1.03]">
+                <TryOnPreview items={items.filter((item) => item.slot !== 'levelup')} resolution={0.5} />
+              </span>
             </span>
           ) : <BundleArt items={items} />}
           <span className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#0d0b0a] to-transparent" />
@@ -101,6 +111,7 @@ function BundleTile({ bundle, items, onOpen }: { bundle: ShopBundle; items: Cosm
         <span className="relative flex w-full flex-1 flex-col px-5 pb-5 pt-1">
           <span className="block truncate text-[19px] font-extrabold uppercase tracking-[.02em] text-white">{bundle.name}</span>
           <span className="mt-0.5 line-clamp-1 block text-[13px] text-white/60">{bundle.description}</span>
+          {deal && <span className="mt-2 inline-flex self-start rounded-md bg-[#facc15]/15 px-2 py-0.5 text-[12px] font-semibold text-[#facc15]">{deal}</span>}
           <span className="mt-3.5 flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
             <Contents items={items} />
             <span className="ml-auto shrink-0 text-right">
@@ -117,7 +128,7 @@ function BundleTile({ bundle, items, onOpen }: { bundle: ShopBundle; items: Cosm
   );
 }
 
-function BundleDetail({ bundle, parts, onClose }: { bundle: ShopBundle; parts: ShopListing[]; onClose: () => void }) {
+function BundleDetail({ bundle, parts, deal, onClose }: { bundle: ShopBundle; parts: ShopListing[]; deal: string | null; onClose: () => void }) {
   const { me } = useMe();
   const updateWallet = useWalletUpdate();
   const { run, busy } = useMutation();
@@ -164,9 +175,10 @@ function BundleDetail({ bundle, parts, onClose }: { bundle: ShopBundle; parts: S
             <BundleArt items={items} large />
           </div>
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[.16em]" style={{ color: tint }}>Paket · {items.length} Artikel</p>
+            <p className="text-[11px] font-bold uppercase tracking-[.16em]" style={{ color: `color-mix(in srgb, ${tint} 50%, var(--text-strong))` }}>Paket · {items.length} Artikel</p>
             <h2 className="mt-1.5 text-[26px] font-bold leading-tight tracking-tight">{bundle.name}</h2>
             <p className="mt-2 text-[14px] text-body">{bundle.description}</p>
+            {deal && <p className="mt-2 text-[13px] font-semibold text-warn">{deal}, schon im Paketpreis enthalten.</p>}
           </div>
           {/* Exactly what is inside, with what each piece costs (or that you have it already). */}
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
@@ -217,7 +229,7 @@ function BundleDetail({ bundle, parts, onClose }: { bundle: ShopBundle; parts: S
 }
 
 /** "Pakete" section of the shop front. */
-export function BundleSection({ bundles, listings }: { bundles: ShopBundle[]; listings: ShopListing[] }) {
+export function BundleSection({ bundles, listings, event }: { bundles: ShopBundle[]; listings: ShopListing[]; event?: ShopEvent }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const byId = useMemo(() => new Map(listings.map((entry) => [entry.item.id, entry])), [listings]);
@@ -227,18 +239,21 @@ export function BundleSection({ bundles, listings }: { bundles: ShopBundle[]; li
   if (!shown.length) return null;
   const visible = expanded ? shown : shown.slice(0, 4);
   return (
-    // A showcase of its own (dark in both modes), so bundles do not read as just more cards.
-    <section data-mode="dark" className="relative mt-12 overflow-hidden rounded-[28px] border border-white/[.07] bg-[#120d09] p-5 md:p-7">
+    // A showcase of its own in the page's mode (the bundle tiles inside stay dark like the item tiles).
+    <>
+    <section className="relative mt-12 overflow-hidden rounded-[28px] border border-[var(--border)] bg-surface p-5 shadow-[var(--card-shadow,none)] md:p-7">
       <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#f2a531]/15 blur-[90px]" />
       <div className="pointer-events-none absolute -bottom-28 right-0 h-72 w-96 rounded-full bg-[#8fb36b]/12 blur-[100px]" />
       <div className="relative mb-5 flex flex-wrap items-end gap-3">
         <div className="min-w-0 flex-1">
-          <h2 className="text-[26px] font-bold tracking-tight text-white">Pakete</h2>
-          <p className="mt-1 max-w-[560px] text-[13.5px] text-white/65">Alles, was zusammenpasst, in einem Klick. Was du schon besitzt, zahlst du nicht.</p>
+          <h2 className="text-[22px] font-semibold leading-tight tracking-tight text-ink">Pakete</h2>
+          <p className="mt-1 max-w-[620px] text-[13.5px] text-mute">Alles, was zusammenpasst, in einem Klick. Was du schon besitzt, zahlst du nicht.</p>
         </div>
       </div>
       <div className="relative grid grid-cols-1 gap-5 md:grid-cols-2">
-        {visible.map((bundle) => <BundleTile key={bundle.id} bundle={bundle} items={partsOf(bundle).map((part) => part.item)} onOpen={() => setOpenId(bundle.id)} />)}
+        {visible.map((bundle) => (
+          <BundleTile key={bundle.id} bundle={bundle} items={partsOf(bundle).map((part) => part.item)} deal={eventDeal(partsOf(bundle), event)} onOpen={() => setOpenId(bundle.id)} />
+        ))}
       </div>
       {shown.length > 4 && (
         <div className="relative mt-5 flex justify-center">
@@ -247,7 +262,9 @@ export function BundleSection({ bundles, listings }: { bundles: ShopBundle[]; li
           </button>
         </div>
       )}
-      {open && <BundleDetail bundle={open} parts={partsOf(open)} onClose={() => setOpenId(null)} />}
     </section>
+    {/* Outside the dark showcase, so the dialog follows the page mode like the item dialog. */}
+    {open && <BundleDetail bundle={open} parts={partsOf(open)} deal={eventDeal(partsOf(open), event)} onClose={() => setOpenId(null)} />}
+    </>
   );
 }

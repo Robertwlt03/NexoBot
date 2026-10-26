@@ -15,7 +15,7 @@ export interface Part {
 }
 
 /** Sample members and commands behind the ids in the sample messages. */
-const MEMBERS: Record<string, string> = { 1: 'Alex', 2: 'Max', 3: 'Lena' };
+const MEMBERS: Record<string, string> = { 1: 'Robert', 2: 'Max', 3: 'Lena' };
 
 /** Inline markdown: bold, italic, strike, code, mentions, command mentions, timestamps and coin emojis. */
 function inline(text: string): ReactNode[] {

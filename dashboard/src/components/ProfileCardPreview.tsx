@@ -97,11 +97,11 @@ export function LevelUpPreview({ subject, cosmetics, level, reward, className = 
 }
 
 /** One item painted by the card renderer itself (shop tiles, inventory), around the viewer's own avatar. */
-export function ItemPreviewCanvas({ item, className = '' }: { item: CosmeticItem; className?: string }) {
+export function ItemPreviewCanvas({ item, own = null, className = '' }: { item: CosmeticItem; own?: ResolvedCosmetics | null; className?: string }) {
   const user = useContext(UserContext);
   const subject = { name: user?.globalName ?? user?.username ?? 'Du', username: user?.username ?? '' };
-  const ref = useCardCanvas(ITEM_PREVIEW_WIDTH, ITEM_PREVIEW_HEIGHT, user?.avatarUrl ?? null, JSON.stringify([item.id, item.data, subject]),
-    (ctx, avatar) => { renderItemPreview(ctx, item, subject, { avatar }); });
+  const ref = useCardCanvas(ITEM_PREVIEW_WIDTH, ITEM_PREVIEW_HEIGHT, user?.avatarUrl ?? null, JSON.stringify([item.id, item.data, subject, own]),
+    (ctx, avatar) => { renderItemPreview(ctx, item, subject, { avatar }, undefined, undefined, own); });
   return (
     <canvas ref={ref} width={ITEM_PREVIEW_WIDTH} height={ITEM_PREVIEW_HEIGHT} aria-hidden="true"
       className={`absolute inset-0 h-full w-full ${item.slot === 'background' ? 'object-cover' : 'object-contain'} ${className}`} />

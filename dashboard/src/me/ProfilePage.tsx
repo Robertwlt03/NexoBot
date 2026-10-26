@@ -257,7 +257,7 @@ function LinkedRoleCard() {
 function SlotTile({ selected, onClick, title, children }: { selected: boolean; onClick: () => void; title: string; children: ReactNode }) {
   return (
     <button type="button" title={title} onClick={onClick} aria-pressed={selected}
-      className={`relative w-[92px] shrink-0 cursor-pointer rounded-xl border bg-transparent p-1 font-[inherit] text-left transition ${selected ? 'border-accent ring-2 ring-accent/30' : 'border-white/[.06] hover:border-white/20'}`}>
+      className={`relative min-w-0 cursor-pointer rounded-xl border bg-transparent p-1 font-[inherit] text-left transition ${selected ? 'border-accent ring-2 ring-accent/30' : 'border-white/[.06] hover:border-white/20'}`}>
       {children}
       <span className={`mt-1 block truncate px-0.5 text-[11.5px] ${selected ? 'text-ink' : 'text-mute'}`}>{title}</span>
       {selected && <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-ink"><Glyph name="check" size={12} /></span>}
@@ -296,7 +296,8 @@ function SlotEditor({ value, onChange }: { value: UserProfileSettings; onChange:
               {slot === 'badge' && <div className="text-[12px] text-faint">{value.equipped.badges.length} / {MAX_EQUIPPED_BADGES} angelegt</div>}
               {slot === 'pet' && <div className="text-[12px] text-faint" title="Wächst mit den Tagen, an denen du chattest: ab 7 und ab 30 Tagen.">{PET_STAGE_NAMES[me.petStage - 1]} · {me.chatDays} Chat-Tage</div>}
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            {/* Wraps onto more rows instead of scrolling sideways, so every item is one click away. */}
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-2">
               <SlotTile selected={isDefault} onClick={() => clear(slot)} title={slot === 'badge' ? 'Keine' : 'Standard'}>
                 <div className="flex aspect-[4/3] items-center justify-center rounded-lg bg-white/[.03] text-[11px] text-faint">Nexo</div>
               </SlotTile>

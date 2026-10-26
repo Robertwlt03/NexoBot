@@ -1,5 +1,5 @@
 // Item tiles (painted by the card renderer, see ItemPreviewCanvas), the member-area icons and currency helpers.
-import { Fragment } from 'react';
+import { Fragment, useContext, useMemo } from 'react';
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { CURRENCY, RARITY_LABELS, SLOT_LABELS } from '../../../src/shared/cosmetics';
 import { CoinIcon } from '../components/CoinIcon';
@@ -8,7 +8,7 @@ import { ItemPreviewCanvas } from '../components/ProfileCardPreview';
 import type {
   BackgroundData, BadgeGlyph, CosmeticItem, LevelupData, Rarity,
 } from '../../../src/shared/cosmetics';
-import { num } from './api';
+import { MeContext, num, resolveCosmetics } from './api';
 
 // ---------- Glyphs (24px line icons; the badge glyphs double as member-area icons) ----------
 
@@ -23,17 +23,17 @@ export const GLYPHS = {
   leaf: <><path d="M5 19C5 10 10 5 20 4c0 10-5 15-14 15z" /><path d="M5 19l8-8" /></>,
   moon: <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />,
   sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>,
-  snowflake: <><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7" /><path d="M9.5 3.5L12 6l2.5-2.5M9.5 20.5L12 18l2.5 2.5" /></>,
+  snowflake: <path d="M12 21.5L12 2.5M14.4 4L12 6.4L9.6 4M20.2 16.8L3.8 7.3M6.3 5.9L7.2 9.2L3.9 10.1M20.2 7.2L3.8 16.8M3.9 13.9L7.2 14.8L6.3 18.1M9.6 20L12 17.6L14.4 20M17.7 18.1L16.8 14.8L20.1 13.9M20.1 10.1L16.8 9.2L17.7 5.9" />,
   skull: <><path d="M12 3a8 8 0 0 0-8 8c0 2.6 1.3 4.4 3 5.5V20h10v-3.5c1.7-1.1 3-2.9 3-5.5a8 8 0 0 0-8-8z" /><circle cx="9" cy="11.5" r="1.6" /><circle cx="15" cy="11.5" r="1.6" /><path d="M10.5 20v-2M13.5 20v-2" /></>,
   music: <><path d="M9 18V5l11-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="17" cy="16" r="3" /></>,
   controller: <><path d="M7 8h10a4 4 0 0 1 4 4l.5 4a2.5 2.5 0 0 1-4.4 1.8L15 16H9l-2.1 1.8A2.5 2.5 0 0 1 2.5 16L3 12a4 4 0 0 1 4-4z" /><path d="M7.5 11v3M6 12.5h3M15.5 12h.01M17.5 13.5h.01" /></>,
   fish: <><path d="M2 7l3 5-3 5" /><path d="M5 12c2.5-3.5 6-5 9.5-5 3 0 5.5 2 6.5 5-1 3-3.5 5-6.5 5-3.5 0-7-1.5-9.5-5z" /><path d="M16.5 11h.01" /></>,
-  pickaxe: <><path d="M5 8a14 14 0 0 1 11-4.5M16 3.5A14 14 0 0 1 20.5 14" /><path d="M15 9L4 20" /></>,
+  pickaxe: <><path d="M12.5 11.5L4 20" /><path d="M13.6 7.6l2.8 2.8-2.2 2.2-2.8-2.8z" /><path d="M14.6 6.8C11.7 4.6 8 3.9 4.5 4.5M17.2 9.4c2.2 2.9 2.9 6.6 2.3 10.1" /></>,
   dice: <><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M9 9h.01M12 12h.01M15 15h.01" strokeWidth={3} /></>,
   trophy: <><path d="M8 4h8v5a4 4 0 0 1-8 0z" /><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8M9.5 17h5" /></>,
-  rocket: <><path d="M12 2.5c3.5 2.5 5 6 4.5 10.5L14 16h-4l-2.5-3C7 8.5 8.5 5 12 2.5z" /><path d="M10 16l-1 4 3-2 3 2-1-4M7.5 13L5 15l1 3M16.5 13L19 15l-1 3" /><circle cx="12" cy="9" r="1.5" /></>,
+  rocket: <><path d="M12 2.5c3.2 2.4 4.6 5.8 4.2 10L14.6 16H9.4l-1.6-3.5C7.4 8.3 8.8 4.9 12 2.5z" /><circle cx="12" cy="8.5" r="1.8" /><path d="M7.8 11.6L5 14.6V18l3.8-2.4M16.2 11.6l2.8 3V18l-3.8-2.4M10.5 18.6L12 21.5l1.5-2.9" /></>,
   ghost: <><path d="M5 20V10a7 7 0 0 1 14 0v10l-2.3-1.6L14.3 20 12 18.4 9.7 20l-2.4-1.6z" /><path d="M9.5 10h.01M14.5 10h.01" strokeWidth={3} /></>,
-  pumpkin: <><path d="M12 7.5c-1.4-.9-3.4-1.1-5.2-.4C3.9 8.2 2.5 11 2.8 14.2c.3 3.4 2.7 6 5.7 6.3 1.3.1 2.5-.2 3.5-.8 1 .6 2.2.9 3.5.8 3-.3 5.4-2.9 5.7-6.3.3-3.2-1.1-6-4-7.1-1.8-.7-3.8-.5-5.2.4z" /><path d="M12 7.5c-1.8 2.3-2.4 5-2.2 7.6.2 2.2.9 3.8 2.2 4.6 1.3-.8 2-2.4 2.2-4.6.2-2.6-.4-5.3-2.2-7.6M12 7.5V5c0-1.1.7-2 1.8-2.3" /></>,
+  pumpkin: <><path d="M12 7.2c-4.6 0-8.5 2.7-8.5 6.7s3.6 6.6 8.5 6.6 8.5-2.6 8.5-6.6-3.9-6.7-8.5-6.7z" /><path d="M8.7 7.8c-1.5 1.6-2.2 3.7-2.2 6s.7 4.4 2.2 5.9M15.3 7.8c1.5 1.6 2.2 3.7 2.2 6s-.7 4.4-2.2 5.9" /><path d="M12 7.2V4.6c0-.9.5-1.5 1.3-1.8M13.4 5.1c1.2-.7 2.6-.6 3.6.3" /></>,
   gift: <><rect x="3" y="8" width="18" height="5" rx="1" /><path d="M5 13v8h14v-8M12 8v13" /><path d="M12 8C10.5 4 6.5 4 7 6.5S12 8 12 8zM12 8c1.5-4 5.5-4 5-1.5S12 8 12 8z" /></>,
   paw: <><circle cx="6.5" cy="10" r="1.8" /><circle cx="10" cy="6" r="1.8" /><circle cx="14" cy="6" r="1.8" /><circle cx="17.5" cy="10" r="1.8" /><path d="M12 12c-3 0-5.5 3.5-5.5 5.5 0 1.5 1.5 2 3 1.5s3.5-.5 5 0 3 0 3-1.5C17.5 15.5 15 12 12 12z" /></>,
   code: <path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16" />,
@@ -207,9 +207,17 @@ function LevelupBanner({ data }: { data: LevelupData }) {
   return <span className="rounded-md px-2.5 py-1 text-[12px] font-bold tracking-wide" style={styles[data.style]}>LEVEL UP</span>;
 }
 
+/** Card layouts in the member area wear the member's own look (equipped frame, background …), not a sample. */
+function LayoutPreview({ item }: { item: CosmeticItem }) {
+  const me = useContext(MeContext);
+  const own = useMemo(() => (me ? resolveCosmetics(me.me.profile.equipped, me.items, me.me.profile.stickerSpot) : null), [me]);
+  return <ItemPreviewCanvas item={item} own={own} />;
+}
+
 function previewOf(item: CosmeticItem): ReactNode {
   // Everything the card shows is painted by the card renderer, so tile and card always match.
   if (item.slot === 'levelup') return <LevelupBanner data={item.data} />;
+  if (item.slot === 'layout') return <LayoutPreview item={item} />;
   return <ItemPreviewCanvas item={item} />;
 }
 

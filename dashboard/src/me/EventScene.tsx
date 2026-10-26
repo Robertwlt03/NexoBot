@@ -48,14 +48,18 @@ export const EVENT_THEMES: Record<EventTheme, { tint: string; glyph: GlyphName; 
   party: { tint: '#a78bfa', glyph: 'gift', emit: { area: 'scene', kinds: ['confetti'], motion: 'fall', x: [0, 100], y: [4, 16], wind: [-60, 30], count: 16 } },
 };
 
-const LEAF_COLOURS = ['#b0561f', '#8a3414', '#c98a2a', '#d9a441'];
+/** Falling leaves: lit and shaded half per colour, like the autumn event icon (EventIcon.tsx). */
+const LEAF_COLOURS: [string, string][] = [['#d0682a', '#b0561f'], ['#a8401a', '#8a3414'], ['#e0a43a', '#c98a2a'], ['#e8b24e', '#d9a441']];
 const CONFETTI_COLOURS = ['#facc15', '#f472b6', '#60a5fa', '#e9e4dc', '#c084fc'];
 const PETAL_COLOURS = ['#f7c6da', '#fbeaf1', '#f2a7c3'];
 const HEART = 'M12 21C5 16.5 2 12.6 2 8.6 2 5.5 4.4 3 7.4 3c1.9 0 3.6 1 4.6 2.6C13 4 14.7 3 16.6 3 19.6 3 22 5.5 22 8.6c0 4-3 7.9-10 12.4Z';
 
 function ParticleArt({ kind, size, colour }: { kind: Particle; size: number; colour: number }) {
   switch (kind) {
-    case 'leaf': return <svg viewBox="-12 -12 24 24" style={{ width: size, height: size }}><path d="M0-11C7-6 7 5 0 11-7 5-7-6 0-11Z" fill={LEAF_COLOURS[colour % 4]} /><path d="M0-9V10" stroke="#00000030" strokeWidth="1.2" /></svg>;
+    case 'leaf': {
+      const [lit, shade] = LEAF_COLOURS[colour % 4];
+      return <svg viewBox="-12 -12 24 24" style={{ width: size, height: size }}><path d="M0-11C7-6 7 5 0 11-7 5-7-6 0-11Z" fill={lit} /><path d="M0-11C7-6 7 5 0 11Z" fill={shade} /></svg>;
+    }
     case 'snow': return <span className="block rounded-full bg-white/80" style={{ width: size / 3, height: size / 3 }} />;
     case 'flake': return <svg viewBox="0 0 24 24" style={{ width: size, height: size }}><path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" opacity=".8" /></svg>;
     case 'ember': return <span className="block rounded-full bg-[#ffb347] shadow-[0_0_6px_#f97316]" style={{ width: size / 4, height: size / 4 }} />;

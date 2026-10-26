@@ -32,7 +32,7 @@ function RevealCard({ listing, revealed, owned, onReveal, onOpen }: {
       <div className={`relative h-full w-full [transform-style:preserve-3d] motion-safe:transition-transform motion-safe:duration-700 motion-safe:ease-[cubic-bezier(.2,.8,.2,1)] ${revealed ? '[transform:rotateY(180deg)]' : ''}`}>
         {/* Back: rarity glow, amber emblem, "aufdecken". */}
         <button type="button" onClick={onReveal} aria-label="Karte aufdecken" tabIndex={revealed ? -1 : 0}
-          className={`group absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-4 overflow-hidden rounded-[18px] border-0 bg-[#0b090b] p-0 font-[inherit] ring-1 ring-[color-mix(in_srgb,var(--tile)_45%,transparent)] [backface-visibility:hidden] hover:shadow-[0_0_40px_-6px_var(--tile)] ${revealed ? 'invisible opacity-0' : ''}`}
+          className={`group absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-4 overflow-hidden rounded-[20px] border-0 bg-[#0b090b] p-0 font-[inherit] ring-1 ring-[color-mix(in_srgb,var(--tile)_45%,transparent)] [backface-visibility:hidden] hover:shadow-[0_0_40px_-6px_var(--tile)] ${revealed ? 'invisible opacity-0' : ''}`}
           // Browsers ignore backface-visibility for children on their own layer (the hovering emblem), so the back side
           // also switches off exactly when the card is edge-on (half of the 700 ms turn).
           style={{ '--tile': tint, transition: revealed ? 'opacity 0s linear 350ms, visibility 0s linear 350ms, box-shadow .2s' : 'box-shadow .2s' } as CSSProperties}>

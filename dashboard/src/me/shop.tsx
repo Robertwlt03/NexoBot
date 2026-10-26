@@ -11,17 +11,17 @@ import { useUser } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
 import { ProfileCardPreview } from '../components/ProfileCardPreview';
 import { ProductStage, TryOnPreview } from './ProductStage';
-import { Empty, Field, Notice, Select, Switch, Tabs, TextInput } from '../components/ui';
+import { Empty, Field, Notice, Pager, Select, Switch, TextInput } from '../components/ui';
 import {
-  cardSubject, countdown, equipItem, formatDate, isEquipped, reducedMotion, resolveCosmetics, useEquip, useMe, useMutation, useNow, useWalletUpdate,
+  cardSubject, countdown, equipItem, formatDate, isEquipped, reducedMotion, resolveCosmetics, startsIn, useEquip, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
 import { Glyph, ItemVisual, Bernis, Price, RARITY_TILE, RarityLabel, backgroundStyle } from './visuals';
 import { ProductDialog } from './ProductDialog';
 import { BundleSection } from './bundles';
 import { Celebration } from './Celebration';
-import { EVENT_THEMES, EventBackdrop, SCENE_ROOM, eventTheme } from './EventScene';
+import { EventBackdrop, SCENE_ROOM, eventTheme } from './EventScene';
+import { EventIcon } from './EventIcon';
 import { Icon } from '../icons';
-import { CommunityGoals } from './CommunityGoals';
 
 export type ShopVariant = 'shop' | 'blackmarket';
 
@@ -32,45 +32,7 @@ const NOT_FOR_SALE: Partial<Record<CosmeticItem['availability'], string>> = {
 };
 const forSale = (item: CosmeticItem) => item.price > 0 && !NOT_FOR_SALE[item.availability];
 
-// ---------- Upcoming events strip ----------
-
-const startsIn = (start: string, now: number) => {
-  const days = Math.floor((Date.parse(start) - now) / 86_400_000);
-  return days >= 1 ? `in ${days} ${days === 1 ? 'Tag' : 'Tagen'}` : `in ${countdown(start, now)}`;
-};
-
-/**
- * Event calendar, folded away at the very bottom: there for the curious, but the shop does not make you wait for the
- * next event — it should arrive as a surprise.
- */
-export function EventCalendar({ events }: { events: ShopEvent[] }) {
-  const now = useNow(60_000);
-  if (!events.length) return null;
-  return (
-    <details className="group mt-12 rounded-2xl border border-white/[.06] bg-surface">
-      <summary className="flex cursor-pointer list-none items-center gap-2.5 px-4 py-3 text-[13.5px] text-mute hover:text-ink [&::-webkit-details-marker]:hidden">
-        <Glyph name="calendar" size={16} /> Event-Kalender
-        <span className="ml-auto flex transition-transform group-open:rotate-90"><Icon name="arrowRight" size={15} /></span>
-      </summary>
-      <ul className="m-0 list-none divide-y divide-white/[.05] border-t border-white/[.06] p-0">
-        {events.map((event) => {
-          const { tint, glyph } = EVENT_THEMES[eventTheme(event)];
-          return (
-            <li key={event.id} className="flex items-center gap-3 px-4 py-2.5 text-[13px]">
-              {/* The season's tint, mixed with the text colour so the icon keeps its contrast in both modes. */}
-              <span className="shrink-0" style={{ color: `color-mix(in srgb, ${tint} 70%, var(--text-strong))` }}><Glyph name={glyph} size={16} /></span>
-              <span className="min-w-0 flex-1 truncate"><span className="text-ink">{event.name}</span> <span className="text-mute">· {formatDate(event.startsAt)} – {formatDate(event.endsAt)}</span></span>
-              {event.discount > 0 && <span className="shrink-0 tabular-nums text-ink">−{event.discount} %</span>}
-              <span className="w-[92px] shrink-0 text-right text-[12px] text-mute">{startsIn(event.startsAt, now)}</span>
-            </li>
-          );
-        })}
-      </ul>
-    </details>
-  );
-}
-
-// ---------- Store card, shelves & storefront ----------
+// ---------- Store card & storefront ----------
 
 
 /**
@@ -86,12 +48,15 @@ export function StoreCard({ listing, owned, variant, onOpen, className = '', lar
   const style = { '--tile': tint } as CSSProperties;
   return (
     <button type="button" onClick={onOpen} data-mode="dark" style={style}
-      className={`js-item game-tile group relative flex cursor-pointer flex-col overflow-hidden rounded-[18px] border-0 bg-[#0d0b0a] p-0 text-left font-[inherit] ring-1 ring-white/[.08] transition duration-300 hover:-translate-y-1 hover:ring-[color-mix(in_srgb,var(--tile)_70%,transparent)] hover:shadow-[0_22px_44px_-18px_color-mix(in_srgb,var(--tile)_55%,transparent)] ${large ? '' : 'aspect-[3/4]'} ${className}`}>
+      className={`js-item game-tile group relative flex cursor-pointer flex-col overflow-hidden rounded-[20px] border-0 bg-[#0d0b0a] p-0 text-left font-[inherit] ring-1 ring-white/[.08] transition duration-300 hover:-translate-y-1 hover:ring-[color-mix(in_srgb,var(--tile)_70%,transparent)] hover:shadow-[0_22px_44px_-18px_color-mix(in_srgb,var(--tile)_55%,transparent)] ${large ? '' : 'aspect-[3/4]'} ${className}`}>
       <div className="game-tile-field relative min-h-0 w-full flex-1 overflow-hidden">
-        {item.slot === 'background' ? (
-          // Backgrounds: your own card as it is now, only with this background, tilted like a store preview.
-          <div className={`absolute origin-top-left overflow-hidden rounded-lg shadow-[0_20px_44px_-14px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 ${large ? 'left-[8%] top-[24%] w-[118%] -rotate-[7deg] group-hover:-rotate-[5deg] group-hover:scale-[1.03]' : 'left-[5%] top-[30%] w-[122%] -rotate-[9deg] group-hover:-rotate-[7deg] group-hover:scale-[1.04]'}`}>
-            <TryOnPreview items={[item]} resolution={0.5} />
+        {item.slot === 'background' || item.slot === 'layout' ? (
+          // Backgrounds and layouts: your own card as it is now (your frame, your look), wearing only this item. It
+          // sits inside the tile with room on every side and a slight tilt, so it reads as a card, not a banner.
+          <div className="absolute inset-0 flex items-center justify-center px-[9%]">
+            <div className="card-shape w-full -rotate-[5deg] shadow-[0_20px_44px_-14px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[3deg] group-hover:scale-[1.04]">
+              <TryOnPreview items={[item]} resolution={0.5} />
+            </div>
           </div>
         ) : (
           <ItemVisual item={item} className={`h-full w-full rounded-none !bg-transparent transition-transform duration-500 ${large ? 'scale-[1.25] group-hover:scale-[1.32]' : 'scale-[1.3] group-hover:scale-[1.42]'}`} />
@@ -107,7 +72,7 @@ export function StoreCard({ listing, owned, variant, onOpen, className = '', lar
         <h3 className={`mt-1 truncate font-sans font-bold uppercase leading-tight tracking-[.02em] text-white ${large ? 'text-[22px]' : 'text-[14.5px]'}`}>{item.name}</h3>
         <div className="mt-2 flex min-h-6 items-center gap-2 text-[15px] font-bold text-white">
           {owned
-            ? <span className="text-[12.5px] font-semibold text-white/60">Anlegen →</span>
+            ? <span className="text-[12.5px] font-semibold text-white/80">Anlegen →</span>
             : forSale(item) ? <Price price={item.price} finalPrice={listing.finalPrice} /> : <span className="text-[12px] font-medium text-white/55">{NOT_FOR_SALE[item.availability] ?? 'Nicht käuflich'}</span>}
         </div>
       </div>
@@ -116,44 +81,39 @@ export function StoreCard({ listing, owned, variant, onOpen, className = '', lar
   );
 }
 
-/** One horizontal shelf of big cards (scrolls sideways; arrows on wide screens). */
-function Shelf({ title, hint, listings, owned, onOpen, onAll }: {
-  title: string; hint?: string; listings: ShopListing[]; owned: Set<string>; onOpen: (id: string) => void; onAll?: () => void;
-}) {
-  const track = useRef<HTMLDivElement>(null);
-  const scroll = (dir: number) => track.current?.scrollBy({ left: dir * track.current.clientWidth * 0.85, behavior: reducedMotion() ? 'auto' : 'smooth' });
-  if (!listings.length) return null;
+/** One line under the banner: the next event and its discount; the full list lives on the season page. */
+/** Title and one line of explanation for each shop section, so every section reads the same way. */
+export function SectionHead({ title, text }: { title: string; text?: string }) {
   return (
-    <section className="mt-10">
-      <div className="mb-3.5 flex items-end gap-3">
-        <div className="min-w-0 flex-1">
-          <h2 className="text-[19px] font-semibold tracking-tight">{title}</h2>
-          {hint && <p className="mt-0.5 text-[13px] text-mute">{hint}</p>}
-        </div>
-        {onAll && <button type="button" className="btn btn-ghost btn-sm" onClick={onAll}>Alle anzeigen</button>}
-        <div className="hidden gap-1.5 md:flex">
-          <button type="button" className="icon-btn" aria-label="Zurück blättern" onClick={() => scroll(-1)}><Icon name="arrowLeft" size={18} /></button>
-          <button type="button" className="icon-btn" aria-label="Weiter blättern" onClick={() => scroll(1)}><Icon name="arrowRight" size={18} /></button>
-        </div>
-      </div>
-      {/* A scroller clips everything outside it: room above for the hover lift, below for the rarity glow. */}
-      <div ref={track} className="-mx-4 -my-3 -mb-12 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-14 pt-3 [scrollbar-width:none] md:-mx-2 md:scroll-px-2 md:px-2">
-        {listings.map((l) => (
-          <StoreCard key={l.item.id} listing={l} owned={owned.has(l.item.id)} variant="shop" onOpen={() => onOpen(l.item.id)} className="w-[200px] shrink-0 snap-start md:w-[220px]" />
-        ))}
-      </div>
-    </section>
+    <div className="mb-4">
+      <h2 className="text-[22px] font-semibold leading-tight tracking-tight text-ink">{title}</h2>
+      {text && <p className="mt-1 max-w-[620px] text-[13.5px] text-mute">{text}</p>}
+    </div>
   );
 }
 
-/** Shop front page: hero with the featured look, shelves per topic, then the full searchable catalog. */
+function NextEvent({ events }: { events: ShopEvent[] }) {
+  const now = useNow(60_000);
+  const next = events[0];
+  if (!next) return null;
+  return (
+    // A small block of its own: the info on the left, the link to the season page as a real button on the right.
+    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-[var(--border-control)] bg-surface px-4 py-3">
+      <EventIcon event={next} size={28} />
+      <div className="min-w-0 flex-1 leading-tight">
+        <div className="text-[12px] font-medium text-mute">Nächstes Event</div>
+        <div className="text-[14.5px] text-body"><span className="font-semibold text-ink">{next.name}</span> · {startsIn(next.startsAt, now)}{next.discount > 0 ? ` · −${next.discount} %` : ''}</div>
+      </div>
+      <Link to="/me/saison" className="btn btn-secondary btn-sm hover:no-underline">Alle Events</Link>
+    </div>
+  );
+}
+
 export function Storefront({ listings, bundles, events, upcoming }: { listings: ShopListing[]; bundles: ShopBundle[]; events: ShopEvent[]; upcoming: ShopEvent[] }) {
   const { me, items } = useMe();
   const user = useUser();
   const now = useNow();
   const [openId, setOpenId] = useState<string | null>(null);
-  const [slot, setSlot] = useState<CosmeticSlot | 'all'>('all');
-  const catalogRef = useRef<HTMLDivElement>(null);
   const owned = useMemo(() => new Set(me.inventory.map((o) => o.itemId)), [me.inventory]);
   const event = events[0];
   const theme = event ? eventTheme(event) : null;
@@ -180,14 +140,6 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
     return resolveCosmetics(equipped, catalog);
   }, [featured, items, me.profile.equipped]);
 
-  const deals = listings.filter((l) => l.discount > 0 && !featured.includes(l));
-  const fresh = [...listings].reverse().filter((l) => !featured.includes(l)).slice(0, 10);
-  const bySlot = COSMETIC_SLOTS.map((s) => ({ slot: s, list: listings.filter((l) => l.item.slot === s) })).filter((g) => g.list.length >= 3)
-    .sort((a, b) => b.list.length - a.list.length);
-  const showAll = (next: CosmeticSlot) => {
-    setSlot(next);
-    catalogRef.current?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
-  };
   const open = listings.find((l) => l.item.id === openId);
 
   return (
@@ -217,13 +169,14 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
             )}
           </div>
           <div className="hidden max-w-[440px] @xl:block">
-            <ProfileCardPreview subject={cardSubject(user, me, null, me.profile.bio)} cosmetics={look} className="w-full rounded-2xl shadow-[0_30px_60px_-20px_rgba(0,0,0,.8)] ring-1 ring-white/10" />
+            <ProfileCardPreview subject={cardSubject(user, me, null, me.profile.bio)} cosmetics={look} className="card-shape w-full shadow-[0_30px_60px_-20px_rgba(0,0,0,.8)] ring-1 ring-white/10" />
           </div>
         </div>
       </section>
-      {event && <CommunityGoals />}
-      <section className="mt-8">
-        <h2 className="mb-3.5 text-[19px] font-semibold tracking-tight">{event ? `Highlights aus „${event.name}“` : 'Empfohlen'}</h2>
+      <NextEvent events={upcoming} />
+      <section className="mt-10">
+        <SectionHead title={event ? `Highlights aus „${event.name}“` : 'Empfohlen'}
+          text={event ? 'Die Event-Artikel und die besten Angebote, solange es läuft.' : 'Die besten Stücke, die dir noch fehlen.'} />
         {/* Bento: one 2×2 feature tile, four regular ones. */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {featured.slice(0, 5).map((l, i) => (
@@ -233,89 +186,138 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
         </div>
       </section>
 
-      <BundleSection bundles={bundles} listings={listings} />
-      <Shelf title={event ? `Mehr aus „${event.name}“` : 'Weitere Empfehlungen'} listings={featured.slice(5)} owned={owned} onOpen={setOpenId} />
-      <Shelf title="Im Angebot" hint="Reduziert, solange das Event läuft." listings={deals} owned={owned} onOpen={setOpenId} />
-      <Shelf title="Neu im Shop" listings={fresh} owned={owned} onOpen={setOpenId} />
-      {bySlot.map((g) => (
-        <Shelf key={g.slot} title={SLOT_PLURAL[g.slot]} listings={g.list} owned={owned} onOpen={setOpenId} onAll={() => showAll(g.slot)} />
-      ))}
+      <BundleSection bundles={bundles} listings={listings} event={event} />
 
-      <section ref={catalogRef} className="mt-12 scroll-mt-6">
-        <h2 className="mb-3 text-[19px] font-semibold tracking-tight">Alle Artikel</h2>
-        <ItemBrowser listings={listings} variant="shop" slot={slot} onSlotChange={setSlot} />
+      {/* The whole catalogue: kinds as tabs, "new" as the default order, deals as a switch (on while an event discounts). */}
+      <section className="mt-12">
+        <SectionHead title="Alle Artikel" text="Alles, was der Shop gerade hat. Filtere nach Art, Seltenheit oder Preis." />
+        <ItemBrowser listings={listings} variant="shop" event={event} dealsFirst={!!event && event.discount > 0 && listings.some((l) => l.discount > 0)} />
       </section>
-      <EventCalendar events={upcoming} />
       {open && <ItemDetail listing={open} owned={owned.has(open.item.id)} onClose={() => setOpenId(null)} />}
     </>
   );
 }
 
-const SLOT_PLURAL: Record<CosmeticSlot, string> = {
-  background: 'Hintergründe', accent: 'Akzentfarben', nameStyle: 'Namensfarben', frame: 'Avatar-Rahmen', badge: 'Abzeichen', title: 'Titel',
-  xpBar: 'XP-Balken', font: 'Schriften', effect: 'Effekte', levelup: 'Level-up-Stile', layout: 'Kartenlayouts', sticker: 'Sticker', pet: 'Begleiter',
-};
+/** Catalogue items per page. */
+const PAGE_SIZE = 20;
 
 type Sort = 'new' | 'price-asc' | 'price-desc';
 
-/** Filterable item grid; `filters` adds slot tabs, rarity, sort, "nur leistbar" and search. */
-export function ItemBrowser({ listings, variant, filters = true, slot: slotProp, onSlotChange }: {
-  listings: ShopListing[]; variant: ShopVariant; filters?: boolean; slot?: CosmeticSlot | 'all'; onSlotChange?: (slot: CosmeticSlot | 'all') => void;
+/** Kind filter: all, the running event's own items, or one item kind. */
+type KindFilter = CosmeticSlot | 'all' | 'event';
+
+/**
+ * Filterable item grid; `filters` adds the kind chips, rarity, sort, "nur leistbar", "nur im Angebot" and search.
+ * With a running `event`, a chip named after it shows the items that exist only during that event.
+ */
+export function ItemBrowser({ listings, variant, filters = true, dealsFirst = false, event }: {
+  listings: ShopListing[]; variant: ShopVariant; filters?: boolean; dealsFirst?: boolean; event?: ShopEvent;
 }) {
   const { me } = useMe();
-  const [ownSlot, setOwnSlot] = useState<CosmeticSlot | 'all'>('all');
-  const slot = slotProp ?? ownSlot;
-  const setSlot = onSlotChange ?? setOwnSlot;
+  const [slot, setSlot] = useState<KindFilter>('all');
+  const [deals, setDeals] = useState(dealsFirst);
   const [rarity, setRarity] = useState<Rarity | 'all'>('all');
   const [sort, setSort] = useState<Sort>('new');
   const [affordable, setAffordable] = useState(false);
   const [query, setQuery] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
   const root = useRef<HTMLDivElement>(null);
   const owned = useMemo(() => new Set(me.inventory.map((o) => o.itemId)), [me.inventory]);
 
-  const shown = useMemo(() => {
+  /** Items that exist only during the running event (not the ones it merely discounts). */
+  const isEventOnly = (l: ShopListing) => !!event && l.item.availability === 'event' && l.item.eventId === event.id;
+  /** Everything but the kind: rarity, "nur leistbar", "nur im Angebot" and the search. The kind counts use this too. */
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = listings.filter((l) => (slot === 'all' || l.item.slot === slot)
-      && (rarity === 'all' || l.item.rarity === rarity)
+    return listings.filter((l) => (rarity === 'all' || l.item.rarity === rarity)
       && (!affordable || (forSale(l.item) && !owned.has(l.item.id) && l.finalPrice <= me.wallet.balance))
+      && (!deals || l.discount > 0)
       && (!q || `${l.item.name} ${l.item.description}`.toLowerCase().includes(q)));
+  }, [listings, rarity, affordable, deals, query, owned, me.wallet.balance]);
+  const shown = useMemo(() => {
+    const list = filtered.filter((l) => slot === 'all' || (slot === 'event' ? isEventOnly(l) : l.item.slot === slot));
     // The API lists items in catalog order, so "Neueste" is the reversed order.
     return sort === 'new' ? [...list].reverse() : [...list].sort((a, b) => (sort === 'price-asc' ? 1 : -1) * (a.finalPrice - b.finalPrice));
-  }, [listings, slot, rarity, affordable, query, sort, owned, me.wallet.balance]);
+  }, [filtered, slot, sort, event]);
 
   useGSAP(() => {
     if (reducedMotion()) return;
     gsap.fromTo('.js-item', { y: 16, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.45, stagger: 0.025, ease: 'power3.out', clearProps: 'transform' });
-  }, { scope: root, dependencies: [slot, rarity, sort, affordable, listings.length], revertOnUpdate: true });
+  }, { scope: root, dependencies: [slot, rarity, sort, affordable, deals, listings.length, page], revertOnUpdate: true });
 
-  const counts = useMemo(() => new Map(COSMETIC_SLOTS.map((s) => [s, listings.filter((l) => l.item.slot === s).length])), [listings]);
+  // 20 items per page; a filter change starts at page 1 again (the page clamps when fewer pages remain).
+  const pages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
+  const current = Math.min(page, pages);
+  const turn = (next: number) => {
+    setPage(next);
+    root.current?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
+  };
+  useEffect(() => { setPage(1); }, [slot, rarity, sort, affordable, deals, query]);
+
+  // Which kinds exist comes from the whole catalogue (so the chips do not jump around); how many of each match comes
+  // from the other filters, so the numbers always say what a click would show.
+  const counts = useMemo(() => new Map(COSMETIC_SLOTS.map((s) => [s, filtered.filter((l) => l.item.slot === s).length])), [filtered]);
+  const kindsInShop = COSMETIC_SLOTS.filter((s) => listings.some((l) => l.item.slot === s));
+  const eventOnlyInShop = event ? listings.some(isEventOnly) : false;
+  const kinds: [KindFilter, string, number][] = [
+    ['all', 'Alle', filtered.length],
+    ...(event && eventOnlyInShop ? [['event', event.name, filtered.filter(isEventOnly).length] as [KindFilter, string, number]] : []),
+    ...kindsInShop.map((s): [CosmeticSlot, string, number] => [s, SLOT_LABELS[s], counts.get(s) ?? 0]),
+  ];
+  const narrowed = filtered.length < listings.length;
   const open = listings.find((l) => l.item.id === openId);
 
   return (
     <div ref={root}>
       {filters && (
-        <>
-          <Tabs value={slot} onChange={setSlot} items={[
-            { id: 'all', label: 'Alle', count: listings.length },
-            ...COSMETIC_SLOTS.filter((s) => counts.get(s)).map((s) => ({ id: s, label: SLOT_LABELS[s], count: counts.get(s) })),
-          ]} />
-          <div className="mb-5 grid grid-cols-2 items-center gap-3 md:grid-cols-[1fr_170px_170px_auto]">
+        // All filters in one panel, so they read as one control area rather than loose pieces on the page.
+        <div className="mb-4 rounded-2xl border border-[var(--border-control)] bg-surface p-3 sm:p-4">
+          {/* Item kinds as chips that wrap onto a second line, so every kind is one click away (no sideways scrolling).
+              Phones get the same choice as a dropdown, where the chips would fill half the screen. */}
+          <div className="filter-chips mb-4 max-sm:hidden" role="group" aria-label="Art">
+            {kinds.map(([id, label, count]) => (
+              <button key={id} type="button" className={`filter-chip${id === 'event' ? ' filter-chip-event' : ''}${count === 0 && slot !== id ? ' filter-chip-empty' : ''}`} aria-pressed={slot === id} onClick={() => setSlot(id)}
+                title={id === 'event' ? `Gibt es nur während „${label}“` : undefined}>
+                {id === 'event' && event && <EventIcon event={event} size={16} />}{label} <span className="tab-count">{count}</span>
+              </button>
+            ))}
+          </div>
+          <div className="mb-3 sm:hidden">
+            <Select value={slot} onChange={setSlot} options={kinds.map(([id, label, count]) => ({ value: id, label: id === 'event' ? `Nur während „${label}“ (${count})` : `${label} (${count})` }))} />
+          </div>
+          <div className="grid grid-cols-2 items-center gap-3 md:grid-cols-[1fr_170px_170px_auto_auto]">
             <div className="col-span-2 md:col-span-1"><TextInput value={query} onChange={setQuery} placeholder="Artikel suchen …" /></div>
-            <Select value={rarity} onChange={setRarity} options={[{ value: 'all', label: 'Alle Seltenheiten' }, ...RARITIES.map((r) => ({ value: r, label: RARITY_LABELS[r] }))]} />
-            <Select value={sort} onChange={setSort} options={[{ value: 'new', label: 'Neueste zuerst' }, { value: 'price-asc', label: 'Preis aufsteigend' }, { value: 'price-desc', label: 'Preis absteigend' }]} />
+            {/* Each select gets the full row on phones, so its label is not cut off. */}
+            <div className="max-sm:col-span-2"><Select value={rarity} onChange={setRarity} options={[{ value: 'all', label: 'Alle Seltenheiten' }, ...RARITIES.map((r) => ({ value: r, label: RARITY_LABELS[r] }))]} /></div>
+            <div className="max-sm:col-span-2"><Select value={sort} onChange={setSort} options={[{ value: 'new', label: 'Neueste zuerst' }, { value: 'price-asc', label: 'Preis aufsteigend' }, { value: 'price-desc', label: 'Preis absteigend' }]} /></div>
             <label className="col-span-2 flex cursor-pointer items-center gap-2.5 text-[13.5px] text-body md:col-span-1">
               <Switch checked={affordable} onChange={setAffordable} label="Nur leistbar" /> Nur leistbar
             </label>
+            <label className="col-span-2 flex cursor-pointer items-center gap-2.5 text-[13.5px] text-body md:col-span-1">
+              <Switch checked={deals} onChange={setDeals} label="Nur im Angebot" /> Nur im Angebot
+            </label>
           </div>
-        </>
+        </div>
+      )}
+      {/* How many items the current kind and filters leave, so the chip numbers and the grid always agree. */}
+      {filters && (
+        <p className="mb-3 text-[13px] text-mute" aria-live="polite">
+          <span className="font-semibold text-ink">{shown.length}</span> Artikel
+          {slot !== 'all' && <> in „{kinds.find(([id]) => id === slot)?.[1]}“</>}
+          {narrowed && <> mit den gewählten Filtern</>}
+          {pages > 1 && <> · Seite {current} von {pages}</>}
+        </p>
       )}
       {shown.length === 0
-        ? <Empty title="Nichts gefunden">Probier andere Filter{affordable ? ' oder hol dir erst den Tagesbonus' : ''}.</Empty>
+        ? <Empty title="Nichts gefunden">{deals && !listings.some((l) => l.discount > 0) ? 'Gerade ist nichts reduziert.' : <>Probier andere Filter{affordable ? ' oder hol dir erst den Tagesbonus' : ''}.</>}</Empty>
         : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {shown.map((l) => <StoreCard key={l.item.id} listing={l} owned={owned.has(l.item.id)} variant={variant} onOpen={() => setOpenId(l.item.id)} />)}
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {shown.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE).map((l) => <StoreCard key={l.item.id} listing={l} owned={owned.has(l.item.id)} variant={variant} onOpen={() => setOpenId(l.item.id)} />)}
+            </div>
+            <Pager page={current} pages={pages} onPage={turn} />
+          </>
         )}
       {open && <ItemDetail listing={open} owned={owned.has(open.item.id)} onClose={() => setOpenId(null)} />}
     </div>
@@ -389,10 +391,11 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 md:p-7">
           {/* The item itself, big, on its rarity light (stacked layouts skip it: the stage above shows it; the gift form needs the room). */}
           <div className={`game-tile-field relative mx-auto aspect-square w-full max-w-[260px] shrink-0 overflow-hidden rounded-[20px] ring-1 ring-white/10 max-lg:hidden ${giftMode ? 'hidden' : ''}`} style={{ '--tile': tint } as CSSProperties} data-mode="dark">
-            <ItemVisual item={item} className="h-full w-full scale-[1.25] rounded-none !bg-transparent" />
+            {/* Small items are zoomed in; a whole card (layout) keeps its margin so it reads as a card. */}
+            <ItemVisual item={item} className={`h-full w-full rounded-none !bg-transparent ${item.slot === 'layout' ? '' : 'scale-[1.25]'}`} />
           </div>
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[.16em]" style={{ color: tint }}>{RARITY_LABELS[item.rarity]} · {SLOT_LABELS[item.slot]}</p>
+            <p className="text-[11px] font-bold uppercase tracking-[.16em]" style={{ color: `color-mix(in srgb, ${tint} 50%, var(--text-strong))` }}>{RARITY_LABELS[item.rarity]} · {SLOT_LABELS[item.slot]}</p>
             <h2 className="mt-1.5 text-[26px] font-bold leading-tight tracking-tight">{item.name}</h2>
             <p className="mt-2 text-[14px] text-body">{item.description}</p>
           </div>

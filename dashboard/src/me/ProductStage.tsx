@@ -55,7 +55,7 @@ function ChatPreview({ items, surface }: { items: CosmeticItem[]; surface: Surfa
           {surface === 'levelup' && (
             <p className="mt-0.5 text-[15px] text-[#dbdee1]">GG <span className="rounded bg-[#5865f2]/30 px-0.5 font-medium text-[#c9cdfb]">@{name}</span>, du bist jetzt Level {level}!</p>
           )}
-          <div className="mt-1.5 max-w-[460px] overflow-hidden rounded-lg"><TryOnPreview items={items} surface={surface} /></div>
+          <div className="card-shape mt-1.5 max-w-[460px]"><TryOnPreview items={items} surface={surface} /></div>
         </div>
       </div>
     </div>
@@ -95,11 +95,11 @@ export function ProductStage({ items, tint, kicker }: { items: CosmeticItem[]; t
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-14 pb-6">
         {view.chat
           ? <ChatPreview items={items} surface={view.surface} />
-          : <div className="w-full max-w-[620px] overflow-hidden rounded-2xl shadow-[0_30px_80px_-24px_rgba(0,0,0,.9)] ring-1 ring-white/10"><TryOnPreview items={items} surface={view.surface} /></div>}
+          : <div className="card-shape w-full max-w-[620px] shadow-[0_30px_80px_-24px_rgba(0,0,0,.9)] ring-1 ring-white/10"><TryOnPreview items={items} surface={view.surface} /></div>}
         {views.length > 1 && (
           <>
-            <button type="button" aria-label="Vorherige Ansicht" onClick={() => step(-1)} className="icon-btn absolute left-3 top-1/2 z-10 -translate-y-1/2 bg-black/45 text-white backdrop-blur hover:bg-black/60"><Icon name="arrowLeft" size={18} /></button>
-            <button type="button" aria-label="Nächste Ansicht" onClick={() => step(1)} className="icon-btn absolute right-3 top-1/2 z-10 -translate-y-1/2 bg-black/45 text-white backdrop-blur hover:bg-black/60"><Icon name="arrowRight" size={18} /></button>
+            <button type="button" aria-label="Vorherige Ansicht" onClick={() => step(-1)} className="icon-btn absolute left-3 top-1/2 z-10 -translate-y-1/2 bg-black/45 text-[#fff]! backdrop-blur hover:bg-black/60"><Icon name="arrowLeft" size={18} /></button>
+            <button type="button" aria-label="Nächste Ansicht" onClick={() => step(1)} className="icon-btn absolute right-3 top-1/2 z-10 -translate-y-1/2 bg-black/45 text-[#fff]! backdrop-blur hover:bg-black/60"><Icon name="arrowRight" size={18} /></button>
           </>
         )}
       </div>
