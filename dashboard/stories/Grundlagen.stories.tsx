@@ -243,7 +243,7 @@ function Combo({ theme, name }: { theme: DashboardTheme; name: string }) {
         <img src={light ? oak : walnut} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, color-mix(in srgb, ${tone} var(--scrim), transparent) 70%, color-mix(in srgb, ${tone} 18%, transparent))` }} />
         <b style={{ position: 'relative', color: 'var(--text-strong)', fontFamily: 'var(--font-display)', fontSize: 16 }}>{name}</b>
-        <span style={{ position: 'relative', color: 'var(--text-muted)', fontSize: 12 }}>{light ? 'Hell · Eiche' : 'Dunkel · Nussbaum'}</span>
+        <span style={{ position: 'relative', color: light ? 'var(--text-strong)' : 'var(--text-muted)', fontSize: 12 }}>{light ? 'Hell · Eiche' : 'Dunkel · Nussbaum'}</span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '64px 1fr', background: 'var(--bg-main)' }}>
         <div style={{ background: 'var(--bg-sidebar)', padding: '12px 8px', display: 'grid', gap: 6, alignContent: 'start' }}>

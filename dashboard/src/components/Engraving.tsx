@@ -1,11 +1,11 @@
 // The page icon and a vine burnt into the header wood (see Backdrop.tsx), the leaves touched with moss.
 // Pyrography look in three passes: a soft scorch around every line, a faint light edge where light catches the cut,
 // and the dark groove itself. The colours come from styles.css (--burn-*): near black on the walnut, a brown burn on
-// the golden oak that the grain shows through (multiplied into the wood, like a real burn).
+// the golden oak that the grain shows through (multiplied into the wood, like a real burn). The moss sits on its own
+// layer between them and is never multiplied, so the leaves stay green on the light oak as well.
 import { Children, cloneElement, isValidElement, useId } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 
-const MOSS = '#8aa866';
 const LINE = { fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 
 type P = readonly [number, number];
@@ -110,17 +110,26 @@ export function Engraving({ art, width }: { art?: ReactNode; width: string }) {
       )}
     </g>
   );
-  return (
+  const layer = (blend: string, children: ReactNode) => (
     <svg viewBox="0 0 600 320" preserveAspectRatio="xMaxYMin meet" aria-hidden="true"
-      className="absolute right-0 top-0 h-full" style={{ width, mixBlendMode: 'var(--burn-blend)' as CSSProperties['mixBlendMode'] }}>
-      <defs>
-        <filter id={`${id}-scorch`} x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.6" /></filter>
-      </defs>
-      <g filter={`url(#${id}-scorch)`} style={{ opacity: 'var(--burn-scorch-opacity)' }}>{lines('var(--burn-scorch)', 2.4)}</g>
-      {/* Moss in the leaves: above the scorch, under the cut lines. */}
-      {LEAVES.map((leaf) => <path key={`m${leaf.key}`} d={LEAF} transform={leaf.transform} fill={MOSS} style={{ fillOpacity: 'var(--burn-moss-opacity)' }} />)}
-      <g transform="translate(0.7 0.9)">{lines('var(--burn-edge)', 1)}</g>
-      {lines('var(--burn-groove)', 1)}
+      className="absolute right-0 top-0 h-full" style={{ width, mixBlendMode: blend as CSSProperties['mixBlendMode'] }}>
+      {children}
     </svg>
+  );
+  return (
+    <>
+      {layer('var(--burn-blend)', <>
+        <defs>
+          <filter id={`${id}-scorch`} x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.6" /></filter>
+        </defs>
+        <g filter={`url(#${id}-scorch)`} style={{ opacity: 'var(--burn-scorch-opacity)' }}>{lines('var(--burn-scorch)', 2.4)}</g>
+      </>)}
+      {/* Moss in the leaves: above the scorch, under the cut lines. */}
+      {layer('normal', LEAVES.map((leaf) => <path key={`m${leaf.key}`} d={LEAF} transform={leaf.transform} style={{ fill: 'var(--burn-moss)', fillOpacity: 'var(--burn-moss-opacity)' }} />))}
+      {layer('var(--burn-blend)', <>
+        <g transform="translate(0.7 0.9)">{lines('var(--burn-edge)', 1)}</g>
+        {lines('var(--burn-groove)', 1)}
+      </>)}
+    </>
   );
 }

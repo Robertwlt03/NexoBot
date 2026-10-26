@@ -37,6 +37,7 @@
   --burn-scorch-opacity: 0.55;
   --burn-groove: rgba(16, 8, 3, 0.9);
   --burn-edge: rgba(255, 222, 180, 0.18);
+  --burn-moss: #8aa866;
   --burn-moss-opacity: 0.7;
   --burn-blend: normal;
   --card-shadow: none;
@@ -90,11 +91,11 @@
   --rarity-epic: #4c1d9e;
   --rarity-legendary: #613a03;
   --rarity-mythic: #8c0d27;
-  /* The header's oak keeps its own colour: the text column is washed toward a light honey, not toward the page.
-     60 % keeps 4.6:1 for the muted text over the darkest grain (measured at 360–1700 px); only the hairline cracks,
-     the darkest 2 % of the wood, stay darker. */
-  --scrim: 60%;
-  --scrim-color: #ecce9e;
+  /* The header's oak keeps its own colour: the text column is washed toward the oak's own lightest earlywood, not
+     toward white, and the header text is in the strongest ink (.page-head below). 40 % keeps 4.6:1 over the darkest
+     grain (measured at 360–1700 px); only the hairline cracks, the darkest 2 % of the wood, stay darker. */
+  --scrim: 40%;
+  --scrim-color: #fac57a;
   /* Light surfaces need a shadow for depth; the dark mode separates by tone. */
   --card-shadow: 0 1px 2px rgba(98, 56, 22, 0.09), 0 12px 30px -14px rgba(98, 56, 22, 0.32);
   /* The vine and icon burnt into the oak (components/Engraving.tsx): a brown burn the grain shows through. */
@@ -102,7 +103,10 @@
   --burn-scorch-opacity: 0.3;
   --burn-groove: rgba(74, 34, 10, 0.55);
   --burn-edge: rgba(255, 236, 205, 0.35);
-  --burn-moss-opacity: 0.55;
+  /* The leaves are not multiplied (their own layer): a deeper moss that stands off the golden oak as the light moss
+     stands off the walnut. */
+  --burn-moss: #3f6e22;
+  --burn-moss-opacity: 0.85;
   --burn-blend: multiply;
 
   --text-strong: #1f1209;
@@ -206,6 +210,8 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--bg-input);
 .page-kicker { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
 .page-kicker::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
 .page-desc { color: var(--text-muted); margin-top: 6px; max-width: 680px; }
+/* On the light oak the header text takes the strongest ink, so the wood needs only a light wash (--scrim). */
+[data-mode="light"] .page-head :is(.page-kicker, .page-desc) { color: var(--text-strong); }
 .page-head .actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 /* Header parts that can sit on the page photo get their own calm surface. */
 .page-head .icon-tile, .page-head .actions .btn-secondary { background: color-mix(in srgb, var(--bg-card) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
