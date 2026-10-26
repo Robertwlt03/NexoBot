@@ -69,7 +69,7 @@ export function StoreCard({ listing, owned, variant, onOpen, className = '', lar
         <h3 className={`mt-1 truncate font-sans font-bold uppercase leading-tight tracking-[.02em] text-white ${large ? 'text-[22px]' : 'text-[14.5px]'}`}>{item.name}</h3>
         <div className="mt-2 flex min-h-6 items-center gap-2 text-[15px] font-bold text-white">
           {owned
-            ? <span className="text-[12.5px] font-semibold text-white/60">Anlegen →</span>
+            ? <span className="text-[12.5px] font-semibold text-white/80">Anlegen →</span>
             : forSale(item) ? <Price price={item.price} finalPrice={listing.finalPrice} /> : <span className="text-[12px] font-medium text-white/55">{NOT_FOR_SALE[item.availability] ?? 'Nicht käuflich'}</span>}
         </div>
       </div>
@@ -79,17 +79,30 @@ export function StoreCard({ listing, owned, variant, onOpen, className = '', lar
 }
 
 /** One line under the banner: the next event and its discount; the full list lives on the season page. */
+/** Title and one line of explanation for each shop section, so every section reads the same way. */
+export function SectionHead({ title, text }: { title: string; text?: string }) {
+  return (
+    <div className="mb-4">
+      <h2 className="text-[22px] font-semibold leading-tight tracking-tight text-ink">{title}</h2>
+      {text && <p className="mt-1 max-w-[620px] text-[13.5px] text-mute">{text}</p>}
+    </div>
+  );
+}
+
 function NextEvent({ events }: { events: ShopEvent[] }) {
   const now = useNow(60_000);
   const next = events[0];
   if (!next) return null;
   return (
-    <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-[13.5px] text-mute">
-      <EventIcon event={next} />
-      Nächstes Event: <span className="text-ink">{next.name}</span>
-      <span>{startsIn(next.startsAt, now)}{next.discount > 0 ? `, −${next.discount} %` : ''}</span>
-      <Link to="/me/saison" className="ml-auto text-accent-text">Alle Events</Link>
-    </p>
+    // A small block of its own: the info on the left, the link to the season page as a real button on the right.
+    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-[var(--border-control)] bg-surface px-4 py-3">
+      <EventIcon event={next} size={28} />
+      <div className="min-w-0 flex-1 leading-tight">
+        <div className="text-[12px] font-medium text-mute">Nächstes Event</div>
+        <div className="text-[14.5px] text-body"><span className="font-semibold text-ink">{next.name}</span> · {startsIn(next.startsAt, now)}{next.discount > 0 ? ` · −${next.discount} %` : ''}</div>
+      </div>
+      <Link to="/me/saison" className="btn btn-secondary btn-sm hover:no-underline">Alle Events</Link>
+    </div>
   );
 }
 
@@ -158,8 +171,9 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
         </div>
       </section>
       <NextEvent events={upcoming} />
-      <section className="mt-8">
-        <h2 className="mb-3.5 text-[19px] font-semibold tracking-tight">{event ? `Highlights aus „${event.name}“` : 'Empfohlen'}</h2>
+      <section className="mt-10">
+        <SectionHead title={event ? `Highlights aus „${event.name}“` : 'Empfohlen'}
+          text={event ? 'Die Event-Artikel und die besten Angebote, solange es läuft.' : 'Die besten Stücke, die dir noch fehlen.'} />
         {/* Bento: one 2×2 feature tile, four regular ones. */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {featured.slice(0, 5).map((l, i) => (
@@ -173,7 +187,7 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
 
       {/* The whole catalogue: kinds as tabs, "new" as the default order, deals as a switch (on while an event discounts). */}
       <section className="mt-12">
-        <h2 className="mb-3 text-[19px] font-semibold tracking-tight">Alle Artikel</h2>
+        <SectionHead title="Alle Artikel" text="Alles, was der Shop gerade hat. Filtere nach Art, Seltenheit oder Preis." />
         <ItemBrowser listings={listings} variant="shop" event={event} dealsFirst={!!event && event.discount > 0 && listings.some((l) => l.discount > 0)} />
       </section>
       {open && <ItemDetail listing={open} owned={owned.has(open.item.id)} onClose={() => setOpenId(null)} />}
@@ -254,7 +268,8 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
   return (
     <div ref={root}>
       {filters && (
-        <>
+        // All filters in one panel, so they read as one control area rather than loose pieces on the page.
+        <div className="mb-4 rounded-2xl border border-[var(--border-control)] bg-surface p-3 sm:p-4">
           {/* Item kinds as chips that wrap onto a second line, so every kind is one click away (no sideways scrolling).
               Phones get the same choice as a dropdown, where the chips would fill half the screen. */}
           <div className="filter-chips mb-4 max-sm:hidden" role="group" aria-label="Art">
@@ -268,10 +283,11 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
           <div className="mb-3 sm:hidden">
             <Select value={slot} onChange={setSlot} options={kinds.map(([id, label, count]) => ({ value: id, label: id === 'event' ? `Nur während „${label}“ (${count})` : `${label} (${count})` }))} />
           </div>
-          <div className="mb-5 grid grid-cols-2 items-center gap-3 md:grid-cols-[1fr_170px_170px_auto_auto]">
+          <div className="grid grid-cols-2 items-center gap-3 md:grid-cols-[1fr_170px_170px_auto_auto]">
             <div className="col-span-2 md:col-span-1"><TextInput value={query} onChange={setQuery} placeholder="Artikel suchen …" /></div>
-            <Select value={rarity} onChange={setRarity} options={[{ value: 'all', label: 'Alle Seltenheiten' }, ...RARITIES.map((r) => ({ value: r, label: RARITY_LABELS[r] }))]} />
-            <Select value={sort} onChange={setSort} options={[{ value: 'new', label: 'Neueste zuerst' }, { value: 'price-asc', label: 'Preis aufsteigend' }, { value: 'price-desc', label: 'Preis absteigend' }]} />
+            {/* Each select gets the full row on phones, so its label is not cut off. */}
+            <div className="max-sm:col-span-2"><Select value={rarity} onChange={setRarity} options={[{ value: 'all', label: 'Alle Seltenheiten' }, ...RARITIES.map((r) => ({ value: r, label: RARITY_LABELS[r] }))]} /></div>
+            <div className="max-sm:col-span-2"><Select value={sort} onChange={setSort} options={[{ value: 'new', label: 'Neueste zuerst' }, { value: 'price-asc', label: 'Preis aufsteigend' }, { value: 'price-desc', label: 'Preis absteigend' }]} /></div>
             <label className="col-span-2 flex cursor-pointer items-center gap-2.5 text-[13.5px] text-body md:col-span-1">
               <Switch checked={affordable} onChange={setAffordable} label="Nur leistbar" /> Nur leistbar
             </label>
@@ -279,7 +295,7 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
               <Switch checked={deals} onChange={setDeals} label="Nur im Angebot" /> Nur im Angebot
             </label>
           </div>
-        </>
+        </div>
       )}
       {/* How many items the current kind and filters leave, so the chip numbers and the grid always agree. */}
       {filters && (

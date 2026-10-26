@@ -244,8 +244,8 @@ export function BundleSection({ bundles, listings, event }: { bundles: ShopBundl
       <div className="pointer-events-none absolute -bottom-28 right-0 h-72 w-96 rounded-full bg-[#8fb36b]/12 blur-[100px]" />
       <div className="relative mb-5 flex flex-wrap items-end gap-3">
         <div className="min-w-0 flex-1">
-          <h2 className="text-[26px] font-bold tracking-tight text-ink">Pakete</h2>
-          <p className="mt-1 max-w-[560px] text-[13.5px] text-mute">Alles, was zusammenpasst, in einem Klick. Was du schon besitzt, zahlst du nicht.</p>
+          <h2 className="text-[22px] font-semibold leading-tight tracking-tight text-ink">Pakete</h2>
+          <p className="mt-1 max-w-[620px] text-[13.5px] text-mute">Alles, was zusammenpasst, in einem Klick. Was du schon besitzt, zahlst du nicht.</p>
         </div>
       </div>
       <div className="relative grid grid-cols-1 gap-5 md:grid-cols-2">
