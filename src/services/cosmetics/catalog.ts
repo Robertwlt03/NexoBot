@@ -31,7 +31,8 @@ const scene = (name: BackgroundScene, colors: string[]) => ({ kind: 'scene' as c
 export type AchievementStat =
   | 'maxLevel' | 'wins' | 'items' | 'streak' | 'lifetime' | 'purchases' | 'gifts' | 'blackMarket' | 'top3'
   | 'daily' | 'spent' | 'giftsReceived' | 'servers' | 'servers10' | 'monthlyWins' | 'eventItems' | 'birthday' | 'bio' | 'outfit'
-  | 'achievements' | 'gamesPlayed' | 'voiceMinutes' | 'chat_days' | 'chat_streak_best' | Exclude<ActivityCounter, 'voice_ms'>;
+  | 'achievements' | 'gamesPlayed' | 'voiceMinutes' | 'chat_days' | 'chat_streak_best' | 'petFeeds' | 'petForm' | 'pets'
+  | Exclude<ActivityCounter, 'voice_ms'>;
 
 /**
  * Every achievement: the stat it watches (services/cosmetics/achievements.ts), its target and Bernis reward, and
@@ -40,17 +41,19 @@ export type AchievementStat =
 export const ACHIEVEMENT_BADGES: {
   achievementId: string; stat: AchievementStat; target: number; reward: number;
   name: string; description: string; rarity: Rarity; glyph: BadgeGlyph; color: string; title: string;
+  /** Secret until unlocked: the page shows only that it exists and its reward, never the condition. */
+  hidden?: true;
 }[] = [
   { achievementId: 'first_purchase', stat: 'purchases', target: 1, reward: 50, name: 'Erster Einkauf', description: 'Dein erstes Item aus dem Berni-Shop.', rarity: 'common', glyph: 'gift', color: '#7DD3FC', title: 'Shopping-Neuling' },
   { achievementId: 'purchases_25', stat: 'purchases', target: 25, reward: 250, name: 'Shopaholic', description: '25 Einkäufe im Berni-Shop.', rarity: 'epic', glyph: 'gift', color: '#38BDF8', title: 'Shopaholic' },
   { achievementId: 'collector_10', stat: 'items', target: 10, reward: 100, name: 'Sammler', description: '10 Cosmetics in deiner Sammlung.', rarity: 'rare', glyph: 'diamond', color: '#22D3EE', title: 'Jäger und Sammler' },
   { achievementId: 'collector_50', stat: 'items', target: 50, reward: 400, name: 'Museumsdirektor', description: '50 Cosmetics in deiner Sammlung.', rarity: 'legendary', glyph: 'diamond', color: '#A78BFA', title: 'Museumsdirektor' },
   { achievementId: 'event_items_10', stat: 'eventItems', target: 10, reward: 300, name: 'Saisonsammler', description: '10 Event-Artikel gesammelt.', rarity: 'epic', glyph: 'leaf', color: '#F59E0B', title: 'Saisonsammler' },
-  { achievementId: 'spent_50000', stat: 'spent', target: 50000, reward: 500, name: 'Big Spender', description: 'Insgesamt 50.000 Bernis ausgegeben.', rarity: 'legendary', glyph: 'diamond', color: '#FDE68A', title: 'Big Spender' },
+  { achievementId: 'spent_50000', stat: 'spent', target: 50000, reward: 500, name: 'Big Spender', description: 'Insgesamt 50.000 Bernis ausgegeben.', rarity: 'legendary', glyph: 'diamond', color: '#FDE68A', title: 'Big Spender', hidden: true },
   { achievementId: 'outfit_full', stat: 'outfit', target: 1, reward: 250, name: 'Komplett gestylt', description: 'In jedem Bereich etwas angelegt.', rarity: 'epic', glyph: 'star', color: '#F472B6', title: 'Modeikone' },
   { achievementId: 'bio_set', stat: 'bio', target: 1, reward: 30, name: 'Über mich', description: 'Einen Text für deine Profilkarte geschrieben.', rarity: 'common', glyph: 'chat', color: '#CBD5E1', title: 'Hat was zu sagen' },
-  { achievementId: 'black_market', stat: 'blackMarket', target: 1, reward: 150, name: 'Schattenhändler', description: 'Etwas auf dem Schwarzmarkt gekauft.', rarity: 'epic', glyph: 'moon', color: '#A78BFA', title: 'Kennt da jemanden' },
-  { achievementId: 'black_market_5', stat: 'blackMarket', target: 5, reward: 400, name: 'Stammkunde der Nacht', description: '5 Käufe auf dem Schwarzmarkt.', rarity: 'legendary', glyph: 'moon', color: '#C084FC', title: 'Unterwelt-Stammkunde' },
+  { achievementId: 'black_market', stat: 'blackMarket', target: 1, reward: 150, name: 'Schattenhändler', description: 'Etwas auf dem Schwarzmarkt gekauft.', rarity: 'epic', glyph: 'moon', color: '#A78BFA', title: 'Kennt da jemanden', hidden: true },
+  { achievementId: 'black_market_5', stat: 'blackMarket', target: 5, reward: 400, name: 'Stammkunde der Nacht', description: '5 Käufe auf dem Schwarzmarkt.', rarity: 'legendary', glyph: 'moon', color: '#C084FC', title: 'Unterwelt-Stammkunde', hidden: true },
   { achievementId: 'first_gift', stat: 'gifts', target: 1, reward: 50, name: 'Großes Herz', description: 'Dein erstes Item verschenkt.', rarity: 'rare', glyph: 'heart', color: '#FDA4AF', title: 'Wichtel' },
   { achievementId: 'gifts_10', stat: 'gifts', target: 10, reward: 200, name: 'Wichtelmeister', description: '10 Items verschenkt.', rarity: 'epic', glyph: 'gift', color: '#FB7185', title: 'Weihnachtsmann in Teilzeit' },
   { achievementId: 'gifts_received_5', stat: 'giftsReceived', target: 5, reward: 150, name: 'Beschenkt', description: '5 Geschenke von anderen bekommen.', rarity: 'rare', glyph: 'gift', color: '#F9A8D4', title: 'Glückskind' },
@@ -79,15 +82,15 @@ export const ACHIEVEMENT_BADGES: {
   { achievementId: 'media_500', stat: 'msg_media', target: 500, reward: 400, name: 'Galerie', description: '500 Bilder oder Videos geteilt.', rarity: 'legendary', glyph: 'star', color: '#F472B6', title: 'Kurator' },
   { achievementId: 'emoji_500', stat: 'msg_emoji', target: 500, reward: 150, name: 'Emoji-Regen', description: '500 Nachrichten mit Emojis.', rarity: 'epic', glyph: 'heart', color: '#FCD34D', title: 'Emoji-Flüsterer' },
   { achievementId: 'links_100', stat: 'msg_link', target: 100, reward: 100, name: 'Linksammler', description: '100 Links geteilt.', rarity: 'rare', glyph: 'code', color: '#7DD3FC', title: 'Lesezeichen auf Beinen' },
-  { achievementId: 'caps_10', stat: 'msg_caps', target: 10, reward: 50, name: 'CAPS LOCK', description: '10 Nachrichten komplett in Großbuchstaben.', rarity: 'rare', glyph: 'bolt', color: '#F87171', title: 'Feststelltaste klemmt' },
+  { achievementId: 'caps_10', stat: 'msg_caps', target: 10, reward: 50, name: 'CAPS LOCK', description: '10 Nachrichten komplett in Großbuchstaben.', rarity: 'rare', glyph: 'bolt', color: '#F87171', title: 'Feststelltaste klemmt', hidden: true },
   { achievementId: 'weekend_500', stat: 'msg_weekend', target: 500, reward: 200, name: 'Wochenendkrieger', description: '500 Nachrichten am Wochenende.', rarity: 'epic', glyph: 'sun', color: '#FBBF24', title: 'Wochenendkrieger' },
   { achievementId: 'night_1', stat: 'msg_night', target: 1, reward: 30, name: 'Nachtschicht', description: 'Eine Nachricht zwischen Mitternacht und 5 Uhr.', rarity: 'common', glyph: 'moon', color: '#A5B4FC', title: 'Nachtgespenst' },
   { achievementId: 'night_100', stat: 'msg_night', target: 100, reward: 250, name: 'Eule', description: '100 Nachrichten zwischen Mitternacht und 5 Uhr.', rarity: 'epic', glyph: 'moon', color: '#818CF8', title: 'Schläft nie' },
   { achievementId: 'early_1', stat: 'msg_early', target: 1, reward: 30, name: 'Frühaufsteher', description: 'Eine Nachricht zwischen 5 und 7 Uhr.', rarity: 'common', glyph: 'sun', color: '#FDE68A', title: 'Der frühe Vogel' },
   { achievementId: 'early_50', stat: 'msg_early', target: 50, reward: 200, name: 'Morgenroutine', description: '50 Nachrichten zwischen 5 und 7 Uhr.', rarity: 'epic', glyph: 'sun', color: '#FBBF24', title: 'Kaffee vor Sonnenaufgang' },
-  { achievementId: 'midnight', stat: 'msg_midnight', target: 1, reward: 150, name: 'Punkt Mitternacht', description: 'Eine Nachricht genau um 00:00 Uhr.', rarity: 'epic', glyph: 'clock', color: '#C084FC', title: 'Geisterstunde' },
-  { achievementId: 'leet', stat: 'msg_leet', target: 1, reward: 137, name: '13:37', description: 'Eine Nachricht genau um 13:37 Uhr.', rarity: 'epic', glyph: 'code', color: '#4ADE80', title: 'Leet' },
-  { achievementId: 'good_morning_30', stat: 'msg_morning', target: 30, reward: 100, name: 'Guten Morgen!', description: '30-mal morgens „Guten Morgen“ gesagt.', rarity: 'rare', glyph: 'sun', color: '#FCD34D', title: 'Sonnenschein' },
+  { achievementId: 'midnight', stat: 'msg_midnight', target: 1, reward: 150, name: 'Punkt Mitternacht', description: 'Eine Nachricht genau um 00:00 Uhr.', rarity: 'epic', glyph: 'clock', color: '#C084FC', title: 'Geisterstunde', hidden: true },
+  { achievementId: 'leet', stat: 'msg_leet', target: 1, reward: 137, name: '13:37', description: 'Eine Nachricht genau um 13:37 Uhr.', rarity: 'epic', glyph: 'code', color: '#4ADE80', title: 'Leet', hidden: true },
+  { achievementId: 'good_morning_30', stat: 'msg_morning', target: 30, reward: 100, name: 'Guten Morgen!', description: '30-mal morgens „Guten Morgen“ gesagt.', rarity: 'rare', glyph: 'sun', color: '#FCD34D', title: 'Sonnenschein', hidden: true },
   { achievementId: 'chatstreak_3', stat: 'chat_streak_best', target: 3, reward: 40, name: 'Am Ball', description: '3 Tage in Folge gechattet.', rarity: 'common', glyph: 'flame', color: '#FDBA74', title: 'Am Ball' },
   { achievementId: 'chatstreak_7', stat: 'chat_streak_best', target: 7, reward: 100, name: 'Stammtisch', description: '7 Tage in Folge gechattet.', rarity: 'rare', glyph: 'flame', color: '#FB923C', title: 'Stammtisch' },
   { achievementId: 'chatstreak_30', stat: 'chat_streak_best', target: 30, reward: 400, name: 'Monatsmarathon', description: '30 Tage in Folge gechattet.', rarity: 'epic', glyph: 'flame', color: '#F97316', title: 'Gehört zum Mobiliar' },
@@ -112,8 +115,8 @@ export const ACHIEVEMENT_BADGES: {
   { achievementId: 'fish_50', stat: 'game_fish', target: 50, reward: 150, name: 'Angler', description: '50-mal erfolgreich geangelt.', rarity: 'rare', glyph: 'fish', color: '#38BDF8', title: 'Petri Heil' },
   { achievementId: 'mine_50', stat: 'game_mine', target: 50, reward: 150, name: 'Bergmann', description: '50-mal erfolgreich geschürft.', rarity: 'rare', glyph: 'pickaxe', color: '#94A3B8', title: 'Glück auf' },
   { achievementId: 'work_100', stat: 'game_work', target: 100, reward: 200, name: 'Workaholic', description: '100-mal gearbeitet.', rarity: 'epic', glyph: 'trophy', color: '#FCD34D', title: 'Workaholic' },
-  { achievementId: 'gamble_100', stat: 'game_gamble', target: 100, reward: 200, name: 'Risikofreudig', description: '100 Glücksspiele gewonnen.', rarity: 'epic', glyph: 'dice', color: '#F87171', title: 'High Roller' },
-  { achievementId: 'crime_25', stat: 'game_crime', target: 25, reward: 150, name: 'Kleinkrimineller', description: '25 Verbrechen erfolgreich begangen.', rarity: 'rare', glyph: 'skull', color: '#94A3B8', title: 'Gesucht' },
+  { achievementId: 'gamble_100', stat: 'game_gamble', target: 100, reward: 200, name: 'Risikofreudig', description: '100 Glücksspiele gewonnen.', rarity: 'epic', glyph: 'dice', color: '#F87171', title: 'High Roller', hidden: true },
+  { achievementId: 'crime_25', stat: 'game_crime', target: 25, reward: 150, name: 'Kleinkrimineller', description: '25 Verbrechen erfolgreich begangen.', rarity: 'rare', glyph: 'skull', color: '#94A3B8', title: 'Gesucht', hidden: true },
   { achievementId: 'fight_50', stat: 'game_fight', target: 50, reward: 250, name: 'Duellant', description: '50 Duelle gewonnen.', rarity: 'epic', glyph: 'shield', color: '#F97316', title: 'Duellmeister' },
   { achievementId: 'games_all', stat: 'gamesPlayed', target: 11, reward: 400, name: 'Allrounder', description: 'Jedes Minispiel mindestens einmal geschafft.', rarity: 'legendary', glyph: 'controller', color: '#22D3EE', title: 'Tausendsassa' },
   { achievementId: 'duel_10', stat: 'game_duel', target: 10, reward: 150, name: 'Herausforderer', description: '10 Spiele gegen andere gewonnen (/fun spiel).', rarity: 'rare', glyph: 'controller', color: '#F472B6', title: 'Herausforderer' },
@@ -128,7 +131,25 @@ export const ACHIEVEMENT_BADGES: {
   { achievementId: 'monthly_winner', stat: 'monthlyWins', target: 1, reward: 500, name: 'Monatschampion', description: 'Ein Monatsranking gewonnen.', rarity: 'legendary', glyph: 'crown', color: '#F5C451', title: 'Unangefochten' },
   { achievementId: 'achievements_25', stat: 'achievements', target: 25, reward: 400, name: 'Erfolgsjäger', description: '25 Erfolge freigeschaltet.', rarity: 'legendary', glyph: 'trophy', color: '#22D3EE', title: 'Erfolgsjäger' },
   { achievementId: 'achievements_50', stat: 'achievements', target: 50, reward: 1000, name: 'Komplettist', description: '50 Erfolge freigeschaltet.', rarity: 'mythic', glyph: 'trophy', color: '#F472B6', title: 'Komplettist' },
+  // Begleiter (services/cosmetics/pets.ts): feedings, the highest form reached and how many pets.
+  { achievementId: 'pet_feed_1', stat: 'petFeeds', target: 1, reward: 30, name: 'Erste Mahlzeit', description: 'Deinen Begleiter zum ersten Mal gefüttert.', rarity: 'common', glyph: 'paw', color: '#FDA4AF', title: 'Futterbringer' },
+  { achievementId: 'pet_feed_30', stat: 'petFeeds', target: 30, reward: 150, name: 'Treue Pflege', description: '30-mal einen Begleiter gefüttert.', rarity: 'rare', glyph: 'heart', color: '#FB7185', title: 'Tierfreund' },
+  { achievementId: 'pet_feed_100', stat: 'petFeeds', target: 100, reward: 400, name: 'Hundert Mahlzeiten', description: '100-mal einen Begleiter gefüttert.', rarity: 'epic', glyph: 'paw', color: '#F59E0B', title: 'Tierpfleger' },
+  { achievementId: 'pet_feed_365', stat: 'petFeeds', target: 365, reward: 1500, name: 'Ein Jahr Futter', description: '365-mal einen Begleiter gefüttert.', rarity: 'legendary', glyph: 'star', color: '#F5C451', title: 'Hüter der Tiere' },
+  { achievementId: 'pet_form_2', stat: 'petForm', target: 2, reward: 120, name: 'Großgezogen', description: 'Ein Begleiter hat seine Jugendform erreicht.', rarity: 'rare', glyph: 'egg', color: '#86EFAC', title: 'Züchter' },
+  { achievementId: 'pet_form_3', stat: 'petForm', target: 3, reward: 500, name: 'Erwachsen geworden', description: 'Ein Begleiter hat seine Erwachsenenform erreicht.', rarity: 'epic', glyph: 'shield', color: '#7DD3FC', title: 'Rudelführer' },
+  { achievementId: 'pet_form_4', stat: 'petForm', target: 4, reward: 2500, name: 'Kronenform', description: 'Ein Begleiter hat seine Kronenform erreicht.', rarity: 'mythic', glyph: 'crown', color: '#F5C451', title: 'Legendenhüter', hidden: true },
+  { achievementId: 'pets_3', stat: 'pets', target: 3, reward: 300, name: 'Kleiner Zoo', description: 'Drei Begleiter besessen.', rarity: 'epic', glyph: 'paw', color: '#C4B5FD', title: 'Zoodirektor' },
+  // Leicht zum Einstieg, schwer für die Ausdauernden.
+  { achievementId: 'question_1', stat: 'msg_question', target: 1, reward: 15, name: 'Erste Frage', description: 'Deine erste Frage im Chat gestellt.', rarity: 'common', glyph: 'chat', color: '#93C5FD', title: 'Fragezeichen' },
+  { achievementId: 'media_1', stat: 'msg_media', target: 1, reward: 15, name: 'Schnappschuss', description: 'Dein erstes Bild oder Video geteilt.', rarity: 'common', glyph: 'sun', color: '#FBBF24', title: 'Hobbyfotograf' },
+  { achievementId: 'collector_100', stat: 'items', target: 100, reward: 800, name: 'Schatzkammer', description: '100 Cosmetics in deiner Sammlung.', rarity: 'legendary', glyph: 'diamond', color: '#A5F3FC', title: 'Schatzmeister' },
+  { achievementId: 'quests_365', stat: 'quest_days', target: 365, reward: 3000, name: 'Ein Jahr Aufgaben', description: 'An 365 Tagen alle Tagesaufgaben geschafft.', rarity: 'mythic', glyph: 'clock', color: '#F5C451', title: 'Unermüdlich', hidden: true },
+  { achievementId: 'achievements_75', stat: 'achievements', target: 75, reward: 2000, name: 'Fast alles', description: '75 Erfolge freigeschaltet.', rarity: 'mythic', glyph: 'trophy', color: '#A78BFA', title: 'Vollender', hidden: true },
 ];
+
+/** Achievements that stay secret until unlocked. */
+export const HIDDEN_ACHIEVEMENTS = new Set(ACHIEVEMENT_BADGES.filter((entry) => entry.hidden).map((entry) => entry.achievementId));
 
 export const RANKING_ITEMS = { winnerBadge: 'rank-badge-champion', winnerTitle: 'rank-title-champion', podiumBadge: 'rank-badge-podium' } as const;
 

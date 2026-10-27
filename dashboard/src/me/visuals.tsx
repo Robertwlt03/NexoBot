@@ -5,7 +5,7 @@ import { CURRENCY, RARITY_LABELS, SLOT_LABELS } from '../../../src/shared/cosmet
 import { CoinIcon } from '../components/CoinIcon';
 import { COIN_TIERS, splitCoins } from '../../../src/shared/coins';
 import { ItemPreviewCanvas } from '../components/ProfileCardPreview';
-import { drawEmblem } from '../../../src/shared/profileCard';
+import { EMBLEM_BOX, EMBLEM_LIFT, drawEmblem } from '../../../src/shared/profileCard';
 import type {
   BackgroundData, BadgeData, BadgeGlyph, CosmeticItem, LevelupData, Rarity,
 } from '../../../src/shared/cosmetics';
@@ -235,7 +235,7 @@ export function ItemVisual({ item, className = '' }: { item: CosmeticItem; class
 }
 
 /** A badge as the emblem the profile card draws (shape and metal by rarity); `locked` shows it grey. */
-export function BadgeEmblem({ badge, size = 44, locked = false }: { badge: BadgeData; size?: number; locked?: boolean }) {
+export function BadgeEmblem({ badge, size = 44, locked = false, mark }: { badge: BadgeData; size?: number; locked?: boolean; mark?: string }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const el = canvas.current;
@@ -243,12 +243,13 @@ export function BadgeEmblem({ badge, size = 44, locked = false }: { badge: Badge
     if (!el || !ctx) return;
     const ratio = window.devicePixelRatio || 1;
     // Room around the emblem for its shadow.
-    const box = size * 1.3;
+    const box = size * EMBLEM_BOX;
     el.width = box * ratio;
     el.height = box * ratio;
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     ctx.clearRect(0, 0, box, box);
-    drawEmblem(ctx, locked ? { ...badge, color: '#6B6F78' } : badge, box / 2, box / 2 - size * 0.03, size);
-  }, [badge, size, locked]);
-  return <canvas ref={canvas} aria-hidden="true" style={{ width: size * 1.3, height: size * 1.3, margin: -size * 0.15, flex: 'none', opacity: locked ? 0.55 : 1 }} />;
+    drawEmblem(ctx, locked ? { ...badge, color: '#6B6F78' } : badge, box / 2, box / 2 - size * EMBLEM_LIFT, size, mark);
+  }, [badge, size, locked, mark]);
+  const margin = (-size * (EMBLEM_BOX - 1)) / 2;
+  return <canvas ref={canvas} aria-hidden="true" style={{ width: size * EMBLEM_BOX, height: size * EMBLEM_BOX, margin, flex: 'none', opacity: locked ? 0.55 : 1 }} />;
 }
