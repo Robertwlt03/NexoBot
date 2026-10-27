@@ -210,7 +210,7 @@ test('resolved cosmetics skip unknown, inactive and wrong-slot items', () => {
   const resolved = resolveEquipped(settings, catalog);
   assert.equal(resolved.background, null);
   assert.equal(resolved.frame, null);
-  assert.deepEqual(resolved.badges, [{ glyph: 'star', color: '#F5C451' }]);
+  assert.deepEqual(resolved.badges, [{ glyph: 'star', color: '#F5C451', rarity: 'common' }]);
 });
 
 test('seed catalog: size, coverage, price bands and valid data', () => {

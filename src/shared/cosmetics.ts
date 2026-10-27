@@ -32,7 +32,8 @@ export const FRAME_STYLES = ['solid', 'gradient', 'glow', 'double', 'dashed', 'n
 /** Illustrated styles (vine … lightning) take colours [main, second] and ignore `width`. */
 export interface FrameData { style: (typeof FRAME_STYLES)[number]; colors: string[]; width: number }
 /** Badge glyph: one of BADGE_GLYPHS (drawn as vector shapes by the renderer, no emoji fonts needed). */
-export interface BadgeData { glyph: BadgeGlyph; color: string }
+/** `rarity` is not stored: it is added when the badge is resolved for drawing and picks the emblem's shape and metal. */
+export interface BadgeData { glyph: BadgeGlyph; color: string; rarity?: Rarity }
 export const PET_SPECIES = [
   'fox', 'owl', 'cat', 'axolotl', 'dragon', 'bunny', 'penguin', 'panda', 'frog',
   'butterfly', 'chicken', 'dog', 'wolf', 'horse', 'turtle', 'koi', 'snail', 'hedgehog', 'bat', 'squirrel', 'hamster', 'bee', 'octopus', 'jellyfish',

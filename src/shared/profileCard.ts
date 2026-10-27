@@ -2283,20 +2283,101 @@ function drawXpBar(ctx: Ctx, { x, y, w, h }: Rect, fraction: number, style: XpBa
 
 // ---------- Badges + sticker ----------
 
+/** The emblem outline per rarity, centred on (0, 0) with radius `r`. */
+function emblemPath(ctx: Ctx, rarity: BadgeData['rarity'], r: number) {
+  ctx.beginPath();
+  if (rarity === 'epic') {
+    for (let i = 0; i < 6; i += 1) {
+      const a = (i / 6) * TAU - Math.PI / 2;
+      if (i) ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); else ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+  } else if (rarity === 'legendary') {
+    ctx.moveTo(0, -r);
+    ctx.quadraticCurveTo(r * 0.55, -r * 0.72, r * 0.92, -r * 0.78);
+    ctx.quadraticCurveTo(r * 0.98, r * 0.15, 0, r);
+    ctx.quadraticCurveTo(-r * 0.98, r * 0.15, -r * 0.92, -r * 0.78);
+    ctx.quadraticCurveTo(-r * 0.55, -r * 0.72, 0, -r);
+  } else if (rarity === 'mythic') {
+    for (let i = 0; i < 16; i += 1) {
+      const a = (i / 16) * TAU - Math.PI / 2;
+      const radius = i % 2 ? r * 0.78 : r;
+      if (i) ctx.lineTo(Math.cos(a) * radius, Math.sin(a) * radius); else ctx.moveTo(Math.cos(a) * radius, Math.sin(a) * radius);
+    }
+  } else {
+    ctx.moveTo(r, 0);
+    ctx.arc(0, 0, r, 0, TAU);
+  }
+  ctx.closePath();
+}
+
+/** Rim metal per rarity: bronze, silver, a lilac silver, gold and gold again for the star. */
+const EMBLEM_METAL: Record<NonNullable<BadgeData['rarity']>, string> = {
+  common: '#B58A5A', rare: '#C9D2DE', epic: '#C9B8F2', legendary: '#F2C24E', mythic: '#F5CF5C',
+};
+
+/**
+ * A badge as a real emblem: shape and rim metal by rarity (medallion, hexagon, shield, star), a soft drop shadow, a lit
+ * metal rim, an inner field in the badge colour, the symbol embossed in a light tint and a gloss over the top.
+ */
+export function drawEmblem(ctx: Ctx, badge: BadgeData, cx: number, cy: number, size: number) {
+  const rarity = badge.rarity ?? 'common';
+  const r = size / 2;
+  const metal = EMBLEM_METAL[rarity];
+  ctx.save();
+  ctx.translate(cx, cy);
+  // Shadow under the whole emblem.
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = size * 0.16;
+  ctx.shadowOffsetY = size * 0.06;
+  emblemPath(ctx, rarity, r);
+  const rim = ctx.createLinearGradient(-r, -r, r, r);
+  rim.addColorStop(0, lighten(metal, 0.55));
+  rim.addColorStop(0.45, metal);
+  rim.addColorStop(1, darken(metal, 0.45));
+  ctx.fillStyle = rim;
+  ctx.fill();
+  resetShadow(ctx);
+  // Inner field: the badge colour, lighter in the middle, deep at the edge.
+  const inner = r * 0.78;
+  emblemPath(ctx, rarity, inner);
+  const field = ctx.createRadialGradient(-inner * 0.25, -inner * 0.3, inner * 0.1, 0, 0, inner * 1.1);
+  field.addColorStop(0, lighten(badge.color, 0.12));
+  field.addColorStop(0.55, darken(badge.color, 0.25));
+  field.addColorStop(1, darken(badge.color, 0.62));
+  ctx.fillStyle = field;
+  ctx.fill();
+  ctx.strokeStyle = withAlpha(darken(metal, 0.55), 0.9);
+  ctx.lineWidth = Math.max(1, size * 0.03);
+  ctx.stroke();
+  // Embossed symbol: a dark offset copy under a light one.
+  const glyph = size * 0.5;
+  drawGlyph(ctx, badge.glyph, size * 0.025, size * 0.035, glyph, withAlpha(darken(badge.color, 0.7), 0.85));
+  drawGlyph(ctx, badge.glyph, 0, 0, glyph, lighten(badge.color, 0.72));
+  // Gloss across the upper half of the field.
+  ctx.save();
+  emblemPath(ctx, rarity, inner);
+  ctx.clip();
+  const gloss = ctx.createLinearGradient(0, -inner, 0, inner * 0.2);
+  gloss.addColorStop(0, 'rgba(255, 255, 255, 0.32)');
+  gloss.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = gloss;
+  ctx.beginPath();
+  ctx.moveTo(-inner * 1.2, -inner * 1.2);
+  ctx.lineTo(inner * 1.2, -inner * 1.2);
+  ctx.lineTo(inner * 1.2, -inner * 0.05);
+  ctx.quadraticCurveTo(0, inner * 0.18, -inner * 1.2, -inner * 0.05);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+  ctx.restore();
+}
+
 /** Draws the badge row right-aligned at `right`; returns its width. */
 function drawBadges(ctx: Ctx, badges: BadgeData[], right: number, top: number): number {
   const shown = badges.slice(0, 3);
   shown.forEach((badge, index) => {
     const x = right - (shown.length - index) * (BADGE_SIZE + BADGE_GAP) + BADGE_GAP;
-    ctx.save();
-    roundedRect(ctx, x, top, BADGE_SIZE, BADGE_SIZE, 12);
-    ctx.fillStyle = withAlpha(badge.color, 0.14);
-    ctx.fill();
-    ctx.strokeStyle = withAlpha(badge.color, 0.42);
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    ctx.restore();
-    drawGlyph(ctx, badge.glyph, x + BADGE_SIZE / 2, top + BADGE_SIZE / 2, 22, badge.color);
+    drawEmblem(ctx, badge, x + BADGE_SIZE / 2, top + BADGE_SIZE / 2, BADGE_SIZE);
   });
   return shown.length ? shown.length * (BADGE_SIZE + BADGE_GAP) - BADGE_GAP : 0;
 }
@@ -2381,7 +2462,7 @@ export function renderItemPreview<I extends ProfileImage>(
       drawAvatar(ctx, assets.avatar, avatar(h * 0.2, h * 0.4), null, accent, subject.name);
       drawXpBar(ctx, { x: w * 0.2, y: h * 0.74, w: w * 0.6, h: 12 }, 0.62, null, accent);
       break;
-    case 'badge': zoomAt(2.2); drawBadges(ctx, [item.data], BADGE_SIZE / 2, -BADGE_SIZE / 2); break;
+    case 'badge': zoomAt(2.2); drawBadges(ctx, [{ ...item.data, rarity: item.rarity }], BADGE_SIZE / 2, -BADGE_SIZE / 2); break;
     case 'sticker': zoomAt(2.2); drawSticker(ctx, item.data, 0, 0); break;
     case 'pet': drawPet(ctx, item.data, w / 2, h / 2 - 6, h * 0.36, 3); break;
     case 'xpBar': drawXpBar(ctx, { x: w * 0.12, y: h / 2 - 10, w: w * 0.76, h: 20 }, 0.66, item.data, accent); break;

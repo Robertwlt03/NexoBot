@@ -35,7 +35,8 @@ export function resolveEquipped(settings: UserProfileSettings, catalog: Map<stri
     accent: pick(equipped.accent, 'accent'),
     nameStyle: pick(equipped.nameStyle, 'nameStyle'),
     frame: pick(equipped.frame, 'frame'),
-    badges: equipped.badges.map((id) => pick(id, 'badge')).filter((data): data is SlotData['badge'] => data !== null),
+    // Badges carry their rarity along for the emblem's shape (BadgeData.rarity).
+    badges: equipped.badges.flatMap((id): SlotData['badge'][] => { const data = pick(id, 'badge'); return data ? [{ ...data, rarity: catalog.get(id)!.rarity }] : []; }),
     title: pick(equipped.title, 'title'),
     xpBar: pick(equipped.xpBar, 'xpBar'),
     font: pick(equipped.font, 'font'),

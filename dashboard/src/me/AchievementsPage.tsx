@@ -3,7 +3,7 @@ import type { AchievementsResponse } from '../../../src/web/dto/profile';
 import { useApi } from '../api';
 import { Card, Empty, Notice, PageHeader, Spinner, Stats } from '../components/ui';
 import { formatDate, num, useMe } from './api';
-import { GLYPHS, Glyph, Bernis } from './visuals';
+import { BadgeEmblem, Glyph, Bernis } from './visuals';
 
 export default function AchievementsPage() {
   const { items } = useMe();
@@ -31,16 +31,13 @@ export default function AchievementsPage() {
         {sorted.map((a) => {
           const item = a.itemId ? items.get(a.itemId) : undefined;
           const title = a.titleId ? items.get(a.titleId) : undefined;
-          const badge = item?.slot === 'badge' ? item.data : null;
+          const badge = item?.slot === 'badge' ? { ...item.data, rarity: item.rarity } : null;
           const pct = a.progress ? Math.min(100, (a.progress.current / Math.max(a.progress.target, 1)) * 100) : a.unlockedAt ? 100 : 0;
           return (
             <article key={a.id} className={`flex flex-col rounded-2xl border p-4 ${a.unlockedAt ? 'border-white/[.1] bg-surface' : 'border-white/[.05] bg-white/[.015]'}`}>
               <div className="flex items-start gap-3">
-                {/* The achievement's own badge symbol, in its colour once unlocked (mixed with the text colour for contrast). */}
-                <span className={`icon-tile ${a.unlockedAt ? '' : '!text-faint'}`}
-                  style={a.unlockedAt && badge ? { color: `color-mix(in srgb, ${badge.color} 70%, var(--text-strong))`, background: `color-mix(in srgb, ${badge.color} 12%, transparent)` } : undefined}>
-                  <Glyph name={badge && badge.glyph in GLYPHS ? badge.glyph : 'medal'} size={18} />
-                </span>
+                {/* The achievement's own badge as the emblem on the card, grey until unlocked. */}
+                {badge ? <BadgeEmblem badge={badge} size={40} locked={!a.unlockedAt} /> : <span className="icon-tile !text-faint"><Glyph name="medal" size={18} /></span>}
                 <div className="min-w-0 flex-1">
                   <h3 className={`text-[14.5px] font-medium ${a.unlockedAt ? '' : 'text-body'}`}>{a.name}</h3>
                   <p className="mt-0.5 text-[12.5px] text-mute">{a.description}</p>
