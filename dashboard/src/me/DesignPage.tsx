@@ -24,24 +24,24 @@ function ThemeTile({ preset, selected, onSelect }: { preset: ThemePreset; select
   const ink = preset.mode === 'light' ? '#1f1209' : '#eef0f5';
   return (
     <button type="button" onClick={onSelect} aria-pressed={selected}
-      className={`group flex cursor-pointer flex-col gap-3 rounded-2xl border bg-surface p-3 text-left transition hover:border-field-line ${selected ? 'border-accent ring-1 ring-accent' : 'border-control'}`}>
-      <span className={`theme-sample relative block aspect-[16/9] w-full overflow-hidden rounded-xl ${preset.look === 'cyber' ? 'theme-sample-cyber' : ''}`} style={{ background: preset.canvas }}>
+      className={`group flex cursor-pointer flex-col gap-3 rounded-box border bg-surface p-3 text-left transition hover:border-field-line ${selected ? 'border-accent ring-1 ring-accent' : 'border-control'}`}>
+      <span className={`theme-sample relative block aspect-[16/9] w-full overflow-hidden rounded-control ${preset.look === 'cyber' ? 'theme-sample-cyber' : ''}`} style={{ background: preset.canvas }}>
         <span className="absolute inset-x-0 top-0 h-[46%]" style={{ background: HEADER[preset.id] }} />
         <span className="absolute inset-x-0 top-[30%] h-[16%]" style={{ background: `linear-gradient(to bottom, transparent, ${preset.canvas})` }} />
         <span className="absolute left-[8%] top-[12%] h-[7%] w-[34%] rounded-full" style={{ background: ink }} />
-        <span className="absolute inset-x-[8%] bottom-[10%] top-[52%] rounded-lg" style={{ background: preset.surface, boxShadow: `0 0 0 1px ${preset.mode === 'light' ? 'rgba(98,56,22,.25)' : 'rgba(255,255,255,.08)'}` }}>
+        <span className="absolute inset-x-[8%] bottom-[10%] top-[52%] rounded-panel" style={{ background: preset.surface, boxShadow: `0 0 0 1px ${preset.mode === 'light' ? 'rgba(98,56,22,.25)' : 'rgba(255,255,255,.08)'}` }}>
           <span className="absolute left-[7%] top-[22%] h-[14%] w-[40%] rounded-full" style={{ background: ink, opacity: 0.7 }} />
-          <span className="absolute bottom-[20%] left-[7%] h-[24%] w-[30%] rounded-md" style={{ background: preset.primary }} />
-          <span className="absolute bottom-[20%] left-[42%] h-[24%] w-[18%] rounded-md" style={{ background: preset.secondary, opacity: 0.85 }} />
+          <span className="absolute bottom-[20%] left-[7%] h-[24%] w-[30%] rounded-tag" style={{ background: preset.primary }} />
+          <span className="absolute bottom-[20%] left-[42%] h-[24%] w-[18%] rounded-tag" style={{ background: preset.secondary, opacity: 0.85 }} />
         </span>
       </span>
       <span className="flex items-start gap-2">
         <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+          <span className="flex items-center gap-2 text-title font-semibold text-ink">
             {preset.name}
-            <span className="rounded-[999px] border border-control px-2 py-px text-[11px] font-medium text-mute">{preset.mode === 'light' ? 'Hell' : 'Dunkel'}</span>
+            <span className="rounded-pill border border-control px-2 py-px text-micro font-medium text-mute">{preset.mode === 'light' ? 'Hell' : 'Dunkel'}</span>
           </span>
-          <span className="mt-1 block text-[13px] leading-snug text-mute">{preset.description}</span>
+          <span className="mt-1 block text-small leading-snug text-mute">{preset.description}</span>
         </span>
         {selected && <span className="text-accent-text"><Glyph name="check" size={18} /></span>}
       </span>
@@ -79,8 +79,8 @@ export default function DesignPage() {
         <div className="card card-hero">
           <p className="page-kicker"><span>Vorschau</span></p>
           <div className="mt-2 flex items-end gap-3">
-            <span className="text-[44px] font-extralight leading-none tracking-[-0.04em] text-ink tabular-nums">2.480</span>
-            <span className="pb-1 text-[13px] text-accent-mute">so sehen Hervorhebungen aus</span>
+            <span className="text-hero font-light leading-none text-ink tabular-nums">2.480</span>
+            <span className="pb-1 text-small text-accent-mute">so sehen Hervorhebungen aus</span>
           </div>
           <div className="mt-4"><Sparkline values={SAMPLE} height={44} /></div>
           <Meter className="mt-2" value={2} max={3} label="Beispiel-Fortschritt" />

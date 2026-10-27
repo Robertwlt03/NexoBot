@@ -9,6 +9,7 @@ import type {
 import type { ApiUser } from '../../../src/web/apiTypes';
 import type { BlackMarketResponse, MeProfileResponse, OwnedItem, ShopResponse, WalletSummary } from '../../../src/web/dto/profile';
 import { api, DirtyContext, useToast } from '../api';
+import { MOTION } from '../components/motion';
 
 gsap.registerPlugin(useGSAP);
 
@@ -214,7 +215,7 @@ export function useCountUp(value: number) {
     if (state.current.n === value) return;
     if (reducedMotion()) { state.current.n = value; setShown(value); return; }
     gsap.to(state.current, {
-      n: value, duration: 1.1, ease: 'power3.out', overwrite: true,
+      n: value, duration: MOTION.long, ease: MOTION.enter, overwrite: true,
       onUpdate: () => setShown(Math.round(state.current.n)),
     });
   }, { dependencies: [value] });

@@ -65,6 +65,55 @@
   --color-rarity-mythic: var(--rarity-mythic);
 }
 
+/*
+ * Scales for the dashboard pages (Storybook "Grundlagen"): every size, corner, ease and duration is one of these names,
+ * tests/designScale.test.ts rejects anything else. New names, so the landing page keeps Tailwind's own defaults.
+ * Static: styles.css reads the same variables for its shared components.
+ */
+@theme static {
+  /* Type: one role per size, line height (and for the big ones letter spacing) included. */
+  --text-micro: 11px;      --text-micro--line-height: 1.4;     /* counters, tiny tags */
+  --text-caption: 12.5px;  --text-caption--line-height: 1.45;  /* labels, hints, meta, badges, table heads */
+  --text-small: 13.5px;    --text-small--line-height: 1.5;     /* secondary text, descriptions, tabs, notices */
+  --text-copy: 14.5px;     --text-copy--line-height: 1.5;      /* body text, inputs, table cells, buttons */
+  --text-title: 16px;      --text-title--line-height: 1.35;    /* card and item titles (h3) */
+  --text-heading: 18px;    --text-heading--line-height: 1.3;   /* h2, dialog titles */
+  --text-section: 22px;    --text-section--line-height: 1.2;   --text-section--letter-spacing: -0.015em; /* section heads */
+  --text-page: 28px;       --text-page--line-height: 1.15;     --text-page--letter-spacing: -0.025em;    /* h1 */
+  --text-display: 36px;    --text-display--line-height: 1.1;   --text-display--letter-spacing: -0.03em;  /* big numbers */
+  --text-hero: 48px;       --text-hero--line-height: 1.05;     --text-hero--letter-spacing: -0.035em;    /* the one hero number */
+  --tracking-caps: 0.16em;     /* small uppercase labels (kickers, rarity) */
+  --tracking-headline: 0.02em; /* big uppercase game titles (shop, bundles, black market) */
+
+  /* Motion: four durations and four curves. GSAP uses the same values (components/motion.ts MOTION). */
+  --dur-fast: 150ms;  /* hover, press, colour changes */
+  --dur-base: 250ms;  /* toggles, moving markers, closing things */
+  --dur-slow: 400ms;  /* entrances: pages, cards, dialogs, bars filling */
+  --dur-long: 800ms;  /* charts drawing, numbers counting, sweeps */
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);   /* things arriving or moving (GSAP power3.out) */
+  --ease-exit: cubic-bezier(0.55, 0, 1, 0.45);    /* things leaving (power2.in) */
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);  /* rewards, dialogs, a knob snapping (back.out(1.6)) */
+  --ease-loop: cubic-bezier(0.37, 0, 0.63, 1);    /* back-and-forth loops (sine.inOut) */
+  --default-transition-duration: var(--dur-fast);
+  --default-transition-timing-function: var(--ease-enter);
+}
+/* Corners from styles.css (per theme): tag 6, control 10, box 16, panel 22, pill (a tag in Cyberpunk), full (a circle). */
+@theme inline {
+  --radius-tag: var(--radius-xs);
+  --radius-control: var(--radius-sm);
+  --radius-box: var(--radius-md);
+  --radius-panel: var(--radius-lg);
+  --radius-pill: 999px;
+}
+/* Every step exists even if no page uses it yet (Storybook shows them all). */
+@source inline("text-{micro,caption,small,copy,title,heading,section,page,display,hero}");
+@source inline("rounded-{tag,control,box,panel,pill}");
+@source inline("{duration-fast,duration-base,duration-slow,duration-long,ease-enter,ease-exit,ease-pop,ease-loop}");
+@utility duration-fast { --tw-duration: var(--dur-fast); transition-duration: var(--dur-fast); }
+@utility duration-base { --tw-duration: var(--dur-base); transition-duration: var(--dur-base); }
+@utility duration-slow { --tw-duration: var(--dur-slow); transition-duration: var(--dur-slow); }
+@utility duration-long { --tw-duration: var(--dur-long); transition-duration: var(--dur-long); }
+
 /* Landing intro: hidden until GSAP reveals them, so nothing flashes before the animation starts. */
 @media (prefers-reduced-motion: no-preference) {
   .js-intro { visibility: hidden; }

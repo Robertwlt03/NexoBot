@@ -27,7 +27,7 @@ export function MemberProfileCard({ profile, onSelect }: { profile: MemberProfil
       {profile.roles.length > 0 && (
         <div className="chips mt-4">
           {profile.roles.map((role) => (
-            <span className="chip pr-[11px]" key={role.id}>
+            <span className="chip pr-3" key={role.id}>
               <span className="dot" style={{ background: role.color !== '#000000' ? role.color : '#99aab5' }} />
               {role.name}
             </span>

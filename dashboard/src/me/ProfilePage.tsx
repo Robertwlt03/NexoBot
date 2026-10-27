@@ -18,6 +18,7 @@ import {
 } from './api';
 import { Glyph, ItemVisual, Bernis, CoinStacks, RARITY_CLASS } from './visuals';
 import { FoodIcon, PetCareCard } from './PetCare';
+import { MOTION } from '../components/motion';
 
 const STREAK_DAYS = DAILY_BONUS.maxStreakBonus / DAILY_BONUS.perStreakDay;
 
@@ -28,16 +29,16 @@ function WalletCard() {
   return (
     <section className="card !p-5">
       <div className="flex items-start justify-between gap-3">
-        <span className="text-[13px] text-mute">Kontostand</span>
+        <span className="text-small text-mute">Kontostand</span>
         <Link to="/me/verlauf" className="arrow-btn hover:no-underline" aria-label="Verlauf"><span className="inline-block rotate-[135deg]"><Icon name="arrowLeft" size={14} /></span></Link>
       </div>
       <div className="mt-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
-        <div className="text-[36px] font-light leading-none tracking-[-0.03em] text-ink"><Bernis amount={shown} large nowrap /></div>
+        <div className="text-display font-light leading-none text-ink"><Bernis amount={shown} large nowrap /></div>
         <CoinStacks amount={me.wallet.balance} />
       </div>
-      <p className="mt-2 text-[12.5px] text-faint">Insgesamt verdient: <Bernis amount={me.wallet.lifetimeEarned} nowrap /></p>
+      <p className="mt-2 text-caption text-faint">Insgesamt verdient: <Bernis amount={me.wallet.lifetimeEarned} nowrap /></p>
       <div className="mt-4">
-        <div className="flex justify-between text-[12px] text-mute"><span>Heute aus Level & Minispielen</span><span className="text-right"><Bernis amount={todayEarned} nowrap /> von <Bernis amount={dailyCap} nowrap /></span></div>
+        <div className="flex justify-between text-caption text-mute"><span>Heute aus Level & Minispielen</span><span className="text-right"><Bernis amount={todayEarned} nowrap /> von <Bernis amount={dailyCap} nowrap /></span></div>
         <Meter className="mt-1.5" value={todayEarned} max={dailyCap} label="Heute aus Level und Minispielen" />
       </div>
     </section>
@@ -64,9 +65,9 @@ function DailyCard() {
 
   useGSAP(() => {
     if (gain === null || reducedMotion()) return;
-    gsap.fromTo('.js-gain', { y: 10, autoAlpha: 0, scale: 0.8 }, { y: 0, autoAlpha: 1, scale: 1, duration: 0.6, ease: 'back.out(2)' });
-    gsap.to('.js-gain', { y: -8, autoAlpha: 0, duration: 0.6, delay: 2 });
-    gsap.fromTo('.js-streak > span', { scaleY: 0.4 }, { scaleY: 1, duration: 0.5, stagger: 0.04, ease: 'back.out(3)' });
+    gsap.fromTo('.js-gain', { y: 10, autoAlpha: 0, scale: 0.8 }, { y: 0, autoAlpha: 1, scale: 1, duration: MOTION.slow, ease: MOTION.pop });
+    gsap.to('.js-gain', { y: -8, autoAlpha: 0, duration: MOTION.base, ease: MOTION.exit, delay: 2 });
+    gsap.fromTo('.js-streak > span', { scaleY: 0.4 }, { scaleY: 1, duration: MOTION.slow, stagger: MOTION.step, ease: MOTION.pop });
   }, { scope: root, dependencies: [gain], revertOnUpdate: true });
 
   const claim = async () => {
@@ -80,25 +81,25 @@ function DailyCard() {
   return (
     <section ref={root} className="card card-hero relative !p-5">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[13px] text-accent-text">Tagesbonus</span>
-        <span className="text-[12.5px] text-accent-mute">Serie: <b className="font-medium text-ink">{daily.streak} {daily.streak === 1 ? 'Tag' : 'Tage'}</b></span>
+        <span className="text-small text-accent-text">Tagesbonus</span>
+        <span className="text-caption text-accent-mute">Serie: <b className="font-medium text-ink">{daily.streak} {daily.streak === 1 ? 'Tag' : 'Tage'}</b></span>
       </div>
       <div className="relative mt-3 flex items-end gap-3">
-        <span className="text-[36px] font-light leading-none tracking-[-0.03em] text-ink"><Bernis amount={daily.nextAmount} large /></span>
-        {gain !== null && <span className="js-gain invisible pb-1 text-[15px] font-semibold text-pos">+{num(gain)}</span>}
+        <span className="text-display font-light leading-none text-ink"><Bernis amount={daily.nextAmount} large /></span>
+        {gain !== null && <span className="js-gain invisible pb-1 text-title font-semibold text-pos">+{num(gain)}</span>}
       </div>
       <div className="js-streak mt-4 flex gap-1" aria-label={`Serienbonus ${Math.min(daily.streak, STREAK_DAYS)} von ${STREAK_DAYS}`}>
         {Array.from({ length: STREAK_DAYS }, (_, i) => (
           <span key={i} className={`h-2 flex-1 origin-bottom rounded-full ${i < Math.min(daily.streak, STREAK_DAYS) ? 'bg-accent' : 'bg-tint-strong'}`} />
         ))}
       </div>
-      <p className="mt-2 text-[12px] text-accent-mute">+{DAILY_BONUS.perStreakDay} pro Tag in Folge, bis +{DAILY_BONUS.maxStreakBonus}</p>
+      <p className="mt-2 text-caption text-accent-mute">+{DAILY_BONUS.perStreakDay} pro Tag in Folge, bis +{DAILY_BONUS.maxStreakBonus}</p>
       {daily.available && daily.saving > 0 && (
-        <p className="mt-3 flex items-start gap-2 rounded-xl border border-line-strong bg-tint-strong px-3 py-2 text-[12.5px] text-ink">
+        <p className="mt-3 flex items-start gap-2 rounded-control border border-line-strong bg-tint-strong px-3 py-2 text-caption text-ink">
           <Glyph name="shield" size={16} /> Dein Serien-Schutz rettet deine Serie: {daily.saving === 1 ? 'ein verpasster Tag wird' : `${daily.saving} verpasste Tage werden`} überbrückt.
         </p>
       )}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-[12.5px] text-accent-mute">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-caption text-accent-mute">
         <span className="flex flex-wrap items-center gap-1.5">
           {Array.from({ length: STREAK_SHIELD.max }, (_, i) => (
             <span key={i} className={i < daily.shields ? 'text-ink' : 'opacity-35'}><Glyph name="shield" size={16} /></span>
@@ -115,9 +116,9 @@ function DailyCard() {
       <div className="mt-4">
         {daily.available
           ? <button type="button" className="btn btn-primary w-full" disabled={busy} onClick={claim}>{busy ? 'Einen Moment …' : 'Bonus abholen'}</button>
-          : <div className="rounded-xl border border-line-strong bg-tint-strong px-3 py-2 text-center text-[13px] text-body">Nächster Bonus in <span className="tabular-nums text-ink">{daily.nextAt ? countdown(daily.nextAt, now) : 'Kürze'}</span></div>}
+          : <div className="rounded-control border border-line-strong bg-tint-strong px-3 py-2 text-center text-small text-body">Nächster Bonus in <span className="tabular-nums text-ink">{daily.nextAt ? countdown(daily.nextAt, now) : 'Kürze'}</span></div>}
       </div>
-      <div className="mt-3 flex items-center justify-between gap-3 text-[12.5px] text-accent-mute">
+      <div className="mt-3 flex items-center justify-between gap-3 text-caption text-accent-mute">
         <span>Um 19 Uhr per DM erinnern, wenn noch etwas offen ist</span>
         <Switch checked={me.reminders} label="Erinnerung per DM" disabled={reminderBusy}
           onChange={async (enabled) => { if (await toggleReminders<{ enabled: boolean }>('/me/reminders', 'PUT', { enabled }, enabled ? 'Erinnerung an.' : 'Erinnerung aus.')) setMe((prev) => ({ ...prev, reminders: enabled })); }} />
@@ -148,35 +149,35 @@ function QuestsCard() {
   return (
     <section className="card !p-5 md:col-span-2 xl:col-span-1">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <span className="text-[13px] text-mute">Tagesaufgaben · {doneCount} von {quests.length}</span>
-        <span className="text-[12px] text-faint">Neue in <span className="tabular-nums">{countdown(resetsAt, now)}</span></span>
+        <span className="text-small text-mute">Tagesaufgaben · {doneCount} von {quests.length}</span>
+        <span className="text-caption text-faint">Neue in <span className="tabular-nums">{countdown(resetsAt, now)}</span></span>
       </div>
       <ul className="mt-3 flex list-none flex-col gap-3 p-0">
         {quests.map((quest) => (
           <li key={quest.id}>
-            <div className="flex items-start gap-2.5">
+            <div className="flex items-start gap-3">
               <span className={`mt-px grid h-5 w-5 shrink-0 place-items-center rounded-full ${quest.done ? 'bg-pos text-canvas' : 'border border-control'}`}>
                 {quest.done && <Glyph name="check" size={12} />}
               </span>
-              <span className={`min-w-0 flex-1 text-[13.5px] leading-snug ${quest.done ? 'text-mute' : 'text-ink'}`}>{quest.label}</span>
-              <span className="shrink-0 text-[12.5px] text-mute">+<Bernis amount={quest.reward} nowrap /></span>
+              <span className={`min-w-0 flex-1 text-small leading-snug ${quest.done ? 'text-mute' : 'text-ink'}`}>{quest.label}</span>
+              <span className="shrink-0 text-caption text-mute">+<Bernis amount={quest.reward} nowrap /></span>
             </div>
             {!quest.done && (
-              <div className="ml-[30px] mt-1.5 flex items-center gap-2">
+              <div className="ml-8 mt-1.5 flex items-center gap-2">
                 <Meter className="flex-1" value={quest.current} max={quest.target} label={quest.label} />
-                <span className="text-[11.5px] tabular-nums text-faint">{quest.current} / {quest.target}</span>
+                <span className="text-micro tabular-nums text-faint">{quest.current} / {quest.target}</span>
               </div>
             )}
           </li>
         ))}
       </ul>
-      <div className={`mt-4 flex items-center gap-2 rounded-xl border px-3 py-2 text-[12.5px] ${bonus.done ? 'border-pos/30 bg-pos/10 text-ink' : 'border-line bg-tint text-mute'}`}>
+      <div className={`mt-4 flex items-center gap-2 rounded-control border px-3 py-2 text-caption ${bonus.done ? 'border-pos/30 bg-pos/10 text-ink' : 'border-line bg-tint text-mute'}`}>
         <Glyph name="gift" size={16} />
         <span className="min-w-0 flex-1">{bonus.done ? 'Alle geschafft – Bonus kassiert!' : 'Alle drei geschafft:'}</span>
         <span className="shrink-0">+<Bernis amount={bonus.reward} nowrap /></span>
         {bonus.food && <span className="flex shrink-0 items-center gap-1">+1 <FoodIcon size={17} /> Futter</span>}
       </div>
-      <p className="mt-2 text-[11.5px] text-faint">Zählt auf allen Servern mit Nexo. Fertige Aufgaben zahlen sich von selbst aus.</p>
+      <p className="mt-2 text-micro text-faint">Zählt auf allen Servern mit Nexo. Fertige Aufgaben zahlen sich von selbst aus.</p>
     </section>
   );
 }
@@ -205,7 +206,7 @@ function ShareProfile() {
         checked={me.shareProfile} disabled={busy} onChange={toggle} />
       {me.shareProfile && (
         <div className="flex flex-wrap gap-2">
-          <input readOnly value={link} aria-label="Dein Profil-Link" className="input min-w-0 flex-[1_1_220px] font-mono text-[12.5px]" onFocus={(event) => event.currentTarget.select()} />
+          <input readOnly value={link} aria-label="Dein Profil-Link" className="input min-w-0 flex-[1_1_220px] font-mono text-caption" onFocus={(event) => event.currentTarget.select()} />
           <button type="button" className="btn btn-secondary" onClick={copy}>Kopieren</button>
         </div>
       )}
@@ -228,9 +229,9 @@ function LinkedRoleCard() {
     <Card title="Verknüpfte Rollen" description="Server können dir Rollen geben, wenn du bestimmte Nexo-Werte erreichst – etwa ab Level 10 oder Saison-Stufe 5.">
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
         {ROLE_VALUES.map(({ key, label }) => (
-          <div key={key} className="flex flex-col-reverse rounded-xl border border-line bg-tint px-3 py-2">
-            <dt className="text-[12px] text-mute">{label}</dt>
-            <dd className="m-0 text-[18px] font-medium text-ink">{key === 'bernis' ? <Bernis amount={values.bernis} nowrap /> : num(values[key])}</dd>
+          <div key={key} className="flex flex-col-reverse rounded-control border border-line bg-tint px-3 py-2">
+            <dt className="text-caption text-mute">{label}</dt>
+            <dd className="m-0 text-heading font-medium text-ink">{key === 'bernis' ? <Bernis amount={values.bernis} nowrap /> : num(values[key])}</dd>
           </div>
         ))}
       </dl>
@@ -245,7 +246,7 @@ function LinkedRoleCard() {
           <a href="/dashboard/linked-role" className="btn btn-primary hover:no-underline">Mit Discord verknüpfen</a>
         )}
       </div>
-      <p className="mt-3 text-[12px] text-faint">
+      <p className="mt-3 text-caption text-faint">
         {linked ? 'Nexo überträgt deine Werte stündlich. Trennen entfernt auch die Rollen, die davon abhängen.' : 'Du verknüpfst einmal, danach hält Nexo die Werte stündlich aktuell. Du kannst es jederzeit wieder trennen.'}
       </p>
     </Card>
@@ -255,9 +256,9 @@ function LinkedRoleCard() {
 function SlotTile({ selected, onClick, title, children }: { selected: boolean; onClick: () => void; title: string; children: ReactNode }) {
   return (
     <button type="button" onClick={onClick} aria-pressed={selected}
-      className={`relative min-w-0 cursor-pointer rounded-xl border bg-transparent p-1 font-[inherit] text-left transition ${selected ? 'border-accent ring-2 ring-accent/30' : 'border-line hover:border-control'}`}>
+      className={`relative min-w-0 cursor-pointer rounded-control border bg-transparent p-1 font-[inherit] text-left transition ${selected ? 'border-accent ring-2 ring-accent/30' : 'border-line hover:border-control'}`}>
       {children}
-      <span className={`mt-1 block break-words px-0.5 leading-tight text-[11.5px] ${selected ? 'text-ink' : 'text-mute'}`}>{title}</span>
+      <span className={`mt-1 block break-words px-0.5 leading-tight text-micro ${selected ? 'text-ink' : 'text-mute'}`}>{title}</span>
       {selected && <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-ink"><Glyph name="check" size={12} /></span>}
     </button>
   );
@@ -290,21 +291,21 @@ function SlotEditor({ value, onChange }: { value: UserProfileSettings; onChange:
         return (
           <div key={slot} className="grid grid-cols-1 gap-3 py-4 first:pt-0 last:pb-0 md:grid-cols-[150px_minmax(0,1fr)]">
             <div className="pt-1">
-              <div className="text-[14px] font-medium text-ink">{SLOT_LABELS[slot]}</div>
-              {slot === 'badge' && <div className="text-[12px] text-faint">{value.equipped.badges.length} / {MAX_EQUIPPED_BADGES} angelegt</div>}
-              {slot === 'pet' && <div className="text-[12px] text-faint">Wächst, wenn du es fütterst (Begleiter oben)</div>}
+              <div className="text-copy font-medium text-ink">{SLOT_LABELS[slot]}</div>
+              {slot === 'badge' && <div className="text-caption text-faint">{value.equipped.badges.length} / {MAX_EQUIPPED_BADGES} angelegt</div>}
+              {slot === 'pet' && <div className="text-caption text-faint">Wächst, wenn du es fütterst (Begleiter oben)</div>}
             </div>
             {/* Wraps onto more rows instead of scrolling sideways, so every item is one click away. */}
             <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-2">
               <SlotTile selected={isDefault} onClick={() => clear(slot)} title={slot === 'badge' ? 'Keine' : 'Standard'}>
-                <div className="flex aspect-[4/3] items-center justify-center rounded-lg bg-tint text-[11px] text-faint">Nexo</div>
+                <div className="flex aspect-[4/3] items-center justify-center rounded-panel bg-tint text-micro text-faint">Nexo</div>
               </SlotTile>
               {list.map((item) => (
                 <SlotTile key={item.id} selected={isEquipped(value.equipped, item)} onClick={() => toggle(item)} title={item.name}>
-                  <ItemVisual item={item} className={`rounded-lg border ${RARITY_CLASS[item.rarity].border}`} />
+                  <ItemVisual item={item} className={`rounded-panel border ${RARITY_CLASS[item.rarity].border}`} />
                 </SlotTile>
               ))}
-              {list.length === 0 && <Link to="/me/shop" className="self-center pl-2 text-[13px]">Noch nichts – im Shop stöbern</Link>}
+              {list.length === 0 && <Link to="/me/shop" className="self-center pl-2 text-small">Noch nichts – im Shop stöbern</Link>}
             </div>
           </div>
         );
@@ -370,7 +371,7 @@ function StickerPlacement({ sticker, layout, placing, setPlacing, onPick }: {
     gsap.set(el, { xPercent: -50, yPercent: -50 });
     const calm = reducedMotion();
     const settle = (spot: StickerSpot) => {
-      gsap.to(el, { scale: 1, rotation: 0, duration: calm ? 0 : 0.45, ease: 'back.out(3)' });
+      gsap.to(el, { scale: 1, rotation: 0, duration: calm ? 0 : MOTION.slow, ease: MOTION.pop });
       setLifted(false);
       if (spot !== live.current.current) live.current.onPick(spot);
     };
@@ -393,7 +394,7 @@ function StickerPlacement({ sticker, layout, placing, setPlacing, onPick }: {
       },
       onPress() {
         setTarget(live.current.current);
-        gsap.to(el, { scale: 1.2, rotation: 8, duration: calm ? 0 : 0.2, ease: 'power2.out' });
+        gsap.to(el, { scale: 1.2, rotation: 8, duration: calm ? 0 : MOTION.fast, ease: MOTION.enter });
         setLifted(true);
       },
       onDrag() { setTarget(nearest(this.x, this.y)); },
@@ -407,7 +408,7 @@ function StickerPlacement({ sticker, layout, placing, setPlacing, onPick }: {
       },
       onThrowComplete() { settle(nearest(this.x, this.y)); },
       onClick() {
-        gsap.to(el, { scale: 1, rotation: 0, duration: calm ? 0 : 0.2 });
+        gsap.to(el, { scale: 1, rotation: 0, duration: calm ? 0 : MOTION.fast });
         setLifted(false);
         live.current.setPlacing(true);
       },
@@ -420,7 +421,7 @@ function StickerPlacement({ sticker, layout, placing, setPlacing, onPick }: {
   const flyTo = contextSafe((spot: StickerSpot) => {
     setPlacing(false);
     if (spot === current) return;
-    gsap.to(piece.current, { ...offsetOf(spot), duration: reducedMotion() ? 0 : 0.5, ease: 'back.out(1.6)', onComplete: () => onPick(spot) });
+    gsap.to(piece.current, { ...offsetOf(spot), duration: reducedMotion() ? 0 : MOTION.slow, ease: MOTION.pop, onComplete: () => onPick(spot) });
   });
 
   const box = stickerRadius(current) * 2.6;
@@ -431,12 +432,12 @@ function StickerPlacement({ sticker, layout, placing, setPlacing, onPick }: {
       {showSpots && points.map(({ spot, x, y }) => (
         <button key={spot} type="button" aria-label={`Sticker ${SPOT_LABELS[spot]} aufkleben`} aria-pressed={spot === current}
           onClick={() => flyTo(spot)} style={pct(x, y)} tabIndex={lifted ? -1 : 0}
-          className={`absolute grid aspect-square h-[14%] min-h-7 -translate-x-1/2 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-2 p-0 transition duration-200 ${lifted ? 'pointer-events-none' : ''} ${(lifted ? spot === target : spot === current) ? 'scale-110 border-accent bg-accent/15' : 'border-dashed border-control bg-transparent hover:border-accent hover:bg-tint-strong'}`} />
+          className={`absolute grid aspect-square h-[14%] min-h-7 -translate-x-1/2 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-2 p-0 transition duration-fast ${lifted ? 'pointer-events-none' : ''} ${(lifted ? spot === target : spot === current) ? 'scale-110 border-accent bg-accent/15' : 'border-dashed border-control bg-transparent hover:border-accent hover:bg-tint-strong'}`} />
       ))}
       <div ref={piece} role="button" tabIndex={0} aria-label={`Sticker ${SPOT_LABELS[current]} – zum Verschieben ziehen oder drücken`}
         onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setPlacing(true); } }}
         style={{ ...pct(at.x, at.y), width: `${(box / PROFILE_CARD_WIDTH) * 100}%` }}
-        className={`absolute z-10 aspect-square cursor-grab touch-none select-none rounded-full outline-none transition-[filter] duration-200 focus-visible:ring-2 focus-visible:ring-accent active:cursor-grabbing ${lifted ? 'drop-shadow-[0_14px_14px_rgba(0,0,0,.55)]' : ''}`}>
+        className={`absolute z-10 aspect-square cursor-grab touch-none select-none rounded-full outline-none transition-[filter] duration-fast focus-visible:ring-2 focus-visible:ring-accent active:cursor-grabbing ${lifted ? 'drop-shadow-[0_14px_14px_rgba(0,0,0,.55)]' : ''}`}>
         <StickerCanvas sticker={sticker} />
       </div>
     </div>
@@ -481,12 +482,12 @@ export default function ProfilePage() {
             )}
           </div>
           {cosmetics.sticker && (
-            <p className="mt-3 text-[13px] text-mute">
+            <p className="mt-3 text-small text-mute">
               {placing ? 'Wohin damit? Tippe auf einen Kreis, um deinen Sticker dort aufzukleben.' : 'Zieh deinen Sticker auf der Karte an einen anderen Platz.'}
             </p>
           )}
           {me.levels.length > 1 && (
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-[13px] text-mute">
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-small text-mute">
               Level von
               <div className="min-w-0 flex-1 sm:max-w-[280px]">
                 <Select value={guildId ?? ''} onChange={setGuildId} options={me.levels.map((l) => ({ value: l.guildId, label: `Level ${l.level} · ${l.guildName}` }))} />

@@ -1,4 +1,4 @@
-// The foundations the components are built from: colour tokens, type, shapes, icons and the colour schemes. Values are
+// The foundations the components are built from: colour tokens, type, shapes, spacing, motion, icons and the colour schemes. Values are
 // read live from the page (styles.css plus the toolbar's scheme and mode), so this page never goes stale.
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
@@ -144,55 +144,111 @@ function Roles() {
   );
 }
 
+// The scales (dashboard/src/tailwind.css); tests/designScale.test.ts rejects every value that is not one of them.
+const TYPE_STEPS: [string, string, string][] = [
+  ['hero', '48', 'Die eine große Zahl einer Seite (Kontostand, Server-Übersicht).'],
+  ['display', '36', 'Große Zahlen und Bühnen-Überschriften (Black Market, Saisonstufe).'],
+  ['page', '28', 'Seitentitel (h1).'],
+  ['section', '22', 'Abschnittsköpfe innerhalb einer Seite.'],
+  ['heading', '18', 'h2, Dialogtitel, Namen in großen Kacheln.'],
+  ['title', '16', 'Kartentitel (h3), Artikelnamen, Werte in Listen.'],
+  ['copy', '14.5', 'Fließtext, Eingaben, Tabellenzellen, Knöpfe. Grundgröße der Seite.'],
+  ['small', '13.5', 'Zweitrangiger Text: Beschreibungen, Reiter, Hinweise, kleine Knöpfe.'],
+  ['caption', '12.5', 'Beschriftungen, Feldhinweise, Metadaten, Abzeichen, Tabellenköpfe.'],
+  ['micro', '11', 'Nur Zähler und winzige Marken (Reiter-Zähler, Achsen).'],
+];
+const RADIUS_STEPS: [string, string, string][] = [
+  ['tag', '--radius-xs', 'Code, Farbfelder, kleine Vorschauen im Text.'],
+  ['control', '--radius-sm', 'Knöpfe, Eingaben, Reiter, Icon-Kacheln, Menüeinträge.'],
+  ['box', '--radius-md', 'Kästen in Karten: Listenzeilen, Hinweise, Tabellen, Artikelkacheln.'],
+  ['panel', '--radius-lg', 'Karten, Kennzahlen, Dialoge, große Bühnen.'],
+  ['pill', '--radius-pill', 'Abzeichen, Chips, Pillen (in Cyberpunk ein schräges Etikett).'],
+  ['full', '50 %', 'Kreise: Avatare, Punkte, Fortschrittsbalken.'],
+];
+const SPACE_STEPS: [string, number, string][] = [
+  ['0.5', 2, 'Haarbreit: Punkt neben Text, Rahmen um Vorschauen.'],
+  ['1', 4, 'Text zu seinem Hinweis, Titel zu seiner Unterzeile.'],
+  ['1.5', 6, 'Icon zu Text in kleinen Teilen, Beschriftung zum Feld.'],
+  ['2', 8, 'Zwischen Knöpfen und Chips in einer Reihe, Icon zu Text in Knöpfen.'],
+  ['3', 12, 'Zwischen Zeilen und Feldern in einer Karte, zwischen kleinen Kacheln.'],
+  ['4', 16, 'Zwischen Karten, Kartengitter, Innenabstand kleiner Kästen.'],
+  ['5', 20, 'Kartenkopf zum Inhalt.'],
+  ['6', 24, 'Innenabstand von Karten und Dialogen.'],
+  ['8', 32, 'Seitenkopf zum ersten Inhalt.'],
+  ['10', 40, 'Zwischen Abschnitten einer Seite, seitlicher Seitenrand ab Tablet.'],
+];
+const MOTION_STEPS: [string, string, string][] = [
+  ['fast', '150 ms', 'Hover, Drücken, Farbwechsel.'],
+  ['base', '250 ms', 'Schalter, wandernde Markierungen, alles was schließt oder geht.'],
+  ['slow', '400 ms', 'Alles was erscheint: Seiten, Karten, Dialoge, sich füllende Balken.'],
+  ['long', '800 ms', 'Diagramme zeichnen, Zahlen zählen hoch, Glanz über Kacheln.'],
+];
+const EASES: [string, string][] = [
+  ['enter', 'Kommt an oder bewegt sich an einen neuen Platz (schnell los, sanft am Ziel).'],
+  ['exit', 'Geht: beschleunigt hinaus.'],
+  ['pop', 'Belohnungen, Dialoge, ein einrastender Schalter: schießt leicht über das Ziel.'],
+  ['loop', 'Hin und her in Dauerschleifen.'],
+];
+const row = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))', gap: '6px 16px', alignItems: 'baseline', padding: '12px 0', borderBottom: '1px solid var(--border)' } as const;
+const Code = ({ children }: { children: ReactNode }) => <code style={{ color: 'var(--text-muted)', fontSize: 12 }}>{children}</code>;
+
 function Type() {
-  const rows = [
-    { tag: 'h1', css: 'h1 · Unbounded 28 px', sample: 'Willkommen', style: { fontFamily: 'var(--font-display)', fontSize: 28, color: 'var(--text-strong)', fontWeight: 600 } },
-    { tag: 'h2', css: 'h2 · Unbounded 18 px', sample: 'Begrüßungsnachricht', style: { fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--text-strong)', fontWeight: 600 } },
-    { tag: 'h3', css: 'h3 · Unbounded 15 px (Kartentitel)', sample: 'Kanal und Rolle', style: { fontFamily: 'var(--font-display)', fontSize: 15, color: 'var(--text-strong)', fontWeight: 600 } },
-    { tag: 'p', css: 'Fließtext · Inter 14.5 px', sample: 'Nexo begrüßt neue Mitglieder mit einer Nachricht in deinem Kanal.', style: { fontSize: 14.5 } },
-    { tag: 'small', css: 'Hinweis · Inter 12–13 px, --text-muted', sample: 'Höchstens 120 Zeichen.', style: { fontSize: 13, color: 'var(--text-muted)' } },
-  ];
   return (
     <div style={page}>
       <div>
         <h1>Schrift</h1>
         <p style={{ color: 'var(--text-muted)', marginTop: 6, maxWidth: 760 }}>
-          Zwei Schriften: <b>Unbounded</b> (<code>--font-display</code>) für Überschriften, <b>Inter</b> (<code>--font</code>) für alles andere. <code>h1</code> bis <code>h3</code> bekommen die Überschrift-Schrift automatisch.
+          Zwei Schriften: <b>Unbounded</b> (<code>--font-display</code>) für <code>h1</code> bis <code>h3</code>, <b>Inter</b> für alles andere. Jede Größe ist eine Rolle mit eigenem Zeilenabstand; die großen bringen ihre Laufweite mit. Man wählt nach dem, was der Text ist, nicht nach Augenmaß: <code>text-caption</code> statt <code>text-[12px]</code>.
         </p>
       </div>
-      <div style={{ display: 'grid', gap: 10 }}>
-        {rows.map((row) => (
-          <div key={row.tag} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: '6px 16px', alignItems: 'baseline', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-            <code style={{ color: 'var(--text-muted)', fontSize: 12 }}>{row.css}</code>
-            <span style={row.style}>{row.sample}</span>
+      <div>
+        {TYPE_STEPS.map(([name, px, use]) => (
+          <div key={name} style={row}>
+            <Code>text-{name} · {px} px</Code>
+            <span className={`text-${name} text-ink`}>{name === 'hero' || name === 'display' ? '12.480' : 'Kanal und Rolle'}</span>
+            <span className="text-caption text-mute">{use}</span>
           </div>
         ))}
       </div>
+      <Section title="Gewicht und Laufweite" text="font-medium (500) für Beschriftungen und Bedienelemente, font-semibold (600) für Überschriften und Knöpfe, font-bold (700) für Hervorhebungen und Spielnamen, font-light (300) nur für große Zahlen. tracking-caps für kleine Großbuchstaben-Beschriftungen, tracking-headline für große Spieltitel in Großbuchstaben, tracking-tight für mittlere Überschriften.">
+        <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'baseline' }}>
+          <span className="text-caption font-semibold uppercase tracking-caps text-mute">Seltenheit</span>
+          <span className="text-heading font-bold uppercase tracking-headline text-ink">Angebote der Woche</span>
+          <span className="text-display font-light text-ink">2.450</span>
+        </div>
+      </Section>
     </div>
   );
 }
 
 function Shapes() {
-  const radii = ['--radius-sm', '--radius', '--radius-lg'];
   const shadows = [{ name: '--shadow', text: 'Dialoge, Speicherleiste, schwebende Teile' }, { name: '--card-shadow', text: 'Karten (im hellen Modus)' }, { name: '--ring', text: 'Fokusring um Eingaben' }];
   return (
     <div style={page}>
       <h1>Formen</h1>
-      <Section title="Rundungen" text="Eingaben und Knöpfe --radius-sm, Kacheln --radius, Karten und Dialoge --radius-lg.">
-        <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
-          {radii.map((name) => (
-            <div key={name} style={{ display: 'grid', gap: 8, justifyItems: 'center' }}>
-              <span style={{ width: 96, height: 96, borderRadius: `var(${name})`, background: 'var(--bg-card)', border: '1px solid var(--border-strong)' }} />
-              <code style={{ fontSize: 12 }}>{name}</code>
+      <Section title="Rundungen" text="Fünf Stufen plus Kreis, benannt nach dem, was gerundet wird. Die Werte kommen aus dem Theme: Cyberpunk schneidet dieselben Stufen schärfer und schräg an. Was in etwas anderem liegt, ist nie runder als sein Rahmen.">
+        <div style={grid(210)}>
+          {RADIUS_STEPS.map(([name, token, use]) => (
+            <div key={name} style={{ display: 'grid', gap: 8 }}>
+              <span className={`rounded-${name} border border-line-strong bg-surface`} style={{ height: name === 'full' ? 64 : 72, width: name === 'full' ? 64 : '100%' }} />
+              <Code>rounded-{name} · {token}</Code>
+              <span className="text-caption text-mute">{use}</span>
             </div>
           ))}
+        </div>
+      </Section>
+      <Section title="Höhen der Bedienelemente" text="Knöpfe, Eingaben und Auswahlfelder sind 40 px hoch (--control-h), kleine Knöpfe, Filterchips und Icon-Knöpfe 32 px (--control-h-sm). So stehen Feld und Knopf in einer Reihe bündig.">
+        <div className="flex flex-wrap items-center gap-2">
+          <input className="input" style={{ width: 200 }} placeholder="Eingabe" />
+          <button className="btn btn-primary">Speichern</button>
+          <button className="btn btn-secondary btn-sm">Klein</button>
         </div>
       </Section>
       <Section title="Schatten und Fokus">
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
           {shadows.map(({ name, text }) => (
             <div key={name} style={{ display: 'grid', gap: 10, width: 200 }}>
-              <span style={{ height: 96, borderRadius: 'var(--radius)', background: 'var(--bg-card)', boxShadow: `var(${name})` }} />
+              <span style={{ height: 96, borderRadius: 'var(--radius-md)', background: 'var(--bg-card)', boxShadow: `var(${name})` }} />
               <code style={{ fontSize: 12 }}>{name}</code>
               <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{text}</span>
             </div>
@@ -201,6 +257,74 @@ function Shapes() {
       </Section>
     </div>
   );
+}
+
+function Spacing() {
+  return (
+    <div style={page}>
+      <div>
+        <h1>Abstände</h1>
+        <p style={{ color: 'var(--text-muted)', marginTop: 6, maxWidth: 760 }}>
+          Ein 4-px-Raster mit zwei feinen Stufen (2 und 6 px) für enge Teile. Jede Stufe hat ihre Aufgabe, damit dieselbe Beziehung überall gleich weit ist. Halbe Stufen wie <code>gap-2.5</code> und feste Pixel wie <code>px-[11px]</code> gibt es nicht; ab 40 px nur noch 48, 64, 80, 96 und 128 für Seitenränder und Platz unter der Speicherleiste.
+        </p>
+      </div>
+      <div>
+        {SPACE_STEPS.map(([step, px, use]) => (
+          <div key={step} style={row}>
+            <Code>gap-{step} · p-{step} · m-{step} · {px} px</Code>
+            <span style={{ display: 'block', width: px, height: 16, background: 'var(--accent)', borderRadius: 2 }} />
+            <span className="text-caption text-mute">{use}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Motion() {
+  const [run, setRun] = useState(0);
+  return (
+    <div style={page}>
+      <div>
+        <h1>Bewegung</h1>
+        <p style={{ color: 'var(--text-muted)', marginTop: 6, maxWidth: 760 }}>
+          Vier Dauern und vier Kurven, in CSS (<code>duration-fast</code>, <code>ease-enter</code>, <code>var(--dur-slow)</code>) und in GSAP (<code>MOTION.slow</code>, <code>MOTION.enter</code> aus <code>components/motion.ts</code>), beide gleich lang (geprüft in tests/designScale.test.ts). Wer weniger Bewegung eingestellt hat, sieht keine Einblendungen. Dauerschleifen (Ladekreis, Holo-Rahmen) und die Inszenierungen (Startseite, Münzflug, Feier, Event-Szenen) haben ihr eigenes Tempo.
+        </p>
+      </div>
+      <button className="btn btn-secondary btn-sm" style={{ justifySelf: 'start' }} onClick={() => setRun((n) => n + 1)}>Abspielen</button>
+      <div>
+        {MOTION_STEPS.map(([name, ms, use]) => (
+          <div key={name} style={row}>
+            <Code>duration-{name} · MOTION.{name} · {ms}</Code>
+            <span style={{ position: 'relative', height: 16, background: 'var(--stripe)', borderRadius: 999 }}>
+              <span key={run} className={`motion-demo absolute inset-y-0 left-0 rounded-full bg-accent duration-${name} ease-enter`} style={{ width: 16, transitionProperty: 'left' }} />
+            </span>
+            <span className="text-caption text-mute">{use}</span>
+          </div>
+        ))}
+        {EASES.map(([name, use]) => (
+          <div key={name} style={row}>
+            <Code>ease-{name} · MOTION.{name}</Code>
+            <span style={{ position: 'relative', height: 16, background: 'var(--stripe)', borderRadius: 999 }}>
+              <span key={run} className={`motion-demo absolute inset-y-0 left-0 rounded-full bg-accent duration-long ease-${name}`} style={{ width: 16, transitionProperty: 'left' }} />
+            </span>
+            <span className="text-caption text-mute">{use}</span>
+          </div>
+        ))}
+      </div>
+      <MotionKick run={run} />
+    </div>
+  );
+}
+/** Moves every demo dot to the end of its track one frame after a (re)start, so the transition runs. */
+function MotionKick({ run }: { run: number }) {
+  useLayoutEffect(() => {
+    const dots = [...document.querySelectorAll<HTMLElement>('.motion-demo')];
+    dots.forEach((dot) => { dot.style.left = '0'; });
+    const frame = requestAnimationFrame(() => requestAnimationFrame(() => dots.forEach((dot) => { dot.style.left = 'calc(100% - 16px)'; })));
+    return () => cancelAnimationFrame(frame);
+  }, [run]);
+  return null;
 }
 
 function Icons() {
@@ -240,7 +364,7 @@ function Schemes() {
       </div>
       <div style={grid(220)}>
         {THEME_PRESETS.map((preset) => (
-          <div key={preset.id} style={{ display: 'grid', gap: 10, padding: 14, borderRadius: 'var(--radius)', background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div key={preset.id} style={{ display: 'grid', gap: 10, padding: 14, borderRadius: 'var(--radius-md)', background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', height: 54, borderRadius: 10, overflow: 'hidden' }}>
               <span style={{ flex: 2, background: preset.primary }} /><span style={{ flex: 1, background: preset.secondary }} />
             </div>
@@ -294,7 +418,7 @@ function Combo({ theme, name }: { theme: DashboardTheme; name: string }) {
   const cyber = themeLook(theme) === 'cyber';
   const tone = light || cyber ? 'var(--scrim-color)' : 'var(--bg-main)';
   return (
-    <div data-mode={theme.mode} data-theme={theme.preset} style={{ ...themeVariables(theme), display: 'grid', background: 'var(--bg-app)', color: 'var(--text)', borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border-strong)' } as CSSProperties}>
+    <div data-mode={theme.mode} data-theme={theme.preset} style={{ ...themeVariables(theme), display: 'grid', background: 'var(--bg-app)', color: 'var(--text)', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border-strong)' } as CSSProperties}>
       {/* The header material with its wash, as behind every page title. */}
       <div style={{ position: 'relative', height: 72, display: 'grid', alignContent: 'center', padding: '0 16px' }}>
         {cyber
@@ -353,7 +477,9 @@ export default { title: 'Grundlagen', tags: ['!autodocs'], parameters: { switche
 export const Farbrollen: StoryObj = { render: () => <Roles /> };
 export const Farben: StoryObj = { render: () => <Colours /> };
 export const Schrift: StoryObj = { parameters: { switches: ['mode'] }, render: () => <Type /> };
-export const Formen: StoryObj = { parameters: { switches: ['mode'] }, render: () => <Shapes /> };
+export const Formen: StoryObj = { render: () => <Shapes /> };
+export const Abstaende: StoryObj = { name: 'Abstände', parameters: { switches: ['mode'] }, render: () => <Spacing /> };
+export const Bewegung: StoryObj = { parameters: { switches: ['mode'] }, render: () => <Motion /> };
 export const IconSet: StoryObj = { name: 'Icons', parameters: { switches: ['mode'] }, render: () => <Icons /> };
 export const Farbvorlagen: StoryObj = { name: 'Themes', parameters: { switches: ['mode'] }, render: () => <Schemes /> };
 export const Farbkombinationen: StoryObj = { parameters: { switches: [] }, render: () => <Combinations /> };

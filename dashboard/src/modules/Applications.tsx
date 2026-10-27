@@ -42,7 +42,7 @@ function RoleEditor({ value, globalQuestions, onChange, onDelete, locked }: {
   const role = guild.roles.find((r) => r.id === value.roleId);
   const set = (patch: Partial<ApplicationRoleConfig>) => onChange({ ...value, ...patch });
   return (
-    <div className="rounded-xl border border-line bg-field p-5">
+    <div className="rounded-control border border-line bg-field p-5">
       <div className="row justify-between">
         <div>
           <div className="font-semibold text-ink">{value.name}</div>
@@ -181,7 +181,7 @@ function Submissions() {
                 <StatusBadge status={entry.status} />
               </div>
               {open === entry.id && (
-                <div className="mt-3 flex flex-col gap-2.5">
+                <div className="mt-3 flex flex-col gap-2">
                   {entry.answers.map((answer, index) => (
                     <div key={index}>
                       <div className="faint">{index + 1}. {answer.question}</div>

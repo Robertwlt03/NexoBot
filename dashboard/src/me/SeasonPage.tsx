@@ -27,16 +27,16 @@ function EventList({ running, upcoming }: { running: ShopEvent[]; upcoming: Shop
       <ul className="m-0 list-none divide-y divide-line p-0">
         {rows.map(({ event, live }) => {
           return (
-            <li key={event.id} className="flex items-center gap-3 py-2.5 text-[13.5px]">
+            <li key={event.id} className="flex items-center gap-3 py-3 text-small">
               <EventIcon event={event} />
               {/* Name and dates on the left, discount and timing on the right; each side wraps on its own on phones. */}
               <span className="min-w-0 flex-1">
                 <span className="block break-words text-ink">{event.name}</span>
-                <span className="block text-[12.5px] text-mute">{formatDate(event.startsAt)} – {formatDate(event.endsAt)}</span>
+                <span className="block text-caption text-mute">{formatDate(event.startsAt)} – {formatDate(event.endsAt)}</span>
               </span>
               <span className="shrink-0 text-right">
                 {event.discount > 0 && <span className="block tabular-nums text-ink">−{event.discount} %</span>}
-                <span className="block whitespace-nowrap text-[12.5px] text-mute">{live ? `läuft noch ${countdown(event.endsAt, now)}` : startsIn(event.startsAt, now)}</span>
+                <span className="block whitespace-nowrap text-caption text-mute">{live ? `läuft noch ${countdown(event.endsAt, now)}` : startsIn(event.startsAt, now)}</span>
               </span>
             </li>
           );
@@ -63,12 +63,12 @@ export default function SeasonPage() {
         <>
           <section className="card card-hero !p-5">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <span className="text-[13px] text-accent-text">Stufe {data.tier} von {data.tiers.length}</span>
-              <span className="text-[12.5px] text-accent-mute">Endet in <span className="tabular-nums text-ink">{countdown(data.endsAt, now)}</span></span>
+              <span className="text-small text-accent-text">Stufe {data.tier} von {data.tiers.length}</span>
+              <span className="text-caption text-accent-mute">Endet in <span className="tabular-nums text-ink">{countdown(data.endsAt, now)}</span></span>
             </div>
-            <div className="mt-3 text-[36px] font-light leading-none tracking-[-0.03em] text-ink">{num(data.points)} <span className="text-[15px] text-accent-mute">Punkte</span></div>
+            <div className="mt-3 text-display font-light leading-none text-ink">{num(data.points)} <span className="text-title text-accent-mute">Punkte</span></div>
             <Meter className="mt-4" value={next ? data.points - previous : 1} max={next ? next.points - previous : 1} done={!next} label={next ? `Fortschritt bis Stufe ${data.tier + 1}` : 'Saisonpfad komplett'} />
-            <p className="mt-2 text-[12.5px] text-accent-mute">
+            <p className="mt-2 text-caption text-accent-mute">
               {next ? <>Noch {num(next.points - data.points)} Punkte bis Stufe {data.tier + 1}</> : 'Saisonpfad komplett – stark!'}
             </p>
           </section>
@@ -80,8 +80,8 @@ export default function SeasonPage() {
               const item = tier.itemId ? items.get(tier.itemId) : undefined;
               return (
                 <li key={tier.points}
-                  className={`relative flex flex-col rounded-2xl border p-3 ${reached ? 'border-pos/50 bg-pos/[.06]' : isNext ? 'border-control bg-surface' : 'border-line bg-tint'}`}>
-                  <div className="flex items-center justify-between gap-2 text-[12px]">
+                  className={`relative flex flex-col rounded-box border p-3 ${reached ? 'border-pos/50 bg-pos/[.06]' : isNext ? 'border-control bg-surface' : 'border-line bg-tint'}`}>
+                  <div className="flex items-center justify-between gap-2 text-caption">
                     <span className={reached ? 'font-medium text-ink' : 'text-mute'}>Stufe {i + 1}</span>
                     {reached
                       ? <span className="grid h-5 w-5 place-items-center rounded-full bg-pos text-canvas"><Glyph name="check" size={12} /></span>
@@ -89,9 +89,9 @@ export default function SeasonPage() {
                   </div>
                   {item
                     ? <ItemVisual item={item} className={`mt-2 ${reached ? '' : 'opacity-70'}`} />
-                    : <div className={`mt-2 grid aspect-[4/3] place-items-center rounded-xl bg-tint ${reached ? '' : 'opacity-70'}`}><CoinStacks amount={tier.bernis} /></div>}
-                  <div className={`mt-2 text-[13px] ${reached ? 'text-ink' : 'text-body'}`}>+<Bernis amount={tier.bernis} nowrap /></div>
-                  {item && <div className="mt-0.5 text-[12px] leading-snug text-mute">{item.name}</div>}
+                    : <div className={`mt-2 grid aspect-[4/3] place-items-center rounded-control bg-tint ${reached ? '' : 'opacity-70'}`}><CoinStacks amount={tier.bernis} /></div>}
+                  <div className={`mt-2 text-small ${reached ? 'text-ink' : 'text-body'}`}>+<Bernis amount={tier.bernis} nowrap /></div>
+                  {item && <div className="mt-0.5 text-caption leading-snug text-mute">{item.name}</div>}
                 </li>
               );
             })}
@@ -103,7 +103,7 @@ export default function SeasonPage() {
           <Card title="So sammelst du Saisonpunkte" description="Alles zählt auf allen Servern mit Nexo. Am Monatsende beginnt die nächste Saison bei null.">
             <ul className="grid list-none grid-cols-1 gap-x-6 gap-y-2 p-0 sm:grid-cols-2">
               {EARN.map(([label, points]) => (
-                <li key={label} className="flex items-center justify-between gap-3 border-b border-line pb-2 text-[13.5px]">
+                <li key={label} className="flex items-center justify-between gap-3 border-b border-line pb-2 text-small">
                   <span className="text-body">{label}</span>
                   <span className="tabular-nums text-ink">+{points}</span>
                 </li>

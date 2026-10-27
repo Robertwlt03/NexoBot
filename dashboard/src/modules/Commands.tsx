@@ -73,7 +73,7 @@ export default function CommandsPage() {
 
       {categories.map(({ category, commands }) => (
         <details key={category.key} className="card group" open>
-          <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden before:text-xl before:leading-none before:text-faint before:transition-transform before:content-['›'] group-open:before:rotate-90">
+          <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden before:text-heading before:leading-none before:text-faint before:transition-transform before:content-['›'] group-open:before:rotate-90">
             <span className="text-mute"><Icon name={CATEGORY_ICONS[category.key] ?? 'commands'} size={20} /></span>
             <div className="min-w-0 flex-1">
               <h3>{category.name}</h3>

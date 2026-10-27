@@ -48,7 +48,7 @@ export default function MusicPage() {
             ) : (
               <div className="stack">
                 <div>
-                  <div className="text-base font-semibold">
+                  <div className="text-title font-semibold">
                     {data.nowPlaying.uri ? <a href={data.nowPlaying.uri} target="_blank" rel="noreferrer">{data.nowPlaying.title}</a> : data.nowPlaying.title}
                   </div>
                   <div className="muted">{data.nowPlaying.author}</div>

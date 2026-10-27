@@ -93,7 +93,7 @@ export const RARITY_TILE: Record<Rarity, string> = {
 };
 
 export function RarityLabel({ rarity }: { rarity: Rarity }) {
-  return <span className={`text-[12px] font-medium ${RARITY_CLASS[rarity].text}`}>{RARITY_LABELS[rarity]}</span>;
+  return <span className={`text-caption font-medium ${RARITY_CLASS[rarity].text}`}>{RARITY_LABELS[rarity]}</span>;
 }
 
 /** `large` shows the full amber drop (vein, bubble) for big hero numbers. */
@@ -139,7 +139,7 @@ export function CoinStacks({ amount, className = '' }: { amount: number; classNa
                   style={{ bottom: i * 5, left: (i % 3 === 1 ? 1.5 : i % 3 === 2 ? -1 : 0) }} />
               ))}
             </div>
-            <span className="text-[11px] font-medium tabular-nums text-mute">{count}</span>
+            <span className="text-micro font-medium tabular-nums text-mute">{count}</span>
           </div>
         );
       })}
@@ -162,7 +162,7 @@ export function Price({ price, finalPrice, className = '' }: { price: number; fi
   return (
     <span className={`inline-flex flex-wrap items-baseline gap-x-2 ${className}`}>
       <Bernis amount={finalPrice} nowrap className="font-medium text-ink" />
-      {finalPrice < price && <StruckBernis amount={price} className="text-[12px] text-faint" />}
+      {finalPrice < price && <StruckBernis amount={price} className="text-caption text-faint" />}
     </span>
   );
 }
@@ -208,7 +208,7 @@ function LevelupBanner({ data }: { data: LevelupData }) {
     royal: { color: '#1a1305', background: `linear-gradient(135deg, ${c}, #fff3c4 50%, ${c})` },
     retro: { color: c, border: `2px solid ${c}`, fontFamily: 'var(--mono)', letterSpacing: '.12em', boxShadow: `3px 3px 0 ${withAlpha(c, '66')}` },
   };
-  return <span className="rounded-md px-2.5 py-1 text-[12px] font-bold tracking-wide" style={styles[data.style]}>LEVEL UP</span>;
+  return <span className="rounded-tag px-3 py-1 text-caption font-bold tracking-caps" style={styles[data.style]}>LEVEL UP</span>;
 }
 
 /** Card layouts in the member area wear the member's own look (equipped frame, background …), not a sample. */
@@ -228,7 +228,7 @@ function previewOf(item: CosmeticItem): ReactNode {
 /** Preview tile of what an item changes, exactly as the card renderer paints it. */
 export function ItemVisual({ item, className = '' }: { item: CosmeticItem; className?: string }) {
   return (
-    <div data-mode="dark" className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-[#101015] ${className}`}>
+    <div data-mode="dark" className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-control bg-[#101015] ${className}`}>
       {previewOf(item)}
     </div>
   );

@@ -13,12 +13,12 @@ function Tile({ item, selected, onClick }: { item: CosmeticItem; selected?: bool
   const Tag = onClick ? 'button' : 'div';
   return (
     <Tag type={onClick ? 'button' : undefined} onClick={onClick} aria-pressed={onClick ? selected : undefined} data-mode="dark"
-      className={`relative flex flex-col rounded-2xl border bg-[#0c0c10] p-2.5 text-left font-[inherit] text-body ${onClick ? 'cursor-pointer' : ''} ${selected ? 'border-accent ring-2 ring-accent/30' : RARITY_CLASS[item.rarity].border}`}>
+      className={`relative flex flex-col rounded-box border bg-[#0c0c10] p-3 text-left font-[inherit] text-body ${onClick ? 'cursor-pointer' : ''} ${selected ? 'border-accent ring-2 ring-accent/30' : RARITY_CLASS[item.rarity].border}`}>
       <ItemVisual item={item} />
-      <div className="px-1 pt-2.5">
-        <h3 className="break-words font-sans text-[14px] font-medium">{item.name}</h3>
-        <div className="mt-0.5 text-[12px] text-faint">{SLOT_LABELS[item.slot]} · <RarityLabel rarity={item.rarity} /></div>
-        <div className="mt-1.5 text-[13px]"><Bernis amount={item.price} /></div>
+      <div className="px-1 pt-3">
+        <h3 className="break-words font-sans text-copy font-medium">{item.name}</h3>
+        <div className="mt-0.5 text-caption text-faint">{SLOT_LABELS[item.slot]} · <RarityLabel rarity={item.rarity} /></div>
+        <div className="mt-1.5 text-small"><Bernis amount={item.price} /></div>
       </div>
       {selected && <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-ink"><Glyph name="check" size={14} /></span>}
     </Tag>

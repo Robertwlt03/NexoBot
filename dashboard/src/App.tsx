@@ -12,6 +12,7 @@ import { MODULES } from './modules/registry';
 import { Landing } from './pages/Landing';
 import { Overview } from './pages/Overview';
 import { ServerPicker } from './pages/ServerPicker';
+import { MOTION } from './components/motion';
 
 // Member area (any logged-in user) and owner area; loaded on demand.
 const MEMBER_PAGES = [
@@ -84,7 +85,7 @@ function ToastItem({ toast }: { toast: Toast }) {
   const ref = useRef<HTMLDivElement>(null);
   useGSAP(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    gsap.from(ref.current, { x: 40, autoAlpha: 0, duration: 0.4, ease: 'back.out(1.6)' });
+    gsap.from(ref.current, { x: 40, autoAlpha: 0, duration: MOTION.slow, ease: MOTION.pop });
   });
   return <div ref={ref} className={`toast${toast.error ? ' error' : ''}`}>{toast.text}</div>;
 }

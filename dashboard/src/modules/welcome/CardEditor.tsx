@@ -305,7 +305,7 @@ export function CardEditor({ kind, value, onChange }: { kind: 'welcome' | 'goodb
             height={CARD_HEIGHT}
             tabIndex={0}
             aria-label="Kartenvorschau. Klicke eine Ebene an, zieh sie mit der Maus oder verschieb sie mit den Pfeiltasten."
-            className={`block h-auto w-full touch-none rounded-xl border border-line outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)] ${cursor}`}
+            className={`block h-auto w-full touch-none rounded-control border border-line outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)] ${cursor}`}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -385,7 +385,7 @@ export function CardEditor({ kind, value, onChange }: { kind: 'welcome' | 'goodb
         <Modal title="Server-Vorschau" onClose={() => setServerPreview(null)}
           footer={<button type="button" className="btn btn-secondary" onClick={() => setServerPreview(null)}>Schließen</button>}>
           <p className="muted mb-3">So rendert Nexo deine Karte für dich – mit dem aktuellen (ungespeicherten) Entwurf.</p>
-          <img className="block w-full rounded-lg" src={serverPreview} alt="Server-Vorschau der Karte" />
+          <img className="block w-full rounded-panel" src={serverPreview} alt="Server-Vorschau der Karte" />
         </Modal>
       )}
       {dialog}

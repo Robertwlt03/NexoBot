@@ -83,7 +83,7 @@ function GlyphPicker({ value, onChange }: { value: StickerData['glyph']; onChang
     <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-8">
       {BADGE_GLYPHS.map((glyph) => (
         <button key={glyph} type="button" title={glyph} aria-pressed={glyph === value} onClick={() => onChange(glyph)}
-          className={`flex aspect-square cursor-pointer items-center justify-center rounded-lg border bg-transparent ${glyph === value ? 'border-accent text-ink ring-2 ring-accent/30' : 'border-line text-mute hover:border-control hover:text-ink'}`}>
+          className={`flex aspect-square cursor-pointer items-center justify-center rounded-panel border bg-transparent ${glyph === value ? 'border-accent text-ink ring-2 ring-accent/30' : 'border-line text-mute hover:border-control hover:text-ink'}`}>
           <CardGlyph glyph={glyph} size={20} />
         </button>
       ))}
@@ -255,8 +255,8 @@ function ItemEditor({ initial, isNew, events, onClose, onSaved }: { initial: Cos
               <Field label="Erfolg-ID"><TextInput value={item.achievementId ?? ''} onChange={(id) => set({ achievementId: id || null })} placeholder="first-win" /></Field>
             )}
           </div>
-          <div className="rounded-2xl border border-line p-4">
-            <p className="mb-3 text-[12.5px] font-medium text-mute">Aussehen</p>
+          <div className="rounded-box border border-line p-4">
+            <p className="mb-3 text-caption font-medium text-mute">Aussehen</p>
             <DataEditor item={item} onChange={setItem} />
           </div>
           <SwitchRow title="Aktiv" description="Inaktive Artikel verschwinden aus Shop und Black Market; wer sie besitzt, behält sie." checked={item.active} onChange={(active) => set({ active })} />
@@ -303,27 +303,27 @@ export default function ItemsPage() {
         <Select value={slot} onChange={setSlot} options={[{ value: '', label: 'Alle Bereiche' }, ...COSMETIC_SLOTS.map((s) => ({ value: s, label: SLOT_LABELS[s] }))]} />
         <Select value={rarity} onChange={setRarity} options={[{ value: '', label: 'Alle Seltenheiten' }, ...RARITIES.map((r) => ({ value: r, label: RARITY_LABELS[r] }))]} />
         <Select value={availability} onChange={setAvailability} options={[{ value: '', label: 'Überall' }, ...opts(AVAILABILITY_LABELS)]} />
-        <label className="flex cursor-pointer items-center gap-2.5 text-[13.5px]"><Switch checked={showInactive} onChange={setShowInactive} label="Inaktive zeigen" /> Inaktive</label>
+        <label className="flex cursor-pointer items-center gap-2 text-small"><Switch checked={showInactive} onChange={setShowInactive} label="Inaktive zeigen" /> Inaktive</label>
       </div>
       {loading && !data && <Spinner />}
       {error && <Notice tone="danger" onRetry={reload}>{error}</Notice>}
       {data && rows.length === 0 && <Empty title="Keine Artikel">Passe die Filter an oder lege einen neuen Artikel an.</Empty>}
       {rows.length > 0 && (
         // Phones: one stacked card per item with every column visible; the table needs too much width there.
-        <ul className="m-0 grid list-none gap-2.5 p-0 sm:hidden">
+        <ul className="m-0 grid list-none gap-2 p-0 sm:hidden">
           {rows.map((item) => (
-            <li key={item.id} className={`rounded-xl border border-line bg-tint p-3 ${item.active ? '' : 'opacity-55'}`}>
+            <li key={item.id} className={`rounded-control border border-line bg-tint p-3 ${item.active ? '' : 'opacity-55'}`}>
               <button type="button" className="flex w-full cursor-pointer items-center gap-3 border-0 bg-transparent p-0 text-left font-[inherit] text-body" onClick={() => setEditing({ item, isNew: false })}>
-                <ItemVisual item={item} className="w-16 shrink-0 rounded-lg" />
+                <ItemVisual item={item} className="w-16 shrink-0 rounded-panel" />
                 <span className="min-w-0 flex-1">
                   <span className="block break-words font-medium text-ink">{item.name}</span>
-                  <span className="block break-all font-mono text-[11.5px] text-faint">{item.id}</span>
-                  <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]">
+                  <span className="block break-all font-mono text-micro text-faint">{item.id}</span>
+                  <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-caption">
                     <span>{SLOT_LABELS[item.slot]}</span><span className="text-faint">·</span><RarityLabel rarity={item.rarity} />
                   </span>
                 </span>
               </button>
-              <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[13px]">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-small">
                 <span className="flex flex-wrap items-center gap-2">
                   {item.price ? <Bernis amount={item.price} nowrap /> : <span className="text-faint">–</span>}
                   <span className="text-faint">{AVAILABILITY_LABELS[item.availability]}{item.eventId ? ` · ${events.find((e) => e.id === item.eventId)?.name ?? item.eventId}` : ''}</span>
@@ -348,10 +348,10 @@ export default function ItemsPage() {
               <tr key={item.id} className={item.active ? '' : 'opacity-55'}>
                 <td>
                   <button type="button" className="flex cursor-pointer items-center gap-3 border-0 bg-transparent p-0 text-left font-[inherit] text-body" onClick={() => setEditing({ item, isNew: false })}>
-                    <ItemVisual item={item} className="w-14 shrink-0 rounded-lg" />
+                    <ItemVisual item={item} className="w-14 shrink-0 rounded-panel" />
                     <span className="min-w-0">
                       <span className="block break-words font-medium text-ink">{item.name}</span>
-                      <span className="block break-all font-mono text-[11.5px] text-faint">{item.id}</span>
+                      <span className="block break-all font-mono text-micro text-faint">{item.id}</span>
                     </span>
                   </button>
                 </td>

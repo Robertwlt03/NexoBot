@@ -44,12 +44,12 @@ export default function InventoryPage() {
               const on = isEquipped(me.profile.equipped, item);
               const full = !on && item.slot === 'badge' && me.profile.equipped.badges.length >= MAX_EQUIPPED_BADGES;
               return (
-                <div key={item.id} className={`flex flex-col rounded-2xl border bg-tint p-2.5 ${on ? 'border-accent/50' : RARITY_CLASS[item.rarity].border}`}>
+                <div key={item.id} className={`flex flex-col rounded-box border bg-tint p-3 ${on ? 'border-accent/50' : RARITY_CLASS[item.rarity].border}`}>
                   <ItemVisual item={item} />
-                  <div className="px-1 pb-3 pt-2.5">
-                    <div className="text-[11px] font-medium uppercase tracking-wide text-mute">{SLOT_LABELS[item.slot]}</div>
-                    <h3 className="break-words font-sans text-[14px] font-medium">{item.name}</h3>
-                    <div className="mt-0.5 text-[12px] text-faint"><RarityLabel rarity={item.rarity} /> · {SOURCE_LABELS[owned.source]} am {formatDate(owned.acquiredAt)}</div>
+                  <div className="px-1 pb-3 pt-3">
+                    <div className="text-micro font-medium uppercase tracking-caps text-mute">{SLOT_LABELS[item.slot]}</div>
+                    <h3 className="break-words font-sans text-copy font-medium">{item.name}</h3>
+                    <div className="mt-0.5 text-caption text-faint"><RarityLabel rarity={item.rarity} /> · {SOURCE_LABELS[owned.source]} am {formatDate(owned.acquiredAt)}</div>
                   </div>
                   {full && <p className="faint mb-2 px-1">Du hast schon {MAX_EQUIPPED_BADGES} Abzeichen angelegt.</p>}
                   <button type="button" className={`btn btn-sm mt-auto ${on ? 'btn-secondary' : 'btn-ghost border-line-strong'}`} disabled={equip.busy || full} onClick={() => toggle(item)}>

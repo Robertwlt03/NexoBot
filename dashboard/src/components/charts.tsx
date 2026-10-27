@@ -7,6 +7,7 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Card, Empty, TableWrap } from './ui';
 import { useChartTheme } from '../theme';
+import { MOTION } from './motion';
 
 gsap.registerPlugin(useGSAP);
 
@@ -39,7 +40,7 @@ function niceStep(raw: number): number {
   return Math.max(1, step);
 }
 
-/** Bar with 4px rounded data end, anchored square to the baseline. */
+/** Bar with 4px rounded-tag data end, anchored square to the baseline. */
 function barPath(x: number, y: number, w: number, h: number): string {
   const r = Math.min(RADIUS, w / 2, h);
   return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
@@ -66,7 +67,7 @@ function TableToggle({ table, onToggle }: { table: boolean; onToggle: () => void
 /** Shared tooltip box (values lead, labels follow). */
 function Tooltip({ left, top = 0, children }: { left: number; top?: number; children: ReactNode }) {
   return (
-    <div role="status" className="pointer-events-none absolute z-10 min-w-[150px] -translate-x-1/2 rounded-lg border border-line-strong bg-field/95 px-3 py-2 text-[13px] shadow-lg"
+    <div role="status" className="pointer-events-none absolute z-10 min-w-[150px] -translate-x-1/2 rounded-panel border border-line-strong bg-field/95 px-3 py-2 text-small shadow-lg"
       style={{ left, top }}>
       {children}
     </div>
@@ -120,9 +121,9 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
     mm.add('(prefers-reduced-motion: no-preference)', () => {
       svg.current!.querySelectorAll<SVGPathElement>('.js-line').forEach((path) => {
         const length = path.getTotalLength();
-        gsap.fromTo(path, { strokeDasharray: length, strokeDashoffset: length }, { strokeDashoffset: 0, duration: 0.8, ease: 'power2.out', clearProps: 'strokeDasharray,strokeDashoffset' });
+        gsap.fromTo(path, { strokeDasharray: length, strokeDashoffset: length }, { strokeDashoffset: 0, duration: MOTION.long, ease: MOTION.enter, clearProps: 'strokeDasharray,strokeDashoffset' });
       });
-      gsap.from(svg.current!.querySelectorAll('.js-bars'), { scaleY: 0, transformOrigin: '50% 100%', duration: 0.6, ease: 'power3.out', clearProps: 'transform' });
+      gsap.from(svg.current!.querySelectorAll('.js-bars'), { scaleY: 0, transformOrigin: '50% 100%', duration: MOTION.slow, ease: MOTION.enter, clearProps: 'transform' });
     });
     return () => mm.revert();
   }, { dependencies: [table, labels.join(), series.map((s) => s.values.join()).join('|')], revertOnUpdate: true });
@@ -146,7 +147,7 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
     <Card title={title} description={description}
       right={<TableToggle table={table} onToggle={() => setTable(!table)} />}>
       {colored.length > 1 && (
-        <ul className="mb-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-mute">
+        <ul className="mb-3 flex flex-wrap gap-x-4 gap-y-1 text-small text-mute">
           {colored.map((s, i) => (
             <li key={s.name} className="flex items-center gap-1.5">
               <svg width="14" height="10" aria-hidden="true">
@@ -171,7 +172,7 @@ export function Chart({ title, description, kind, labels, longLabels, series, fo
         </div>
       ) : (
         <div ref={ref} className="relative">
-          <svg ref={svg} width={width} height={HEIGHT} role="img" tabIndex={0} className="block outline-none focus-visible:outline-2 focus-visible:outline-accent rounded-md"
+          <svg ref={svg} width={width} height={HEIGHT} role="img" tabIndex={0} className="block outline-none focus-visible:outline-2 focus-visible:outline-accent rounded-tag"
             aria-label={`${title}: ${n} Tage. Pfeiltasten zeigen die Werte einzelner Tage.`}
             onKeyDown={onKey} onFocus={() => setActive((current) => current ?? n - 1)} onBlur={() => setActive(null)}>
             {ticks.map((tick) => (
@@ -336,7 +337,7 @@ export function Heatmap({ title, description, rows, cols, values, cellLabel, uni
     if (table || !svg.current) return;
     const mm = gsap.matchMedia();
     mm.add('(prefers-reduced-motion: no-preference)', () => {
-      gsap.from(svg.current!.querySelectorAll('.js-cell'), { opacity: 0, duration: 0.35, ease: 'power2.out', stagger: { amount: 0.4, grid: [rows.length, cols.length], from: 'start' } });
+      gsap.from(svg.current!.querySelectorAll('.js-cell'), { opacity: 0, duration: MOTION.base, ease: MOTION.enter, stagger: { amount: 0.4, grid: [rows.length, cols.length], from: 'start' } });
     });
     return () => mm.revert();
   }, { dependencies: [table, values.flat().join()], revertOnUpdate: true });
@@ -366,7 +367,7 @@ export function Heatmap({ title, description, rows, cols, values, cellLabel, uni
       ) : (
         <>
           <div ref={ref} className="relative overflow-x-auto pb-1">
-            <svg ref={svg} width={svgW} height={svgH} role="img" tabIndex={0} className="block rounded-md outline-none focus-visible:outline-2 focus-visible:outline-accent"
+            <svg ref={svg} width={svgW} height={svgH} role="img" tabIndex={0} className="block rounded-tag outline-none focus-visible:outline-2 focus-visible:outline-accent"
               aria-label={`${title}. Pfeiltasten zeigen die Werte einzelner Felder.`}
               onKeyDown={onKey} onFocus={() => setActive((current) => current ?? [0, 0])} onBlur={() => setActive(null)}
               onPointerLeave={() => setActive(null)}>
@@ -395,9 +396,9 @@ export function Heatmap({ title, description, rows, cols, values, cellLabel, uni
               </Tooltip>
             )}
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[13px] text-mute" aria-hidden="true">
+          <div className="mt-3 flex flex-wrap items-center gap-1.5 text-small text-mute" aria-hidden="true">
             <span className="mr-1">0</span>
-            {[EMPTY_CELL, ...themed.heat].map((color) => <span key={color} className="h-3 w-5 rounded-[3px]" style={{ background: color }} />)}
+            {[EMPTY_CELL, ...themed.heat].map((color) => <span key={color} className="h-3 w-5 rounded-tag" style={{ background: color }} />)}
             <span className="ml-1 tabular-nums">{format(max)} {unit}</span>
           </div>
         </>
@@ -445,7 +446,7 @@ export function HorizontalBars({ title, description, items, unit, ordinal, forma
     if (table || !list.current) return;
     const mm = gsap.matchMedia();
     mm.add('(prefers-reduced-motion: no-preference)', () => {
-      gsap.from(list.current!.querySelectorAll('.js-hbar'), { scaleX: 0, transformOrigin: '0% 50%', duration: 0.6, ease: 'power3.out', stagger: 0.03, clearProps: 'transform' });
+      gsap.from(list.current!.querySelectorAll('.js-hbar'), { scaleX: 0, transformOrigin: '0% 50%', duration: MOTION.slow, ease: MOTION.enter, stagger: MOTION.step, clearProps: 'transform' });
     });
     return () => mm.revert();
   }, { dependencies: [table, items.map((item) => `${item.key}:${item.value}`).join()], revertOnUpdate: true });
@@ -467,7 +468,7 @@ export function HorizontalBars({ title, description, items, unit, ordinal, forma
         <ol ref={list} className="m-0 flex list-none flex-col gap-3 p-0">
           {items.map((item, i) => (
             <li key={item.key}>
-              <div className="flex items-baseline justify-between gap-3 text-[14px]">
+              <div className="flex items-baseline justify-between gap-3 text-copy">
                 {item.onSelect ? (
                   <button type="button" className="min-w-0 cursor-pointer break-words border-0 bg-transparent p-0 text-left text-body [font:inherit] hover:underline"
                     onClick={item.onSelect}>{item.label}</button>
@@ -478,7 +479,7 @@ export function HorizontalBars({ title, description, items, unit, ordinal, forma
                 </span>
               </div>
               <div className="mt-1.5 h-2.5">
-                <div className="js-hbar h-full rounded-r-[4px]" style={{ width: `${Math.max(1, (item.value / max) * 100)}%`, background: color(i) }} />
+                <div className="js-hbar h-full rounded-r-tag" style={{ width: `${Math.max(1, (item.value / max) * 100)}%`, background: color(i) }} />
               </div>
             </li>
           ))}

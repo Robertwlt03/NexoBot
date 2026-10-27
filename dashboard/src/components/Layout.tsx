@@ -10,6 +10,7 @@ import { GROUPS, MODULES } from '../modules/registry';
 import { Spinner, Notice } from './ui';
 import { NexoLogo } from './NexoLogo';
 import { PageBackdrop } from './Backdrop';
+import { MOTION } from './motion';
 
 gsap.registerPlugin(useGSAP);
 
@@ -42,15 +43,15 @@ export function GuildIcon({ guild, className = '' }: { guild: { name: string; ic
 export function ServerRail({ guilds, activeId }: { guilds: ApiGuildSummary[]; activeId?: string }) {
   const navigate = useNavigate();
   const onOverview = useLocation().pathname.replace(/\/$/, '') === '/servers';
-  const item = 'group relative grid h-11 w-11 place-items-center overflow-hidden rounded-[22px] bg-surface transition-all duration-200 hover:rounded-[14px]';
-  // Groove beside each rail button: a short rounded nub at rest, grows on hover and to full height for the open one.
-  const pill = (active: boolean) => `rail-groove absolute left-0 top-1/2 w-1 -translate-y-1/2 rounded-r-full transition-all duration-200 ${active ? 'h-8' : 'h-[2px] group-hover:h-4'}`;
+  const item = 'group relative grid h-11 w-11 place-items-center overflow-hidden rail-item rounded-panel bg-surface transition-all duration-base hover:rounded-box';
+  // Groove beside each rail button: a short rounded-tag nub at rest, grows on hover and to full height for the open one.
+  const pill = (active: boolean) => `rail-groove absolute left-0 top-1/2 w-1 -translate-y-1/2 rounded-r-full transition-all duration-fast ${active ? 'h-8' : 'h-[2px] group-hover:h-4'}`;
   return (
-    <nav className="flex w-[72px] shrink-0 flex-col items-center gap-2.5 overflow-y-auto border-r border-line bg-rail py-4" aria-label="Server">
+    <nav className="flex w-[72px] shrink-0 flex-col items-center gap-2 overflow-y-auto border-r border-line bg-rail py-4" aria-label="Server">
       <div className="relative flex w-full justify-center">
         <span className={pill(onOverview)} />
         <button className={`${item} rail-home cursor-pointer border-0 bg-surface p-0 ring-1 ring-line hover:ring-accent/40`} title="Alle Server" onClick={() => navigate('/servers')}>
-          <NexoLogo className="w-9 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" animated={false} />
+          <NexoLogo className="w-9 transition-transform duration-base group-hover:-rotate-6 group-hover:scale-110" animated={false} />
         </button>
       </div>
       {/* Divider between "Alle Server" and the servers: the same groove as the open-server marker (Cyberpunk: a flat line). */}
@@ -61,7 +62,7 @@ export function ServerRail({ guilds, activeId }: { guilds: ApiGuildSummary[]; ac
           <div key={guild.id} className="relative flex w-full justify-center">
             <span className={pill(active)} />
             <button title={guild.name} onClick={() => navigate(`/servers/${guild.id}`)}
-              className={`${item} cursor-pointer border-0 p-0 ${active ? 'rounded-[14px] ring-1 ring-line-strong' : 'opacity-80 hover:opacity-100'}`}>
+              className={`${item} cursor-pointer border-0 p-0 ${active ? 'rounded-box ring-1 ring-line-strong' : 'opacity-80 hover:opacity-100'}`}>
               <GuildIcon guild={guild} className="h-full w-full" />
             </button>
           </div>
@@ -76,7 +77,7 @@ export function SideMenu({ open, onClose, children }: { open: boolean; onClose: 
   return (
     <>
       {open && <button aria-label="Menü schließen" className="fixed inset-0 z-30 border-0 bg-black/60 lg:hidden" onClick={onClose} />}
-      <div className={`fixed inset-y-0 left-0 z-40 flex transition-transform duration-300 lg:static lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`fixed inset-y-0 left-0 z-40 flex transition-transform duration-base lg:static lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
         {children}
       </div>
     </>
@@ -92,12 +93,12 @@ export function UserPanel({ className = 'm-3' }: { className?: string }) {
   };
   if (!user) return null;
   return (
-    <div className={`flex items-center gap-2.5 rounded-2xl border border-line bg-surface px-3 py-2.5 ${className}`}>
-      <Link to="/me" title="Mein Profil öffnen" className="-m-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-xl p-1 text-body transition-colors hover:bg-tint hover:no-underline">
+    <div className={`flex items-center gap-2 rounded-box border border-line bg-surface px-3 py-3 ${className}`}>
+      <Link to="/me" title="Mein Profil öffnen" className="-m-1 flex min-w-0 flex-1 items-center gap-2 rounded-control p-1 text-body transition-colors hover:bg-tint hover:no-underline">
         <img src={user.avatarUrl} alt="" className="h-9 w-9 rounded-full ring-1 ring-line-strong" />
         <span className="min-w-0 flex-1 leading-tight">
-          <span className="block truncate text-sm font-medium text-ink">{user.globalName ?? user.username}</span>
-          <span className="block truncate text-xs text-mute">Mein Profil</span>
+          <span className="block truncate text-copy font-medium text-ink">{user.globalName ?? user.username}</span>
+          <span className="block truncate text-caption text-mute">Mein Profil</span>
         </span>
       </Link>
       <button className="icon-btn" title="Abmelden" onClick={logout}><Icon name="logout" size={18} /></button>
@@ -134,7 +135,7 @@ export function GuildLayout() {
     if (!marker) return;
     if (!active) { gsap.set(marker, { autoAlpha: 0 }); return; }
     const target = { y: active.offsetTop, height: active.offsetHeight, autoAlpha: 1 };
-    if (animate && !reducedMotion() && marker.dataset.placed === '1') gsap.to(marker, { ...target, duration: 0.35, ease: 'power3.out', overwrite: true });
+    if (animate && !reducedMotion() && marker.dataset.placed === '1') gsap.to(marker, { ...target, duration: MOTION.base, ease: MOTION.enter, overwrite: true });
     else gsap.set(marker, { ...target, overwrite: true });
     marker.dataset.placed = '1';
   }, []);
@@ -153,7 +154,7 @@ export function GuildLayout() {
   // Page transition on every module change.
   useGSAP(() => {
     if (!pageRef.current || reducedMotion()) return;
-    gsap.fromTo(pageRef.current, { y: 14, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.4, ease: 'power2.out', clearProps: 'transform' });
+    gsap.fromTo(pageRef.current, { y: 14, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: MOTION.slow, ease: MOTION.enter, clearProps: 'transform' });
   }, { dependencies: [location.pathname] });
 
   // Block in-app navigation while there are unsaved changes (Discord behaviour: the save bar shakes).
@@ -163,11 +164,11 @@ export function GuildLayout() {
     const bar = document.getElementById('save-bar');
     if (!bar) return;
     bar.classList.add('shake');
-    gsap.fromTo(bar, { x: -8 }, { x: 0, duration: 0.5, ease: 'elastic.out(1.2, 0.3)', onComplete: () => bar.classList.remove('shake') });
+    gsap.fromTo(bar, { x: -8 }, { x: 0, duration: MOTION.slow, ease: MOTION.nudge, onComplete: () => bar.classList.remove('shake') });
   };
 
   const current = MODULES.find((m) => location.pathname.endsWith(`/${m.id}`));
-  const navLink = 'relative z-10 flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] font-medium transition-colors hover:no-underline';
+  const navLink = 'relative z-10 flex items-center gap-3 rounded-control px-3 py-2 text-copy font-medium transition-colors hover:no-underline';
 
   return (
     <div className="flex h-full bg-canvas">
@@ -175,20 +176,20 @@ export function GuildLayout() {
         <ServerRail guilds={guilds.data ?? []} activeId={guildId} />
         <aside className="flex w-[264px] flex-col border-r border-line bg-panel">
           <div className="flex h-16 shrink-0 items-center gap-3 border-b border-line px-4">
-            {detail.data && <GuildIcon guild={detail.data} className="h-9 w-9 shrink-0 rounded-xl ring-1 ring-line" />}
+            {detail.data && <GuildIcon guild={detail.data} className="h-9 w-9 shrink-0 rounded-control ring-1 ring-line" />}
             <div className="min-w-0 leading-tight">
-              <div className="truncate text-[14px] font-semibold text-ink">{detail.data?.name ?? 'Server'}</div>
-              {detail.data && <div className="text-xs text-mute">{detail.data.memberCount.toLocaleString('de-DE')} Mitglieder</div>}
+              <div className="truncate text-copy font-semibold text-ink">{detail.data?.name ?? 'Server'}</div>
+              {detail.data && <div className="text-caption text-mute">{detail.data.memberCount.toLocaleString('de-DE')} Mitglieder</div>}
             </div>
           </div>
           <nav ref={navRef} className="nav-scroll relative flex-1 overflow-y-auto px-3 py-3" onClickCapture={guardClick}>
-            <div ref={markerRef} className="invisible absolute left-3 right-3 top-0 rounded-xl border border-line bg-tint-strong nav-marker before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r before:bg-accent" />
+            <div ref={markerRef} className="invisible absolute left-3 right-3 top-0 rounded-control border border-line bg-tint-strong nav-marker before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r-tag before:bg-accent" />
             <NavLink end to={`/servers/${guildId}`} className={({ isActive }) => `${navLink} ${isActive ? 'text-ink' : 'text-mute hover:bg-tint hover:text-ink'}`}>
               <Icon name="home" size={18} /> Übersicht
             </NavLink>
             {GROUPS.map((group) => (
               <div className="mt-5" key={group}>
-                <div className="mb-1 px-3 text-[11.5px] font-medium text-faint">{group}</div>
+                <div className="mb-1 px-3 text-micro font-medium text-faint">{group}</div>
                 {MODULES.filter((m) => m.group === group).map((m) => (
                   <NavLink key={m.id} to={`/servers/${guildId}/${m.id}`}
                     className={({ isActive }) => `${navLink} ${isActive ? 'text-ink' : 'text-mute hover:bg-tint hover:text-ink'}`}>
@@ -205,11 +206,11 @@ export function GuildLayout() {
       <main className="relative flex min-w-0 flex-1 flex-col bg-canvas">
         <header className="flex h-16 shrink-0 items-center gap-3 border-b border-line bg-canvas/80 px-4 backdrop-blur-md md:px-8">
           <button className="icon-btn lg:hidden" onClick={() => setMenuOpen((open) => !open)} aria-label="Menü"><Icon name="menu" /></button>
-          <span className="max-w-[40vw] truncate text-sm text-mute">{detail.data?.name}</span>
+          <span className="max-w-[40vw] truncate text-copy text-mute">{detail.data?.name}</span>
           <span className="text-faint">/</span>
-          <span className="truncate text-sm font-medium text-ink">{current?.label ?? 'Übersicht'}</span>
+          <span className="truncate text-copy font-medium text-ink">{current?.label ?? 'Übersicht'}</span>
         </header>
-        <div className="relative flex-1 overflow-y-auto px-4 pb-32 pt-9 md:px-10">
+        <div className="relative flex-1 overflow-y-auto px-4 pb-32 pt-10 md:px-10">
           <PageBackdrop art={ICON_PATHS[current?.icon ?? 'home']} label={current?.label ?? 'Übersicht'} />
           <div ref={pageRef} className="relative mx-auto max-w-[1040px]">
             {detail.loading && !detail.data && <Spinner />}

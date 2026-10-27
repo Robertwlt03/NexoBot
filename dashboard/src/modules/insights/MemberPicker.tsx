@@ -73,10 +73,10 @@ export function MemberPicker({ base, selected, onSelect }: {
         }} />
       {expanded && (
         <ul id={listId} role="listbox" aria-label="Gefundene Mitglieder"
-          className="absolute inset-x-0 top-full z-20 m-0 mt-1 max-h-80 list-none overflow-y-auto rounded-xl border border-line-strong bg-field p-1 shadow-lg">
+          className="absolute inset-x-0 top-full z-20 m-0 mt-1 max-h-80 list-none overflow-y-auto rounded-control border border-line-strong bg-field p-1 shadow-lg">
           {hits.map((hit, i) => (
             <li key={hit.userId} id={`${listId}-${i}`} role="option" aria-selected={i === active}
-              className={`flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 ${i === active ? 'bg-tint-strong' : ''}`}
+              className={`flex cursor-pointer items-center gap-2 rounded-panel px-3 py-2 ${i === active ? 'bg-tint-strong' : ''}`}
               onMouseDown={(e) => e.preventDefault()} onMouseEnter={() => setActive(i)} onClick={() => pick(hit)}>
               <img src={hit.avatarUrl ?? DEFAULT_AVATAR} alt="" className="h-7 w-7 shrink-0 rounded-full" />
               <span className="min-w-0 flex-1 break-words">
@@ -86,7 +86,7 @@ export function MemberPicker({ base, selected, onSelect }: {
             </li>
           ))}
           {hits.length === 0 && (
-            <li className="faint px-2.5 py-2" role="presentation">{error ?? (searching ? 'Suche …' : 'Kein Mitglied gefunden.')}</li>
+            <li className="faint px-3 py-2" role="presentation">{error ?? (searching ? 'Suche …' : 'Kein Mitglied gefunden.')}</li>
           )}
         </ul>
       )}

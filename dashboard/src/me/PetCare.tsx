@@ -51,7 +51,7 @@ function CareBar({ care, pet }: { care: PetCare; pet: PetData }) {
   return (
     <div className="mt-2">
       <Meter value={share} max={1} done={care.nextAt === null} label="Pflegetage bis zur nächsten Form" />
-      <div className="mt-1 text-[11.5px] tabular-nums text-faint">
+      <div className="mt-1 text-micro tabular-nums text-faint">
         {care.nextAt === null ? `${care.care} Pflegetage · höchste Form` : `${care.care} / ${care.nextAt} Pflegetage · nächste Form: ${PET_FORM_NAMES[pet.species][care.stage as 1 | 2 | 3]}`}
       </div>
     </div>
@@ -70,8 +70,8 @@ export function PetCareCard() {
   if (pets.length === 0) {
     return (
       <section className="card !p-5">
-        <span className="text-[13px] text-mute">Begleiter</span>
-        <p className="mt-2 text-[13.5px] text-body">Noch kein Tier. Im Shop findest du Begleiter, die mit deiner Pflege von der Babyform bis zur Kronenform wachsen.</p>
+        <span className="text-small text-mute">Begleiter</span>
+        <p className="mt-2 text-small text-body">Noch kein Tier. Im Shop findest du Begleiter, die mit deiner Pflege von der Babyform bis zur Kronenform wachsen.</p>
         <Link to="/me/shop" className="btn btn-secondary btn-sm mt-3 hover:no-underline"><Glyph name="paw" size={15} /> Begleiter ansehen</Link>
       </section>
     );
@@ -88,9 +88,9 @@ export function PetCareCard() {
   return (
     <section className="card !p-5">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[13px] text-mute">Begleiter</span>
+        <span className="text-small text-mute">Begleiter</span>
         {/* The stock as one unit: the label, then a bowl per portion; free places are faint grey bowls. */}
-        <span className="flex items-center gap-2 text-[12.5px] text-mute" role="img" aria-label={`Futtervorrat: ${food} von ${foodMax}`}>
+        <span className="flex items-center gap-2 text-caption text-mute" role="img" aria-label={`Futtervorrat: ${food} von ${foodMax}`}>
           Vorrat {food} von {foodMax}
           <span className="flex items-center gap-1">
             {Array.from({ length: foodMax }, (_, i) => (
@@ -107,11 +107,11 @@ export function PetCareCard() {
           return (
             <div key={care.itemId} className="mt-3">
               <div className="flex items-center gap-3">
-                <div className="grid shrink-0 place-items-center rounded-xl bg-tint-strong"><PetPortrait pet={pet} stage={care.stage} hungry={care.hungry} size={104} /></div>
+                <div className="grid shrink-0 place-items-center rounded-control bg-tint-strong"><PetPortrait pet={pet} stage={care.stage} hungry={care.hungry} size={104} /></div>
                 <div className="min-w-0 flex-1">
-                  <div className="break-words text-[15px] font-medium text-ink">{item.name}</div>
-                  <div className="text-[12.5px] text-mute">{PET_FORM_NAMES[pet.species][care.stage - 1]} · {PET_STAGE_NAMES[care.stage - 1]}</div>
-                  <div className={`mt-1 text-[12.5px] ${care.hungry ? 'text-warn' : 'text-mute'}`}>{mood(care)}</div>
+                  <div className="break-words text-title font-medium text-ink">{item.name}</div>
+                  <div className="text-caption text-mute">{PET_FORM_NAMES[pet.species][care.stage - 1]} · {PET_STAGE_NAMES[care.stage - 1]}</div>
+                  <div className={`mt-1 text-caption ${care.hungry ? 'text-warn' : 'text-mute'}`}>{mood(care)}</div>
                 </div>
               </div>
               <CareBar care={care} pet={pet} />
@@ -120,17 +120,17 @@ export function PetCareCard() {
           );
         }
         return (
-          <div key={care.itemId} className="mt-3 flex items-center gap-2.5 border-t border-line pt-3">
+          <div key={care.itemId} className="mt-3 flex items-center gap-2 border-t border-line pt-3">
             <PetPortrait pet={pet} stage={care.stage} hungry={care.hungry} size={44} />
             <div className="min-w-0 flex-1">
-              <div className="break-words text-[13.5px] text-ink">{item.name}</div>
-              <div className={`text-[12px] ${care.hungry ? 'text-warn' : 'text-faint'}`}>{PET_FORM_NAMES[pet.species][care.stage - 1]} · {care.hungry ? 'traurig' : care.fedToday ? 'satt' : `${care.care} Pflegetage`}</div>
+              <div className="break-words text-small text-ink">{item.name}</div>
+              <div className={`text-caption ${care.hungry ? 'text-warn' : 'text-faint'}`}>{PET_FORM_NAMES[pet.species][care.stage - 1]} · {care.hungry ? 'traurig' : care.fedToday ? 'satt' : `${care.care} Pflegetage`}</div>
             </div>
             {feedButton(care, true)}
           </div>
         );
       })}
-      <p className="mt-3 text-[11.5px] text-faint">Futter gibt es für alle drei Tagesaufgaben, nicht im Shop, höchstens drei Portionen auf Vorrat. Jedes Tier frisst einmal am Tag eine Portion. Verpasst du einen Tag, wird es traurig und der Weg zur nächsten Form beginnt neu.</p>
+      <p className="mt-3 text-micro text-faint">Futter gibt es für alle drei Tagesaufgaben, nicht im Shop, höchstens drei Portionen auf Vorrat. Jedes Tier frisst einmal am Tag eine Portion. Verpasst du einen Tag, wird es traurig und der Weg zur nächsten Form beginnt neu.</p>
     </section>
   );
 }

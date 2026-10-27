@@ -59,29 +59,29 @@ function AchievementCard({ a }: { a: Achievement }) {
   const title = a.titleId ? items.get(a.titleId) : undefined;
   const badge = item?.slot === 'badge' ? { ...item.data, rarity: item.rarity } : null;
   return (
-    <article className={`flex flex-col rounded-2xl border p-4 ${a.unlockedAt ? 'border-line-strong bg-surface' : 'border-line bg-tint'}`}>
+    <article className={`flex flex-col rounded-box border p-4 ${a.unlockedAt ? 'border-line-strong bg-surface' : 'border-line bg-tint'}`}>
       <div className="flex items-start gap-3">
         {/* The achievement's own badge as the emblem on the card, grey until unlocked. */}
         {badge ? <BadgeEmblem badge={badge} size={40} locked={!a.unlockedAt} /> : <span className="icon-tile !text-faint"><Glyph name="medal" size={18} /></span>}
         <div className="min-w-0 flex-1">
-          <h3 className={`text-[14.5px] font-medium ${a.unlockedAt ? '' : 'text-body'}`}>{a.name}</h3>
-          <p className="mt-0.5 text-[12.5px] text-mute">{a.description}</p>
+          <h3 className={`text-copy font-medium ${a.unlockedAt ? '' : 'text-body'}`}>{a.name}</h3>
+          <p className="mt-0.5 text-caption text-mute">{a.description}</p>
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         {a.progress && !a.unlockedAt && (
           <div className="w-full">
-            <div className="flex justify-between text-[12px] text-mute"><span>Fortschritt</span><span className="tabular-nums">{num(a.progress.current)} / {num(a.progress.target)}</span></div>
+            <div className="flex justify-between text-caption text-mute"><span>Fortschritt</span><span className="tabular-nums">{num(a.progress.current)} / {num(a.progress.target)}</span></div>
             <Meter value={a.progress.current} max={a.progress.target} label={`Fortschritt ${a.name}`} className="mt-1.5" />
           </div>
         )}
         {a.unlockedAt && <Badge tone="pos">Freigeschaltet am {formatDate(a.unlockedAt)}</Badge>}
         {a.hidden && <Badge>Versteckt</Badge>}
       </div>
-      <div className="mt-auto flex items-center gap-3 border-t border-line pt-3 text-[13px]">
+      <div className="mt-auto flex items-center gap-3 border-t border-line pt-3 text-small">
         <Bernis amount={a.reward} className="text-ink" />
         {(a.itemId || title) && (
-          <span className="ml-auto flex min-w-0 items-center gap-2 text-right text-[12.5px] text-mute">
+          <span className="ml-auto flex min-w-0 items-center gap-2 text-right text-caption text-mute">
             <span className="min-w-0">
               {a.itemId && <span className="block break-words">+ {item ? `Abzeichen „${item.name}“` : 'Abzeichen'}</span>}
               {title?.slot === 'title' && <span className="block break-words">+ Titel <span className="title-tint" style={{ '--tint': title.data.color } as CSSProperties}>„{title.data.text}“</span></span>}
@@ -96,17 +96,17 @@ function AchievementCard({ a }: { a: Achievement }) {
 /** A secret achievement not yet unlocked: only that it exists and what it pays. */
 function MysteryCard({ a }: { a: Achievement }) {
   return (
-    <article className="flex flex-col rounded-2xl border border-dashed border-line-strong bg-tint p-4">
+    <article className="flex flex-col rounded-box border border-dashed border-line-strong bg-tint p-4">
       <div className="flex items-start gap-3">
         <BadgeEmblem badge={MYSTERY} size={40} mark="?" />
         <div className="min-w-0 flex-1">
-          <h3 className="text-[14.5px] font-medium text-body">{a.name}</h3>
-          <p className="mt-0.5 text-[12.5px] text-mute">Die Bedingung erfährst du, sobald du ihn freischaltest.</p>
+          <h3 className="text-copy font-medium text-body">{a.name}</h3>
+          <p className="mt-0.5 text-caption text-mute">Die Bedingung erfährst du, sobald du ihn freischaltest.</p>
         </div>
       </div>
-      <div className="mt-auto flex items-center gap-3 border-t border-line pt-3 text-[13px]">
+      <div className="mt-auto flex items-center gap-3 border-t border-line pt-3 text-small">
         <Bernis amount={a.reward} className="text-ink" />
-        <span className="ml-auto text-[12.5px] text-mute">+ geheimes Abzeichen und Titel</span>
+        <span className="ml-auto text-caption text-mute">+ geheimes Abzeichen und Titel</span>
       </div>
     </article>
   );
