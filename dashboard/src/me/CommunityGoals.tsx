@@ -3,6 +3,7 @@ import type { CommunityResponse } from '../../../src/web/dto/profile';
 import { useApi } from '../api';
 import { num } from './api';
 import { Bernis, Glyph } from './visuals';
+import { Badge, Meter } from '../components/ui';
 
 export function CommunityGoals() {
   const { data } = useApi<CommunityResponse>('/me/community');
@@ -20,16 +21,14 @@ export function CommunityGoals() {
               <div className="flex items-center gap-3">
                 {goal.guildIconUrl
                   ? <img src={goal.guildIconUrl} alt="" className="h-9 w-9 shrink-0 rounded-xl" />
-                  : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[.06] text-[14px] font-semibold text-ink">{goal.guildName.slice(0, 1)}</span>}
+                  : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-tint-strong text-[14px] font-semibold text-ink">{goal.guildName.slice(0, 1)}</span>}
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[14px] font-medium text-ink">{goal.guildName}</div>
+                  <div className="break-words text-[14px] font-medium text-ink">{goal.guildName}</div>
                   <div className="text-[12px] text-faint">{goal.eventName}</div>
                 </div>
-                {reached && <span className="badge badge-on shrink-0">Geschafft</span>}
+                {reached && <Badge tone="pos" className="shrink-0">Geschafft</Badge>}
               </div>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/[.06]">
-                <div className={`h-full rounded-full ${reached ? 'bg-pos' : 'bg-accent'}`} style={{ width: `${Math.min(100, (goal.progress / goal.target) * 100)}%` }} />
-              </div>
+              <Meter className="mt-3" value={goal.progress} max={goal.target} done={reached} label={`Gemeinschaftsziel ${goal.guildName}`} />
               <div className="mt-1.5 flex flex-wrap justify-between gap-x-3 text-[12.5px] text-mute">
                 <span><span className="tabular-nums text-ink">{num(goal.progress)}</span> von {num(goal.target)} Nachrichten</span>
                 <span>Du: <span className="tabular-nums text-ink">{num(goal.mine)}</span></span>

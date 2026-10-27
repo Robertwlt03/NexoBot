@@ -15,7 +15,7 @@ export function MemberProfileCard({ profile, onSelect }: { profile: MemberProfil
         <img src={profile.avatarUrl ?? DEFAULT_AVATAR} alt="" className="h-14 w-14 rounded-full" />
         <div className="min-w-[180px] flex-1">
           <h2 className="flex flex-wrap items-center gap-2">
-            <span className="min-w-0 truncate">{profile.name}</span>
+            <span className="min-w-0 break-words">{profile.name}</span>
             {profile.bot && <Badge>Bot</Badge>}
             {!profile.inGuild && <Badge on={false}>Nicht mehr auf dem Server</Badge>}
           </h2>
@@ -37,10 +37,10 @@ export function MemberProfileCard({ profile, onSelect }: { profile: MemberProfil
 
       <div className="mt-5 grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 xl:grid-cols-3">
         <Facts items={[
-          ['Beigetreten', profile.joinedAt ? <span title={ago(profile.joinedAt)}>{shortDate(profile.joinedAt)}</span> : '–'],
-          ['Konto erstellt', <span title={shortDate(profile.accountCreatedAt)}>{ago(profile.accountCreatedAt)}</span>],
+          ['Beigetreten', profile.joinedAt ? `${shortDate(profile.joinedAt)} · ${ago(profile.joinedAt)}` : '–'],
+          ['Konto erstellt', `${shortDate(profile.accountCreatedAt)} · ${ago(profile.accountCreatedAt)}`],
           // Shown once invite tracking exists; the bot does not record who invited whom yet.
-          ...(invitedBy ? [['Eingeladen von', <button type="button" className="cursor-pointer border-0 bg-transparent p-0 text-accent [font:inherit] hover:underline" onClick={() => onSelect(invitedBy.userId)}>{invitedBy.name}</button>] as [string, ReactNode]] : []),
+          ...(invitedBy ? [['Eingeladen von', <button type="button" className="cursor-pointer border-0 bg-transparent p-0 text-accent-text [font:inherit] hover:underline" onClick={() => onSelect(invitedBy.userId)}>{invitedBy.name}</button>] as [string, ReactNode]] : []),
           ['Geburtstag', or(birthday, (b) => `${String(b.day).padStart(2, '0')}.${String(b.month).padStart(2, '0')}.`)],
         ]} />
         <Facts items={[

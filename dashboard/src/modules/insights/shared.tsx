@@ -51,11 +51,11 @@ export function ago(iso: string): string {
 /** Label / value rows (module tiles, member profile). */
 export function Facts({ items }: { items: [string, ReactNode][] }) {
   return (
-    <dl className="stack m-0 gap-2">
+    <dl className="m-0 flex flex-col">
       {items.map(([label, value]) => (
-        <div key={label} className="flex items-baseline justify-between gap-3">
+        <div key={label} className="flex items-baseline justify-between gap-3 rounded-lg px-2 py-1.5 even:bg-stripe">
           <dt className="muted">{label}</dt>
-          <dd className="m-0 min-w-0 truncate text-right font-semibold tabular-nums text-ink">{value}</dd>
+          <dd className="m-0 min-w-0 break-words text-right font-semibold tabular-nums text-ink">{value}</dd>
         </div>
       ))}
     </dl>

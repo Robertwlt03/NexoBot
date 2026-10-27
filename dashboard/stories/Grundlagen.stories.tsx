@@ -6,15 +6,19 @@ import { THEME_PRESETS, chartPalette, normalizeTheme, themeLook, themeVariables,
 import walnut from '../src/assets/wood/walnut.webp';
 import oak from '../src/assets/wood/oak.webp';
 import { ICON_PATHS, Icon, type IconName } from '../src/icons';
+import { Badge, Meter, Notice, TableWrap } from '../src/components/ui';
+import { Bernis, RarityLabel } from '../src/me/visuals';
 
 const GROUPS: { title: string; text: string; tokens: string[] }[] = [
   { title: 'Flächen', text: 'Von hinten nach vorn: App-Hintergrund, Seitenleiste, Seite, Karte. Eingabefelder haben ihre eigene Fläche.', tokens: ['--bg-app', '--bg-sidebar', '--bg-main', '--bg-card', '--bg-card-hover', '--bg-input', '--bg-hover', '--bg-active'] },
-  { title: 'Linien', text: 'Trennlinien und Rahmen; Eingabefelder brauchen den kräftigeren Rand (3:1 nach WCAG).', tokens: ['--border', '--border-strong', '--border-input'] },
+  { title: 'Linien', text: 'Trennlinien und Rahmen (Tailwind line, line-strong); Knöpfe, Chips und Abzeichen haben den Steuerrand (control), Eingabefelder den kräftigsten (field-line, 3:1 nach WCAG). Jede zweite Tabellenzeile liegt auf --stripe.', tokens: ['--border', '--border-strong', '--border-control', '--border-input', '--stripe'] },
   { title: 'Text', text: 'Vier Stufen; alle halten auf der Seite mindestens 4.5:1 (geprüft in tests/contrast.test.ts).', tokens: ['--text-strong', '--text', '--text-muted', '--text-faint'] },
   { title: 'Akzent', text: 'Kommt aus dem Theme des Mitglieds (src/shared/theme.ts) und ändert sich mit der Auswahl oben.', tokens: ['--accent', '--accent-strong', '--accent-hover', '--accent-ink', '--accent-text', '--accent-soft', '--accent-line', '--accent-2', '--chart-primary'] },
   { title: 'Zustände', text: 'Erfolg, Fehler und Warnung; --success und --danger für Knopfflächen, die anderen für Text und Icons.', tokens: ['--pos', '--neg', '--warning', '--success', '--danger', '--blurple'] },
+  { title: 'Seltenheit', text: 'Nur an Artikeln: Beschriftung und Rand nach Seltenheit (Gewöhnlich bleibt neutral).', tokens: ['--rarity-rare', '--rarity-epic', '--rarity-legendary', '--rarity-mythic'] },
+  { title: 'Ticket-Priorität', text: 'Nur an Ticket-Prioritäten, immer zusammen mit eigenem Symbol und Text.', tokens: ['--prio-urgent', '--prio-high', '--prio-medium', '--prio-low'] },
 ];
-const TEXT_TOKENS = new Set(['--text-strong', '--text', '--text-muted', '--text-faint', '--accent-text', '--pos', '--neg', '--warning']);
+const TEXT_TOKENS = new Set(['--text-strong', '--text', '--text-muted', '--text-faint', '--accent-text', '--pos', '--neg', '--warning', '--rarity-rare', '--rarity-epic', '--rarity-legendary', '--rarity-mythic']);
 
 // ---------- Contrast (WCAG relative luminance) ----------
 
@@ -85,6 +89,57 @@ function Colours() {
           <div style={grid(260)}>{group.tokens.map((name) => <Token key={name} name={name} />)}</div>
         </Section>
       ))}
+    </div>
+  );
+}
+
+// ---------- Colour roles ----------
+
+/** Every colour on a page has one of these meanings; a colour without one of them stays neutral. */
+const ROLES: { role: string; tokens: string; use: string; never: string; sample: ReactNode }[] = [
+  { role: 'Neutral', tokens: 'Flächen, Text (ink, body, mute, faint), Linien (line, line-strong, control), tint, stripe', use: 'Alles ohne besondere Bedeutung: Karten, Texte, Rahmen, Icons, Abschnittsbeschriftungen, Zähler.', never: 'Weiß oder Schwarz mit Deckkraft (white/10, black/20) und feste Hex-Werte; dafür gibt es line und tint.', sample: <Badge>Geplant</Badge> },
+  { role: 'Akzent', tokens: '--accent, --accent-text, accent-mute (Theme-Farbe)', use: 'Hauptaktion, aktiv oder ausgewählt, Fokus, Links, laufender Fortschritt, höchstens eine Hero-Fläche je Seite.', never: 'Dekoration, Icons in Listen, Überschriften, reine Zähler.', sample: <><button type="button" className="btn btn-primary btn-sm">Speichern</button><Badge tone="accent">Ausgewählt</Badge></> },
+  { role: 'Erfolg', tokens: '--pos (Text, Rand), --success (Knopffläche)', use: 'An, aktiv, läuft, erledigt, im Besitz, Gewinne, Rabatte und Ersparnis, Annehmen.', never: 'Hauptaktionen ohne Erfolgsbedeutung.', sample: <><Badge on>Aktiv</Badge><span style={{ color: 'var(--pos)' }}>−20 %</span></> },
+  { role: 'Warnung', tokens: '--warning (Text: text-warn)', use: 'Braucht Aufmerksamkeit, offen, läuft bald ab, nur für kurze Zeit, Kanal fehlt.', never: 'Angebote und Rabatte (die sind Erfolg), Dekoration.', sample: <><Badge tone="warn">Offen</Badge><span style={{ color: 'var(--warning)' }}>Nur bis Sonntag</span></> },
+  { role: 'Gefahr', tokens: '--neg (Text, Rand), --danger (Knopffläche beim Überfahren)', use: 'Fehler, Löschen und Deaktivieren (btn-danger), Verluste, Abgelehnt.', never: 'Hervorhebungen ohne Fehler- oder Verlustbedeutung.', sample: <><button type="button" className="btn btn-danger btn-sm">Löschen</button><Badge tone="neg">Abgelehnt</Badge></> },
+  { role: 'Bernis', tokens: 'Münz-Icons (Platin, Gold, Silber, Bronze)', use: 'Die Münzen tragen die Währung, der Betrag steht in Textfarbe; Gewinne in Erfolg, Ausgaben in Gefahr.', never: 'Eine eigene Geldfarbe für Beträge.', sample: <Bernis amount={123456} nowrap /> },
+  { role: 'Seltenheit', tokens: '--rarity-rare … --rarity-mythic (text-rarity-*, border-rarity-*/40)', use: 'Nur an Artikeln: Beschriftung, Rand und Leuchten der Kachel.', never: 'Alles, was kein Artikel ist.', sample: <><RarityLabel rarity="rare" /><RarityLabel rarity="epic" /><RarityLabel rarity="legendary" /><RarityLabel rarity="mythic" /></> },
+  { role: 'Rang, Priorität', tokens: 'Medaillen Gold, Silber, Bronze; --prio-*', use: 'Plätze 1 bis 3 in Ranglisten; Ticket-Prioritäten mit eigenem Symbol.', never: 'Andere Reihenfolgen oder Zustände.', sample: <span style={{ color: 'var(--prio-urgent)' }}>Dringend</span> },
+  { role: 'Discord, Diagramme, Kunst', tokens: 'Discord-Farben, Diagrammpalette, Szenen', use: 'Discord-Vorschauen in Discords eigenen Farben, Datenfarben nur in Diagrammen, Event-Szenen, Logo und Holz als Illustration.', never: 'Bedienelemente oder Zustände außerhalb dieser Bereiche.', sample: <span className="mention">@Nexo</span> },
+];
+
+function Roles() {
+  return (
+    <div style={page}>
+      <div>
+        <h1>Farbrollen</h1>
+        <p style={{ color: 'var(--text-muted)', marginTop: 6, maxWidth: 760 }}>
+          Jede Farbe auf einer Seite hat genau eine dieser Bedeutungen, damit Gleiches überall gleich aussieht. Seiten bauen aus den gemeinsamen Komponenten (<code>Badge</code> mit <code>tone</code>, <code>Notice</code>, <code>Meter</code>, <code>btn-*</code>) und den Tailwind-Namen der Tokens, nie aus festen Hex-Werten.
+        </p>
+      </div>
+      <TableWrap>
+        <thead><tr><th>Rolle</th><th>Tokens</th><th>Wofür</th><th>Nicht für</th><th>Beispiel</th></tr></thead>
+        <tbody>
+          {ROLES.map((r) => (
+            <tr key={r.role}>
+              <td><b style={{ color: 'var(--text-strong)' }}>{r.role}</b></td>
+              <td><code style={{ fontSize: 12 }}>{r.tokens}</code></td>
+              <td>{r.use}</td>
+              <td style={{ color: 'var(--text-muted)' }}>{r.never}</td>
+              <td><span style={{ display: 'inline-flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>{r.sample}</span></td>
+            </tr>
+          ))}
+        </tbody>
+      </TableWrap>
+      <Section title="Rückmeldungen" text="Hinweise im Seitenfluss: neutral, Warnung, Fehler. Fortschritt läuft im Akzent und wird beim Abschluss grün.">
+        <div style={{ display: 'grid', gap: 12, maxWidth: 640 }}>
+          <Notice>Änderungen gelten erst nach dem Speichern.</Notice>
+          <Notice tone="warn">Der Kanal ist für Nexo nicht sichtbar.</Notice>
+          <Notice tone="danger">Die Daten konnten nicht geladen werden.</Notice>
+          <Meter value={6} max={10} label="Laufend" />
+          <Meter value={10} max={10} done label="Geschafft" />
+        </div>
+      </Section>
     </div>
   );
 }
@@ -261,7 +316,7 @@ function Combo({ theme, name }: { theme: DashboardTheme; name: string }) {
             {COMBO_TEXT.map(([token, label]) => <Line key={token} token={token} label={label} />)}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            <span className="badge badge-brand">Akzent</span><span className="badge badge-on">An</span><span className="badge badge-warn">Achtung</span><span className="badge badge-off">Aus</span>
+            <span className="badge badge-brand">Akzent</span><span className="badge badge-on">An</span><span className="badge badge-warn">Achtung</span><span className="badge badge-neg">Fehler</span><span className="badge badge-off">Aus</span>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'start' }}>
             <Button kind="btn-primary" label="Speichern" /><Button kind="btn-secondary" label="Vorschau" />
@@ -295,6 +350,7 @@ function Combinations() {
 
 export default { title: 'Grundlagen', tags: ['!autodocs'], parameters: { switches: ['scheme', 'mode'] } } satisfies Meta;
 
+export const Farbrollen: StoryObj = { render: () => <Roles /> };
 export const Farben: StoryObj = { render: () => <Colours /> };
 export const Schrift: StoryObj = { parameters: { switches: ['mode'] }, render: () => <Type /> };
 export const Formen: StoryObj = { parameters: { switches: ['mode'] }, render: () => <Shapes /> };

@@ -40,7 +40,7 @@ export function RankList({ rows, loading, error, emptyTitle, emptyText, page, pa
                   title={selectLabel} onClick={() => onSelect(row.userId)}>{row.name}</button>
               ) : <div className="title">{row.name}</div>}
               {/* On phones the detail (e.g. wallet · bank) replaces the id line, so the value column stays narrow. */}
-              <div className={`faint truncate${row.detail ? ' max-sm:hidden' : ''}`}>{row.meta ?? row.userId}</div>
+              <div className="faint break-words">{row.meta ?? row.userId}</div>
               {row.detail && <div className="faint sm:hidden">{row.detail}</div>}
             </div>
             <div className="shrink-0 whitespace-nowrap text-right">

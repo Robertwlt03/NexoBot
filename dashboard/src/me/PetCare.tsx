@@ -7,6 +7,7 @@ import type { PetData } from '../../../src/shared/cosmetics';
 import type { PetOverview } from '../../../src/web/dto/profile';
 import { useMe, useMutation } from './api';
 import { Glyph } from './visuals';
+import { Meter } from '../components/ui';
 
 /** The pet drawn on a small canvas at its stage and mood (crisp on high-density screens). */
 export function PetPortrait({ pet, stage, hungry, size }: { pet: PetData; stage: number; hungry: boolean; size: number }) {
@@ -49,9 +50,7 @@ function CareBar({ care, pet }: { care: PetCare; pet: PetData }) {
   const share = care.nextAt === null ? 1 : (care.care - from) / (care.nextAt - from);
   return (
     <div className="mt-2">
-      <div className="h-1.5 overflow-hidden rounded-full bg-white/[.06]">
-        <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${Math.max(4, share * 100)}%` }} />
-      </div>
+      <Meter value={share} max={1} done={care.nextAt === null} label="Pflegetage bis zur nächsten Form" />
       <div className="mt-1 text-[11.5px] tabular-nums text-faint">
         {care.nextAt === null ? `${care.care} Pflegetage · höchste Form` : `${care.care} / ${care.nextAt} Pflegetage · nächste Form: ${PET_FORM_NAMES[pet.species][care.stage as 1 | 2 | 3]}`}
       </div>
@@ -81,9 +80,8 @@ export function PetCareCard() {
   const equipped = me.profile.equipped.pet;
   const ordered = [...pets].sort((a, b) => Number(b.itemId === equipped) - Number(a.itemId === equipped));
   const feedButton = (care: PetCare, small = false) => (
-    <button type="button" className={`btn ${small ? 'btn-secondary btn-sm' : 'btn-primary w-full'}`} disabled={busy || care.fedToday || food === 0}
-      title={care.fedToday ? 'Heute schon gefüttert' : food === 0 ? 'Kein Futter: schaff alle drei Tagesaufgaben' : undefined} onClick={() => feed(care.itemId)}>
-      {care.fedToday ? 'Satt' : 'Füttern'}
+    <button type="button" className={`btn ${small ? 'btn-secondary btn-sm' : 'btn-primary w-full'}`} disabled={busy || care.fedToday || food === 0} onClick={() => feed(care.itemId)}>
+      {care.fedToday ? 'Heute satt' : food === 0 ? 'Kein Futter' : 'Füttern'}
     </button>
   );
 
@@ -92,9 +90,8 @@ export function PetCareCard() {
       <div className="flex items-center justify-between gap-3">
         <span className="text-[13px] text-mute">Begleiter</span>
         {/* The stock as one unit: the label, then a bowl per portion; free places are faint grey bowls. */}
-        <span className="flex items-center gap-2 text-[12.5px] text-mute" role="img" aria-label={`Futtervorrat: ${food} von ${foodMax}`}
-          title="Futtervorrat: eine Portion für alle drei Tagesaufgaben, höchstens drei auf Vorrat. Jede Fütterung kostet eine Portion.">
-          Vorrat
+        <span className="flex items-center gap-2 text-[12.5px] text-mute" role="img" aria-label={`Futtervorrat: ${food} von ${foodMax}`}>
+          Vorrat {food} von {foodMax}
           <span className="flex items-center gap-1">
             {Array.from({ length: foodMax }, (_, i) => (
               <span key={i} className={i < food ? '' : 'opacity-30 grayscale'}><FoodIcon size={18} /></span>
@@ -110,10 +107,10 @@ export function PetCareCard() {
           return (
             <div key={care.itemId} className="mt-3">
               <div className="flex items-center gap-3">
-                <div className="grid shrink-0 place-items-center rounded-xl bg-black/20"><PetPortrait pet={pet} stage={care.stage} hungry={care.hungry} size={104} /></div>
+                <div className="grid shrink-0 place-items-center rounded-xl bg-tint-strong"><PetPortrait pet={pet} stage={care.stage} hungry={care.hungry} size={104} /></div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[15px] font-medium text-ink">{item.name}</div>
-                  <div className="text-[12.5px] text-accent-text">{PET_FORM_NAMES[pet.species][care.stage - 1]} · {PET_STAGE_NAMES[care.stage - 1]}</div>
+                  <div className="break-words text-[15px] font-medium text-ink">{item.name}</div>
+                  <div className="text-[12.5px] text-mute">{PET_FORM_NAMES[pet.species][care.stage - 1]} · {PET_STAGE_NAMES[care.stage - 1]}</div>
                   <div className={`mt-1 text-[12.5px] ${care.hungry ? 'text-warn' : 'text-mute'}`}>{mood(care)}</div>
                 </div>
               </div>
@@ -123,17 +120,17 @@ export function PetCareCard() {
           );
         }
         return (
-          <div key={care.itemId} className="mt-3 flex items-center gap-2.5 border-t border-white/[.06] pt-3">
+          <div key={care.itemId} className="mt-3 flex items-center gap-2.5 border-t border-line pt-3">
             <PetPortrait pet={pet} stage={care.stage} hungry={care.hungry} size={44} />
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[13.5px] text-ink">{item.name}</div>
+              <div className="break-words text-[13.5px] text-ink">{item.name}</div>
               <div className={`text-[12px] ${care.hungry ? 'text-warn' : 'text-faint'}`}>{PET_FORM_NAMES[pet.species][care.stage - 1]} · {care.hungry ? 'traurig' : care.fedToday ? 'satt' : `${care.care} Pflegetage`}</div>
             </div>
             {feedButton(care, true)}
           </div>
         );
       })}
-      <p className="mt-3 text-[11.5px] text-faint">Futter gibt es für alle drei Tagesaufgaben, nicht im Shop. Jedes Tier frisst einmal am Tag. Verpasst du einen Tag, wird es traurig und der Weg zur nächsten Form beginnt neu.</p>
+      <p className="mt-3 text-[11.5px] text-faint">Futter gibt es für alle drei Tagesaufgaben, nicht im Shop, höchstens drei Portionen auf Vorrat. Jedes Tier frisst einmal am Tag eine Portion. Verpasst du einen Tag, wird es traurig und der Weg zur nächsten Form beginnt neu.</p>
     </section>
   );
 }

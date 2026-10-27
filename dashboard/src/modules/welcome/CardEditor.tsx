@@ -305,7 +305,7 @@ export function CardEditor({ kind, value, onChange }: { kind: 'welcome' | 'goodb
             height={CARD_HEIGHT}
             tabIndex={0}
             aria-label="Kartenvorschau. Klicke eine Ebene an, zieh sie mit der Maus oder verschieb sie mit den Pfeiltasten."
-            className={`block h-auto w-full touch-none rounded-xl border border-[color:var(--border)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)] ${cursor}`}
+            className={`block h-auto w-full touch-none rounded-xl border border-line outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)] ${cursor}`}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}

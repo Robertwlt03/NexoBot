@@ -9,7 +9,7 @@ import { api, useAction, useApi, useGuild, useSettings, useToast } from '../api'
 import { useConfirm } from '../components/ConfirmDialog';
 import {
   Badge, Card, ChannelSelect, Empty, Field, Modal, MultiRoleSelect, Notice, NumberInput, PageHeader, Pager, RoleSelect,
-  Select, SettingsPage, Spinner, Switch, SwitchRow, TextArea, TextInput,
+  Select, SettingsPage, Spinner, Switch, SwitchRow, TextArea, TextInput, type BadgeTone,
 } from '../components/ui';
 import { Icon } from '../icons';
 
@@ -42,17 +42,17 @@ function RoleEditor({ value, globalQuestions, onChange, onDelete, locked }: {
   const role = guild.roles.find((r) => r.id === value.roleId);
   const set = (patch: Partial<ApplicationRoleConfig>) => onChange({ ...value, ...patch });
   return (
-    <div className="rounded-xl border border-(--border) bg-(--bg-input) p-5">
+    <div className="rounded-xl border border-line bg-field p-5">
       <div className="row justify-between">
         <div>
-          <div className="font-semibold text-(--text-strong)">{value.name}</div>
+          <div className="font-semibold text-ink">{value.name}</div>
           <span className="faint">{role ? `@${role.name}` : 'Rolle gelöscht'} · /apply submit application:{value.name}</span>
         </div>
         <div className="row">
           <Badge on={value.enabled}>{value.enabled ? 'Aktiv' : 'Aus'}</Badge>
           <Switch checked={value.enabled} onChange={(enabled) => set({ enabled })} label="Bewerbung aktiv" />
-          <button type="button" className="icon-btn" aria-label="Bewerbung löschen" disabled={locked} onClick={onDelete}
-            title={locked ? 'Speichere zuerst deine Änderungen.' : undefined}><Icon name="trash" size={18} /></button>
+          <button type="button" className="icon-btn" aria-label="Bewerbung löschen" disabled={locked} onClick={onDelete}><Icon name="trash" size={18} /></button>
+          {locked && <span className="faint basis-full text-right">Löschen geht, sobald deine Änderungen gespeichert sind.</span>}
         </div>
       </div>
       {!role && <div className="mt-3"><Notice tone="warn">Die Discord-Rolle existiert nicht mehr. Annehmen klappt erst, wenn du die Bewerbung neu anlegst.</Notice></div>}
@@ -98,15 +98,15 @@ function CreateRoleModal({ globalQuestions, onClose, onCreated }: { globalQuesti
   );
 }
 
-const STATUS: Record<string, { label: string; tone: 'on' | 'off' | 'warn' }> = {
+const STATUS: Record<string, { label: string; tone: BadgeTone }> = {
   pending: { label: 'Offen', tone: 'warn' },
-  approved: { label: 'Angenommen', tone: 'on' },
-  denied: { label: 'Abgelehnt', tone: 'off' },
+  approved: { label: 'Angenommen', tone: 'pos' },
+  denied: { label: 'Abgelehnt', tone: 'neg' },
 };
 
 function StatusBadge({ status }: { status: string }) {
   const entry = STATUS[status] ?? { label: status, tone: 'off' as const };
-  return <span className={`badge badge-${entry.tone}`}>{entry.label}</span>;
+  return <Badge tone={entry.tone}>{entry.label}</Badge>;
 }
 
 function ReviewModal({ entry, approve, onClose, onDone }: { entry: ApplicationEntry; approve: boolean; onClose: () => void; onDone: () => void }) {
@@ -234,10 +234,12 @@ export default function ApplicationsPage() {
     <>
       <PageHeader icon="clipboard" title="Bewerbungen" description="Team-Bewerbungen einrichten, Fragen festlegen und Bewerbungen prüfen."
         actions={settings.value && (
-          <button type="button" className="btn btn-primary" disabled={settings.dirty} onClick={() => setCreating(true)}
-            title={settings.dirty ? 'Speichere zuerst deine Änderungen.' : undefined}>
-            <Icon name="plus" size={16} />Neue Bewerbung
-          </button>
+          <>
+            <button type="button" className="btn btn-primary" disabled={settings.dirty} onClick={() => setCreating(true)}>
+              <Icon name="plus" size={16} />Neue Bewerbung
+            </button>
+            {settings.dirty && <span className="faint basis-full text-right">Speichere zuerst deine Änderungen.</span>}
+          </>
         )} />
       <SettingsPage settings={settings}>
         {(value) => (

@@ -36,7 +36,7 @@ export function BundleArt({ items, large = false }: { items: CosmeticItem[]; lar
         const spot = shown.length === 2 ? spots[i === 0 ? 0 : 2] : spots[i];
         return (
           <div key={item.id} data-mode="dark"
-            className={`absolute left-1/2 top-1/2 ${size} aspect-[3/4] overflow-hidden rounded-[14px] bg-[#0d0b0a] shadow-[0_18px_40px_-14px_rgba(0,0,0,.85)] ring-1 ring-white/15 transition-transform duration-500 group-hover:scale-[1.04]`}
+            className={`absolute left-1/2 top-1/2 ${size} aspect-[3/4] overflow-hidden rounded-[14px] bg-[#0d0b0a] shadow-[0_18px_40px_-14px_rgba(0,0,0,.85)] ring-1 ring-line-strong transition-transform duration-500 group-hover:scale-[1.04]`}
             style={{ transform: `translate(-50%, -50%) translate(${spot.x}, ${spot.y}) rotate(${spot.rotate}deg)`, zIndex: spot.z }}>
             <div className="game-tile-field absolute inset-0" style={{ '--tile': RARITY_TILE[item.rarity] } as CSSProperties} />
             <ItemVisual item={item} className="h-full w-full scale-[1.15] rounded-none !bg-transparent" />
@@ -58,7 +58,7 @@ function Contents({ items }: { items: CosmeticItem[] }) {
           <ItemVisual item={item} className="h-full w-full rounded-none !bg-transparent" />
         </span>
       ))}
-      {items.length > shown.length && <span className="ml-1.5 text-[12px] font-semibold text-white/70">+{items.length - shown.length}</span>}
+      {items.length > shown.length && <span className="ml-1.5 text-[12px] font-semibold text-mute">+{items.length - shown.length}</span>}
     </span>
   );
 }
@@ -87,7 +87,7 @@ function BundleTile({ bundle, items, deal, onOpen }: { bundle: ShopBundle; items
           {/* Your own card already wearing the whole bundle, slightly tilted with room on every side. */}
           {items.some((item) => item.slot !== 'levelup') ? (
             <span className="absolute inset-0 flex items-center justify-center px-[12%] pt-[6%]">
-              <span className="card-shape block w-full -rotate-[4deg] shadow-[0_24px_50px_-16px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[2deg] group-hover:scale-[1.03]">
+              <span className="card-shape block w-full -rotate-[4deg] shadow-[0_24px_50px_-16px_rgba(0,0,0,.9)] ring-1 ring-line-strong transition-transform duration-500 group-hover:-rotate-[2deg] group-hover:scale-[1.03]">
                 <TryOnPreview items={items.filter((item) => item.slot !== 'levelup')} resolution={0.5} />
               </span>
             </span>
@@ -99,27 +99,27 @@ function BundleTile({ bundle, items, deal, onOpen }: { bundle: ShopBundle; items
               <span className="block skew-x-12 text-[12.5px] font-black uppercase italic tracking-[.12em] text-white">Paket</span>
             </span>
             <span className="-skew-x-12 bg-[#0d0b0a]/85 px-2.5 py-1">
-              <span className="block skew-x-12 text-[11px] font-bold uppercase tracking-[.08em] text-white/85">{items.length} Artikel</span>
+              <span className="block skew-x-12 text-[11px] font-bold uppercase tracking-[.08em] text-body">{items.length} Artikel</span>
             </span>
           </span>
           {percent > 0 && (
-            <span className="absolute right-0 top-4 z-10 -mr-2 -skew-x-12 bg-[#facc15] py-1 pl-3 pr-5 drop-shadow-[0_6px_10px_rgba(0,0,0,.6)]">
-              <span className="block skew-x-12 text-[13px] font-black italic tabular-nums text-[#1a1405]">−{percent} %</span>
+            <span className="absolute right-0 top-4 z-10 -mr-2 -skew-x-12 bg-pos py-1 pl-3 pr-5 drop-shadow-[0_6px_10px_rgba(0,0,0,.6)]">
+              <span className="block skew-x-12 text-[13px] font-black italic tabular-nums text-canvas">−{percent} %</span>
             </span>
           )}
         </span>
         <span className="relative flex w-full flex-1 flex-col px-5 pb-5 pt-1">
           <span className="block truncate text-[19px] font-extrabold uppercase tracking-[.02em] text-white">{bundle.name}</span>
-          <span className="mt-0.5 line-clamp-1 block text-[13px] text-white/60">{bundle.description}</span>
-          {deal && <span className="mt-2 inline-flex self-start rounded-md bg-[#facc15]/15 px-2 py-0.5 text-[12px] font-semibold text-[#facc15]">{deal}</span>}
+          <span className="mt-0.5 line-clamp-1 block text-[13px] text-mute">{bundle.description}</span>
+          {deal && <span className="mt-2 inline-flex self-start rounded-md bg-pos/15 px-2 py-0.5 text-[12px] font-semibold text-pos">{deal}</span>}
           <span className="mt-3.5 flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
             <Contents items={items} />
             <span className="ml-auto shrink-0 text-right">
               <span className="flex items-center justify-end gap-2 text-[18px] font-bold text-white">
-                {bundle.price > 0 ? <Price price={bundle.fullPrice} finalPrice={bundle.price} /> : <span className="text-[13px] font-semibold text-[#86efac]">Alles im Besitz</span>}
+                {bundle.price > 0 ? <Price price={bundle.fullPrice} finalPrice={bundle.price} /> : <span className="text-[13px] font-semibold text-pos">Alles im Besitz</span>}
               </span>
-              {saving > 0 && <span className="mt-0.5 block text-[12px] font-semibold text-[#86efac]">Du sparst <Bernis amount={saving} /></span>}
-              {bundle.owned > 0 && bundle.price > 0 && <span className="mt-0.5 block text-[12px] font-medium text-white/60">{bundle.owned} schon im Besitz</span>}
+              {saving > 0 && <span className="mt-0.5 block text-[12px] font-semibold text-pos">Du sparst <Bernis amount={saving} /></span>}
+              {bundle.owned > 0 && bundle.price > 0 && <span className="mt-0.5 block text-[12px] font-medium text-mute">{bundle.owned} schon im Besitz</span>}
             </span>
           </span>
         </span>
@@ -175,21 +175,21 @@ function BundleDetail({ bundle, parts, deal, onClose }: { bundle: ShopBundle; pa
             <BundleArt items={items} large />
           </div>
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[.16em]" style={{ color: `color-mix(in srgb, ${tint} 50%, var(--text-strong))` }}>Paket · {items.length} Artikel</p>
+            <p className="text-[11px] font-bold uppercase tracking-[.16em] text-mute">Paket · {items.length} Artikel</p>
             <h2 className="mt-1.5 text-[26px] font-bold leading-tight tracking-tight">{bundle.name}</h2>
             <p className="mt-2 text-[14px] text-body">{bundle.description}</p>
-            {deal && <p className="mt-2 text-[13px] font-semibold text-warn">{deal}, schon im Paketpreis enthalten.</p>}
+            {deal && <p className="mt-2 text-[13px] font-semibold text-pos">{deal}, schon im Paketpreis enthalten.</p>}
           </div>
           {/* Exactly what is inside, with what each piece costs (or that you have it already). */}
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {parts.map((part) => (
-              <li key={part.item.id} className="flex items-center gap-3 rounded-xl border border-white/[.06] p-2">
+              <li key={part.item.id} className="flex items-center gap-3 rounded-xl border border-line p-2">
                 <span data-mode="dark" className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-[#0d0b0a]">
                   <span className="game-tile-field absolute inset-0" style={{ '--tile': RARITY_TILE[part.item.rarity] } as CSSProperties} />
                   <ItemVisual item={part.item} className="h-full w-full rounded-none !bg-transparent" />
                 </span>
                 <span className="min-w-0 flex-1 leading-tight">
-                  <span className="block truncate text-[14px] font-medium text-ink">{part.item.name}</span>
+                  <span className="block break-words text-[14px] font-medium text-ink">{part.item.name}</span>
                   <span className="flex items-center gap-1.5 text-[12px] text-faint">{SLOT_LABELS[part.item.slot]} · <RarityLabel rarity={part.item.rarity} /></span>
                 </span>
                 <span className="text-[13.5px] font-semibold text-ink">
@@ -242,9 +242,9 @@ export function BundleSection({ bundles, listings, event }: { bundles: ShopBundl
     // A showcase of its own in the page's mode (the bundle tiles inside stay dark like the item tiles). Clipped, not hidden:
     // the glows reach past the edge, and a hidden overflow could be scrolled (scrollIntoView), shifting the content up.
     <>
-    <section className="relative mt-12 overflow-clip rounded-[28px] border border-[var(--border)] bg-surface p-5 shadow-[var(--card-shadow,none)] md:p-7">
-      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#f2a531]/15 blur-[90px]" />
-      <div className="pointer-events-none absolute -bottom-28 right-0 h-72 w-96 rounded-full bg-[#8fb36b]/12 blur-[100px]" />
+    <section className="relative mt-12 overflow-clip rounded-[28px] border border-line bg-surface p-5 shadow-[var(--card-shadow,none)] md:p-7">
+      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-accent-2/15 blur-[90px]" />
+      <div className="pointer-events-none absolute -bottom-28 right-0 h-72 w-96 rounded-full bg-accent/12 blur-[100px]" />
       <div className="relative mb-5 flex flex-wrap items-end gap-3">
         <div className="min-w-0 flex-1">
           <h2 className="text-[22px] font-semibold leading-tight tracking-tight text-ink">Pakete</h2>

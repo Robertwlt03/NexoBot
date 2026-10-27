@@ -376,8 +376,23 @@ export function TagInput({ value, onChange, placeholder = 'Eintrag hinzufügen u
 
 // ---------- Feedback ----------
 
-export function Badge({ on, children }: { on?: boolean; children: ReactNode }) {
-  return <span className={`badge ${on === undefined ? 'badge-brand' : on ? 'badge-on' : 'badge-off'}`}>{children}</span>;
+export type BadgeTone = 'neutral' | 'accent' | 'pos' | 'warn' | 'neg' | 'off';
+const BADGE_CLASS: Record<BadgeTone, string> = { neutral: '', accent: 'badge-brand', pos: 'badge-on', warn: 'badge-warn', neg: 'badge-neg', off: 'badge-off' };
+
+/** A small state label. `on` is the short form for on/off switches (success or off); `tone` picks any colour role. */
+export function Badge({ on, tone, children, className = '' }: { on?: boolean; tone?: BadgeTone; children: ReactNode; className?: string }) {
+  const role = tone ?? (on === undefined ? 'neutral' : on ? 'pos' : 'off');
+  return <span className={`badge ${BADGE_CLASS[role]} ${className}`}>{children}</span>;
+}
+
+/** Progress bar: accent while running, success once `done`. `label` names it for screen readers. */
+export function Meter({ value, max, done = false, label, className = '' }: { value: number; max: number; done?: boolean; label: string; className?: string }) {
+  const share = max > 0 ? Math.min(1, Math.max(0, value / max)) : 0;
+  return (
+    <div className={`meter${done ? ' done' : ''} ${className}`} role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={max} aria-valuenow={Math.min(value, max)}>
+      <span style={{ width: `${share * 100}%` }} />
+    </div>
+  );
 }
 
 export function Notice({ tone, children, onRetry }: { tone?: 'warn' | 'danger'; children: ReactNode; onRetry?: () => void }) {

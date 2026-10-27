@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { THEME_PRESETS, type DashboardTheme, type ThemePreset } from '../../../src/shared/theme';
 import walnut from '../assets/wood/walnut.webp';
 import oak from '../assets/wood/oak.webp';
-import { Badge, Card, PageHeader, SaveBar, Switch, Tabs } from '../components/ui';
+import { Badge, Card, Meter, PageHeader, SaveBar, Switch, Tabs } from '../components/ui';
 import { Sparkline } from '../components/charts';
 import { useTheme } from '../theme';
 import { Glyph } from './visuals';
@@ -24,7 +24,7 @@ function ThemeTile({ preset, selected, onSelect }: { preset: ThemePreset; select
   const ink = preset.mode === 'light' ? '#1f1209' : '#eef0f5';
   return (
     <button type="button" onClick={onSelect} aria-pressed={selected}
-      className={`group flex cursor-pointer flex-col gap-3 rounded-2xl border bg-surface p-3 text-left transition hover:border-[var(--border-input)] ${selected ? 'border-accent ring-1 ring-accent' : 'border-[var(--border-control)]'}`}>
+      className={`group flex cursor-pointer flex-col gap-3 rounded-2xl border bg-surface p-3 text-left transition hover:border-field-line ${selected ? 'border-accent ring-1 ring-accent' : 'border-control'}`}>
       <span className={`theme-sample relative block aspect-[16/9] w-full overflow-hidden rounded-xl ${preset.look === 'cyber' ? 'theme-sample-cyber' : ''}`} style={{ background: preset.canvas }}>
         <span className="absolute inset-x-0 top-0 h-[46%]" style={{ background: HEADER[preset.id] }} />
         <span className="absolute inset-x-0 top-[30%] h-[16%]" style={{ background: `linear-gradient(to bottom, transparent, ${preset.canvas})` }} />
@@ -39,7 +39,7 @@ function ThemeTile({ preset, selected, onSelect }: { preset: ThemePreset; select
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2 text-[15px] font-semibold text-ink">
             {preset.name}
-            <span className="rounded-[999px] border border-[var(--border-control)] px-2 py-px text-[11px] font-medium text-mute">{preset.mode === 'light' ? 'Hell' : 'Dunkel'}</span>
+            <span className="rounded-[999px] border border-control px-2 py-px text-[11px] font-medium text-mute">{preset.mode === 'light' ? 'Hell' : 'Dunkel'}</span>
           </span>
           <span className="mt-1 block text-[13px] leading-snug text-mute">{preset.description}</span>
         </span>
@@ -80,17 +80,15 @@ export default function DesignPage() {
           <p className="page-kicker"><span>Vorschau</span></p>
           <div className="mt-2 flex items-end gap-3">
             <span className="text-[44px] font-extralight leading-none tracking-[-0.04em] text-ink tabular-nums">2.480</span>
-            <span className="pb-1 text-[13px] text-[var(--accent-text-muted)]">so sehen Hervorhebungen aus</span>
+            <span className="pb-1 text-[13px] text-accent-mute">so sehen Hervorhebungen aus</span>
           </div>
           <div className="mt-4"><Sparkline values={SAMPLE} height={44} /></div>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
-            <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-accent to-accent-2" />
-          </div>
+          <Meter className="mt-2" value={2} max={3} label="Beispiel-Fortschritt" />
           <div className="mt-5 flex flex-wrap items-center gap-2">
             <button type="button" className="btn btn-primary">Hauptaktion</button>
             <button type="button" className="btn btn-secondary">Nebenaktion</button>
             <Switch checked={on} onChange={setOn} label="Beispiel-Schalter" />
-            <Badge>Neu</Badge>
+            <Badge tone="accent">Neu</Badge>
           </div>
           <div className="mt-4">
             <Tabs value={tab} onChange={setTab} items={[{ id: 'a', label: 'Ausgewählt', count: 3 }, { id: 'b', label: 'Weitere' }]} />

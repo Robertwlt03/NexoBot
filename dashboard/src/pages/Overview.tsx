@@ -64,7 +64,7 @@ export function Overview() {
     <div ref={root}>
       <PageHeader
         kicker="Übersicht"
-        media={<GuildIcon guild={guild} className="h-12 w-12 shrink-0 rounded-[14px] text-lg ring-1 ring-white/10" />}
+        media={<GuildIcon guild={guild} className="h-12 w-12 shrink-0 rounded-[14px] text-lg ring-1 ring-line" />}
         title={guild.name}
         description="Der Stand deines Servers auf einen Blick. Wähle unten ein Modul, um es einzurichten."
       />
@@ -79,12 +79,12 @@ export function Overview() {
             <span className="js-count text-[56px] font-extralight leading-none tracking-[-0.04em] text-ink tabular-nums" data-value={guild.memberCount}>{num(guild.memberCount)}</span>
             <span className="pb-1.5 text-[15px] text-body">Mitglieder</span>
           </div>
-          <p className="mt-2 text-[13px] text-[var(--accent-text-muted)]">
+          <p className="mt-2 text-[13px] text-accent-mute">
             {totals ? <>+{num(totals.joins)} Beitritte · −{num(totals.leaves)} Austritte in den letzten 7 Tagen</> : 'Verlauf wird ab jetzt täglich aufgezeichnet.'}
           </p>
           <div className="mt-6 flex flex-wrap gap-2 text-[12.5px]">
             {([['Textkanäle', count(CHANNEL_TYPES.text, CHANNEL_TYPES.announcement, CHANNEL_TYPES.forum)], ['Sprachkanäle', count(CHANNEL_TYPES.voice, CHANNEL_TYPES.stage)], ['Rollen', guild.roles.length]] as const).map(([label, value]) => (
-              <span key={label} className="rounded-[999px] border border-white/10 bg-white/[.04] px-3 py-1 text-body"><b className="font-medium text-ink">{value}</b> {label}</span>
+              <span key={label} className="rounded-[999px] border border-line-strong bg-tint px-3 py-1 text-body"><b className="font-medium text-ink">{value}</b> {label}</span>
             ))}
           </div>
           <div className="mt-auto flex flex-wrap gap-2 pt-6">
@@ -107,11 +107,11 @@ export function Overview() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {MODULES.filter((m) => m.group === group).map((m) => (
               <Link key={m.id} to={m.id}
-                className="js-tile group relative flex items-center gap-3.5 rounded-2xl border border-white/[.06] bg-surface p-4 text-body transition duration-300 hover:border-white/[.12] hover:bg-raised hover:no-underline">
+                className="js-tile group relative flex items-center gap-3.5 rounded-2xl border border-line bg-surface p-4 text-body transition duration-300 hover:border-line-strong hover:bg-raised hover:no-underline">
                 <IconTile name={m.icon} />
                 <div className="min-w-0 flex-1">
                   <h3 className="text-[14.5px] font-medium">{m.label}</h3>
-                  <p className="mt-0.5 truncate text-[12.5px] text-mute">{m.description}</p>
+                  <p className="mt-0.5 text-[12.5px] text-mute">{m.description}</p>
                 </div>
                 <span className="arrow-btn opacity-0 transition group-hover:opacity-100"><span className="inline-block rotate-[135deg]"><Icon name="arrowLeft" size={14} /></span></span>
               </Link>

@@ -7,7 +7,7 @@ import { CoinIcon } from '../components/CoinIcon';
 import { PageHeader, Spinner } from '../components/ui';
 import { countdown, formatDate, useMe, useNow } from './api';
 import { ItemDetail, StoreCard } from './shop';
-import { RARITY_TILE } from './visuals';
+import { RARITY_CLASS, RARITY_TILE } from './visuals';
 
 // Which cards this viewer already turned over this week (a per-browser convenience; buying never depends on it).
 const storageKey = (weekStart: string) => `nexo.blackmarket.revealed.${weekStart}`;
@@ -41,7 +41,7 @@ function RevealCard({ listing, revealed, owned, onReveal, onOpen }: {
           <span className="relative transition-transform duration-500 [backface-visibility:hidden] group-hover:scale-110 group-hover:-rotate-6">
             <CoinIcon tier="gold" size={72} />
           </span>
-          <span className="relative text-[11px] font-bold uppercase tracking-[.24em]" style={{ color: tint }}>Aufdecken</span>
+          <span className={`relative text-[11px] font-bold uppercase tracking-[.24em] ${RARITY_CLASS[listing.item.rarity].text}`}>Aufdecken</span>
         </button>
         {/* Front: the regular game tile. */}
         <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
@@ -81,21 +81,21 @@ export default function BlackMarketPage() {
       <PageHeader kicker="Mein Profil" title="Black Market" description="Jede Woche neue Karten: Artikel aus dem Shop zum Sonderpreis und mythische Exklusive, die es nur hier gibt. Montags um Mitternacht wird neu gemischt." />
       {/* The black market (banner and cards) stays dark in both modes. */}
       <div data-mode="dark">
-        <section className="relative mb-6 overflow-clip rounded-[20px] border border-rose-500/20 bg-[#070608] p-6 md:p-8">
+        <section className="relative mb-6 overflow-clip rounded-[20px] border border-line-strong bg-[#070608] p-6 md:p-8">
           <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,rgba(255,255,255,.028)_0_1px,transparent_1px_3px)]" />
-          <div className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-rose-600/20 blur-[110px]" />
-          <div className="pointer-events-none absolute -bottom-40 left-10 h-72 w-72 rounded-full bg-amber-800/15 blur-[110px]" />
+          <div className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-rarity-mythic/20 blur-[110px]" />
+          <div className="pointer-events-none absolute -bottom-40 left-10 h-72 w-72 rounded-full bg-accent-2/10 blur-[110px]" />
           <div className="relative flex flex-wrap items-end gap-6">
             <div className="min-w-0 flex-[1_1_300px]">
-              <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[.24em] text-rose-300">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-400 shadow-[0_0_10px_#fb7185]" /> Nur diese Woche
+              <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[.24em] text-warn">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-warn shadow-[0_0_10px_var(--warning)]" /> Nur diese Woche
               </p>
               <h2 className="mt-2 text-[28px] font-bold uppercase tracking-[.02em] text-white">{listings.length} Angebote der Woche</h2>
               <p className="mt-2 max-w-[520px] text-[14px] text-mute">Seit {formatDate(blackMarket.weekStart)} im Angebot. Deck die Karten auf: bis zu 40 % Rabatt{exclusives > 0 ? `, dazu ${exclusives} mythische${exclusives === 1 ? 'r' : ''} Exklusiv-Artikel` : ''}.</p>
             </div>
             <div className="sm:text-right">
               <p className="text-[11px] font-bold uppercase tracking-[.2em] text-faint">Neue Ware in</p>
-              <p className="mt-1.5 inline-block rounded-xl border border-white/10 bg-black/40 px-4 py-2 font-mono text-[28px] font-semibold leading-none tracking-tight text-white tabular-nums">{countdown(blackMarket.endsAt, now)}</p>
+              <p className="mt-1.5 inline-block rounded-xl border border-line-strong bg-black/40 px-4 py-2 font-mono text-[28px] font-semibold leading-none tracking-tight text-white tabular-nums">{countdown(blackMarket.endsAt, now)}</p>
             </div>
           </div>
         </section>

@@ -58,8 +58,8 @@ export default function RankingsPage() {
         return (
           <section key={first.guildId} className="mt-8">
             <div className="mb-3 flex flex-wrap items-center gap-3">
-              <GuildIcon guild={{ name: first.guildName, iconUrl: first.guildIconUrl }} className="h-9 w-9 rounded-xl text-[13px] ring-1 ring-white/10" />
-              <h2 className="min-w-0 flex-1 truncate text-[16px]">{first.guildName}</h2>
+              <GuildIcon guild={{ name: first.guildName, iconUrl: first.guildIconUrl }} className="h-9 w-9 rounded-xl text-[13px] ring-1 ring-line" />
+              <h2 className="min-w-0 flex-1 break-words text-[16px]">{first.guildName}</h2>
               <span className="basis-full text-[12.5px] text-mute sm:basis-auto">{monthLabel(first.month)} · endet in <span className="text-ink tabular-nums">{countdown(first.endsAt, now)}</span></span>
             </div>
             {!first.eligible && <div className="mb-3"><Notice tone="warn">Dieser Server hat weniger als {MONTHLY_MIN_HUMANS} Menschen – hier gibt es diesen Monat keine Belohnungen.</Notice></div>}

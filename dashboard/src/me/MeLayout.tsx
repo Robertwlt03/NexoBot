@@ -49,7 +49,7 @@ function CoinMilestone({ balance }: { balance: number }) {
   if (!milestone) return null;
   return (
     <Celebration tint={milestone.tint} kicker="Neue Münze" title={milestone.title} text={milestone.text} onClose={close}
-      tile={<span className="game-tile-field grid aspect-square place-items-center rounded-[22px] ring-1 ring-white/10" style={{ '--tile': milestone.tint } as CSSProperties}><CoinIcon tier={milestone.tier} size={128} /></span>}
+      tile={<span className="game-tile-field grid aspect-square place-items-center rounded-[22px] ring-1 ring-line" style={{ '--tile': milestone.tint } as CSSProperties}><CoinIcon tier={milestone.tier} size={128} /></span>}
       actions={<button type="button" className="btn btn-primary" onClick={close}>Weiter</button>} />
   );
 }
@@ -60,8 +60,8 @@ function WalletPill({ balance }: { balance: number }) {
   const { flight, done } = useCoinFlight(balance, pill);
   return (
     <>
-      <span ref={pill} className="inline-flex items-center gap-1.5 rounded-[999px] border border-white/[.08] bg-white/[.04] px-3 py-1 text-[13px] font-medium text-ink">
-        <Bernis amount={shown} nowrap max={2} />
+      <span ref={pill} className="inline-flex items-center gap-1.5 rounded-[999px] border border-line bg-tint px-3 py-1 text-[13px] font-medium text-ink">
+        <Bernis amount={shown} nowrap />
       </span>
       <CoinFlight flight={flight} pill={pill} onDone={done} />
     </>
@@ -125,14 +125,14 @@ export function MeLayout() {
   const current = [...MEMBER_NAV, ...OWNER_NAV].find((entry) => entry.to === location.pathname.replace(/\/$/, ''));
   const navLink = 'relative flex items-center gap-3 rounded-xl border px-3 py-2 text-[14px] font-medium transition-colors hover:no-underline';
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `${navLink} ${isActive ? 'border-white/[.06] bg-white/[.05] text-ink nav-marker before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r before:bg-accent' : 'border-transparent text-mute hover:bg-white/[.03] hover:text-ink'}`;
+    `${navLink} ${isActive ? 'border-line bg-tint-strong text-ink nav-marker before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r before:bg-accent' : 'border-transparent text-mute hover:bg-tint hover:text-ink'}`;
 
   return (
     <div className="flex h-full bg-canvas">
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)}>
         <ServerRail guilds={guilds.data ?? []} />
-        <aside className="flex w-[264px] flex-col border-r border-white/[.05] bg-panel">
-          <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/[.05] px-4">
+        <aside className="flex w-[264px] flex-col border-r border-line bg-panel">
+          <div className="flex h-16 shrink-0 items-center gap-3 border-b border-line px-4">
             <div className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">Mein Profil</div>
             {profile.data && <WalletPill balance={profile.data.wallet.balance} />}
           </div>
@@ -154,7 +154,7 @@ export function MeLayout() {
       </SideMenu>
 
       <main className="relative flex min-w-0 flex-1 flex-col bg-canvas">
-        <header className="flex h-16 shrink-0 items-center gap-3 border-b border-white/[.05] bg-canvas/80 px-4 backdrop-blur-md md:px-8">
+        <header className="flex h-16 shrink-0 items-center gap-3 border-b border-line bg-canvas/80 px-4 backdrop-blur-md md:px-8">
           <button className="icon-btn lg:hidden" onClick={() => setMenuOpen((open) => !open)} aria-label="Menü"><Icon name="menu" /></button>
           {/* Phones show only the page name, so the wallet pill has room. */}
           <span className="text-sm text-mute max-sm:hidden">{isOwnerArea ? 'Owner' : 'Mein Profil'}</span>

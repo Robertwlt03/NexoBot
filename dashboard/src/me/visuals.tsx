@@ -80,11 +80,11 @@ export function Glyph({ name, size = 20, className }: { name: GlyphName; size?: 
 
 /** Subtle per-rarity tint (border + label); kept out of the accent so the lavender stays for actions. */
 export const RARITY_CLASS: Record<Rarity, { border: string; text: string }> = {
-  common: { border: 'border-white/[.07]', text: 'text-mute' },
-  rare: { border: 'border-sky-400/25', text: 'text-(--rarity-rare)' },
-  epic: { border: 'border-violet-400/30', text: 'text-(--rarity-epic)' },
-  legendary: { border: 'border-amber-300/30', text: 'text-(--rarity-legendary)' },
-  mythic: { border: 'border-rose-500/25', text: 'text-(--rarity-mythic)' },
+  common: { border: 'border-line', text: 'text-mute' },
+  rare: { border: 'border-rarity-rare/40', text: 'text-rarity-rare' },
+  epic: { border: 'border-rarity-epic/40', text: 'text-rarity-epic' },
+  legendary: { border: 'border-rarity-legendary/40', text: 'text-rarity-legendary' },
+  mythic: { border: 'border-rarity-mythic/40', text: 'text-rarity-mythic' },
 };
 
 /** Rarity identity of a tile (game-shop convention: grey, blue, purple, gold, red). Only used inside item tiles. */
@@ -101,16 +101,14 @@ export function RarityLabel({ rarity }: { rarity: Rarity }) {
  * An amount as coins: platinum, gold, silver and bronze (each 100 of the one below), zero tiers left out. Plain
  * inline text, so the numbers sit on the surrounding text's baseline and each coin is centred on them (the usual
  * icon-in-text offset); it breaks only between coins, or never with `nowrap` (table cells, pills, price rows).
- * `max` shows only the highest coins (e.g. 2 in the header pill); the tooltip keeps the exact amount.
  */
-export function Bernis({ amount, className = '', large = false, nowrap = false, max }: { amount: number; className?: string; large?: boolean; nowrap?: boolean; max?: number }) {
-  const all = splitCoins(amount);
-  const parts = max ? all.slice(0, max) : all;
-  const label = `${num(amount)} ${CURRENCY.name}: ${all.map(({ tier, count }) => `${count} ${COIN_TIERS.find((t) => t.tier === tier)!.label}`).join(', ')}`;
+export function Bernis({ amount, className = '', large = false, nowrap = false }: { amount: number; className?: string; large?: boolean; nowrap?: boolean }) {
+  const parts = splitCoins(amount);
+  const label = `${num(amount)} ${CURRENCY.name}: ${parts.map(({ tier, count }) => `${count} ${COIN_TIERS.find((t) => t.tier === tier)!.label}`).join(', ')}`;
   // Lowered so the coin's centre meets the middle of the digits (Inter digits are 0.738em tall).
   const coin = large ? 'h-[1.1em] w-[1.1em] align-[-0.181em]' : 'h-[1.05em] w-[1.05em] align-[-0.156em]';
   return (
-    <span title={label} aria-label={label} className={`tabular-nums ${nowrap ? 'whitespace-nowrap' : ''} ${className}`}>
+    <span aria-label={label} className={`tabular-nums ${nowrap ? 'whitespace-nowrap' : ''} ${className}`}>
       {amount < 0 && <span aria-hidden="true">−</span>}
       {parts.map(({ tier, count }, index) => (
         <Fragment key={tier}>

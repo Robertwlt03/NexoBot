@@ -133,10 +133,12 @@ export default function ReactionRolesPage() {
     <>
       <PageHeader icon="reaction" title="Reaktionsrollen" description="Mitglieder wählen sich Rollen selbst über ein Dropdown-Menü aus."
         actions={(
-          <button type="button" className="btn btn-primary" disabled={!data || full} onClick={() => setCreating(true)}
-            title={full ? `Maximal ${MAX_PANELS} Panels pro Server.` : undefined}>
-            <Icon name="plus" size={16} />Panel erstellen
-          </button>
+          <>
+            <button type="button" className="btn btn-primary" disabled={!data || full} onClick={() => setCreating(true)}>
+              <Icon name="plus" size={16} />Panel erstellen
+            </button>
+            {full && <span className="faint basis-full text-right">Maximal {MAX_PANELS} Panels pro Server.</span>}
+          </>
         )} />
 
       {loading && !data && <Spinner />}

@@ -37,7 +37,7 @@ export function Members({ data, tracking, onSelect }: { data: MembersResponse; t
                   <div className="grow">
                     <button type="button" className="title block w-full cursor-pointer border-0 bg-transparent p-0 text-left [font:inherit] hover:underline"
                       onClick={() => onSelect(member.userId)}>{member.name}</button>
-                    <div className="faint" title={fullDate(member.joinedAt)}>beigetreten {ago(member.joinedAt)}</div>
+                    <div className="faint">beigetreten {ago(member.joinedAt)} · {fullDate(member.joinedAt)}</div>
                   </div>
                   <button type="button" className="btn btn-ghost btn-sm max-sm:hidden" onClick={() => onSelect(member.userId)}>Filtern</button>
                 </div>

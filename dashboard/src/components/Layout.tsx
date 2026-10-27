@@ -46,10 +46,10 @@ export function ServerRail({ guilds, activeId }: { guilds: ApiGuildSummary[]; ac
   // Groove beside each rail button: a short rounded nub at rest, grows on hover and to full height for the open one.
   const pill = (active: boolean) => `rail-groove absolute left-0 top-1/2 w-1 -translate-y-1/2 rounded-r-full transition-all duration-200 ${active ? 'h-8' : 'h-[2px] group-hover:h-4'}`;
   return (
-    <nav className="flex w-[72px] shrink-0 flex-col items-center gap-2.5 overflow-y-auto border-r border-white/[.05] bg-rail py-4" aria-label="Server">
+    <nav className="flex w-[72px] shrink-0 flex-col items-center gap-2.5 overflow-y-auto border-r border-line bg-rail py-4" aria-label="Server">
       <div className="relative flex w-full justify-center">
         <span className={pill(onOverview)} />
-        <button className={`${item} rail-home cursor-pointer border-0 bg-surface p-0 ring-1 ring-white/[.06] hover:ring-accent/40`} title="Alle Server" onClick={() => navigate('/servers')}>
+        <button className={`${item} rail-home cursor-pointer border-0 bg-surface p-0 ring-1 ring-line hover:ring-accent/40`} title="Alle Server" onClick={() => navigate('/servers')}>
           <NexoLogo className="w-9 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" animated={false} />
         </button>
       </div>
@@ -61,7 +61,7 @@ export function ServerRail({ guilds, activeId }: { guilds: ApiGuildSummary[]; ac
           <div key={guild.id} className="relative flex w-full justify-center">
             <span className={pill(active)} />
             <button title={guild.name} onClick={() => navigate(`/servers/${guild.id}`)}
-              className={`${item} cursor-pointer border-0 p-0 ${active ? 'rounded-[14px] ring-1 ring-white/25' : 'opacity-80 hover:opacity-100'}`}>
+              className={`${item} cursor-pointer border-0 p-0 ${active ? 'rounded-[14px] ring-1 ring-line-strong' : 'opacity-80 hover:opacity-100'}`}>
               <GuildIcon guild={guild} className="h-full w-full" />
             </button>
           </div>
@@ -92,9 +92,9 @@ export function UserPanel({ className = 'm-3' }: { className?: string }) {
   };
   if (!user) return null;
   return (
-    <div className={`flex items-center gap-2.5 rounded-2xl border border-white/[.06] bg-surface px-3 py-2.5 ${className}`}>
-      <Link to="/me" title="Mein Profil öffnen" className="-m-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-xl p-1 text-body transition-colors hover:bg-white/[.04] hover:no-underline">
-        <img src={user.avatarUrl} alt="" className="h-9 w-9 rounded-full ring-1 ring-white/15" />
+    <div className={`flex items-center gap-2.5 rounded-2xl border border-line bg-surface px-3 py-2.5 ${className}`}>
+      <Link to="/me" title="Mein Profil öffnen" className="-m-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-xl p-1 text-body transition-colors hover:bg-tint hover:no-underline">
+        <img src={user.avatarUrl} alt="" className="h-9 w-9 rounded-full ring-1 ring-line-strong" />
         <span className="min-w-0 flex-1 leading-tight">
           <span className="block truncate text-sm font-medium text-ink">{user.globalName ?? user.username}</span>
           <span className="block truncate text-xs text-mute">Mein Profil</span>
@@ -173,17 +173,17 @@ export function GuildLayout() {
     <div className="flex h-full bg-canvas">
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)}>
         <ServerRail guilds={guilds.data ?? []} activeId={guildId} />
-        <aside className="flex w-[264px] flex-col border-r border-white/[.05] bg-panel">
-          <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/[.05] px-4">
-            {detail.data && <GuildIcon guild={detail.data} className="h-9 w-9 shrink-0 rounded-xl ring-1 ring-white/10" />}
+        <aside className="flex w-[264px] flex-col border-r border-line bg-panel">
+          <div className="flex h-16 shrink-0 items-center gap-3 border-b border-line px-4">
+            {detail.data && <GuildIcon guild={detail.data} className="h-9 w-9 shrink-0 rounded-xl ring-1 ring-line" />}
             <div className="min-w-0 leading-tight">
               <div className="truncate text-[14px] font-semibold text-ink">{detail.data?.name ?? 'Server'}</div>
               {detail.data && <div className="text-xs text-mute">{detail.data.memberCount.toLocaleString('de-DE')} Mitglieder</div>}
             </div>
           </div>
           <nav ref={navRef} className="nav-scroll relative flex-1 overflow-y-auto px-3 py-3" onClickCapture={guardClick}>
-            <div ref={markerRef} className="invisible absolute left-3 right-3 top-0 rounded-xl border border-white/[.06] bg-white/[.05] nav-marker before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r before:bg-accent" />
-            <NavLink end to={`/servers/${guildId}`} className={({ isActive }) => `${navLink} ${isActive ? 'text-ink' : 'text-mute hover:bg-white/[.03] hover:text-ink'}`}>
+            <div ref={markerRef} className="invisible absolute left-3 right-3 top-0 rounded-xl border border-line bg-tint-strong nav-marker before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r before:bg-accent" />
+            <NavLink end to={`/servers/${guildId}`} className={({ isActive }) => `${navLink} ${isActive ? 'text-ink' : 'text-mute hover:bg-tint hover:text-ink'}`}>
               <Icon name="home" size={18} /> Übersicht
             </NavLink>
             {GROUPS.map((group) => (
@@ -191,7 +191,7 @@ export function GuildLayout() {
                 <div className="mb-1 px-3 text-[11.5px] font-medium text-faint">{group}</div>
                 {MODULES.filter((m) => m.group === group).map((m) => (
                   <NavLink key={m.id} to={`/servers/${guildId}/${m.id}`}
-                    className={({ isActive }) => `${navLink} ${isActive ? 'text-ink' : 'text-mute hover:bg-white/[.03] hover:text-ink'}`}>
+                    className={({ isActive }) => `${navLink} ${isActive ? 'text-ink' : 'text-mute hover:bg-tint hover:text-ink'}`}>
                     <Icon name={m.icon} size={18} /> {m.label}
                   </NavLink>
                 ))}
@@ -203,7 +203,7 @@ export function GuildLayout() {
       </SideMenu>
 
       <main className="relative flex min-w-0 flex-1 flex-col bg-canvas">
-        <header className="flex h-16 shrink-0 items-center gap-3 border-b border-white/[.05] bg-canvas/80 px-4 backdrop-blur-md md:px-8">
+        <header className="flex h-16 shrink-0 items-center gap-3 border-b border-line bg-canvas/80 px-4 backdrop-blur-md md:px-8">
           <button className="icon-btn lg:hidden" onClick={() => setMenuOpen((open) => !open)} aria-label="Menü"><Icon name="menu" /></button>
           <span className="max-w-[40vw] truncate text-sm text-mute">{detail.data?.name}</span>
           <span className="text-faint">/</span>

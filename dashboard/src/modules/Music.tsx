@@ -54,10 +54,10 @@ export default function MusicPage() {
                   <div className="muted">{data.nowPlaying.author}</div>
                 </div>
                 <div className="chips">
-                  <span className="badge">{formatTime(data.positionMs)} / {formatTime(data.nowPlaying.lengthMs)}</span>
-                  <span className="badge">{data.queueLength} in der Warteschlange</span>
-                  <span className="badge">Lautstärke {data.volume} %</span>
-                  <span className="badge">Wiederholen: {LOOP_LABELS[data.loop] ?? data.loop}</span>
+                  <Badge>{formatTime(data.positionMs)} / {formatTime(data.nowPlaying.lengthMs)}</Badge>
+                  <Badge>{data.queueLength} in der Warteschlange</Badge>
+                  <Badge>Lautstärke {data.volume} %</Badge>
+                  <Badge>Wiederholen: {LOOP_LABELS[data.loop] ?? data.loop}</Badge>
                   {voiceChannel && <span className="badge whitespace-nowrap"><Icon name="mic" size={13} />{voiceChannel.name}</span>}
                 </div>
               </div>

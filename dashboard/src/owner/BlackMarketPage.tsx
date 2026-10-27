@@ -4,7 +4,7 @@ import type { CosmeticItem } from '../../../src/shared/cosmetics';
 import type { BlackMarketResponse, OwnerOverview } from '../../../src/web/dto/profile';
 import { useApi } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
-import { Actions, Card, Empty, Notice, PageHeader, Spinner } from '../components/ui';
+import { Actions, Badge, Card, Empty, Notice, PageHeader, Spinner } from '../components/ui';
 import { Icon } from '../icons';
 import { countdown, formatDate, useMe, useMutation, useNow } from '../me/api';
 import { Glyph, ItemVisual, Bernis, RARITY_CLASS, RarityLabel } from '../me/visuals';
@@ -16,7 +16,7 @@ function Tile({ item, selected, onClick }: { item: CosmeticItem; selected?: bool
       className={`relative flex flex-col rounded-2xl border bg-[#0c0c10] p-2.5 text-left font-[inherit] text-body ${onClick ? 'cursor-pointer' : ''} ${selected ? 'border-accent ring-2 ring-accent/30' : RARITY_CLASS[item.rarity].border}`}>
       <ItemVisual item={item} />
       <div className="px-1 pt-2.5">
-        <h3 className="truncate font-sans text-[14px] font-medium">{item.name}</h3>
+        <h3 className="break-words font-sans text-[14px] font-medium">{item.name}</h3>
         <div className="mt-0.5 text-[12px] text-faint">{SLOT_LABELS[item.slot]} · <RarityLabel rarity={item.rarity} /></div>
         <div className="mt-1.5 text-[13px]"><Bernis amount={item.price} /></div>
       </div>
@@ -69,7 +69,7 @@ export default function OwnerBlackMarketPage() {
           )}
         </Card>
       ) : (
-        <Card title="Rotation festlegen" description={`Wähle bis zu ${size} Artikel – sie gelten bis Montag.`} right={<span className="badge badge-brand">{picking.length} / {size}</span>}>
+        <Card title="Rotation festlegen" description={`Wähle bis zu ${size} Artikel – sie gelten bis Montag.`} right={<Badge tone="accent">{picking.length} / {size}</Badge>}>
           {pool.length === 0 ? <Empty title="Keine Black-Market-Artikel">Lege unter „Artikel“ welche mit „Erhältlich über: Black Market“ an.</Empty> : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {pool.map((item) => <Tile key={item.id} item={item} selected={picking.includes(item.id)} onClick={() => toggle(item.id)} />)}

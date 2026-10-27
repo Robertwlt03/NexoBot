@@ -71,10 +71,10 @@ export default function VerificationPage() {
                       <a className="btn btn-ghost btn-sm" href={value.panel.url} target="_blank" rel="noreferrer"><Icon name="external" size={14} />Panel ansehen</a>
                     )}
                     <button type="button" className="btn btn-secondary btn-sm ml-auto"
-                      disabled={!value.enabled || !value.channelId || settings.dirty || busy !== null} onClick={repost}
-                      title={settings.dirty ? 'Speichere zuerst deine Änderungen.' : undefined}>
+                      disabled={!value.enabled || !value.channelId || settings.dirty || busy !== null} onClick={repost}>
                       <Icon name="refresh" size={14} />Panel neu posten
                     </button>
+                    {settings.dirty && <span className="faint basis-full text-right">Speichere zuerst deine Änderungen.</span>}
                   </div>
                   <div className="grid-2">
                     <div className="stack">

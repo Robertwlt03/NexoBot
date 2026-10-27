@@ -39,13 +39,30 @@
   --color-mute: #ae9e87;
   --color-faint: #978875;
   --color-accent: #8fb36b;
-  --color-accent-strong: #8b7bff;
-  --color-accent-ink: #15112b;
+  --color-accent-strong: #759358;
+  --color-accent-ink: #14190f;
   --color-accent-2: #c98a4b;
-  --color-accent-text: #cfc6ff;
+  --color-accent-text: #c1d5ae;
   --color-pos: #4ade80;
   --color-neg: #f87171;
   --color-warn: #fbbf24;
+}
+
+/* The remaining styles.css tokens under one Tailwind name each, resolved where they are used (so dark islands inside a
+   light page get their own values). Lines and tints replace every white/black-with-opacity on the pages. */
+@theme inline {
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-control: var(--border-control);
+  --color-field-line: var(--border-input);
+  --color-tint: rgb(var(--ov) / .03);
+  --color-tint-strong: var(--bg-active);
+  --color-stripe: var(--stripe);
+  --color-accent-mute: var(--accent-text-muted);
+  --color-rarity-rare: var(--rarity-rare);
+  --color-rarity-epic: var(--rarity-epic);
+  --color-rarity-legendary: var(--rarity-legendary);
+  --color-rarity-mythic: var(--rarity-mythic);
 }
 
 /* Landing intro: hidden until GSAP reveals them, so nothing flashes before the animation starts. */

@@ -36,6 +36,17 @@ for (const [mode, t] of Object.entries(MODES)) {
     const alpha = Number(block.match(/--border-control:\s*rgb\(var\(--ov\) \/ ([\d.]+)\)/)![1]);
     for (const bg of ['--bg-card', '--bg-main', '--bg-sidebar']) assert.ok(contrast(mix(t[bg], `#${ov}`, alpha), t[bg]) >= 2, `${mode}: outline on ${bg}`);
   });
+  test(`${mode}: every text colour still reads at 4.5:1 on a striped table row`, () => {
+    const block = css.slice(css.indexOf(`${SELECTORS[mode as keyof typeof SELECTORS]} {`)).split('}')[0];
+    const own = block.match(/--ov:\s*(\d+) (\d+) (\d+);/);
+    const base = css.slice(css.indexOf(`${SELECTORS.walnuss} {`)).split('}')[0];
+    const ov = (own ?? base.match(/--ov:\s*(\d+) (\d+) (\d+);/)!).slice(1).map((n) => Number(n).toString(16).padStart(2, '0')).join('');
+    const alpha = Number((block.match(/--stripe:\s*rgb\(var\(--ov\) \/ ([\d.]+)\)/) ?? base.match(/--stripe:\s*rgb\(var\(--ov\) \/ ([\d.]+)\)/))![1]);
+    const stripe = mix(t['--bg-card'], `#${ov}`, alpha);
+    for (const text of ['--text-strong', '--text', '--text-muted', '--text-faint', '--pos', '--neg', '--warning']) {
+      assert.ok(contrast(t[text], stripe) >= 4.5, `${mode}: ${text} on a stripe = ${contrast(t[text], stripe).toFixed(2)}`);
+    }
+  });
 }
 
 test('accent text of every theme reads at 4.5:1 on its page, sidebar and cards', () => {

@@ -66,7 +66,7 @@ function TableToggle({ table, onToggle }: { table: boolean; onToggle: () => void
 /** Shared tooltip box (values lead, labels follow). */
 function Tooltip({ left, top = 0, children }: { left: number; top?: number; children: ReactNode }) {
   return (
-    <div role="status" className="pointer-events-none absolute z-10 min-w-[150px] -translate-x-1/2 rounded-lg border border-white/10 bg-field/95 px-3 py-2 text-[13px] shadow-lg"
+    <div role="status" className="pointer-events-none absolute z-10 min-w-[150px] -translate-x-1/2 rounded-lg border border-line-strong bg-field/95 px-3 py-2 text-[13px] shadow-lg"
       style={{ left, top }}>
       {children}
     </div>
@@ -469,9 +469,9 @@ export function HorizontalBars({ title, description, items, unit, ordinal, forma
             <li key={item.key}>
               <div className="flex items-baseline justify-between gap-3 text-[14px]">
                 {item.onSelect ? (
-                  <button type="button" className="min-w-0 cursor-pointer truncate border-0 bg-transparent p-0 text-left text-body [font:inherit] hover:underline"
+                  <button type="button" className="min-w-0 cursor-pointer break-words border-0 bg-transparent p-0 text-left text-body [font:inherit] hover:underline"
                     onClick={item.onSelect}>{item.label}</button>
-                ) : <span className="min-w-0 truncate text-body">{item.label}</span>}
+                ) : <span className="min-w-0 break-words text-body">{item.label}</span>}
                 <span className="shrink-0">
                   <b className="tabular-nums text-ink">{format(item.value)}</b>
                   {item.detail && <span className="text-mute"> · {item.detail}</span>}

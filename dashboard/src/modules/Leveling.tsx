@@ -216,11 +216,10 @@ export default function LevelingPage() {
               </div>
             </Card>
 
-            <Card icon="gift" title="Rollen-Belohnungen" description="Diese Rollen bekommt man beim Erreichen des Levels. Nexos Rolle muss darüber stehen."
+            <Card icon="gift" title="Rollen-Belohnungen" description={`Diese Rollen bekommt man beim Erreichen des Levels. Nexos Rolle muss darüber stehen. „Rollen synchronisieren“ vergibt fehlende Belohnungsrollen an alle Mitglieder mit genug Level${settings.dirty ? ', sobald deine Änderungen gespeichert sind' : ''}.`}
               disabled={!value.enabled}
               right={(
                 <button type="button" className="btn btn-secondary btn-sm" disabled={settings.dirty || busy !== null || value.roleRewards.length === 0}
-                  title={settings.dirty ? 'Speichere zuerst deine Änderungen.' : 'Vergibt fehlende Belohnungsrollen an alle Mitglieder mit genug Level.'}
                   onClick={() => void syncRoles()}>
                   <Icon name="refresh" size={16} /> Rollen synchronisieren
                 </button>
