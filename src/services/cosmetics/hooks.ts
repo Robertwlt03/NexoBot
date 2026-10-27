@@ -8,7 +8,7 @@ import { formatCoins } from '../../shared/coins.js';
 import { logger } from '../../utils/logger.js';
 import { addActivity, startActivityTracker } from './activity.js';
 import { ensureCoinEmojis } from './coinEmojis.js';
-import { syncAchievements } from './achievements.js';
+import { setAchievementClient, syncAchievements } from './achievements.js';
 import { seedCatalog } from './catalog.js';
 import { startReminders } from './reminders.js';
 import { setCommunityClient } from './community.js';
@@ -120,6 +120,7 @@ export async function startCosmetics(client: Client): Promise<void> {
   startActivityTracker();
   await ensureSeasonItems().catch((error: unknown) => logger.warn('Saison-Items konnten nicht angelegt werden:', (error as Error).message));
   setCommunityClient(client);
+  setAchievementClient(client);
   startBotProfiles(client);
   startPresenceRotation(client);
   startLinkedRoles(client, linkedRolesConfig());

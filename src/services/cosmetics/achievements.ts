@@ -1,14 +1,20 @@
 // Achievements: derived from stored data (levels, wallet, inventory, transactions, monthly scores), so a sync can
 // always catch up. Each unlock pays Bernis once (not capped) and grants its badge item `ach-<id>`.
 
+import { PermissionFlagsBits, type Client } from 'discord.js';
 import type { Achievement } from '../../web/dto/profile.js';
+import type { NexoClient } from '../../types/index.js';
+import { formatCoins } from '../../shared/coins.js';
+import { ACCENTS, nexoCard, nexoMessage } from '../../utils/nexoMessage.js';
+import { getLevelingConfig } from '../leveling/leveling.js';
 import { logger } from '../../utils/logger.js';
-import { ACHIEVEMENT_BADGES, type AchievementStat } from './catalog.js';
+import { ACHIEVEMENT_BADGES, HIDDEN_ACHIEVEMENTS, type AchievementStat } from './catalog.js';
 import { ACTIVITY_COUNTERS, CHAT_STATS, GAME_IDS } from './activity.js';
 import { normalizeSettings } from './profile.js';
 import { COSMETIC_SLOTS } from '../../shared/cosmetics.js';
 import { T, cosmeticsPool, requirePool, withTx } from './db.js';
 import { earnTx } from './wallet.js';
+import { getPetOverview } from './pets.js';
 
 export type AchievementStats = Record<AchievementStat, number>;
 
@@ -47,10 +53,11 @@ const DERIVED_SQL = `SELECT
 /** Every stat an achievement can watch, from stored data and the activity counters. */
 async function readStats(userId: string): Promise<{ stats: AchievementStats; unlocked: Map<string, Date> }> {
   const pool = requirePool();
-  const [derived, counters, unlocked] = await Promise.all([
+  const [derived, counters, unlocked, pets] = await Promise.all([
     pool.query<Record<string, unknown>>(DERIVED_SQL, [userId]),
     pool.query<{ stat: string; value: string }>(`SELECT stat, value FROM ${T.user_stats} WHERE user_id = $1`, [userId]),
     pool.query<{ achievement_id: string; unlocked_at: Date }>(`SELECT achievement_id, unlocked_at FROM ${T.user_achievements} WHERE user_id = $1`, [userId]),
+    getPetOverview(userId, new Date(), pool),
   ]);
   const row = derived.rows[0] ?? {};
   const stored = new Map(counters.rows.map((entry) => [entry.stat, Number(entry.value)]));
@@ -69,6 +76,10 @@ async function readStats(userId: string): Promise<{ stats: AchievementStats; unl
     voiceMinutes: Math.floor(counter('voice_ms') / 60_000),
     gamesPlayed: GAME_IDS.filter((game) => counter(`game_${game}`) > 0).length,
     achievements: unlocked.rows.length,
+    petFeeds: counter('pet_feeds'),
+    // The highest form any pet reached (a sad spell keeps the form, so this never drops).
+    petForm: Math.max(0, ...pets.pets.map((pet) => pet.stage)),
+    pets: pets.pets.length,
   } as AchievementStats;
   return { stats, unlocked: new Map(unlocked.rows.map((entry) => [entry.achievement_id, entry.unlocked_at])) };
 }
@@ -113,6 +124,7 @@ export async function syncAchievements(userId: string): Promise<string[]> {
         if (inserted) unlockedNow.push(def.id);
       }
     }
+    if (unlockedNow.length) void announceAchievements(userId, unlockedNow);
     return unlockedNow;
   } catch (error) {
     logger.warn('Erfolge konnten nicht geprüft werden:', (error as Error).message);
@@ -120,12 +132,55 @@ export async function syncAchievements(userId: string): Promise<string[]> {
   }
 }
 
+let client: Client | null = null;
+export function setAchievementClient(next: Client): void { client = next; }
+
+/**
+ * Tells every server the member shares with the bot about new achievements, with a mention: in the level-up channel,
+ * else the system channel. Secret ones show only their name, so the condition stays a secret for the others. Never throws.
+ */
+async function announceAchievements(userId: string, ids: string[]): Promise<void> {
+  if (!client?.isReady()) return;
+  const defs = ids.map(nameOf).filter((def) => def !== undefined);
+  const lines = defs.map((def) => (def.hidden
+    ? `🔓 Versteckter Erfolg entdeckt: **${def.name}** · ${formatCoins(def.reward)}`
+    : `🏆 **${def.name}**: ${def.description} · ${formatCoins(def.reward)}`));
+  const payload = {
+    ...nexoMessage(nexoCard({
+      kicker: defs.length === 1 ? 'Erfolg freigeschaltet' : `${defs.length} Erfolge freigeschaltet`,
+      accent: ACCENTS.gold,
+      blocks: [{ text: `<@${userId}> hat ${defs.length === 1 ? 'einen Erfolg' : `${defs.length} Erfolge`} geschafft!` }, { text: lines.join('\n') }],
+    })),
+    allowedMentions: { users: [userId] },
+  };
+  for (const guild of client.guilds.cache.values()) {
+    try {
+      if (!(await guild.members.fetch(userId).catch(() => null))) continue;
+      const { levelUpChannel } = await getLevelingConfig(client as NexoClient, guild.id);
+      const channel = (levelUpChannel ? guild.channels.cache.get(levelUpChannel) : null) ?? guild.systemChannel;
+      const me = guild.members.me;
+      if (!channel?.isTextBased() || !me || !channel.permissionsFor(me).has([PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages])) continue;
+      await channel.send(payload);
+    } catch (error) {
+      logger.warn(`Erfolg konnte auf ${guild.id} nicht angekündigt werden:`, (error as Error).message);
+    }
+  }
+}
+
+/** Every achievement for the member; secret ones not yet unlocked carry only their reward (name, condition and items stay hidden). */
 export async function listAchievements(userId: string): Promise<Achievement[]> {
   const { stats, unlocked } = await readStats(userId);
+  let secret = 0;
   return ACHIEVEMENTS.map((def) => {
     const meta = nameOf(def.id);
     const unlockedAt = unlocked.get(def.id) ?? null;
+    const hidden = HIDDEN_ACHIEVEMENTS.has(def.id);
+    if (hidden && !unlockedAt) {
+      secret += 1;
+      return { id: `hidden-${secret}`, name: 'Verborgener Erfolg', description: '', reward: def.reward, itemId: null, titleId: null, unlockedAt: null, progress: null, hidden };
+    }
     return {
+      hidden,
       id: def.id,
       name: meta?.name ?? def.id,
       description: meta?.description ?? '',

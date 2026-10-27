@@ -2284,7 +2284,7 @@ function drawXpBar(ctx: Ctx, { x, y, w, h }: Rect, fraction: number, style: XpBa
 // ---------- Badges + sticker ----------
 
 /** The emblem outline per rarity, centred on (0, 0) with radius `r`. */
-function emblemPath(ctx: Ctx, rarity: BadgeData['rarity'], r: number) {
+export function emblemPath(ctx: Ctx, rarity: BadgeData['rarity'], r: number) {
   ctx.beginPath();
   if (rarity === 'epic') {
     for (let i = 0; i < 6; i += 1) {
@@ -2315,11 +2315,26 @@ const EMBLEM_METAL: Record<NonNullable<BadgeData['rarity']>, string> = {
   common: '#B58A5A', rare: '#C9D2DE', epic: '#C9B8F2', legendary: '#F2C24E', mythic: '#F5CF5C',
 };
 
+/** The inner field's radius relative to the emblem's. */
+export const EMBLEM_FIELD = 0.78;
+/** A canvas for one emblem of `size`: EMBLEM_BOX × size square, the emblem EMBLEM_LIFT × size above the centre, so its
+    drop shadow (blur and offset downwards) fits inside. */
+export const EMBLEM_BOX = 1.5;
+export const EMBLEM_LIFT = 0.05;
+/** The symbol's size on an emblem of `size`: smaller on the narrower shapes, so it never runs over the field's edge. */
+const EMBLEM_GLYPH: Record<NonNullable<BadgeData['rarity']>, number> = { common: 0.5, rare: 0.5, epic: 0.44, legendary: 0.38, mythic: 0.42 };
+export function emblemGlyphSize(rarity: BadgeData['rarity'], size: number): number {
+  return size * EMBLEM_GLYPH[rarity ?? 'common'];
+}
+/** Where the symbol sits: on the shield a little higher, where it is wide. */
+export const emblemGlyphY = (rarity: BadgeData['rarity'], size: number) => (rarity === 'legendary' ? -size * 0.06 : 0);
+
 /**
  * A badge as a real emblem: shape and rim metal by rarity (medallion, hexagon, shield, star), a soft drop shadow, a lit
  * metal rim, an inner field in the badge colour, the symbol embossed in a light tint and a gloss over the top.
  */
-export function drawEmblem(ctx: Ctx, badge: BadgeData, cx: number, cy: number, size: number) {
+/** A badge emblem; `mark` (like "?") is embossed in place of the glyph. */
+export function drawEmblem(ctx: Ctx, badge: BadgeData, cx: number, cy: number, size: number, mark?: string) {
   const rarity = badge.rarity ?? 'common';
   const r = size / 2;
   const metal = EMBLEM_METAL[rarity];
@@ -2338,7 +2353,7 @@ export function drawEmblem(ctx: Ctx, badge: BadgeData, cx: number, cy: number, s
   ctx.fill();
   resetShadow(ctx);
   // Inner field: the badge colour, lighter in the middle, deep at the edge.
-  const inner = r * 0.78;
+  const inner = r * EMBLEM_FIELD;
   emblemPath(ctx, rarity, inner);
   const field = ctx.createRadialGradient(-inner * 0.25, -inner * 0.3, inner * 0.1, 0, 0, inner * 1.1);
   field.addColorStop(0, lighten(badge.color, 0.12));
@@ -2350,9 +2365,18 @@ export function drawEmblem(ctx: Ctx, badge: BadgeData, cx: number, cy: number, s
   ctx.lineWidth = Math.max(1, size * 0.03);
   ctx.stroke();
   // Embossed symbol: a dark offset copy under a light one.
-  const glyph = size * 0.5;
-  drawGlyph(ctx, badge.glyph, size * 0.025, size * 0.035, glyph, withAlpha(darken(badge.color, 0.7), 0.85));
-  drawGlyph(ctx, badge.glyph, 0, 0, glyph, lighten(badge.color, 0.72));
+  const glyph = emblemGlyphSize(rarity, size);
+  const gy = emblemGlyphY(rarity, size);
+  const emboss = (dx: number, dy: number, color: string) => {
+    if (!mark) return drawGlyph(ctx, badge.glyph, dx, gy + dy, glyph, color);
+    ctx.font = `800 ${glyph * 1.15}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = color;
+    ctx.fillText(mark, dx, gy + dy + glyph * 0.06);
+  };
+  emboss(size * 0.02, size * 0.03, withAlpha(darken(badge.color, 0.7), 0.85));
+  emboss(0, 0, lighten(badge.color, 0.72));
   // Gloss across the upper half of the field.
   ctx.save();
   emblemPath(ctx, rarity, inner);
