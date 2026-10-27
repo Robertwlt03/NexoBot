@@ -5,7 +5,6 @@
 import type { CosmeticItem, ResolvedCosmetics, SlotData, UserProfileSettings } from '../../shared/cosmetics.js';
 import { defaultProfileSettings, withSpot } from '../../shared/cosmetics.js';
 import { logger } from '../../utils/logger.js';
-import { petStage } from '../../shared/pets.js';
 import { loadCatalog } from './catalog.js';
 import { T, cosmeticsPool } from './db.js';
 import { readProfileSettings } from './profile.js';
@@ -61,18 +60,6 @@ export async function getResolvedCosmetics(userId: string): Promise<ResolvedCosm
 }
 
 /** Current Bernis balance (0 when the user has no wallet yet). */
-/** Growth stage of the member's companion (from the days they chatted; 1 without a database). */
-export async function getPetStage(userId: string): Promise<number> {
-  const pool = cosmeticsPool();
-  if (!pool) return 1;
-  try {
-    const result = await pool.query<{ value: string }>(`SELECT value FROM ${T.user_stats} WHERE user_id = $1 AND stat = 'chat_days'`, [userId]);
-    return petStage(Number(result.rows[0]?.value ?? 0));
-  } catch {
-    return 1;
-  }
-}
-
 export async function getBalance(userId: string): Promise<number> {
   const pool = cosmeticsPool();
   if (!pool) return 0;

@@ -33,7 +33,7 @@ export const FRAME_STYLES = ['solid', 'gradient', 'glow', 'double', 'dashed', 'n
 export interface FrameData { style: (typeof FRAME_STYLES)[number]; colors: string[]; width: number }
 /** Badge glyph: one of BADGE_GLYPHS (drawn as vector shapes by the renderer, no emoji fonts needed). */
 export interface BadgeData { glyph: BadgeGlyph; color: string }
-export const PET_SPECIES = ['fox', 'owl', 'cat', 'axolotl', 'dragon'] as const;
+export const PET_SPECIES = ['fox', 'owl', 'cat', 'axolotl', 'dragon', 'bunny', 'penguin', 'panda', 'frog'] as const;
 /** A companion on the profile card (shared/pets.ts draws it). */
 export interface PetData { species: (typeof PET_SPECIES)[number]; color: string }
 export interface TitleData { text: string; color: string }
@@ -172,6 +172,8 @@ export interface ProfileCardSubject {
   balance: number;
   /** Growth of the companion (1–3, from the days the member chatted; shared/pets.ts). */
   petStage?: number;
+  /** The pet went two days without food: it looks sad (shared/pets.ts). */
+  petHungry?: boolean;
 }
 
 // ---------- Earning (defaults; the economy service may read overrides from the owner config) ----------

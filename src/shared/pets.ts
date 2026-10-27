@@ -1,6 +1,11 @@
-// Companions ("Begleiter") for the profile card: small flat animals that sit at the lower left of the avatar and grow
-// with the member (stage 1–3 from the days they chatted). Drawn on canvas in a 100×100 design box centred on (0, 0)
-// with the ground at y = 50, scaled to the requested size. Shared by the bot and the dashboard.
+// Companions ("Begleiter") for the profile card: small animals that sit at the lower left of the avatar and evolve when
+// their owner looks after them. Drawn on canvas in a 100×100 design box centred on (0, 0) with the ground at y = 50,
+// scaled to the requested size. Shared by the bot and the dashboard.
+//
+// Care, after the CS2 chickens: food comes only from finishing all three daily quests (never bought), at most
+// PET_FOOD_MAX portions in stock, and each pet eats once per Berlin day. Every feeding is a care day; the care days
+// decide the stage. Two days without food and the pet is hungry: it looks sad and, since only feeding counts, stops
+// growing until it is fed again.
 
 import type { PetData } from './cosmetics.js';
 
@@ -13,19 +18,61 @@ interface PetCtx {
   quadraticCurveTo(cx: number, cy: number, x: number, y: number): void;
   bezierCurveTo(c1x: number, c1y: number, c2x: number, c2y: number, x: number, y: number): void;
   fill(): void; stroke(): void; translate(x: number, y: number): void; rotate(a: number): void; scale(x: number, y: number): void;
+  createRadialGradient(x0: number, y0: number, r0: number, x1: number, y1: number, r1: number): { addColorStop(offset: number, color: string): void };
 }
 
-/** Growth stage from the number of days a member chatted. */
-export function petStage(chatDays: number): 1 | 2 | 3 {
-  return chatDays >= 30 ? 3 : chatDays >= 7 ? 2 : 1;
+/** A fill: a colour or a gradient from the context. */
+type Paint = string | object;
+
+// ---------- Care ----------
+
+export type PetStage = 1 | 2 | 3 | 4;
+export const PET_STAGE_NAMES = ['Jungtier', 'Halbstark', 'Ausgewachsen', 'Legendär'] as const;
+/** Care days from which each stage starts. */
+export const PET_STAGE_CARE = [0, 5, 15, 40] as const;
+/** Food portions a member can keep in stock. */
+export const PET_FOOD_MAX = 3;
+/** Days without food after which a pet is hungry. */
+export const PET_HUNGRY_AFTER = 2;
+
+/** Stage from the care days (feedings) of a pet. */
+export function petStage(care: number): PetStage {
+  return (PET_STAGE_CARE.filter((from) => care >= from).length as PetStage);
 }
-export const PET_STAGE_NAMES = ['Jungtier', 'Halbstark', 'Ausgewachsen'] as const;
-/** Size factor of the avatar radius per stage. */
-const STAGE_SIZE = [0.34, 0.42, 0.5];
+/** Care days the next stage needs, or null at the last stage. */
+export function nextStageAt(care: number): number | null {
+  return PET_STAGE_CARE.find((from) => from > care) ?? null;
+}
+
+/** Whole days from Berlin day `from` to `to` (both YYYY-MM-DD). */
+export function daysBetween(from: string, to: string): number {
+  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+}
+
+export interface PetCare {
+  itemId: string;
+  care: number;
+  stage: PetStage;
+  /** Care days the next stage starts at (null at "Legendär"). */
+  nextAt: number | null;
+  /** Berlin day of the last feeding (YYYY-MM-DD). */
+  lastFed: string;
+  fedToday: boolean;
+  hungry: boolean;
+}
+
+/** A pet's state from its care days and the day it last ate (`today` as YYYY-MM-DD in Berlin). */
+export function petCare(itemId: string, care: number, lastFed: string, today: string): PetCare {
+  const since = daysBetween(lastFed, today);
+  return { itemId, care, stage: petStage(care), nextAt: nextStageAt(care), lastFed, fedToday: since <= 0, hungry: since >= PET_HUNGRY_AFTER };
+}
+
+/** Size factor of the avatar radius per stage (Legendär keeps the adult size and gets its aura and crown instead). */
+const STAGE_SIZE = [0.34, 0.42, 0.5, 0.5];
 
 /** Where the companion sits: on the lower left rim of the avatar. */
 export function petPoint(avatar: { cx: number; cy: number; r: number }, stage: number): { x: number; y: number; size: number } {
-  const size = avatar.r * STAGE_SIZE[Math.min(3, Math.max(1, stage)) - 1];
+  const size = avatar.r * STAGE_SIZE[Math.min(4, Math.max(1, stage)) - 1];
   return { x: avatar.cx - avatar.r * 0.78, y: avatar.cy + avatar.r * 0.86 - size, size };
 }
 
@@ -52,7 +99,7 @@ function ellipse(ctx: PetCtx, x: number, y: number, rx: number, ry: number, rota
   ctx.restore();
 }
 
-function shape(ctx: PetCtx, fill: string, line: string | null, path: () => void) {
+function shape(ctx: PetCtx, fill: Paint, line: string | null, path: () => void) {
   ctx.beginPath();
   path();
   ctx.fillStyle = fill;
@@ -63,20 +110,47 @@ function shape(ctx: PetCtx, fill: string, line: string | null, path: () => void)
   }
 }
 
+/** Mood of the pet being drawn (set by drawPet; the drawing is synchronous). */
+let hungry = false;
+
+/** Glossy eyes: a dark iris with a soft lighter rim, two catch lights. Hungry, the lids droop and a tear runs. */
 function eyes(ctx: PetCtx, x: number, y: number, r: number, ink: string) {
   for (const side of [-1, 1]) {
-    shape(ctx, ink, null, () => ellipse(ctx, side * x, y, r, r * 1.12));
-    shape(ctx, '#FFFFFF', null, () => ellipse(ctx, side * x + r * 0.35, y - r * 0.4, r * 0.36, r * 0.36));
+    const cx = side * x;
+    const iris = ctx.createRadialGradient(cx, y + r * 0.5, r * 0.2, cx, y, r * 1.15);
+    iris.addColorStop(0, mixed(ink, '#7A6CFF', 0.35));
+    iris.addColorStop(0.7, ink);
+    iris.addColorStop(1, ink);
+    shape(ctx, iris, null, () => ellipse(ctx, cx, y, r, r * 1.12));
+    shape(ctx, '#FFFFFF', null, () => ellipse(ctx, cx + r * 0.32, y - r * 0.42, r * 0.38, r * 0.38));
+    shape(ctx, '#FFFFFF', null, () => ellipse(ctx, cx - r * 0.38, y + r * 0.42, r * 0.16, r * 0.16));
+    if (hungry) {
+      // Heavy upper lid in the face colour's dark line.
+      shape(ctx, ink, null, () => {
+        ctx.moveTo(cx - r * 1.3, y - r * 0.2);
+        ctx.quadraticCurveTo(cx, y - r * 1.6, cx + r * 1.3, y - r * 0.2);
+        ctx.quadraticCurveTo(cx, y + r * 0.15, cx - r * 1.3, y - r * 0.2);
+      });
+    }
+  }
+  if (hungry) {
+    shape(ctx, '#8FD3FF', '#3B82C4', () => {
+      const tx = x + r * 0.2;
+      ctx.moveTo(tx, y + r * 1.2);
+      ctx.quadraticCurveTo(tx + r * 0.9, y + r * 2.4, tx, y + r * 2.8);
+      ctx.quadraticCurveTo(tx - r * 0.9, y + r * 2.4, tx, y + r * 1.2);
+    });
   }
 }
 
 function cheeks(ctx: PetCtx, x: number, y: number) {
+  if (hungry) return;
   ctx.globalAlpha = 0.45;
   for (const side of [-1, 1]) shape(ctx, '#FF8FA3', null, () => ellipse(ctx, side * x, y, 4.5, 3));
   ctx.globalAlpha = 1;
 }
 
-type Drawer = (ctx: PetCtx, main: string, light: string, dark: string, line: string) => void;
+type Drawer = (ctx: PetCtx, main: Paint, light: Paint, dark: Paint, line: string) => void;
 
 const fox: Drawer = (ctx, main, light, dark, line) => {
   // Tail curled around the right side, with a white tip.
@@ -212,7 +286,7 @@ const dragon: Drawer = (ctx, main, light, dark, line) => {
   shape(ctx, dark, line, () => { ctx.moveTo(44, 22); ctx.lineTo(50, 12); ctx.lineTo(52, 24); ctx.closePath(); });
   shape(ctx, main, line, () => ellipse(ctx, 0, 25, 24, 24));
   shape(ctx, light, null, () => ellipse(ctx, 0, 29, 13, 17));
-  ctx.strokeStyle = mixed(light.startsWith('#') ? light : '#FFE7A3', '#000000', 0.25);
+  ctx.strokeStyle = mixed('#FFE7A3', '#000000', 0.25);
   for (const y of [20, 28, 36]) {
     ctx.beginPath();
     ctx.moveTo(-9, y);
@@ -230,38 +304,173 @@ const dragon: Drawer = (ctx, main, light, dark, line) => {
   for (const side of [-1, 1]) shape(ctx, main, line, () => ellipse(ctx, side * 10, 47, 7, 4.5));
 };
 
-const DRAWERS: Record<PetData['species'], Drawer> = { fox, owl, cat, axolotl, dragon };
+const bunny: Drawer = (ctx, main, light, dark, line) => {
+  shape(ctx, '#FFFDF8', line, () => ellipse(ctx, 25, 38, 9, 8));
+  shape(ctx, main, line, () => ellipse(ctx, 0, 26, 24, 23));
+  shape(ctx, light, null, () => ellipse(ctx, 0, 31, 13, 15));
+  for (const side of [-1, 1]) {
+    shape(ctx, main, line, () => ellipse(ctx, side * 11, -36, 8.5, 19, side * 0.2));
+    shape(ctx, '#FFB3C1', null, () => ellipse(ctx, side * 11, -34, 4.2, 13, side * 0.2));
+  }
+  shape(ctx, main, line, () => ellipse(ctx, 0, -8, 26, 22));
+  shape(ctx, light, null, () => ellipse(ctx, 0, 0, 13, 8));
+  eyes(ctx, 11, -11, 3.8, '#1E1A2B');
+  shape(ctx, '#FF8FA3', null, () => ellipse(ctx, 0, -2, 3, 2.2));
+  ctx.strokeStyle = line;
+  ctx.beginPath();
+  ctx.moveTo(-5, 3);
+  ctx.quadraticCurveTo(-2.5, 6, 0, 2);
+  ctx.quadraticCurveTo(2.5, 6, 5, 3);
+  ctx.stroke();
+  shape(ctx, '#FFFFFF', line, () => { ctx.moveTo(-2.4, 4); ctx.lineTo(2.4, 4); ctx.lineTo(2.4, 8); ctx.lineTo(-2.4, 8); ctx.closePath(); });
+  cheeks(ctx, 17, -1);
+  for (const side of [-1, 1]) shape(ctx, light, line, () => ellipse(ctx, side * 11, 47, 8, 4.5));
+  void dark;
+};
 
-/** Draws the companion standing on (x, y + size), `size` = half its height. Stage 3 gets a little sparkle. */
-export function drawPet(ctx: PetCtx, pet: PetData, x: number, y: number, size: number, stage = 1) {
+const penguin: Drawer = (ctx, main, light, dark, line) => {
+  for (const side of [-1, 1]) shape(ctx, dark, line, () => ellipse(ctx, side * 27, 14, 7, 18, side * -0.35));
+  shape(ctx, main, line, () => ellipse(ctx, 0, 8, 28, 40));
+  shape(ctx, '#FFFDF7', null, () => ellipse(ctx, 0, 20, 19, 27));
+  shape(ctx, '#FFFDF7', null, () => ellipse(ctx, 0, -10, 21, 15));
+  eyes(ctx, 8, -13, 3.6, '#1E1A2B');
+  shape(ctx, '#F59E0B', line, () => { ctx.moveTo(-5.5, -5); ctx.quadraticCurveTo(0, -8, 5.5, -5); ctx.lineTo(0, 2); ctx.closePath(); });
+  cheeks(ctx, 15, -3);
+  for (const side of [-1, 1]) shape(ctx, '#F59E0B', line, () => ellipse(ctx, side * 10, 47, 8, 4));
+  void light;
+};
+
+const panda: Drawer = (ctx, main, light, dark, line) => {
+  const ink = '#2B2B33';
+  for (const side of [-1, 1]) shape(ctx, ink, line, () => ellipse(ctx, side * 20, -29, 9, 9));
+  shape(ctx, main, line, () => ellipse(ctx, 0, 26, 25, 23));
+  shape(ctx, light, null, () => ellipse(ctx, 0, 30, 13, 14));
+  for (const side of [-1, 1]) shape(ctx, ink, line, () => ellipse(ctx, side * 20, 22, 8, 13, side * 0.4));
+  for (const side of [-1, 1]) shape(ctx, ink, line, () => ellipse(ctx, side * 12, 45, 9, 5.5));
+  shape(ctx, main, line, () => ellipse(ctx, 0, -10, 28, 23));
+  for (const side of [-1, 1]) shape(ctx, ink, null, () => ellipse(ctx, side * 11, -10, 7.5, 9.5, side * -0.5));
+  for (const side of [-1, 1]) shape(ctx, '#FFFFFF', null, () => ellipse(ctx, side * 11, -11, 4.4, 4.8));
+  eyes(ctx, 11, -11, 3, '#1E1A2B');
+  shape(ctx, ink, null, () => ellipse(ctx, 0, -1, 3.6, 2.6));
+  ctx.strokeStyle = ink;
+  ctx.beginPath();
+  ctx.moveTo(-4.5, 4);
+  ctx.quadraticCurveTo(-2.2, 6.5, 0, 2.5);
+  ctx.quadraticCurveTo(2.2, 6.5, 4.5, 4);
+  ctx.stroke();
+  cheeks(ctx, 19, 1);
+  void dark;
+};
+
+const frog: Drawer = (ctx, main, light, dark, line) => {
+  for (const side of [-1, 1]) shape(ctx, dark, line, () => ellipse(ctx, side * 24, 38, 13, 9, side * 0.3));
+  shape(ctx, main, line, () => ellipse(ctx, 0, 22, 26, 24));
+  shape(ctx, light, null, () => ellipse(ctx, 0, 28, 16, 15));
+  shape(ctx, main, line, () => ellipse(ctx, 0, -6, 30, 20));
+  for (const side of [-1, 1]) shape(ctx, main, line, () => ellipse(ctx, side * 15, -23, 11, 11));
+  for (const side of [-1, 1]) shape(ctx, '#FFFDF5', null, () => ellipse(ctx, side * 15, -23, 8, 8));
+  eyes(ctx, 15, -23, 4.2, '#1E1A2B');
+  ctx.strokeStyle = line;
+  ctx.beginPath();
+  ctx.moveTo(-15, -2);
+  ctx.quadraticCurveTo(0, hungry ? 0 : 8, 15, -2);
+  ctx.stroke();
+  cheeks(ctx, 21, 1);
+  for (const side of [-1, 1]) shape(ctx, light, line, () => ellipse(ctx, side * 12, 46, 8, 4.5));
+};
+
+const DRAWERS: Record<PetData['species'], Drawer> = { fox, owl, cat, axolotl, dragon, bunny, penguin, panda, frog };
+
+/** Soft light from the upper left over the whole animal: one gradient per tone, shared by all its shapes. */
+function lit(ctx: PetCtx, color: string) {
+  const paint = ctx.createRadialGradient(-20, -32, 4, -8, -6, 92);
+  paint.addColorStop(0, mixed(color, '#FFFFFF', 0.38));
+  paint.addColorStop(0.5, color);
+  paint.addColorStop(1, mixed(color, '#000000', 0.22));
+  return paint;
+}
+
+/** Four-point sparkle. */
+function sparkle(ctx: PetCtx, x: number, y: number, r: number, fill: string, line: string | null) {
+  shape(ctx, fill, line, () => {
+    for (let i = 0; i < 8; i += 1) {
+      const radius = i % 2 ? r * 0.35 : r;
+      const a = (i / 8) * Math.PI * 2 - Math.PI / 2;
+      if (i) ctx.lineTo(x + Math.cos(a) * radius, y + Math.sin(a) * radius); else ctx.moveTo(x + Math.cos(a) * radius, y + Math.sin(a) * radius);
+    }
+    ctx.closePath();
+  });
+}
+
+const GOLD = '#F5C542';
+
+/**
+ * Draws the companion standing on (x, y + size), `size` = half its height. Each stage shows more: a collar with a gold
+ * tag (Halbstark), a sparkle (Ausgewachsen), a golden aura, crown and light points (Legendär). Hungry, it droops.
+ */
+export function drawPet(ctx: PetCtx, pet: PetData, x: number, y: number, size: number, stage = 1, isHungry = false) {
   const k = size / 50;
-  const light = pet.species === 'dragon' ? '#FFE7A3' : mixed(pet.color, '#FFFFFF', 0.55);
+  const base = pet.species === 'dragon' ? '#FFE7A3' : mixed(pet.color, '#FFFFFF', 0.55);
   const dark = mixed(pet.color, '#000000', 0.28);
   const line = mixed(pet.color, '#000000', 0.62);
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(k, k);
-  // Contact shadow on whatever it sits on.
-  ctx.globalAlpha = 0.28;
-  shape(ctx, '#000000', null, () => ellipse(ctx, 0, 50, 30, 5));
-  ctx.globalAlpha = 1;
-  ctx.lineWidth = 2.6;
+  if (stage >= 4) {
+    const aura = ctx.createRadialGradient(0, 4, 10, 0, 4, 66);
+    aura.addColorStop(0, 'rgba(255, 214, 102, 0.55)');
+    aura.addColorStop(0.6, 'rgba(255, 196, 64, 0.18)');
+    aura.addColorStop(1, 'rgba(255, 196, 64, 0)');
+    shape(ctx, aura, null, () => ellipse(ctx, 0, 4, 66, 66));
+  }
+  // Soft contact shadow on whatever it sits on.
+  const ground = ctx.createRadialGradient(0, 50, 2, 0, 50, 34);
+  ground.addColorStop(0, 'rgba(0, 0, 0, 0.38)');
+  ground.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  shape(ctx, ground, null, () => ellipse(ctx, 0, 50, 34, 6.5));
+  ctx.lineWidth = 2.4;
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
-  DRAWERS[pet.species](ctx, pet.color, light, dark, line);
-  if (stage >= 3) {
-    ctx.save();
-    ctx.translate(-42, -40);
-    ctx.rotate(-0.2);
-    shape(ctx, '#FFE27A', line, () => {
-      for (let i = 0; i < 8; i += 1) {
-        const r = i % 2 ? 3 : 8;
-        const a = (i / 8) * Math.PI * 2 - Math.PI / 2;
-        if (i) ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); else ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
-      }
+  hungry = isHungry;
+  if (isHungry) ctx.translate(0, 2);
+  DRAWERS[pet.species](ctx, lit(ctx, pet.color), lit(ctx, base), lit(ctx, dark), line);
+  if (stage >= 2) {
+    // Collar with a gold tag under the chin.
+    ctx.lineWidth = 2;
+    shape(ctx, '#B4232F', '#5C0F16', () => {
+      ctx.moveTo(-17, 6);
+      ctx.quadraticCurveTo(0, 15, 17, 6);
+      ctx.lineTo(17, 11);
+      ctx.quadraticCurveTo(0, 20, -17, 11);
       ctx.closePath();
     });
-    ctx.restore();
+    shape(ctx, GOLD, '#8A6410', () => ellipse(ctx, 0, 19, 4.4, 4.4));
+    shape(ctx, '#FFF3C4', null, () => ellipse(ctx, -1.2, 17.6, 1.3, 1.3));
   }
+  if (stage >= 3) sparkle(ctx, -40, -38, 8, '#FFE27A', line);
+  if (stage >= 4) {
+    // Crown on the head, tilted a little, and light points around.
+    ctx.save();
+    ctx.translate(2, -34);
+    ctx.rotate(0.12);
+    ctx.lineWidth = 2;
+    shape(ctx, GOLD, '#8A6410', () => {
+      ctx.moveTo(-12, 4);
+      ctx.lineTo(-13, -9);
+      ctx.lineTo(-6, -2);
+      ctx.lineTo(0, -13);
+      ctx.lineTo(6, -2);
+      ctx.lineTo(13, -9);
+      ctx.lineTo(12, 4);
+      ctx.closePath();
+    });
+    shape(ctx, '#E5484D', null, () => ellipse(ctx, 0, -1, 2.4, 2.4));
+    for (const side of [-1, 1]) shape(ctx, '#3DD6C6', null, () => ellipse(ctx, side * 7, 0, 1.6, 1.6));
+    ctx.restore();
+    sparkle(ctx, 42, -30, 6, '#FFF3C4', null);
+    sparkle(ctx, -46, 8, 4.5, '#FFF3C4', null);
+    sparkle(ctx, 40, 30, 3.5, '#FFE27A', null);
+  }
+  hungry = false;
   ctx.restore();
 }

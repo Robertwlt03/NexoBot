@@ -30,7 +30,7 @@ const FONT_LABELS: Record<FontData['font'], string> = { inter: 'Inter', unbounde
 const EFFECT_LABELS: Record<EffectData['effect'], string> = { sparkles: 'Funkeln', snow: 'Schnee', confetti: 'Konfetti', aurora: 'Polarlicht', scanlines: 'Scanlines', stardust: 'Sternenstaub', embers: 'Glut', hearts: 'Herzen', leaves: 'Fallendes Laub' };
 const LEVELUP_LABELS: Record<LevelupData['style'], string> = { classic: 'Klassisch', minimal: 'Minimal', neon: 'Neon', royal: 'Königlich', retro: 'Retro' };
 const LAYOUT_LABELS: Record<LayoutData['layout'], string> = { classic: 'Klassisch', compact: 'Kompakt', centered: 'Zentriert', split: 'Geteilt', banner: 'Banner', mirror: 'Gespiegelt', minimal: 'Minimal' };
-const PET_LABELS: Record<PetData['species'], string> = { fox: 'Fuchs', owl: 'Eule', cat: 'Katze', axolotl: 'Axolotl', dragon: 'Drache' };
+const PET_LABELS: Record<PetData['species'], string> = { fox: 'Fuchs', owl: 'Eule', cat: 'Katze', axolotl: 'Axolotl', dragon: 'Drache', bunny: 'Hase', penguin: 'Pinguin', panda: 'Panda', frog: 'Frosch' };
 const CORNER_LABELS: Record<StickerData['corner'], string> = { tl: 'Oben links', tr: 'Oben rechts', bl: 'Unten links', br: 'Unten rechts', avatar: 'Auf dem Avatar' };
 
 const SLOT_DEFAULTS: { [S in CosmeticSlot]: SlotData[S] } = {

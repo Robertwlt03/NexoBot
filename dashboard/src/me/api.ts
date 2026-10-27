@@ -100,7 +100,9 @@ export function cardSubject(user: ApiUser | null, me: MeProfileResponse, guildId
     rank: level?.rank ?? null,
     serverName: level?.guildName ?? null,
     balance: me.wallet.balance,
-    petStage: me.petStage,
+    // The saved companion's stage and mood (a pet just picked in the editor shows its own once saved).
+    petStage: me.pets.pets.find((pet) => pet.itemId === me.profile.equipped.pet)?.stage ?? 1,
+    petHungry: me.pets.pets.find((pet) => pet.itemId === me.profile.equipped.pet)?.hungry ?? false,
   };
 }
 

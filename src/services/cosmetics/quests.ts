@@ -1,7 +1,8 @@
 // Daily quests: three small tasks per member and Berlin day, picked from QUESTS by a hash of user and day (so
 // nothing has to be stored for the pick). Progress is today's share of the activity counters, kept in user_stats as
 // `q:<day>:<counter>` next to the lifetime counters; finished quests are marked as `q:<day>:done:<id>` and paid
-// once (not capped). All three done pays a bonus and counts a quest day for the achievements.
+// once (not capped). All three done pays a bonus, a portion of pet food (services/cosmetics/pets.ts) and counts a quest
+// day for the achievements.
 
 import { createHash } from 'node:crypto';
 import type { DailyQuests } from '../../web/dto/profile.js';
@@ -11,6 +12,7 @@ import { T, cosmeticsPool, requirePool, withTx } from './db.js';
 import { berlinDay, nextBerlinMidnight, shiftDay } from './time.js';
 import { earnTx } from './wallet.js';
 import { addSeasonPoints } from './season.js';
+import { grantPetFood } from './pets.js';
 import { SEASON_POINTS } from '../../shared/season.js';
 
 interface QuestDef { id: string; label: string; counters: ActivityCounter[]; target: number; reward: number }
@@ -105,6 +107,7 @@ export async function syncQuests(userId: string): Promise<string[]> {
         if (!marked.rowCount) continue;
         await earnTx(client, userId, quest.reward, 'quest', quest.id === 'all' ? 'Bonus: alle Tagesaufgaben geschafft' : `Tagesaufgabe: ${quest.label}`, null);
         if (quest.id === 'all') {
+          await grantPetFood(client, userId);
           await client.query(
             `INSERT INTO ${T.user_stats} AS s (user_id, stat, value) VALUES ($1, 'quest_days', 1)
              ON CONFLICT (user_id, stat) DO UPDATE SET value = s.value + 1`, [userId],

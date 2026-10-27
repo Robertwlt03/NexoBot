@@ -2313,7 +2313,7 @@ export function renderProfileCard<I extends ProfileImage>(
   if (cosmetics.pet) {
     const stage = subject.petStage ?? 1;
     const at = petPoint(g.avatar, stage);
-    drawPet(ctx, cosmetics.pet, at.x, at.y, at.size, stage);
+    drawPet(ctx, cosmetics.pet, at.x, at.y, at.size, stage, subject.petHungry);
   }
 
   const badgeRight = badgeRowRight(g, sticker);
@@ -2612,7 +2612,7 @@ export function renderYearCard<I extends ProfileImage>(
   drawAvatar(ctx, assets.avatar, avatar, cosmetics.frame, accent, subject.name);
   if (cosmetics.pet) {
     const at = petPoint(avatar, subject.petStage ?? 1);
-    drawPet(ctx, cosmetics.pet, at.x, at.y, at.size, subject.petStage ?? 1);
+    drawPet(ctx, cosmetics.pet, at.x, at.y, at.size, subject.petStage ?? 1, subject.petHungry);
   }
   drawRuns(ctx, [{ text: 'DEIN NEXO-JAHR', font: font('inter', 700, 15), color: lighten(accent, 0.25) }], 216, 96, 'left');
   drawName(ctx, subject.name, 216, 142, 'left', 40, cosmetics.font?.font ?? 'inter', cosmetics.nameStyle, 520);

@@ -6,7 +6,6 @@ import { Draggable } from 'gsap/Draggable';
 import { InertiaPlugin } from 'gsap/InertiaPlugin';
 import { useGSAP } from '@gsap/react';
 import { COSMETIC_SLOTS, DAILY_BONUS, STREAK_SHIELD, MAX_BIO_LENGTH, MAX_EQUIPPED_BADGES, SLOT_LABELS, STICKER_SPOTS, levelUpReward } from '../../../src/shared/cosmetics';
-import { PET_STAGE_NAMES } from '../../../src/shared/pets';
 import { PROFILE_CARD_HEIGHT, PROFILE_CARD_WIDTH, drawSticker, profileGeometry, stickerPoint, stickerRadius } from '../../../src/shared/profileCard';
 import type { CosmeticItem, CosmeticSlot, ResolvedCosmetics, StickerData, StickerSpot, UserProfileSettings } from '../../../src/shared/cosmetics';
 import type { DailyClaimResult, LinkedRoleValues, MeProfileResponse, QuestsResponse } from '../../../src/web/dto/profile';
@@ -18,6 +17,7 @@ import {
   cardSubject, countdown, equipItem, isEquipped, num, reducedMotion, resolveCosmetics, unequipItem, useCountUp, useDraft, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
 import { Glyph, ItemVisual, Bernis, CoinStacks, RARITY_CLASS } from './visuals';
+import { PetCareCard } from './PetCare';
 
 const STREAK_DAYS = DAILY_BONUS.maxStreakBonus / DAILY_BONUS.perStreakDay;
 
@@ -294,7 +294,7 @@ function SlotEditor({ value, onChange }: { value: UserProfileSettings; onChange:
             <div className="pt-1">
               <div className="text-[14px] font-medium text-ink">{SLOT_LABELS[slot]}</div>
               {slot === 'badge' && <div className="text-[12px] text-faint">{value.equipped.badges.length} / {MAX_EQUIPPED_BADGES} angelegt</div>}
-              {slot === 'pet' && <div className="text-[12px] text-faint" title="Wächst mit den Tagen, an denen du chattest: ab 7 und ab 30 Tagen.">{PET_STAGE_NAMES[me.petStage - 1]} · {me.chatDays} Chat-Tage</div>}
+              {slot === 'pet' && <div className="text-[12px] text-faint">Wächst, wenn du es fütterst (Begleiter oben)</div>}
             </div>
             {/* Wraps onto more rows instead of scrolling sideways, so every item is one click away. */}
             <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-2">
@@ -500,6 +500,7 @@ export default function ProfilePage() {
           <WalletCard />
           <DailyCard />
           <QuestsCard />
+          <PetCareCard />
         </div>
         {/* On xl "Über dich" and the level-up preview stack under the card, next to the side column; equipment spans below. */}
         <div className="min-w-0 xl:col-span-2 xl:row-start-4">

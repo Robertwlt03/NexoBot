@@ -20,6 +20,7 @@ import { pendingCommunity, pendingQuestCounts } from '../../services/cosmetics/a
 import { canAttachFiles, loadProfileCardData, profileCardAttachment, yearCardAttachment } from '../../services/profileCardRenderer.js';
 import { loadYearReview } from '../../services/cosmetics/yearReview.js';
 import { cosmeticsPool } from '../../services/cosmetics/db.js';
+import { petMessage } from './modules/pet.js';
 
 const COIN_TEXT = '🟤 Bronze · ⚪ Silber (100 Bronze) · 🟡 Gold (100 Silber) · 💠 Platin (100 Gold)';
 
@@ -50,6 +51,7 @@ export default {
       .addIntegerOption((option) => option.setName('jahr').setDescription('Welches Jahr (Standard: das aktuelle)').setMinValue(2024).setMaxValue(2100)))
     .addSubcommand((sub) => sub.setName('rollen').setDescription('Verknüpfte Rollen: Server-Rollen für dein Level, deine Saison-Stufe und mehr'))
     .addSubcommand((sub) => sub.setName('aufgaben').setDescription('Deine drei Tagesaufgaben und wie weit du bist'))
+    .addSubcommand((sub) => sub.setName('pet').setDescription('Dein Begleiter: Stufe, Hunger, Futter und füttern'))
     .addSubcommand((sub) => sub
       .setName('erinnerung')
       .setDescription('Erinnerung per DM um 19 Uhr an Tagesbonus und offene Aufgaben')
@@ -129,6 +131,17 @@ export default {
           ? 'Ich schreibe dir um 19 Uhr eine DM, wenn dein Tagesbonus noch wartet oder Tagesaufgaben offen sind. Deine DMs müssen für Nexo offen sein.'
           : `Keine Erinnerungen mehr. Einschalten kannst du sie jederzeit wieder mit ${cmd('profil erinnerung')}.` }],
       }));
+      return;
+    }
+
+    if (subcommand === 'pet') {
+      if (!cosmeticsPool()) {
+        await reply(nexoCard({ kicker: 'Begleiter', title: 'Gerade nicht verfügbar', accent: ACCENTS.warn, blocks: [{ text: 'Dafür braucht Nexo seine Datenbank – versuch es später noch einmal.' }] }));
+        return;
+      }
+      await InteractionHelper.safeDefer(interaction, { ephemeral: true });
+      const { container, files } = await petMessage(interaction.user.id, canAttachFiles(interaction));
+      await InteractionHelper.safeEditReply(interaction, { ...nexoMessage(container), files });
       return;
     }
 
