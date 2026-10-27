@@ -58,7 +58,7 @@ export default function MusicPage() {
                   <Badge>{data.queueLength} in der Warteschlange</Badge>
                   <Badge>Lautstärke {data.volume} %</Badge>
                   <Badge>Wiederholen: {LOOP_LABELS[data.loop] ?? data.loop}</Badge>
-                  {voiceChannel && <span className="badge whitespace-nowrap"><Icon name="mic" size={13} />{voiceChannel.name}</span>}
+                  {voiceChannel && <Badge className="whitespace-nowrap"><Icon name="mic" size={13} />{voiceChannel.name}</Badge>}
                 </div>
               </div>
             )}
