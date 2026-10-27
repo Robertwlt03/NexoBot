@@ -1,7 +1,12 @@
 // Achievements: derived from stored data (levels, wallet, inventory, transactions, monthly scores), so a sync can
 // always catch up. Each unlock pays Bernis once (not capped) and grants its badge item `ach-<id>`.
 
+import { PermissionFlagsBits, type Client } from 'discord.js';
 import type { Achievement } from '../../web/dto/profile.js';
+import type { NexoClient } from '../../types/index.js';
+import { formatCoins } from '../../shared/coins.js';
+import { ACCENTS, nexoCard, nexoMessage } from '../../utils/nexoMessage.js';
+import { getLevelingConfig } from '../leveling/leveling.js';
 import { logger } from '../../utils/logger.js';
 import { ACHIEVEMENT_BADGES, HIDDEN_ACHIEVEMENTS, type AchievementStat } from './catalog.js';
 import { ACTIVITY_COUNTERS, CHAT_STATS, GAME_IDS } from './activity.js';
@@ -119,10 +124,46 @@ export async function syncAchievements(userId: string): Promise<string[]> {
         if (inserted) unlockedNow.push(def.id);
       }
     }
+    if (unlockedNow.length) void announceAchievements(userId, unlockedNow);
     return unlockedNow;
   } catch (error) {
     logger.warn('Erfolge konnten nicht geprüft werden:', (error as Error).message);
     return [];
+  }
+}
+
+let client: Client | null = null;
+export function setAchievementClient(next: Client): void { client = next; }
+
+/**
+ * Tells every server the member shares with the bot about new achievements, with a mention: in the level-up channel,
+ * else the system channel. Secret ones show only their name, so the condition stays a secret for the others. Never throws.
+ */
+async function announceAchievements(userId: string, ids: string[]): Promise<void> {
+  if (!client?.isReady()) return;
+  const defs = ids.map(nameOf).filter((def) => def !== undefined);
+  const lines = defs.map((def) => (def.hidden
+    ? `🔓 Versteckter Erfolg entdeckt: **${def.name}** · ${formatCoins(def.reward)}`
+    : `🏆 **${def.name}**: ${def.description} · ${formatCoins(def.reward)}`));
+  const payload = {
+    ...nexoMessage(nexoCard({
+      kicker: defs.length === 1 ? 'Erfolg freigeschaltet' : `${defs.length} Erfolge freigeschaltet`,
+      accent: ACCENTS.gold,
+      blocks: [{ text: `<@${userId}> hat ${defs.length === 1 ? 'einen Erfolg' : `${defs.length} Erfolge`} geschafft!` }, { text: lines.join('\n') }],
+    })),
+    allowedMentions: { users: [userId] },
+  };
+  for (const guild of client.guilds.cache.values()) {
+    try {
+      if (!(await guild.members.fetch(userId).catch(() => null))) continue;
+      const { levelUpChannel } = await getLevelingConfig(client as NexoClient, guild.id);
+      const channel = (levelUpChannel ? guild.channels.cache.get(levelUpChannel) : null) ?? guild.systemChannel;
+      const me = guild.members.me;
+      if (!channel?.isTextBased() || !me || !channel.permissionsFor(me).has([PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages])) continue;
+      await channel.send(payload);
+    } catch (error) {
+      logger.warn(`Erfolg konnte auf ${guild.id} nicht angekündigt werden:`, (error as Error).message);
+    }
   }
 }
 
