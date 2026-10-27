@@ -5,6 +5,7 @@
 import type {
   CosmeticItem, CosmeticSlot, Rarity, RankingKind, UserProfileSettings,
 } from '../../shared/cosmetics.js';
+import type { PetCare } from '../../shared/pets.js';
 
 export interface WalletSummary {
   balance: number;
@@ -30,14 +31,15 @@ export interface MeProfileResponse {
   quests: DailyQuests;
   /** DM reminder at 19:00 about the daily bonus and open quests (opt-in). */
   reminders: boolean;
-  /** Growth stage of the companion (1–3) and the days chatted it comes from. */
-  petStage: number;
-  chatDays: number;
+  /** Pet food in stock and the care state of every owned pet (shared/pets.ts). */
+  pets: PetOverview;
   /** Public profile link /dashboard/p/<id> with a Discord link preview (opt-in). */
   shareProfile: boolean;
   /** Linked Roles: whether the member linked Nexo, and the values servers can require. */
   linkedRole: { linked: boolean; values: LinkedRoleValues };
 }
+export interface PetOverview { food: number; foodMax: number; pets: PetCare[] }
+/** POST /me/pets/feed { itemId } → PetOverview; 404 for a pet the member does not own, 409 when it ate today or there is no food. */
 export interface LinkedRoleValues { level: number; season_tier: number; achievements: number; chat_days: number; bernis: number }
 /** POST /me/linked-role/sync → { linkedRole }; DELETE /me/linked-role → { linkedRole } */
 /** PUT /me/share { enabled } → { enabled } */
@@ -55,7 +57,12 @@ export interface DailyClaimResult { claimed: number; wallet: WalletSummary; dail
 
 export interface DailyQuest { id: string; label: string; current: number; target: number; reward: number; done: boolean }
 /** Three tasks per Berlin day, paid automatically once done; all three pay `bonus.reward` on top. */
-export interface DailyQuests { quests: DailyQuest[]; bonus: { reward: number; done: boolean }; resetsAt: string }
+export interface DailyQuests {
+  quests: DailyQuest[];
+  /** All three done: Bernis plus a portion of pet food. `food`: before, whether the stock has room for it; after, whether it came. */
+  bonus: { reward: number; done: boolean; food: boolean };
+  resetsAt: string;
+}
 /** A server's shared goal during a running event (messages written there by everyone). */
 export interface CommunityGoal {
   eventId: string; eventName: string; endsAt: string;

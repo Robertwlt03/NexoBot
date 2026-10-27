@@ -28,7 +28,7 @@ import { isLinked, pushRoleConnection, roleValues, unlink } from '../../services
 import { linkedRolesConfig } from '../dashboard.js';
 import { addSeasonPoints, getSeason } from '../../services/cosmetics/season.js';
 import { SEASON_POINTS } from '../../shared/season.js';
-import { petStage } from '../../shared/pets.js';
+import { feedPet, getPetOverview } from '../../services/cosmetics/pets.js';
 import { pendingCommunity, pendingQuestCounts } from '../../services/cosmetics/activity.js';
 
 async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[]> {
@@ -46,14 +46,13 @@ async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[
 }
 
 async function profileResponse(client: NexoClient, userId: string): Promise<MeProfileResponse> {
-  const [wallet, profile, inventory, levelList, daily, quests, reminders, chatDays, shareProfile, linkedRole] = await Promise.all([
+  const [wallet, profile, inventory, levelList, daily, quests, reminders, pets, shareProfile, linkedRole] = await Promise.all([
     walletSummary(userId), readProfileSettings(userId), ownedItems(userId), levels(client, userId), getDailyState(userId),
-    getDailyQuests(userId, pendingQuestCounts(userId)), readReminders(userId),
-    requirePool().query<{ value: string }>(`SELECT value FROM ${T.user_stats} WHERE user_id = $1 AND stat = 'chat_days'`, [userId]).then((r) => Number(r.rows[0]?.value ?? 0)),
+    getDailyQuests(userId, pendingQuestCounts(userId)), readReminders(userId), getPetOverview(userId),
     readShareProfile(userId),
     linkedRoleState(userId),
   ]);
-  return { isOwner: isBotOwner(userId), wallet, profile, inventory, levels: levelList, daily, quests, reminders, petStage: petStage(chatDays), chatDays, shareProfile, linkedRole };
+  return { isOwner: isBotOwner(userId), wallet, profile, inventory, levels: levelList, daily, quests, reminders, pets, shareProfile, linkedRole };
 }
 
 async function linkedRoleState(userId: string) {
@@ -148,6 +147,12 @@ export function meRouter(client: NexoClient): Router {
   });
 
   // Polled by the dashboard while the profile page is open: quest progress and the wallet (quests pay on their own).
+  router.post('/pets/feed', async (req, res) => {
+    const itemId = (req.body as { itemId?: unknown } | undefined)?.itemId;
+    if (typeof itemId !== 'string') return sendError(res, 400, 'Welches Tier soll fressen?');
+    res.json(await feedPet(locals(res).session.userId, itemId));
+  });
+
   router.get('/quests', async (_req, res) => {
     const { userId } = locals(res).session;
     const result: QuestsResponse = { quests: await getDailyQuests(userId, pendingQuestCounts(userId)), wallet: await walletSummary(userId) };

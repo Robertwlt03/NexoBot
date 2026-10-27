@@ -27,10 +27,16 @@ const PATTERN_LABELS: Record<BackgroundData['pattern'], string> = { none: 'Keins
 const FRAME_LABELS: Record<FrameData['style'], string> = { solid: 'Einfach', gradient: 'Verlauf', glow: 'Glühen', double: 'Doppelt', dashed: 'Gestrichelt', neon: 'Neon', crown: 'Krone', vine: 'Ranke', fire: 'Flammen', laurel: 'Lorbeer', blossom: 'Blüten', crystal: 'Eiszacken', lightning: 'Blitze' };
 const XP_LABELS: Record<XpBarData['style'], string> = { solid: 'Einfarbig', gradient: 'Verlauf', striped: 'Gestreift', segmented: 'Segmente', glow: 'Glühen', pixel: 'Pixel', wave: 'Welle', flame: 'Flammen', vine: 'Ranke', comet: 'Komet' };
 const FONT_LABELS: Record<FontData['font'], string> = { inter: 'Inter', unbounded: 'Unbounded', caveat: 'Caveat (Handschrift)' };
-const EFFECT_LABELS: Record<EffectData['effect'], string> = { sparkles: 'Funkeln', snow: 'Schnee', confetti: 'Konfetti', aurora: 'Polarlicht', scanlines: 'Scanlines', stardust: 'Sternenstaub', embers: 'Glut', hearts: 'Herzen', leaves: 'Fallendes Laub' };
+const EFFECT_LABELS: Record<EffectData['effect'], string> = { sparkles: 'Funkeln', snow: 'Schnee', confetti: 'Konfetti', aurora: 'Polarlicht', scanlines: 'Scanlines', stardust: 'Sternenstaub', embers: 'Glut', hearts: 'Herzen', leaves: 'Fallendes Laub', bubbles: 'Seifenblasen', fireflies: 'Glühwürmchen', petals: 'Blütenblätter' };
 const LEVELUP_LABELS: Record<LevelupData['style'], string> = { classic: 'Klassisch', minimal: 'Minimal', neon: 'Neon', royal: 'Königlich', retro: 'Retro' };
 const LAYOUT_LABELS: Record<LayoutData['layout'], string> = { classic: 'Klassisch', compact: 'Kompakt', centered: 'Zentriert', split: 'Geteilt', banner: 'Banner', mirror: 'Gespiegelt', minimal: 'Minimal' };
-const PET_LABELS: Record<PetData['species'], string> = { fox: 'Fuchs', owl: 'Eule', cat: 'Katze', axolotl: 'Axolotl', dragon: 'Drache' };
+const PET_LABELS: Record<PetData['species'], string> = {
+  fox: 'Fuchs', owl: 'Eule', cat: 'Katze', axolotl: 'Axolotl', dragon: 'Drache', bunny: 'Hase', penguin: 'Pinguin', panda: 'Panda', frog: 'Frosch',
+  butterfly: 'Schmetterling', chicken: 'Huhn', dog: 'Hund', wolf: 'Wolf', horse: 'Pferd', turtle: 'Schildkröte', koi: 'Koi', snail: 'Schnecke', hedgehog: 'Igel',
+  bat: 'Fledermaus', squirrel: 'Eichhörnchen', hamster: 'Hamster', bee: 'Biene', octopus: 'Oktopus', jellyfish: 'Qualle', seahorse: 'Seepferdchen', crab: 'Krabbe',
+  snake: 'Schlange', chameleon: 'Chamäleon', sloth: 'Faultier', raccoon: 'Waschbär', sparrow: 'Spatz', parrot: 'Papagei', mushroom: 'Pilz', slime: 'Schleim',
+  ghost: 'Gespenst', golem: 'Golem', salamander: 'Salamander', whale: 'Wal', bear: 'Bär',
+};
 const CORNER_LABELS: Record<StickerData['corner'], string> = { tl: 'Oben links', tr: 'Oben rechts', bl: 'Unten links', br: 'Unten rechts', avatar: 'Auf dem Avatar' };
 
 const SLOT_DEFAULTS: { [S in CosmeticSlot]: SlotData[S] } = {

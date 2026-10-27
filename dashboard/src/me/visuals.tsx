@@ -1,12 +1,13 @@
 // Item tiles (painted by the card renderer, see ItemPreviewCanvas), the member-area icons and currency helpers.
-import { Fragment, useContext, useMemo } from 'react';
+import { Fragment, useContext, useEffect, useMemo, useRef } from 'react';
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { CURRENCY, RARITY_LABELS, SLOT_LABELS } from '../../../src/shared/cosmetics';
 import { CoinIcon } from '../components/CoinIcon';
 import { COIN_TIERS, splitCoins } from '../../../src/shared/coins';
 import { ItemPreviewCanvas } from '../components/ProfileCardPreview';
+import { drawEmblem } from '../../../src/shared/profileCard';
 import type {
-  BackgroundData, BadgeGlyph, CosmeticItem, LevelupData, Rarity,
+  BackgroundData, BadgeData, BadgeGlyph, CosmeticItem, LevelupData, Rarity,
 } from '../../../src/shared/cosmetics';
 import { MeContext, num, resolveCosmetics } from './api';
 
@@ -58,6 +59,11 @@ export const GLYPHS = {
   sliders: <><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" /><circle cx="16" cy="6" r="2" /><circle cx="10" cy="12" r="2" /><circle cx="18" cy="18" r="2" /></>,
   shuffle: <path d="M3 7h4l10 10h4M3 17h4l3-3M14 10l3-3h4M18 4l3 3-3 3M18 14l3 3-3 3" />,
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
+  anchor: <><circle cx="12" cy="5" r="2.5" /><path d="M12 7.5V21M7.5 10.5h9M4 15c1 4 4.5 6 8 6s7-2 8-6" /></>,
+  planet: <><circle cx="12" cy="12" r="6" /><ellipse cx="12" cy="12" rx="10.5" ry="3.5" transform="rotate(-23 12 12)" /></>,
+  feather: <><path d="M5 20c0-8 5-14 15-16-1 9-6 13-13 14" /><path d="M4 21l9-9" /></>,
+  cherry: <><circle cx="7" cy="17" r="4" /><circle cx="17" cy="18" r="4" /><path d="M7 13c2-4 5-7 9-9M17 14c-.5-4-1-7-1-10M16 4c2-1 4 0 5 2-2 1-4 0-5-2z" /></>,
+  potion: <><path d="M10 3h4M10.5 3v5C6 10 4.5 12.5 4.5 15a7.5 7 0 0 0 15 0c0-2.5-1.5-5-6-7V3" /><path d="M7 14h10" /></>,
 } satisfies Record<BadgeGlyph, ReactElement> & Record<string, ReactElement>;
 
 export type GlyphName = keyof typeof GLYPHS;
@@ -228,4 +234,23 @@ export function ItemVisual({ item, className = '' }: { item: CosmeticItem; class
       {previewOf(item)}
     </div>
   );
+}
+
+/** A badge as the emblem the profile card draws (shape and metal by rarity); `locked` shows it grey. */
+export function BadgeEmblem({ badge, size = 44, locked = false }: { badge: BadgeData; size?: number; locked?: boolean }) {
+  const canvas = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const el = canvas.current;
+    const ctx = el?.getContext('2d');
+    if (!el || !ctx) return;
+    const ratio = window.devicePixelRatio || 1;
+    // Room around the emblem for its shadow.
+    const box = size * 1.3;
+    el.width = box * ratio;
+    el.height = box * ratio;
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.clearRect(0, 0, box, box);
+    drawEmblem(ctx, locked ? { ...badge, color: '#6B6F78' } : badge, box / 2, box / 2 - size * 0.03, size);
+  }, [badge, size, locked]);
+  return <canvas ref={canvas} aria-hidden="true" style={{ width: size * 1.3, height: size * 1.3, margin: -size * 0.15, flex: 'none', opacity: locked ? 0.55 : 1 }} />;
 }

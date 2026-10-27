@@ -651,6 +651,85 @@ export const GLYPH_DRAWERS: Record<BadgeGlyph, GlyphDrawer> = {
     poly(ctx, [[0, -12.5], [7.5, -3.5], [4, -3.5], [10, 5], [2, 5], [2, 12], [-2, 12], [-2, 5], [-10, 5], [-4, -3.5], [-7.5, -3.5]]);
     ctx.fill();
   },
+  anchor: (ctx) => {
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.moveTo(2.6, -8.5);
+    ctx.arc(0, -8.5, 2.6, 0, TAU);
+    ctx.moveTo(0, -5.9);
+    ctx.lineTo(0, 11);
+    ctx.moveTo(-5.5, -2.5);
+    ctx.lineTo(5.5, -2.5);
+    ctx.moveTo(-10, 3.5);
+    ctx.quadraticCurveTo(-8.5, 11, 0, 11);
+    ctx.quadraticCurveTo(8.5, 11, 10, 3.5);
+    ctx.stroke();
+    ctx.beginPath();
+    poly(ctx, [[-10, 2], [-12.8, 7], [-7.4, 6.4]]);
+    poly(ctx, [[10, 2], [12.8, 7], [7.4, 6.4]]);
+    ctx.fill();
+  },
+  planet: (ctx) => {
+    ctx.beginPath();
+    circle(ctx, 0, 0, 7);
+    ctx.fill();
+    // The ring as a squashed circle, tilted.
+    ctx.save();
+    ctx.rotate(-0.4);
+    ctx.scale(1, 0.34);
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(0, 0, 12, 0, TAU);
+    ctx.restore();
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  },
+  feather: (ctx) => {
+    ctx.beginPath();
+    ctx.moveTo(-8, 9);
+    ctx.bezierCurveTo(-7, -1, -1, -10, 11, -12);
+    ctx.bezierCurveTo(10, -1, 3, 6, -5, 7.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-11.5, 12.5);
+    ctx.lineTo(4, -4);
+    ctx.stroke();
+  },
+  cherry: (ctx) => {
+    ctx.beginPath();
+    circle(ctx, -5.5, 6, 5.2);
+    circle(ctx, 6, 7.5, 5.2);
+    ctx.fill();
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(-5, 1);
+    ctx.quadraticCurveTo(-1, -6, 4, -11);
+    ctx.moveTo(6, 2.5);
+    ctx.quadraticCurveTo(5, -5, 4, -11);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(4, -11);
+    ctx.quadraticCurveTo(10, -13.5, 12.5, -8);
+    ctx.quadraticCurveTo(7, -7, 4, -11);
+    ctx.fill();
+  },
+  potion: (ctx) => {
+    ctx.beginPath();
+    box(ctx, -3, -12.5, 6, 3.4, 1);
+    ctx.moveTo(-2.4, -8.6);
+    ctx.lineTo(2.4, -8.6);
+    ctx.lineTo(2.4, -4);
+    ctx.bezierCurveTo(8.5, -1.5, 10, 3, 10, 5.5);
+    ctx.bezierCurveTo(10, 10.5, 6, 12.5, 0, 12.5);
+    ctx.bezierCurveTo(-6, 12.5, -10, 10.5, -10, 5.5);
+    ctx.bezierCurveTo(-10, 3, -8.5, -1.5, -2.4, -4);
+    ctx.closePath();
+    circle(ctx, -3, 6.5, 1.7);
+    circle(ctx, 3.5, 3.8, 1.2);
+    ctx.fill('evenodd');
+  },
 };
 
 /** Draws `glyph` centred at (x, y), `size` px wide, in `color`. */
@@ -1352,6 +1431,59 @@ function drawEffect(ctx: Ctx, effect: EffectData['effect'], accent: string, w: n
         ctx.globalAlpha = 0.3 + rng() * 0.4;
         const color = ['#8FB36B', '#e0a43a', '#d0682a', '#a8401a'][Math.floor(rng() * 4)];
         drawGlyph(ctx, 'leaf', rng() * w, rng() * h, 9 + rng() * 13, color, rng() * Math.PI * 2);
+      }
+      break;
+    case 'bubbles':
+      // Soap bubbles: thin rings with a catch light, more of them towards the bottom.
+      for (let i = 0; i < 24; i++) {
+        const r = 4 + rng() * rng() * 18;
+        const x = rng() * w;
+        const y = h * (0.25 + rng() * 0.8);
+        ctx.globalAlpha = 0.25 + rng() * 0.35;
+        ctx.strokeStyle = lighten(accent, 0.55);
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        circle(ctx, x, y, r);
+        ctx.stroke();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        circle(ctx, x - r * 0.35, y - r * 0.38, Math.max(1, r * 0.18));
+        ctx.fill();
+      }
+      break;
+    case 'fireflies':
+      // Warm points of light with a soft halo.
+      for (let i = 0; i < 30; i++) {
+        const x = rng() * w;
+        const y = rng() * h;
+        const r = 1.4 + rng() * 2.2;
+        const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 6);
+        halo.addColorStop(0, 'rgba(236, 255, 140, 0.55)');
+        halo.addColorStop(1, 'rgba(236, 255, 140, 0)');
+        ctx.globalAlpha = 0.5 + rng() * 0.5;
+        ctx.fillStyle = halo;
+        ctx.fillRect(x - r * 6, y - r * 6, r * 12, r * 12);
+        ctx.fillStyle = '#F7FFC4';
+        ctx.beginPath();
+        circle(ctx, x, y, r);
+        ctx.fill();
+      }
+      break;
+    case 'petals':
+      // Cherry blossom petals drifting across the card.
+      for (let i = 0; i < 26; i++) {
+        ctx.globalAlpha = 0.35 + rng() * 0.45;
+        ctx.fillStyle = ['#F7A8C4', '#FBCFE0', '#F48FB1'][Math.floor(rng() * 3)];
+        ctx.save();
+        ctx.translate(rng() * w, rng() * h);
+        ctx.rotate(rng() * TAU);
+        const s = 4 + rng() * 6;
+        ctx.beginPath();
+        ctx.moveTo(0, -s);
+        ctx.quadraticCurveTo(s * 0.9, -s * 0.2, 0, s);
+        ctx.quadraticCurveTo(-s * 0.9, -s * 0.2, 0, -s);
+        ctx.fill();
+        ctx.restore();
       }
       break;
   }
@@ -2151,20 +2283,101 @@ function drawXpBar(ctx: Ctx, { x, y, w, h }: Rect, fraction: number, style: XpBa
 
 // ---------- Badges + sticker ----------
 
+/** The emblem outline per rarity, centred on (0, 0) with radius `r`. */
+function emblemPath(ctx: Ctx, rarity: BadgeData['rarity'], r: number) {
+  ctx.beginPath();
+  if (rarity === 'epic') {
+    for (let i = 0; i < 6; i += 1) {
+      const a = (i / 6) * TAU - Math.PI / 2;
+      if (i) ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); else ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+  } else if (rarity === 'legendary') {
+    ctx.moveTo(0, -r);
+    ctx.quadraticCurveTo(r * 0.55, -r * 0.72, r * 0.92, -r * 0.78);
+    ctx.quadraticCurveTo(r * 0.98, r * 0.15, 0, r);
+    ctx.quadraticCurveTo(-r * 0.98, r * 0.15, -r * 0.92, -r * 0.78);
+    ctx.quadraticCurveTo(-r * 0.55, -r * 0.72, 0, -r);
+  } else if (rarity === 'mythic') {
+    for (let i = 0; i < 16; i += 1) {
+      const a = (i / 16) * TAU - Math.PI / 2;
+      const radius = i % 2 ? r * 0.78 : r;
+      if (i) ctx.lineTo(Math.cos(a) * radius, Math.sin(a) * radius); else ctx.moveTo(Math.cos(a) * radius, Math.sin(a) * radius);
+    }
+  } else {
+    ctx.moveTo(r, 0);
+    ctx.arc(0, 0, r, 0, TAU);
+  }
+  ctx.closePath();
+}
+
+/** Rim metal per rarity: bronze, silver, a lilac silver, gold and gold again for the star. */
+const EMBLEM_METAL: Record<NonNullable<BadgeData['rarity']>, string> = {
+  common: '#B58A5A', rare: '#C9D2DE', epic: '#C9B8F2', legendary: '#F2C24E', mythic: '#F5CF5C',
+};
+
+/**
+ * A badge as a real emblem: shape and rim metal by rarity (medallion, hexagon, shield, star), a soft drop shadow, a lit
+ * metal rim, an inner field in the badge colour, the symbol embossed in a light tint and a gloss over the top.
+ */
+export function drawEmblem(ctx: Ctx, badge: BadgeData, cx: number, cy: number, size: number) {
+  const rarity = badge.rarity ?? 'common';
+  const r = size / 2;
+  const metal = EMBLEM_METAL[rarity];
+  ctx.save();
+  ctx.translate(cx, cy);
+  // Shadow under the whole emblem.
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = size * 0.16;
+  ctx.shadowOffsetY = size * 0.06;
+  emblemPath(ctx, rarity, r);
+  const rim = ctx.createLinearGradient(-r, -r, r, r);
+  rim.addColorStop(0, lighten(metal, 0.55));
+  rim.addColorStop(0.45, metal);
+  rim.addColorStop(1, darken(metal, 0.45));
+  ctx.fillStyle = rim;
+  ctx.fill();
+  resetShadow(ctx);
+  // Inner field: the badge colour, lighter in the middle, deep at the edge.
+  const inner = r * 0.78;
+  emblemPath(ctx, rarity, inner);
+  const field = ctx.createRadialGradient(-inner * 0.25, -inner * 0.3, inner * 0.1, 0, 0, inner * 1.1);
+  field.addColorStop(0, lighten(badge.color, 0.12));
+  field.addColorStop(0.55, darken(badge.color, 0.25));
+  field.addColorStop(1, darken(badge.color, 0.62));
+  ctx.fillStyle = field;
+  ctx.fill();
+  ctx.strokeStyle = withAlpha(darken(metal, 0.55), 0.9);
+  ctx.lineWidth = Math.max(1, size * 0.03);
+  ctx.stroke();
+  // Embossed symbol: a dark offset copy under a light one.
+  const glyph = size * 0.5;
+  drawGlyph(ctx, badge.glyph, size * 0.025, size * 0.035, glyph, withAlpha(darken(badge.color, 0.7), 0.85));
+  drawGlyph(ctx, badge.glyph, 0, 0, glyph, lighten(badge.color, 0.72));
+  // Gloss across the upper half of the field.
+  ctx.save();
+  emblemPath(ctx, rarity, inner);
+  ctx.clip();
+  const gloss = ctx.createLinearGradient(0, -inner, 0, inner * 0.2);
+  gloss.addColorStop(0, 'rgba(255, 255, 255, 0.32)');
+  gloss.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = gloss;
+  ctx.beginPath();
+  ctx.moveTo(-inner * 1.2, -inner * 1.2);
+  ctx.lineTo(inner * 1.2, -inner * 1.2);
+  ctx.lineTo(inner * 1.2, -inner * 0.05);
+  ctx.quadraticCurveTo(0, inner * 0.18, -inner * 1.2, -inner * 0.05);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+  ctx.restore();
+}
+
 /** Draws the badge row right-aligned at `right`; returns its width. */
 function drawBadges(ctx: Ctx, badges: BadgeData[], right: number, top: number): number {
   const shown = badges.slice(0, 3);
   shown.forEach((badge, index) => {
     const x = right - (shown.length - index) * (BADGE_SIZE + BADGE_GAP) + BADGE_GAP;
-    ctx.save();
-    roundedRect(ctx, x, top, BADGE_SIZE, BADGE_SIZE, 12);
-    ctx.fillStyle = withAlpha(badge.color, 0.14);
-    ctx.fill();
-    ctx.strokeStyle = withAlpha(badge.color, 0.42);
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    ctx.restore();
-    drawGlyph(ctx, badge.glyph, x + BADGE_SIZE / 2, top + BADGE_SIZE / 2, 22, badge.color);
+    drawEmblem(ctx, badge, x + BADGE_SIZE / 2, top + BADGE_SIZE / 2, BADGE_SIZE);
   });
   return shown.length ? shown.length * (BADGE_SIZE + BADGE_GAP) - BADGE_GAP : 0;
 }
@@ -2249,9 +2462,9 @@ export function renderItemPreview<I extends ProfileImage>(
       drawAvatar(ctx, assets.avatar, avatar(h * 0.2, h * 0.4), null, accent, subject.name);
       drawXpBar(ctx, { x: w * 0.2, y: h * 0.74, w: w * 0.6, h: 12 }, 0.62, null, accent);
       break;
-    case 'badge': zoomAt(2.2); drawBadges(ctx, [item.data], BADGE_SIZE / 2, -BADGE_SIZE / 2); break;
+    case 'badge': zoomAt(2.2); drawBadges(ctx, [{ ...item.data, rarity: item.rarity }], BADGE_SIZE / 2, -BADGE_SIZE / 2); break;
     case 'sticker': zoomAt(2.2); drawSticker(ctx, item.data, 0, 0); break;
-    case 'pet': drawPet(ctx, item.data, w / 2, h / 2 - 6, h * 0.36, 2); break;
+    case 'pet': drawPet(ctx, item.data, w / 2, h / 2 - 6, h * 0.36, 3); break;
     case 'xpBar': drawXpBar(ctx, { x: w * 0.12, y: h / 2 - 10, w: w * 0.76, h: 20 }, 0.66, item.data, accent); break;
     case 'nameStyle': drawName(ctx, subject.name, w / 2, h / 2 + 14, 'center', 44, 'inter', item.data, w * 0.86); break;
     case 'font': drawName(ctx, subject.name, w / 2, h / 2 + 14, 'center', 44, item.data.font, null, w * 0.86); break;
@@ -2313,7 +2526,7 @@ export function renderProfileCard<I extends ProfileImage>(
   if (cosmetics.pet) {
     const stage = subject.petStage ?? 1;
     const at = petPoint(g.avatar, stage);
-    drawPet(ctx, cosmetics.pet, at.x, at.y, at.size, stage);
+    drawPet(ctx, cosmetics.pet, at.x, at.y, at.size, stage, subject.petHungry);
   }
 
   const badgeRight = badgeRowRight(g, sticker);
@@ -2612,7 +2825,7 @@ export function renderYearCard<I extends ProfileImage>(
   drawAvatar(ctx, assets.avatar, avatar, cosmetics.frame, accent, subject.name);
   if (cosmetics.pet) {
     const at = petPoint(avatar, subject.petStage ?? 1);
-    drawPet(ctx, cosmetics.pet, at.x, at.y, at.size, subject.petStage ?? 1);
+    drawPet(ctx, cosmetics.pet, at.x, at.y, at.size, subject.petStage ?? 1, subject.petHungry);
   }
   drawRuns(ctx, [{ text: 'DEIN NEXO-JAHR', font: font('inter', 700, 15), color: lighten(accent, 0.25) }], 216, 96, 'left');
   drawName(ctx, subject.name, 216, 142, 'left', 40, cosmetics.font?.font ?? 'inter', cosmetics.nameStyle, 520);

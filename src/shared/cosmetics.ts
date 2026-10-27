@@ -32,15 +32,21 @@ export const FRAME_STYLES = ['solid', 'gradient', 'glow', 'double', 'dashed', 'n
 /** Illustrated styles (vine … lightning) take colours [main, second] and ignore `width`. */
 export interface FrameData { style: (typeof FRAME_STYLES)[number]; colors: string[]; width: number }
 /** Badge glyph: one of BADGE_GLYPHS (drawn as vector shapes by the renderer, no emoji fonts needed). */
-export interface BadgeData { glyph: BadgeGlyph; color: string }
-export const PET_SPECIES = ['fox', 'owl', 'cat', 'axolotl', 'dragon'] as const;
+/** `rarity` is not stored: it is added when the badge is resolved for drawing and picks the emblem's shape and metal. */
+export interface BadgeData { glyph: BadgeGlyph; color: string; rarity?: Rarity }
+export const PET_SPECIES = [
+  'fox', 'owl', 'cat', 'axolotl', 'dragon', 'bunny', 'penguin', 'panda', 'frog',
+  'butterfly', 'chicken', 'dog', 'wolf', 'horse', 'turtle', 'koi', 'snail', 'hedgehog', 'bat', 'squirrel', 'hamster', 'bee', 'octopus', 'jellyfish',
+  'seahorse', 'crab', 'snake', 'chameleon', 'sloth', 'raccoon', 'sparrow', 'parrot', 'mushroom', 'slime', 'ghost', 'golem', 'salamander', 'whale', 'bear',
+] as const;
 /** A companion on the profile card (shared/pets.ts draws it). */
 export interface PetData { species: (typeof PET_SPECIES)[number]; color: string }
 export interface TitleData { text: string; color: string }
 export const XP_BAR_STYLES = ['solid', 'gradient', 'striped', 'segmented', 'glow', 'pixel', 'wave', 'flame', 'vine', 'comet'] as const;
 export interface XpBarData { style: (typeof XP_BAR_STYLES)[number]; colors: string[] }
 export interface FontData { font: 'inter' | 'unbounded' | 'caveat' }
-export interface EffectData { effect: 'sparkles' | 'snow' | 'confetti' | 'aurora' | 'scanlines' | 'stardust' | 'embers' | 'hearts' | 'leaves' }
+export const EFFECTS = ['sparkles', 'snow', 'confetti', 'aurora', 'scanlines', 'stardust', 'embers', 'hearts', 'leaves', 'bubbles', 'fireflies', 'petals'] as const;
+export interface EffectData { effect: (typeof EFFECTS)[number] }
 export interface LevelupData { style: 'classic' | 'minimal' | 'neon' | 'royal' | 'retro'; color: string }
 export const CARD_LAYOUTS = ['classic', 'compact', 'centered', 'split', 'banner', 'mirror', 'minimal'] as const;
 export interface LayoutData { layout: (typeof CARD_LAYOUTS)[number] }
@@ -56,7 +62,7 @@ export function withSpot(sticker: StickerData | null, spot: StickerSpot | null):
 export const BADGE_GLYPHS = [
   'star', 'crown', 'flame', 'bolt', 'heart', 'diamond', 'shield', 'leaf', 'moon', 'sun', 'snowflake', 'skull',
   'music', 'controller', 'fish', 'pickaxe', 'dice', 'trophy', 'rocket', 'ghost', 'pumpkin', 'gift', 'paw', 'code',
-  'acorn', 'mushroom', 'tree', 'egg', 'mask', 'chat', 'mic', 'clock',
+  'acorn', 'mushroom', 'tree', 'egg', 'mask', 'chat', 'mic', 'clock', 'anchor', 'planet', 'feather', 'cherry', 'potion',
 ] as const;
 export type BadgeGlyph = (typeof BADGE_GLYPHS)[number];
 
@@ -172,6 +178,8 @@ export interface ProfileCardSubject {
   balance: number;
   /** Growth of the companion (1–3, from the days the member chatted; shared/pets.ts). */
   petStage?: number;
+  /** The pet went two days without food: it looks sad (shared/pets.ts). */
+  petHungry?: boolean;
 }
 
 // ---------- Earning (defaults; the economy service may read overrides from the owner config) ----------

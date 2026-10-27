@@ -239,9 +239,10 @@ export function BundleSection({ bundles, listings, event }: { bundles: ShopBundl
   if (!shown.length) return null;
   const visible = expanded ? shown : shown.slice(0, 4);
   return (
-    // A showcase of its own in the page's mode (the bundle tiles inside stay dark like the item tiles).
+    // A showcase of its own in the page's mode (the bundle tiles inside stay dark like the item tiles). Clipped, not hidden:
+    // the glows reach past the edge, and a hidden overflow could be scrolled (scrollIntoView), shifting the content up.
     <>
-    <section className="relative mt-12 overflow-hidden rounded-[28px] border border-[var(--border)] bg-surface p-5 shadow-[var(--card-shadow,none)] md:p-7">
+    <section className="relative mt-12 overflow-clip rounded-[28px] border border-[var(--border)] bg-surface p-5 shadow-[var(--card-shadow,none)] md:p-7">
       <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#f2a531]/15 blur-[90px]" />
       <div className="pointer-events-none absolute -bottom-28 right-0 h-72 w-96 rounded-full bg-[#8fb36b]/12 blur-[100px]" />
       <div className="relative mb-5 flex flex-wrap items-end gap-3">

@@ -81,7 +81,7 @@ export default function BlackMarketPage() {
       <PageHeader kicker="Mein Profil" title="Black Market" description="Jede Woche neue Karten: Artikel aus dem Shop zum Sonderpreis und mythische Exklusive, die es nur hier gibt. Montags um Mitternacht wird neu gemischt." />
       {/* The black market (banner and cards) stays dark in both modes. */}
       <div data-mode="dark">
-        <section className="relative mb-6 overflow-hidden rounded-[20px] border border-rose-500/20 bg-[#070608] p-6 md:p-8">
+        <section className="relative mb-6 overflow-clip rounded-[20px] border border-rose-500/20 bg-[#070608] p-6 md:p-8">
           <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,rgba(255,255,255,.028)_0_1px,transparent_1px_3px)]" />
           <div className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-rose-600/20 blur-[110px]" />
           <div className="pointer-events-none absolute -bottom-40 left-10 h-72 w-72 rounded-full bg-amber-800/15 blur-[110px]" />

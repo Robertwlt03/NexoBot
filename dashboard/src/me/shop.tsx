@@ -145,7 +145,7 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
   return (
     <>
       {/* Showcase banner: dark in both modes, like a lit shop window. */}
-      <section data-mode="dark" className="@container relative overflow-hidden rounded-[24px] border border-white/[.07]">
+      <section data-mode="dark" className="@container relative overflow-clip rounded-[24px] border border-white/[.07]">
         <div className="absolute inset-0" style={heroBackground?.slot === 'background' ? backgroundStyle(heroBackground.data) : { background: 'var(--hero-glow), var(--brand-gradient)' }} />
         {/* With an event scene the right side stays dark too, so the scene reads against a calm ground. */}
         <div className={`absolute inset-0 ${theme ? 'bg-[linear-gradient(90deg,rgba(9,9,12,.94)_0%,rgba(9,9,12,.72)_50%,rgba(9,9,12,.5)_100%)]' : 'bg-[linear-gradient(90deg,rgba(9,9,12,.94)_0%,rgba(9,9,12,.7)_45%,rgba(9,9,12,.15)_100%)]'}`} />
