@@ -27,7 +27,7 @@ type Paint = string | object;
 // ---------- Care ----------
 
 export type PetStage = 1 | 2 | 3 | 4;
-export const PET_STAGE_NAMES = ['Jungtier', 'Halbstark', 'Ausgewachsen', 'Legendär'] as const;
+export const PET_STAGE_NAMES = ['Babyform', 'Jugendform', 'Erwachsenenform', 'Kronenform'] as const;
 /** Care days from which each stage starts. */
 export const PET_STAGE_CARE = [0, 5, 15, 40] as const;
 /** Food portions a member can keep in stock. */
@@ -53,7 +53,7 @@ export interface PetCare {
   itemId: string;
   care: number;
   stage: PetStage;
-  /** Care days the next stage starts at (null at "Legendär"). */
+  /** Care days the next stage starts at (null at "Kronenform"). */
   nextAt: number | null;
   /** Berlin day of the last feeding (YYYY-MM-DD). */
   lastFed: string;
@@ -67,7 +67,7 @@ export function petCare(itemId: string, care: number, lastFed: string, today: st
   return { itemId, care, stage: petStage(care), nextAt: nextStageAt(care), lastFed, fedToday: since <= 0, hungry: since >= PET_HUNGRY_AFTER };
 }
 
-/** Size factor of the avatar radius per stage (Legendär keeps the adult size and gets its aura and crown instead). */
+/** Size factor of the avatar radius per stage (the crown form keeps the adult size and gets its aura and crown instead). */
 const STAGE_SIZE = [0.34, 0.42, 0.5, 0.5];
 
 /** Where the companion sits: on the lower left rim of the avatar. */
@@ -110,11 +110,13 @@ function shape(ctx: PetCtx, fill: Paint, line: string | null, path: () => void) 
   }
 }
 
-/** Mood of the pet being drawn (set by drawPet; the drawing is synchronous). */
+/** Mood and eye size of the pet being drawn (set by drawPet; the drawing is synchronous). */
 let hungry = false;
+let eyeScale = 1;
 
 /** Glossy eyes: a dark iris with a soft lighter rim, two catch lights. Hungry, the lids droop and a tear runs. */
-function eyes(ctx: PetCtx, x: number, y: number, r: number, ink: string) {
+function eyes(ctx: PetCtx, x: number, y: number, size: number, ink: string) {
+  const r = size * eyeScale;
   for (const side of [-1, 1]) {
     const cx = side * x;
     const iris = ctx.createRadialGradient(cx, y + r * 0.5, r * 0.2, cx, y, r * 1.15);
@@ -404,11 +406,84 @@ function sparkle(ctx: PetCtx, x: number, y: number, r: number, fill: string, lin
 
 const GOLD = '#F5C542';
 
+/** Eye size per stage: babies have the biggest eyes. */
+const EYE_SCALE = [1.35, 1.15, 1, 1];
+
+/** Half an eggshell worn as a hat (Babyform). */
+function eggshell(ctx: PetCtx) {
+  ctx.save();
+  ctx.translate(-3, -33);
+  ctx.rotate(-0.18);
+  ctx.lineWidth = 2;
+  shape(ctx, '#FFF8EC', '#B8A58A', () => {
+    ctx.moveTo(-13, 2);
+    ctx.bezierCurveTo(-13, -13, 13, -13, 13, 2);
+    for (const [px, py] of [[10, -1.5], [7, 3], [4, -1.5], [1, 3], [-2, -1.5], [-5, 3], [-8, -1.5], [-11, 3]] as const) ctx.lineTo(px, py);
+    ctx.closePath();
+  });
+  shape(ctx, '#E8D9C0', null, () => ellipse(ctx, -4, -5, 1.7, 1.2));
+  shape(ctx, '#E8D9C0', null, () => ellipse(ctx, 5, -7.5, 1.2, 0.9));
+  ctx.restore();
+}
+
+/** Neckerchief in teal with light dots (Jugendform). */
+function neckerchief(ctx: PetCtx) {
+  ctx.lineWidth = 2;
+  shape(ctx, '#2BB3A3', '#0F5E55', () => {
+    ctx.moveTo(-16, 6);
+    ctx.quadraticCurveTo(0, 12, 16, 6);
+    ctx.lineTo(3, 22);
+    ctx.quadraticCurveTo(0, 24.5, -3, 22);
+    ctx.closePath();
+  });
+  for (const [px, py] of [[-7, 10], [6, 10], [0, 16]] as const) shape(ctx, '#E6FFFB', null, () => ellipse(ctx, px, py, 1.3, 1.3));
+}
+
+/** Leather collar with a gold tag (Erwachsenenform and up). */
+function collar(ctx: PetCtx) {
+  ctx.lineWidth = 2;
+  shape(ctx, '#B4232F', '#5C0F16', () => {
+    ctx.moveTo(-17, 6);
+    ctx.quadraticCurveTo(0, 15, 17, 6);
+    ctx.lineTo(17, 11);
+    ctx.quadraticCurveTo(0, 20, -17, 11);
+    ctx.closePath();
+  });
+  shape(ctx, GOLD, '#8A6410', () => ellipse(ctx, 0, 19, 4.4, 4.4));
+  shape(ctx, '#FFF3C4', null, () => ellipse(ctx, -1.2, 17.6, 1.3, 1.3));
+}
+
+/** Tilted crown on the head and light points around (Kronenform). */
+function crown(ctx: PetCtx) {
+  ctx.save();
+  ctx.translate(2, -34);
+  ctx.rotate(0.12);
+  ctx.lineWidth = 2;
+  shape(ctx, GOLD, '#8A6410', () => {
+    ctx.moveTo(-12, 4);
+    ctx.lineTo(-13, -9);
+    ctx.lineTo(-6, -2);
+    ctx.lineTo(0, -13);
+    ctx.lineTo(6, -2);
+    ctx.lineTo(13, -9);
+    ctx.lineTo(12, 4);
+    ctx.closePath();
+  });
+  shape(ctx, '#E5484D', null, () => ellipse(ctx, 0, -1, 2.4, 2.4));
+  for (const side of [-1, 1]) shape(ctx, '#3DD6C6', null, () => ellipse(ctx, side * 7, 0, 1.6, 1.6));
+  ctx.restore();
+  sparkle(ctx, 42, -30, 6, '#FFF3C4', null);
+  sparkle(ctx, -46, 8, 4.5, '#FFF3C4', null);
+  sparkle(ctx, 40, 30, 3.5, '#FFE27A', null);
+}
+
 /**
- * Draws the companion standing on (x, y + size), `size` = half its height. Each stage shows more: a collar with a gold
- * tag (Halbstark), a sparkle (Ausgewachsen), a golden aura, crown and light points (Legendär). Hungry, it droops.
+ * Draws the companion standing on (x, y + size), `size` = half its height. Each form looks different: Babyform is
+ * stubby with big eyes and an eggshell hat, Jugendform wears a neckerchief, Erwachsenenform a collar with a gold tag
+ * and a sparkle, Kronenform adds a crown, golden aura and light points. Hungry, it droops.
  */
 export function drawPet(ctx: PetCtx, pet: PetData, x: number, y: number, size: number, stage = 1, isHungry = false) {
+  const form = Math.min(4, Math.max(1, Math.round(stage)));
   const k = size / 50;
   const base = pet.species === 'dragon' ? '#FFE7A3' : mixed(pet.color, '#FFFFFF', 0.55);
   const dark = mixed(pet.color, '#000000', 0.28);
@@ -416,7 +491,7 @@ export function drawPet(ctx: PetCtx, pet: PetData, x: number, y: number, size: n
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(k, k);
-  if (stage >= 4) {
+  if (form === 4) {
     const aura = ctx.createRadialGradient(0, 4, 10, 0, 4, 66);
     aura.addColorStop(0, 'rgba(255, 214, 102, 0.55)');
     aura.addColorStop(0.6, 'rgba(255, 196, 64, 0.18)');
@@ -428,49 +503,25 @@ export function drawPet(ctx: PetCtx, pet: PetData, x: number, y: number, size: n
   ground.addColorStop(0, 'rgba(0, 0, 0, 0.38)');
   ground.addColorStop(1, 'rgba(0, 0, 0, 0)');
   shape(ctx, ground, null, () => ellipse(ctx, 0, 50, 34, 6.5));
+  // A baby is stubbier: wider and lower, squashed towards the ground.
+  if (form === 1) {
+    ctx.translate(0, 50);
+    ctx.scale(1.08, 0.9);
+    ctx.translate(0, -50);
+  }
   ctx.lineWidth = 2.4;
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
   hungry = isHungry;
+  eyeScale = EYE_SCALE[form - 1];
   if (isHungry) ctx.translate(0, 2);
   DRAWERS[pet.species](ctx, lit(ctx, pet.color), lit(ctx, base), lit(ctx, dark), line);
-  if (stage >= 2) {
-    // Collar with a gold tag under the chin.
-    ctx.lineWidth = 2;
-    shape(ctx, '#B4232F', '#5C0F16', () => {
-      ctx.moveTo(-17, 6);
-      ctx.quadraticCurveTo(0, 15, 17, 6);
-      ctx.lineTo(17, 11);
-      ctx.quadraticCurveTo(0, 20, -17, 11);
-      ctx.closePath();
-    });
-    shape(ctx, GOLD, '#8A6410', () => ellipse(ctx, 0, 19, 4.4, 4.4));
-    shape(ctx, '#FFF3C4', null, () => ellipse(ctx, -1.2, 17.6, 1.3, 1.3));
-  }
-  if (stage >= 3) sparkle(ctx, -40, -38, 8, '#FFE27A', line);
-  if (stage >= 4) {
-    // Crown on the head, tilted a little, and light points around.
-    ctx.save();
-    ctx.translate(2, -34);
-    ctx.rotate(0.12);
-    ctx.lineWidth = 2;
-    shape(ctx, GOLD, '#8A6410', () => {
-      ctx.moveTo(-12, 4);
-      ctx.lineTo(-13, -9);
-      ctx.lineTo(-6, -2);
-      ctx.lineTo(0, -13);
-      ctx.lineTo(6, -2);
-      ctx.lineTo(13, -9);
-      ctx.lineTo(12, 4);
-      ctx.closePath();
-    });
-    shape(ctx, '#E5484D', null, () => ellipse(ctx, 0, -1, 2.4, 2.4));
-    for (const side of [-1, 1]) shape(ctx, '#3DD6C6', null, () => ellipse(ctx, side * 7, 0, 1.6, 1.6));
-    ctx.restore();
-    sparkle(ctx, 42, -30, 6, '#FFF3C4', null);
-    sparkle(ctx, -46, 8, 4.5, '#FFF3C4', null);
-    sparkle(ctx, 40, 30, 3.5, '#FFE27A', null);
-  }
+  if (form === 1) eggshell(ctx);
+  if (form === 2) neckerchief(ctx);
+  if (form >= 3) collar(ctx);
+  if (form === 3) sparkle(ctx, -40, -38, 8, '#FFE27A', line);
+  if (form === 4) crown(ctx);
   hungry = false;
+  eyeScale = 1;
   ctx.restore();
 }

@@ -19,8 +19,8 @@ const meta = {
     docs: {
       description: {
         component: [
-          '- `PetPortrait`: zeichnet ein Tier mit demselben Code wie der Bot (`drawPet` in `src/shared/pets.ts`) auf ein Canvas, in seiner Stufe und Laune. `size` ist die Kantenlänge in Pixeln.',
-          '- Stufen: Jungtier, Halbstark (Halsband mit Goldmarke), Ausgewachsen (Funkeln) und Legendär (Krone und goldene Aura), ab 0, 5, 15 und 40 Pflegetagen. Ein Pflegetag ist eine Fütterung; Futter gibt es nur für alle drei Tagesaufgaben.',
+          '- `PetPortrait`: zeichnet ein Tier mit demselben Code wie der Bot (`drawPet` in `src/shared/pets.ts`) auf ein Canvas, in seiner Form und Laune. `size` ist die Kantenlänge in Pixeln.',
+          '- Formen: Babyform (rundlich, große Augen, Eierschale als Hut), Jugendform (Halstuch), Erwachsenenform (Halsband mit Goldmarke und Funkeln) und Kronenform (Krone und goldene Aura), ab 0, 5, 15 und 40 Pflegetagen. Ein Pflegetag ist eine Fütterung; Futter gibt es nur für alle drei Tagesaufgaben.',
           '- `hungry`: nach zwei Tagen ohne Futter hängen die Lider und eine Träne läuft; das Tier wächst dann nicht weiter.',
           '- Die Karte „Begleiter“ (`PetCareCard`) mit Füttern-Knopf steht auf der Seite „Profil“.',
         ].join('\n'),
@@ -34,8 +34,8 @@ type Story = StoryObj<typeof meta>;
 
 export const Einzeln: Story = {};
 
-/** Ein Tier durch alle vier Stufen, rechts hungrig. */
-export const Stufen: Story = {
+/** Ein Tier durch alle vier Formen, rechts hungrig. */
+export const Formen: Story = {
   render: (args) => (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
       {PET_STAGE_NAMES.map((name, i) => (
@@ -46,7 +46,7 @@ export const Stufen: Story = {
   ),
 };
 
-/** Alle Arten in der Stufe „Ausgewachsen“. */
+/** Alle Arten in der Erwachsenenform. */
 export const AlleArten: Story = {
   name: 'Alle Arten',
   render: () => (

@@ -27,7 +27,7 @@ export function PetPortrait({ pet, stage, hungry, size }: { pet: PetData; stage:
 
 const mood = (care: PetCare) => (care.hungry ? 'Hat Hunger und wächst gerade nicht' : care.fedToday ? 'Satt und zufrieden' : 'Freut sich auf Futter');
 
-/** Care days towards the next stage as a bar (full at "Legendär"). */
+/** Care days towards the next form as a bar (full at "Kronenform"). */
 function CareBar({ care }: { care: PetCare }) {
   const from = [0, 5, 15, 40][care.stage - 1];
   const share = care.nextAt === null ? 1 : (care.care - from) / (care.nextAt - from);
@@ -37,7 +37,7 @@ function CareBar({ care }: { care: PetCare }) {
         <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${Math.max(4, share * 100)}%` }} />
       </div>
       <div className="mt-1 text-[11.5px] tabular-nums text-faint">
-        {care.nextAt === null ? `${care.care} Pflegetage · höchste Stufe` : `${care.care} / ${care.nextAt} Pflegetage bis ${PET_STAGE_NAMES[care.stage as 1 | 2 | 3]}`}
+        {care.nextAt === null ? `${care.care} Pflegetage · höchste Form` : `${care.care} / ${care.nextAt} Pflegetage bis ${PET_STAGE_NAMES[care.stage as 1 | 2 | 3]}`}
       </div>
     </div>
   );
@@ -56,7 +56,7 @@ export function PetCareCard() {
     return (
       <section className="card !p-5">
         <span className="text-[13px] text-mute">Begleiter</span>
-        <p className="mt-2 text-[13.5px] text-body">Noch kein Tier. Im Shop findest du Begleiter, die mit deiner Pflege bis zur Stufe „Legendär“ wachsen.</p>
+        <p className="mt-2 text-[13.5px] text-body">Noch kein Tier. Im Shop findest du Begleiter, die mit deiner Pflege von der Babyform bis zur Kronenform wachsen.</p>
         <Link to="/me/shop" className="btn btn-secondary btn-sm mt-3 hover:no-underline"><Glyph name="paw" size={15} /> Begleiter ansehen</Link>
       </section>
     );

@@ -25,7 +25,7 @@ export async function petMessage(userId: string, canAttach: boolean) {
 
   if (pets.length === 0) {
     return {
-      container: nexoCard({ kicker: 'Begleiter', title: 'Noch kein Tier', blocks: [{ text: 'Im Shop findest du Begleiter, die mit deiner Pflege bis zur Stufe **Legendär** wachsen.' }, { text: foodLine }, { buttons: link('Begleiter im Shop', '/shop') }] }),
+      container: nexoCard({ kicker: 'Begleiter', title: 'Noch kein Tier', blocks: [{ text: 'Im Shop findest du Begleiter, die mit deiner Pflege von der **Babyform** bis zur **Kronenform** wachsen.' }, { text: foodLine }, { buttons: link('Begleiter im Shop', '/shop') }] }),
       files: [] as AttachmentBuilder[],
     };
   }
@@ -35,7 +35,7 @@ export async function petMessage(userId: string, canAttach: boolean) {
   const files = canAttach ? [new AttachmentBuilder(await renderPetPng(item.data as PetData, main.stage, main.hungry), { name: 'pet.png' })] : [];
   const from = PET_STAGE_CARE[main.stage - 1];
   const progress = main.nextAt === null
-    ? `${main.care} Pflegetage · höchste Stufe erreicht`
+    ? `${main.care} Pflegetage · Kronenform erreicht`
     : `${textBar(main.care - from, main.nextAt - from)} ${main.care} / ${main.nextAt} Pflegetage bis **${PET_STAGE_NAMES[main.stage as 1 | 2 | 3]}**`;
   const mood = main.hungry ? '😢 Hat Hunger: es wächst erst weiter, wenn du es fütterst.' : main.fedToday ? '😋 Satt, heute schon gefüttert.' : '🙂 Freut sich auf Futter.';
   const feed = new ButtonBuilder().setCustomId(`${PET_FEED_BUTTON}:${main.itemId}`).setStyle(ButtonStyle.Primary)

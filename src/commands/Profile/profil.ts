@@ -51,7 +51,7 @@ export default {
       .addIntegerOption((option) => option.setName('jahr').setDescription('Welches Jahr (Standard: das aktuelle)').setMinValue(2024).setMaxValue(2100)))
     .addSubcommand((sub) => sub.setName('rollen').setDescription('Verknüpfte Rollen: Server-Rollen für dein Level, deine Saison-Stufe und mehr'))
     .addSubcommand((sub) => sub.setName('aufgaben').setDescription('Deine drei Tagesaufgaben und wie weit du bist'))
-    .addSubcommand((sub) => sub.setName('pet').setDescription('Dein Begleiter: Stufe, Hunger, Futter und füttern'))
+    .addSubcommand((sub) => sub.setName('pet').setDescription('Dein Begleiter: Form, Hunger, Futter und füttern'))
     .addSubcommand((sub) => sub
       .setName('erinnerung')
       .setDescription('Erinnerung per DM um 19 Uhr an Tagesbonus und offene Aufgaben')
