@@ -2,7 +2,7 @@
 // shop_items storage with a short in-memory cache for the card renderer.
 
 import {
-  BACKGROUND_SCENES, BADGE_GLYPHS, CARD_LAYOUTS, COSMETIC_SLOTS, FRAME_STYLES, PET_SPECIES, RARITIES, STICKER_SPOTS, XP_BAR_STYLES,
+  BACKGROUND_SCENES, BADGE_GLYPHS, CARD_LAYOUTS, COSMETIC_SLOTS, EFFECTS, FRAME_STYLES, PET_SPECIES, RARITIES, STICKER_SPOTS, XP_BAR_STYLES,
   type BackgroundScene, type BadgeGlyph, type CosmeticItem, type CosmeticSlot, type ItemAvailability, type Rarity, type SlotData,
 } from '../../shared/cosmetics.js';
 import { HttpError, badRequest, body, bool, hexColor, int, str } from '../../web/http.js';
@@ -356,7 +356,7 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('levelup', 'lvl-forest-clearing', 'epic', 2400, 'Waldlichtung', 'Ein Aufstieg im grünen Licht.', { style: 'classic', color: '#8FB36B' }),
   item('sticker', 'sticker-acorn', 'rare', 900, 'Eichel-Sticker', 'Eine Eichel für die Ecke.', { glyph: 'acorn', color: '#C98A4B', corner: 'br' }),
   item('sticker', 'sticker-toadstool', 'rare', 1000, 'Pilz-Sticker', 'Ein Fliegenpilz für die Ecke.', { glyph: 'mushroom', color: '#E2574C', corner: 'tr' }),
-  // ---------- Begleiter (sitzen am Avatar und wachsen mit den Chat-Tagen) ----------
+  // ---------- Begleiter (sitzen am Avatar und wachsen mit der Pflege, shared/pets.ts) ----------
   item('pet', 'pet-fox', 'rare', 1200, 'Fuchs', 'Schlau, flauschig und immer an deiner Seite.', { species: 'fox', color: '#E8833A' }),
   item('pet', 'pet-owl', 'rare', 1200, 'Eule', 'Hält nachts Wache, wenn du noch chattest.', { species: 'owl', color: '#9C7A5B' }),
   item('pet', 'pet-cat', 'epic', 2000, 'Katze', 'Sitzt auf deiner Karte, als gehöre sie ihr.', { species: 'cat', color: '#8E95A3' }),
@@ -384,6 +384,161 @@ export const SEED_ITEMS: CosmeticItem[] = [
   item('xpBar', 'xp-pixel', 'rare', 1000, 'Pixelbalken', 'Pixelig wie eine alte Lebensanzeige.', { style: 'pixel', colors: ['#FFD166', '#E86F5B'] }),
   item('badge', 'badge-jolly-roger', 'rare', 1000, 'Totenkopfflagge', 'Für alle, die gern in See stechen.', badge('skull', '#F4E7C5')),
   item('badge', 'badge-guardian', 'rare', 900, 'Schildwache', 'Hält die Stellung.', badge('shield', '#CBD5E1')),
+
+  // ---------- Herbst 2026: neue Motive in jedem Bereich ----------
+  // Hintergründe
+  item('background', 'bg-espresso', 'common', 350, 'Espresso', 'Dunkles Kaffeebraun mit warmem Rand.', bg('gradient', ['#1C120C', '#3B2416'], 150)),
+  item('background', 'bg-slate-rain', 'common', 400, 'Regentag', 'Kühles Grau wie ein ruhiger Regentag.', bg('gradient', ['#1F2933', '#3E4C59'], 170)),
+  item('background', 'bg-plum-velvet', 'common', 450, 'Pflaumensamt', 'Weiches Pflaumenviolett.', bg('solid', ['#2A1530'], 0)),
+  item('background', 'bg-mint-dots', 'common', 500, 'Minzpunkte', 'Feine Punkte auf Tannengrün.', bg('pattern', ['#0E2A23', '#34D399'], 0, 'dots')),
+  item('background', 'bg-ocean-depths', 'rare', 900, 'Meeresgrund', 'Tiefes Blau, in dem Licht von oben tanzt.', bg('aurora', ['#031525', '#0B4F6C', '#20A4C9'])),
+  item('background', 'bg-lavender-field', 'rare', 1000, 'Lavendelfeld', 'Sanfter Verlauf von Lavendel zu Abendblau.', bg('gradient', ['#2E2350', '#7B6CB8', '#C9B8F2'], 120)),
+  item('background', 'bg-copper-wire', 'rare', 1100, 'Kupferdraht', 'Kupferne Leiterbahnen auf dunklem Grund.', bg('pattern', ['#140D08', '#C2703D'], 0, 'circuit')),
+  item('background', 'bg-teal-hex', 'rare', 1200, 'Petrolwabe', 'Waben in Petrol auf Schiefer.', bg('pattern', ['#0B1F24', '#14B8A6'], 0, 'hex')),
+  item('background', 'bg-sunrise-stripes', 'rare', 1300, 'Morgenstreifen', 'Diagonale Streifen in Morgenrot.', bg('pattern', ['#2B0F1A', '#F97362'], 0, 'diagonal')),
+  item('background', 'bg-arctic-waves', 'rare', 1400, 'Polarwellen', 'Eisige Wellen auf Nachtblau.', bg('pattern', ['#0A1628', '#A5D8FF'], 0, 'waves')),
+  item('background', 'bg-cherry-blossom', 'epic', 2400, 'Kirschblütennacht', 'Rosa Nebel über dunklem Holz.', bg('mesh', ['#1A0F14', '#B5486B', '#F7A8C4', '#3B1F2B'])),
+  item('background', 'bg-toxic-glow', 'epic', 2600, 'Giftgrün', 'Grelles Leuchten aus dem Labor.', bg('aurora', ['#06120A', '#3F7D20', '#B6F23C'])),
+  item('background', 'bg-royal-velvet', 'epic', 2800, 'Königssamt', 'Tiefes Purpur mit goldenem Schimmer.', bg('mesh', ['#1A0B2E', '#5B2A86', '#C084FC', '#F5C451'])),
+  item('background', 'bg-desert-dusk', 'epic', 3000, 'Wüstendämmerung', 'Dünen im letzten Licht.', bg('gradient', ['#2A1608', '#9A4A1D', '#F2B36B', '#FCE3B5'], 100)),
+  item('background', 'bg-steel-grid', 'epic', 3200, 'Stahlraster', 'Kühles Raster wie in einer Werkhalle.', bg('pattern', ['#111827', '#9CA3AF'], 0, 'grid')),
+  item('background', 'bg-lagoon', 'legendary', 5500, 'Lagune', 'Türkises Wasser über weißem Sand.', bg('mesh', ['#063342', '#0EA5A4', '#7FE7DA', '#F1F5D8'])),
+  item('background', 'bg-firefly-forest', 'legendary', 6200, 'Glühwürmchenwald', 'Ein dunkler Wald, in dem es leise leuchtet.', bg('aurora', ['#050B07', '#1F3B1D', '#D9F99D'])),
+  item('background', 'bg-solar-flare', 'legendary', 7000, 'Sonnensturm', 'Glühende Bögen auf der Sonnenoberfläche.', bg('mesh', ['#1F0500', '#B91C1C', '#F97316', '#FDE047'])),
+  item('background', 'bg-galaxy-spiral', 'legendary', 8500, 'Spiralgalaxie', 'Millionen Sterne um ein helles Zentrum.', bg('pattern', ['#05031A', '#C4B5FD'], 0, 'stars')),
+  item('background', 'bg-abyss', 'mythic', 9000, 'Abgrund', 'Nur auf dem Schwarzmarkt: Licht, das in der Tiefe verschwindet.', bg('mesh', ['#000000', '#0B132B', '#1C2541', '#5BC0BE']), BM),
+  item('background', 'bg-gilded-hex', 'mythic', 10000, 'Vergoldete Wabe', 'Nur auf dem Schwarzmarkt: Waben aus reinem Gold.', bg('pattern', ['#0A0704', '#FFD166'], 0, 'hex'), BM),
+  item('background', 'bg-pixel-night', 'epic', 2600, 'Pixelnacht', 'Retro-Jump-and-Run bei Nacht.', scene('pixel', ['#0E1033', '#4C3B8F', '#F4E7C5', '#1F4E3D'])),
+
+  // Akzentfarben
+  item('accent', 'acc-lilac', 'common', 350, 'Flieder', 'Helles, freundliches Flieder.', { color: '#C4B5FD' }),
+  item('accent', 'acc-sand', 'common', 350, 'Sand', 'Warmer, heller Sandton.', { color: '#E9C99B' }),
+  item('accent', 'acc-lagoon', 'common', 400, 'Lagune', 'Klares Lagunentürkis.', { color: '#2DD4BF' }),
+  item('accent', 'acc-cherry', 'rare', 850, 'Kirsche', 'Saftiges Kirschrot.', { color: '#F43F5E' }),
+  item('accent', 'acc-lime', 'rare', 900, 'Limette', 'Frisches Limettengrün.', { color: '#A3E635' }),
+  item('accent', 'acc-copper', 'rare', 1000, 'Kupfer', 'Warmes, glänzendes Kupfer.', { color: '#D9864F' }),
+  item('accent', 'acc-sapphire', 'epic', 2200, 'Saphirblau', 'Tiefes, edles Blau.', { color: '#3B82F6' }),
+  item('accent', 'acc-rose-gold', 'legendary', 5200, 'Roségold', 'Zartes Gold mit rosa Schimmer.', { color: '#F2B6A0' }),
+
+  // Namensfarben
+  item('nameStyle', 'name-mint-frost', 'common', 450, 'Minzfrost', 'Kühles Mint auf deinem Namen.', { colors: ['#A7F3D0'], glow: false }),
+  item('nameStyle', 'name-peach', 'common', 500, 'Pfirsich', 'Weicher Pfirsichton.', { colors: ['#FDBA8C'], glow: false }),
+  item('nameStyle', 'name-lagoon', 'rare', 950, 'Lagunenverlauf', 'Von Türkis zu tiefem Blau.', { colors: ['#5EEAD4', '#0EA5E9'], glow: false }),
+  item('nameStyle', 'name-cherry-blossom', 'rare', 1100, 'Kirschblüte', 'Rosa Verlauf wie Blüten im Frühling.', { colors: ['#FBCFE8', '#F472B6'], glow: false }),
+  item('nameStyle', 'name-toxic', 'rare', 1300, 'Giftgrün', 'Grell leuchtendes Grün.', { colors: ['#D9F99D', '#65A30D'], glow: true }),
+  item('nameStyle', 'name-lava', 'epic', 2600, 'Lava', 'Glühend von Gelb bis Tiefrot.', { colors: ['#FDE047', '#F97316', '#B91C1C'], glow: true }),
+  item('nameStyle', 'name-galaxy', 'epic', 3000, 'Galaxie', 'Violett, Blau und ein Hauch Rosa.', { colors: ['#C4B5FD', '#60A5FA', '#F0ABFC'], glow: true }),
+  item('nameStyle', 'name-ice-crown', 'legendary', 5800, 'Eiskrone', 'Glitzernd weiß mit eisblauem Schein.', { colors: ['#FFFFFF', '#BAE6FD', '#7DD3FC'], glow: true }),
+  item('nameStyle', 'name-sunset-boulevard', 'legendary', 6400, 'Sonnenboulevard', 'Ein Sonnenuntergang über der Stadt.', { colors: ['#FDE68A', '#FB7185', '#A855F7'], glow: true }),
+  item('nameStyle', 'name-abyss', 'mythic', 7500, 'Abgrundleuchten', 'Nur auf dem Schwarzmarkt: Türkis aus der Tiefe.', { colors: ['#5BC0BE', '#1C2541', '#A78BFA'], glow: true }, BM),
+
+  // Avatar-Rahmen
+  item('frame', 'frame-copper', 'common', 400, 'Kupferring', 'Schlichter Ring aus Kupfer.', { style: 'solid', colors: ['#C2703D'], width: 4 }),
+  item('frame', 'frame-lilac-dashed', 'common', 450, 'Fliederstrich', 'Gestrichelt in hellem Flieder.', { style: 'dashed', colors: ['#C4B5FD'], width: 3 }),
+  item('frame', 'frame-coral-reef', 'common', 550, 'Korallenriff', 'Verlauf von Koralle zu Lagune.', { style: 'gradient', colors: ['#FB7185', '#2DD4BF'], width: 4 }),
+  item('frame', 'frame-ocean-double', 'rare', 1000, 'Doppelwelle', 'Zwei Ringe in Ozeanblau.', { style: 'double', colors: ['#7DD3FC', '#0369A1'], width: 5 }),
+  item('frame', 'frame-cherry-blossom', 'rare', 1300, 'Kirschzweig', 'Blüten an einem dunklen Zweig.', { style: 'blossom', colors: ['#FBCFE8', '#5B3A29'], width: 5 }),
+  item('frame', 'frame-neon-lime', 'rare', 1400, 'Neonlimette', 'Leuchtröhre in Limettengrün.', { style: 'neon', colors: ['#A3E635'], width: 5 }),
+  item('frame', 'frame-frostfire', 'epic', 2400, 'Frostfeuer', 'Kalte Flammen in Weiß und Eisblau.', { style: 'fire', colors: ['#7DD3FC', '#F0F9FF'], width: 6 }),
+  item('frame', 'frame-amethyst', 'epic', 2600, 'Amethystzacken', 'Kristalle in tiefem Violett.', { style: 'crystal', colors: ['#A78BFA', '#EDE9FE'], width: 5 }),
+  item('frame', 'frame-emerald-laurel', 'epic', 2800, 'Smaragdlorbeer', 'Lorbeerzweige in Smaragd.', { style: 'laurel', colors: ['#34D399', '#065F46'], width: 5 }),
+  item('frame', 'frame-thunder-gold', 'epic', 3000, 'Goldgewitter', 'Goldene Blitze rund um deinen Avatar.', { style: 'lightning', colors: ['#FDE047', '#FFFFFF'], width: 5 }),
+  item('frame', 'frame-sunset-glow', 'epic', 3200, 'Abendschein', 'Weicher Schein in Abendrot.', { style: 'glow', colors: ['#FB7185', '#FDBA74'], width: 6 }),
+  item('frame', 'frame-wisteria', 'legendary', 5500, 'Glyzinienranke', 'Violette Blütentrauben an einer Ranke.', { style: 'vine', colors: ['#C4B5FD', '#5B21B6'], width: 6 }),
+  item('frame', 'frame-silver-crown', 'legendary', 6200, 'Silberkrone', 'Eine Krone aus kühlem Silber.', { style: 'crown', colors: ['#E5E7EB', '#9CA3AF'], width: 6 }),
+  item('frame', 'frame-phoenix', 'legendary', 7500, 'Phönixfeuer', 'Flammen in Gold und Purpur.', { style: 'fire', colors: ['#F59E0B', '#C026D3'], width: 7 }),
+  item('frame', 'frame-abyss-neon', 'mythic', 8500, 'Abgrundneon', 'Nur auf dem Schwarzmarkt: Neon aus der Tiefe.', { style: 'neon', colors: ['#5BC0BE'], width: 6 }, BM),
+  item('frame', 'frame-obsidian-crown', 'mythic', 11000, 'Obsidiankrone', 'Nur auf dem Schwarzmarkt: eine Krone aus schwarzem Glas.', { style: 'crown', colors: ['#1F2937', '#A78BFA'], width: 7 }, BM),
+
+  // Abzeichen
+  item('badge', 'badge-anchor', 'common', 350, 'Anker', 'Fest verankert in der Community.', badge('anchor', '#7DD3FC')),
+  item('badge', 'badge-feather', 'common', 400, 'Feder', 'Leicht wie eine Feder.', badge('feather', '#E9D5FF')),
+  item('badge', 'badge-cherry', 'common', 450, 'Kirschen', 'Zum Anbeißen.', badge('cherry', '#F43F5E')),
+  item('badge', 'badge-mic', 'common', 500, 'Mikrofon', 'Für alle, die gern reden.', badge('mic', '#CBD5E1')),
+  item('badge', 'badge-chat', 'common', 500, 'Sprechblase', 'Hat immer etwas zu sagen.', badge('chat', '#93C5FD')),
+  item('badge', 'badge-planet', 'rare', 900, 'Planet', 'Aus einer anderen Welt.', badge('planet', '#C4B5FD')),
+  item('badge', 'badge-potion', 'rare', 950, 'Zaubertrank', 'Ein Schluck und alles ist möglich.', badge('potion', '#A78BFA')),
+  item('badge', 'badge-clock', 'rare', 900, 'Pünktlich', 'Immer rechtzeitig da.', badge('clock', '#FDE68A')),
+  item('badge', 'badge-dice-gold', 'rare', 1100, 'Glückswürfel', 'Würfelt immer eine Sechs.', badge('dice', '#F5C451')),
+  item('badge', 'badge-pickaxe-iron', 'rare', 1000, 'Eisenhacke', 'Gräbt sich durch jede Mine.', badge('pickaxe', '#94A3B8')),
+  item('badge', 'badge-fish-koi', 'epic', 2000, 'Koi', 'Ein Glücksfisch in Rot und Weiß.', badge('fish', '#FB7185')),
+  item('badge', 'badge-heart-gold', 'epic', 2400, 'Goldherz', 'Ein Herz aus Gold.', badge('heart', '#F5C451')),
+  item('badge', 'badge-planet-ring', 'epic', 2800, 'Ringplanet', 'Saturn hätte ihn gern.', badge('planet', '#F2A531')),
+  item('badge', 'badge-anchor-gold', 'legendary', 5200, 'Goldanker', 'Für alle, die nie untergehen.', badge('anchor', '#F5C451')),
+  item('badge', 'badge-phoenix-feather', 'legendary', 6000, 'Phönixfeder', 'Steigt immer wieder auf.', badge('feather', '#F97316')),
+  item('badge', 'badge-void-potion', 'mythic', 4500, 'Leerentrank', 'Nur auf dem Schwarzmarkt: ein Trank aus dem Nichts.', badge('potion', '#22D3EE'), BM),
+
+  // Titel
+  item('title', 'title-nap-champion', 'common', 350, 'Nickerchen-Profi', 'Kurz die Augen zu. Nur fünf Minuten.', { text: 'Nickerchen-Profi', color: '#C4B5FD' }),
+  item('title', 'title-snack-hunter', 'common', 400, 'Snackjäger', 'Weiß, wo der Kühlschrank steht.', { text: 'Snackjäger', color: '#FDBA74' }),
+  item('title', 'title-gif-master', 'common', 450, 'GIF-Meister', 'Antwortet am liebsten in Bildern.', { text: 'GIF-Meister', color: '#F9A8D4' }),
+  item('title', 'title-night-shift', 'common', 500, 'Nachtschicht', 'Ist um drei Uhr noch online.', { text: 'Nachtschicht', color: '#93C5FD' }),
+  item('title', 'title-plant-parent', 'common', 550, 'Pflanzenmama', 'Gießt pünktlich, redet mit Farnen.', { text: 'Pflanzenmama', color: '#86EFAC' }),
+  item('title', 'title-tea-time', 'common', 400, 'Teekenner', 'Hat für jede Stimmung eine Sorte.', { text: 'Teekenner', color: '#D9F99D' }),
+  item('title', 'title-pet-whisperer', 'rare', 900, 'Tierflüsterer', 'Jedes Tier mag dich.', { text: 'Tierflüsterer', color: '#FDA4AF' }),
+  item('title', 'title-patch-notes', 'rare', 950, 'Liest Patchnotes', 'Weiß als Erstes, was sich geändert hat.', { text: 'Liest Patchnotes', color: '#7DD3FC' }),
+  item('title', 'title-loot-goblin', 'rare', 1000, 'Beutegoblin', 'Sammelt alles, was glänzt.', { text: 'Beutegoblin', color: '#BEF264' }),
+  item('title', 'title-speedrunner', 'rare', 1100, 'Speedrunner', 'Kein Frame zu viel.', { text: 'Speedrunner', color: '#FDE047' }),
+  item('title', 'title-respawn', 'rare', 1200, 'Kommt immer wieder', 'Respawn in drei, zwei, eins.', { text: 'Kommt immer wieder', color: '#A5B4FC' }),
+  item('title', 'title-quest-giver', 'rare', 1300, 'Questgeber', 'Hat immer eine Aufgabe für dich.', { text: 'Questgeber', color: '#FCD34D' }),
+  item('title', 'title-captain', 'epic', 2200, 'Kapitän', 'Steuert die Crew durch jeden Sturm.', { text: 'Kapitän', color: '#7DD3FC' }),
+  item('title', 'title-alchemist', 'epic', 2400, 'Alchemist', 'Macht aus Bronze Gold.', { text: 'Alchemist', color: '#C4B5FD' }),
+  item('title', 'title-stargazer', 'epic', 2600, 'Sterngucker', 'Kennt jedes Sternbild beim Namen.', { text: 'Sterngucker', color: '#E0E7FF' }),
+  item('title', 'title-beast-tamer', 'epic', 2800, 'Bestienbändiger', 'Selbst Drachen fressen dir aus der Hand.', { text: 'Bestienbändiger', color: '#F59E0B' }),
+  item('title', 'title-legend', 'legendary', 6000, 'Lebende Legende', 'Wird in jedem Channel erwähnt.', { text: 'Lebende Legende', color: '#FDE68A' }),
+  item('title', 'title-phoenix', 'legendary', 6800, 'Phönix', 'Steigt aus jeder Asche auf.', { text: 'Phönix', color: '#FB923C' }),
+  item('title', 'title-archmage', 'legendary', 7500, 'Erzmagier', 'Beherrscht jeden Zauber.', { text: 'Erzmagier', color: '#A78BFA' }),
+  item('title', 'title-abyss-walker', 'mythic', 6500, 'Abgrundwanderer', 'Nur auf dem Schwarzmarkt.', { text: 'Abgrundwanderer', color: '#5BC0BE' }, BM),
+
+  // XP-Balken
+  item('xpBar', 'xp-coral', 'common', 350, 'Koralle', 'Schlichter Balken in Korallenrot.', { style: 'solid', colors: ['#FB7185'] }),
+  item('xpBar', 'xp-lilac-fade', 'common', 450, 'Fliederhauch', 'Sanfter Verlauf in Flieder.', { style: 'gradient', colors: ['#C4B5FD', '#8B5CF6'] }),
+  item('xpBar', 'xp-candy', 'common', 550, 'Zuckerwatte', 'Rosa und Hellblau gestreift.', { style: 'striped', colors: ['#F9A8D4', '#93C5FD'] }),
+  item('xpBar', 'xp-retro-arcade', 'rare', 1100, 'Arcade', 'Pixel wie am Spielautomaten.', { style: 'pixel', colors: ['#22D3EE', '#7C3AED'] }),
+  item('xpBar', 'xp-honey', 'rare', 1200, 'Honigtropfen', 'Zäh fließender Honig.', { style: 'wave', colors: ['#F59E0B', '#FDE68A'] }),
+  item('xpBar', 'xp-rose-vine', 'rare', 1300, 'Rosenranke', 'Eine Ranke in Rosé.', { style: 'vine', colors: ['#FB7185', '#9F1239'] }),
+  item('xpBar', 'xp-ruby-segments', 'epic', 2300, 'Rubinsegmente', 'Segmente wie geschliffene Rubine.', { style: 'segmented', colors: ['#E11D48', '#FDA4AF'] }),
+  item('xpBar', 'xp-frost-flame', 'epic', 2700, 'Eisflamme', 'Kalte Flammen in Eisblau.', { style: 'flame', colors: ['#38BDF8', '#E0F2FE'] }),
+  item('xpBar', 'xp-meteor', 'legendary', 6000, 'Meteor', 'Ein glühender Meteor zieht vorbei.', { style: 'comet', colors: ['#F97316', '#FDE68A'] }),
+  item('xpBar', 'xp-abyss-glow', 'mythic', 5500, 'Abgrundglühen', 'Nur auf dem Schwarzmarkt.', { style: 'glow', colors: ['#5BC0BE', '#1C2541'] }, BM),
+
+  // Effekte
+  item('effect', 'effect-bubbles', 'rare', 1200, 'Seifenblasen', 'Schillernde Blasen steigen über deine Karte.', { effect: 'bubbles' }),
+  item('effect', 'effect-fireflies', 'epic', 3200, 'Glühwürmchen', 'Warme Lichtpunkte, die leise leuchten.', { effect: 'fireflies' }),
+  item('effect', 'effect-petals', 'epic', 2800, 'Blütenregen', 'Kirschblütenblätter im Wind.', { effect: 'petals' }),
+
+  // Level-up-Stile
+  item('levelup', 'lvl-classic-lagoon', 'common', 450, 'Lagune', 'Der klassische Aufstieg in Türkis.', { style: 'classic', color: '#2DD4BF' }),
+  item('levelup', 'lvl-minimal-rose', 'common', 500, 'Rosé', 'Reduziert in zartem Rosé.', { style: 'minimal', color: '#FDA4AF' }),
+  item('levelup', 'lvl-retro-lime', 'rare', 1100, 'Arcade-Grün', 'Retro-Aufstieg in Limette.', { style: 'retro', color: '#A3E635' }),
+  item('levelup', 'lvl-neon-pink', 'epic', 2600, 'Neonpink', 'Leuchtröhre in Pink für jeden Aufstieg.', { style: 'neon', color: '#FF3DCB' }),
+  item('levelup', 'lvl-royal-silver', 'legendary', 6000, 'Silberkrönung', 'Eine Krönung in kühlem Silber.', { style: 'royal', color: '#E5E7EB' }),
+
+  // Sticker
+  item('sticker', 'sticker-anchor', 'common', 350, 'Anker-Sticker', 'Ein Anker für die Ecke.', { glyph: 'anchor', color: '#7DD3FC', corner: 'bl' }),
+  item('sticker', 'sticker-cherry', 'common', 400, 'Kirschen-Sticker', 'Zwei Kirschen am Stiel.', { glyph: 'cherry', color: '#F43F5E', corner: 'tr' }),
+  item('sticker', 'sticker-feather', 'common', 450, 'Feder-Sticker', 'Eine leichte Feder.', { glyph: 'feather', color: '#E9D5FF', corner: 'tl' }),
+  item('sticker', 'sticker-heart', 'common', 500, 'Herz-Sticker', 'Ein kleines Herz.', { glyph: 'heart', color: '#FB7185', corner: 'avatar' }),
+  item('sticker', 'sticker-planet', 'rare', 900, 'Planeten-Sticker', 'Ein Ringplanet zieht seine Bahn.', { glyph: 'planet', color: '#C4B5FD', corner: 'tr' }),
+  item('sticker', 'sticker-potion', 'rare', 1000, 'Trank-Sticker', 'Ein blubbernder Zaubertrank.', { glyph: 'potion', color: '#A78BFA', corner: 'br' }),
+  item('sticker', 'sticker-star-gold', 'rare', 1100, 'Goldstern', 'Ein Stern für besondere Leistungen.', { glyph: 'star', color: '#F5C451', corner: 'avatar' }),
+  item('sticker', 'sticker-rocket', 'epic', 2200, 'Raketen-Sticker', 'Abheben, bitte.', { glyph: 'rocket', color: '#F97316', corner: 'tr' }),
+  item('sticker', 'sticker-diamond', 'legendary', 5000, 'Diamant-Sticker', 'Ein funkelnder Diamant.', { glyph: 'diamond', color: '#A5F3FC', corner: 'tl' }),
+  item('sticker', 'sticker-void-planet', 'mythic', 3500, 'Leerenplanet', 'Nur auf dem Schwarzmarkt.', { glyph: 'planet', color: '#22D3EE', corner: 'tr' }, BM),
+
+  // Begleiter: neue Arten und Farben
+  item('pet', 'pet-bunny', 'rare', 1300, 'Hase', 'Mümmelt am liebsten Löwenzahn.', { species: 'bunny', color: '#E9DCCB' }),
+  item('pet', 'pet-bunny-choco', 'rare', 1400, 'Schokohase', 'Ein brauner Hase mit weichem Fell.', { species: 'bunny', color: '#8B5E3C' }),
+  item('pet', 'pet-frog', 'rare', 1100, 'Frosch', 'Quakt bei jeder neuen Nachricht.', { species: 'frog', color: '#5DBB63' }),
+  item('pet', 'pet-cat-black', 'rare', 1500, 'Schwarze Katze', 'Bringt Glück, nicht Pech.', { species: 'cat', color: '#3A3A44' }),
+  item('pet', 'pet-penguin', 'epic', 2200, 'Pinguin', 'Watschelt stolz neben deinem Avatar.', { species: 'penguin', color: '#2F3A56' }),
+  item('pet', 'pet-panda', 'epic', 2600, 'Panda', 'Gemütlich, rund und immer hungrig.', { species: 'panda', color: '#F5F2EA' }),
+  item('pet', 'pet-frog-dart', 'epic', 2400, 'Pfeilgiftfrosch', 'Leuchtend blau und völlig harmlos.', { species: 'frog', color: '#2E8BDB' }),
+  item('pet', 'pet-fox-arctic', 'epic', 2300, 'Polarfuchs', 'Weiß wie frischer Schnee.', { species: 'fox', color: '#E5E9F0' }),
+  item('pet', 'pet-owl-snow', 'epic', 2300, 'Schneeeule', 'Lautlos, weiß und sehr weise.', { species: 'owl', color: '#EDEFF2' }),
+  item('pet', 'pet-penguin-emperor', 'legendary', 5500, 'Kaiserpinguin', 'Der König des Eises.', { species: 'penguin', color: '#1F2937' }),
+  item('pet', 'pet-axolotl-gold', 'legendary', 5800, 'Goldaxolotl', 'Ein seltenes Axolotl in Gold.', { species: 'axolotl', color: '#F5C542' }),
+  item('pet', 'pet-dragon-ember', 'mythic', 11000, 'Glutdrache', 'Aus der Black-Market-Höhle: ein Drache, der glüht.', { species: 'dragon', color: '#C2410C' }, BM),
 ];
 
 // ---------- Bundles ----------
@@ -416,6 +571,16 @@ export const BUNDLES: BundleDef[] = [
     itemIds: ['bg-orbital', 'title-bounty-hunter', 'badge-rocket', 'effect-stardust'] },
   { id: 'bundle-pirate-cove', name: 'Piraten-Paket', description: 'Mondlicht, Segel und die Flagge am Mast.',
     itemIds: ['bg-pirate-cove', 'title-buccaneer', 'badge-jolly-roger', 'sticker-goldfish'] },
+  { id: 'bundle-lagoon', name: 'Lagunen-Paket', description: 'Türkises Wasser, Blasen und ein Anker im Sand.',
+    itemIds: ['bg-lagoon', 'name-lagoon', 'frame-ocean-double', 'effect-bubbles', 'badge-anchor', 'acc-lagoon'] },
+  { id: 'bundle-cherry-blossom', name: 'Kirschblüten-Paket', description: 'Rosa Nebel, Blütenregen und ein Zweig voller Blüten.',
+    itemIds: ['bg-cherry-blossom', 'frame-cherry-blossom', 'name-cherry-blossom', 'effect-petals', 'sticker-cherry'] },
+  { id: 'bundle-alchemy', name: 'Alchemie-Paket', description: 'Tränke, Amethyst und ein Titel für Goldmacher.',
+    itemIds: ['bg-royal-velvet', 'frame-amethyst', 'badge-potion', 'sticker-potion', 'title-alchemist', 'xp-lilac-fade'] },
+  { id: 'bundle-phoenix', name: 'Phönix-Paket', description: 'Feuer in Gold und Purpur, das immer wieder aufsteigt.',
+    itemIds: ['bg-solar-flare', 'frame-phoenix', 'name-lava', 'badge-phoenix-feather', 'title-phoenix', 'xp-meteor'] },
+  { id: 'bundle-firefly', name: 'Glühwürmchen-Paket', description: 'Ein dunkler Wald, in dem es leise leuchtet.',
+    itemIds: ['bg-firefly-forest', 'effect-fireflies', 'name-toxic', 'frame-neon-lime', 'acc-lime'] },
   { id: 'bundle-dungeon', name: 'Dungeon-Paket', description: 'Fackeln an, Schild hoch – der Raid kann beginnen.',
     itemIds: ['bg-dungeon-torches', 'frame-torchlight', 'title-dungeon-master', 'badge-guardian'] },
 ];
@@ -459,7 +624,7 @@ export function parseSlotData(slot: CosmeticSlot, input: unknown): SlotData[Cosm
     case 'title': return { text: str(d.text, 'Titeltext', { min: 1, max: 32 }), color: hexColor(d.color, 'Farbe') };
     case 'xpBar': return { style: oneOf(d.style, XP_BAR_STYLES, 'Stil'), colors: colors(d.colors, 'Farben', 3) };
     case 'font': return { font: oneOf(d.font, ['inter', 'unbounded', 'caveat'] as const, 'Schrift') };
-    case 'effect': return { effect: oneOf(d.effect, ['sparkles', 'snow', 'confetti', 'aurora', 'scanlines', 'stardust', 'embers', 'hearts', 'leaves'] as const, 'Effekt') };
+    case 'effect': return { effect: oneOf(d.effect, EFFECTS, 'Effekt') };
     case 'levelup': return { style: oneOf(d.style, ['classic', 'minimal', 'neon', 'royal', 'retro'] as const, 'Stil'), color: hexColor(d.color, 'Farbe') };
     case 'layout': return { layout: oneOf(d.layout, CARD_LAYOUTS, 'Layout') };
     case 'sticker': return {

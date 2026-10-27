@@ -651,6 +651,85 @@ export const GLYPH_DRAWERS: Record<BadgeGlyph, GlyphDrawer> = {
     poly(ctx, [[0, -12.5], [7.5, -3.5], [4, -3.5], [10, 5], [2, 5], [2, 12], [-2, 12], [-2, 5], [-10, 5], [-4, -3.5], [-7.5, -3.5]]);
     ctx.fill();
   },
+  anchor: (ctx) => {
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.moveTo(2.6, -8.5);
+    ctx.arc(0, -8.5, 2.6, 0, TAU);
+    ctx.moveTo(0, -5.9);
+    ctx.lineTo(0, 11);
+    ctx.moveTo(-5.5, -2.5);
+    ctx.lineTo(5.5, -2.5);
+    ctx.moveTo(-10, 3.5);
+    ctx.quadraticCurveTo(-8.5, 11, 0, 11);
+    ctx.quadraticCurveTo(8.5, 11, 10, 3.5);
+    ctx.stroke();
+    ctx.beginPath();
+    poly(ctx, [[-10, 2], [-12.8, 7], [-7.4, 6.4]]);
+    poly(ctx, [[10, 2], [12.8, 7], [7.4, 6.4]]);
+    ctx.fill();
+  },
+  planet: (ctx) => {
+    ctx.beginPath();
+    circle(ctx, 0, 0, 7);
+    ctx.fill();
+    // The ring as a squashed circle, tilted.
+    ctx.save();
+    ctx.rotate(-0.4);
+    ctx.scale(1, 0.34);
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(0, 0, 12, 0, TAU);
+    ctx.restore();
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  },
+  feather: (ctx) => {
+    ctx.beginPath();
+    ctx.moveTo(-8, 9);
+    ctx.bezierCurveTo(-7, -1, -1, -10, 11, -12);
+    ctx.bezierCurveTo(10, -1, 3, 6, -5, 7.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-11.5, 12.5);
+    ctx.lineTo(4, -4);
+    ctx.stroke();
+  },
+  cherry: (ctx) => {
+    ctx.beginPath();
+    circle(ctx, -5.5, 6, 5.2);
+    circle(ctx, 6, 7.5, 5.2);
+    ctx.fill();
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(-5, 1);
+    ctx.quadraticCurveTo(-1, -6, 4, -11);
+    ctx.moveTo(6, 2.5);
+    ctx.quadraticCurveTo(5, -5, 4, -11);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(4, -11);
+    ctx.quadraticCurveTo(10, -13.5, 12.5, -8);
+    ctx.quadraticCurveTo(7, -7, 4, -11);
+    ctx.fill();
+  },
+  potion: (ctx) => {
+    ctx.beginPath();
+    box(ctx, -3, -12.5, 6, 3.4, 1);
+    ctx.moveTo(-2.4, -8.6);
+    ctx.lineTo(2.4, -8.6);
+    ctx.lineTo(2.4, -4);
+    ctx.bezierCurveTo(8.5, -1.5, 10, 3, 10, 5.5);
+    ctx.bezierCurveTo(10, 10.5, 6, 12.5, 0, 12.5);
+    ctx.bezierCurveTo(-6, 12.5, -10, 10.5, -10, 5.5);
+    ctx.bezierCurveTo(-10, 3, -8.5, -1.5, -2.4, -4);
+    ctx.closePath();
+    circle(ctx, -3, 6.5, 1.7);
+    circle(ctx, 3.5, 3.8, 1.2);
+    ctx.fill('evenodd');
+  },
 };
 
 /** Draws `glyph` centred at (x, y), `size` px wide, in `color`. */
@@ -1352,6 +1431,59 @@ function drawEffect(ctx: Ctx, effect: EffectData['effect'], accent: string, w: n
         ctx.globalAlpha = 0.3 + rng() * 0.4;
         const color = ['#8FB36B', '#e0a43a', '#d0682a', '#a8401a'][Math.floor(rng() * 4)];
         drawGlyph(ctx, 'leaf', rng() * w, rng() * h, 9 + rng() * 13, color, rng() * Math.PI * 2);
+      }
+      break;
+    case 'bubbles':
+      // Soap bubbles: thin rings with a catch light, more of them towards the bottom.
+      for (let i = 0; i < 24; i++) {
+        const r = 4 + rng() * rng() * 18;
+        const x = rng() * w;
+        const y = h * (0.25 + rng() * 0.8);
+        ctx.globalAlpha = 0.25 + rng() * 0.35;
+        ctx.strokeStyle = lighten(accent, 0.55);
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        circle(ctx, x, y, r);
+        ctx.stroke();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        circle(ctx, x - r * 0.35, y - r * 0.38, Math.max(1, r * 0.18));
+        ctx.fill();
+      }
+      break;
+    case 'fireflies':
+      // Warm points of light with a soft halo.
+      for (let i = 0; i < 30; i++) {
+        const x = rng() * w;
+        const y = rng() * h;
+        const r = 1.4 + rng() * 2.2;
+        const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 6);
+        halo.addColorStop(0, 'rgba(236, 255, 140, 0.55)');
+        halo.addColorStop(1, 'rgba(236, 255, 140, 0)');
+        ctx.globalAlpha = 0.5 + rng() * 0.5;
+        ctx.fillStyle = halo;
+        ctx.fillRect(x - r * 6, y - r * 6, r * 12, r * 12);
+        ctx.fillStyle = '#F7FFC4';
+        ctx.beginPath();
+        circle(ctx, x, y, r);
+        ctx.fill();
+      }
+      break;
+    case 'petals':
+      // Cherry blossom petals drifting across the card.
+      for (let i = 0; i < 26; i++) {
+        ctx.globalAlpha = 0.35 + rng() * 0.45;
+        ctx.fillStyle = ['#F7A8C4', '#FBCFE0', '#F48FB1'][Math.floor(rng() * 3)];
+        ctx.save();
+        ctx.translate(rng() * w, rng() * h);
+        ctx.rotate(rng() * TAU);
+        const s = 4 + rng() * 6;
+        ctx.beginPath();
+        ctx.moveTo(0, -s);
+        ctx.quadraticCurveTo(s * 0.9, -s * 0.2, 0, s);
+        ctx.quadraticCurveTo(-s * 0.9, -s * 0.2, 0, -s);
+        ctx.fill();
+        ctx.restore();
       }
       break;
   }

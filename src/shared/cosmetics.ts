@@ -40,7 +40,8 @@ export interface TitleData { text: string; color: string }
 export const XP_BAR_STYLES = ['solid', 'gradient', 'striped', 'segmented', 'glow', 'pixel', 'wave', 'flame', 'vine', 'comet'] as const;
 export interface XpBarData { style: (typeof XP_BAR_STYLES)[number]; colors: string[] }
 export interface FontData { font: 'inter' | 'unbounded' | 'caveat' }
-export interface EffectData { effect: 'sparkles' | 'snow' | 'confetti' | 'aurora' | 'scanlines' | 'stardust' | 'embers' | 'hearts' | 'leaves' }
+export const EFFECTS = ['sparkles', 'snow', 'confetti', 'aurora', 'scanlines', 'stardust', 'embers', 'hearts', 'leaves', 'bubbles', 'fireflies', 'petals'] as const;
+export interface EffectData { effect: (typeof EFFECTS)[number] }
 export interface LevelupData { style: 'classic' | 'minimal' | 'neon' | 'royal' | 'retro'; color: string }
 export const CARD_LAYOUTS = ['classic', 'compact', 'centered', 'split', 'banner', 'mirror', 'minimal'] as const;
 export interface LayoutData { layout: (typeof CARD_LAYOUTS)[number] }
@@ -56,7 +57,7 @@ export function withSpot(sticker: StickerData | null, spot: StickerSpot | null):
 export const BADGE_GLYPHS = [
   'star', 'crown', 'flame', 'bolt', 'heart', 'diamond', 'shield', 'leaf', 'moon', 'sun', 'snowflake', 'skull',
   'music', 'controller', 'fish', 'pickaxe', 'dice', 'trophy', 'rocket', 'ghost', 'pumpkin', 'gift', 'paw', 'code',
-  'acorn', 'mushroom', 'tree', 'egg', 'mask', 'chat', 'mic', 'clock',
+  'acorn', 'mushroom', 'tree', 'egg', 'mask', 'chat', 'mic', 'clock', 'anchor', 'planet', 'feather', 'cherry', 'potion',
 ] as const;
 export type BadgeGlyph = (typeof BADGE_GLYPHS)[number];
 
