@@ -176,6 +176,8 @@ export interface Achievement {
   titleId: string | null;
   unlockedAt: string | null;
   progress: { current: number; target: number } | null;
+  /** A secret achievement: until it is unlocked only its reward is sent (name and condition stay hidden). */
+  hidden: boolean;
 }
 /** GET /me/achievements */
 export interface AchievementsResponse { achievements: Achievement[] }

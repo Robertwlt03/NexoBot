@@ -3,7 +3,7 @@
 
 import type { Achievement } from '../../web/dto/profile.js';
 import { logger } from '../../utils/logger.js';
-import { ACHIEVEMENT_BADGES, type AchievementStat } from './catalog.js';
+import { ACHIEVEMENT_BADGES, HIDDEN_ACHIEVEMENTS, type AchievementStat } from './catalog.js';
 import { ACTIVITY_COUNTERS, CHAT_STATS, GAME_IDS } from './activity.js';
 import { normalizeSettings } from './profile.js';
 import { COSMETIC_SLOTS } from '../../shared/cosmetics.js';
@@ -126,12 +126,20 @@ export async function syncAchievements(userId: string): Promise<string[]> {
   }
 }
 
+/** Every achievement for the member; secret ones not yet unlocked carry only their reward (name, condition and items stay hidden). */
 export async function listAchievements(userId: string): Promise<Achievement[]> {
   const { stats, unlocked } = await readStats(userId);
+  let secret = 0;
   return ACHIEVEMENTS.map((def) => {
     const meta = nameOf(def.id);
     const unlockedAt = unlocked.get(def.id) ?? null;
+    const hidden = HIDDEN_ACHIEVEMENTS.has(def.id);
+    if (hidden && !unlockedAt) {
+      secret += 1;
+      return { id: `hidden-${secret}`, name: 'Verborgener Erfolg', description: '', reward: def.reward, itemId: null, titleId: null, unlockedAt: null, progress: null, hidden };
+    }
     return {
+      hidden,
       id: def.id,
       name: meta?.name ?? def.id,
       description: meta?.description ?? '',

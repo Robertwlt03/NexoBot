@@ -13,7 +13,7 @@ import { HttpError, badRequest, body } from '../http.js';
 import { isBotOwner } from '../../config/bot.js';
 import { getXpForLevel } from '../../services/leveling/leveling.js';
 import { NO_DB_MESSAGE, T, cosmeticsPool, isSnowflake, requirePool } from '../../services/cosmetics/db.js';
-import { loadCatalog } from '../../services/cosmetics/catalog.js';
+import { HIDDEN_ACHIEVEMENTS, loadCatalog } from '../../services/cosmetics/catalog.js';
 import { parseProfileSettings, readDashboardTheme, readProfileSettings, writeDashboardTheme, writeProfileSettings } from '../../services/cosmetics/profile.js';
 import { forgetPalette } from '../../services/messageTheme.js';
 import { buyStreakShield, claimDaily, getDailyState, listTransactions, walletSummary } from '../../services/cosmetics/wallet.js';
@@ -175,7 +175,9 @@ export function meRouter(client: NexoClient): Router {
     const { userId } = locals(res).session;
     const [catalog, owned] = await Promise.all([loadCatalog(), ownedItems(userId)]);
     const ownedIds = new Set(owned.map((entry) => entry.itemId));
-    const items: CosmeticItem[] = [...catalog.values()].filter((entry) => entry.active || ownedIds.has(entry.id));
+    // Badges and titles of secret achievements stay out until owned (their names would give them away).
+    const items: CosmeticItem[] = [...catalog.values()].filter((entry) => ownedIds.has(entry.id)
+      || (entry.active && !(entry.achievementId && HIDDEN_ACHIEVEMENTS.has(entry.achievementId))));
     res.json(items);
   });
 
