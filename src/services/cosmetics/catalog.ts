@@ -31,7 +31,8 @@ const scene = (name: BackgroundScene, colors: string[]) => ({ kind: 'scene' as c
 export type AchievementStat =
   | 'maxLevel' | 'wins' | 'items' | 'streak' | 'lifetime' | 'purchases' | 'gifts' | 'blackMarket' | 'top3'
   | 'daily' | 'spent' | 'giftsReceived' | 'servers' | 'servers10' | 'monthlyWins' | 'eventItems' | 'birthday' | 'bio' | 'outfit'
-  | 'achievements' | 'gamesPlayed' | 'voiceMinutes' | 'chat_days' | 'chat_streak_best' | Exclude<ActivityCounter, 'voice_ms'>;
+  | 'achievements' | 'gamesPlayed' | 'voiceMinutes' | 'chat_days' | 'chat_streak_best' | 'petFeeds' | 'petForm' | 'pets'
+  | Exclude<ActivityCounter, 'voice_ms'>;
 
 /**
  * Every achievement: the stat it watches (services/cosmetics/achievements.ts), its target and Bernis reward, and
@@ -128,6 +129,21 @@ export const ACHIEVEMENT_BADGES: {
   { achievementId: 'monthly_winner', stat: 'monthlyWins', target: 1, reward: 500, name: 'Monatschampion', description: 'Ein Monatsranking gewonnen.', rarity: 'legendary', glyph: 'crown', color: '#F5C451', title: 'Unangefochten' },
   { achievementId: 'achievements_25', stat: 'achievements', target: 25, reward: 400, name: 'Erfolgsjäger', description: '25 Erfolge freigeschaltet.', rarity: 'legendary', glyph: 'trophy', color: '#22D3EE', title: 'Erfolgsjäger' },
   { achievementId: 'achievements_50', stat: 'achievements', target: 50, reward: 1000, name: 'Komplettist', description: '50 Erfolge freigeschaltet.', rarity: 'mythic', glyph: 'trophy', color: '#F472B6', title: 'Komplettist' },
+  // Begleiter (services/cosmetics/pets.ts): feedings, the highest form reached and how many pets.
+  { achievementId: 'pet_feed_1', stat: 'petFeeds', target: 1, reward: 30, name: 'Erste Mahlzeit', description: 'Deinen Begleiter zum ersten Mal gefüttert.', rarity: 'common', glyph: 'paw', color: '#FDA4AF', title: 'Futterbringer' },
+  { achievementId: 'pet_feed_30', stat: 'petFeeds', target: 30, reward: 150, name: 'Treue Pflege', description: '30-mal einen Begleiter gefüttert.', rarity: 'rare', glyph: 'heart', color: '#FB7185', title: 'Tierfreund' },
+  { achievementId: 'pet_feed_100', stat: 'petFeeds', target: 100, reward: 400, name: 'Hundert Mahlzeiten', description: '100-mal einen Begleiter gefüttert.', rarity: 'epic', glyph: 'paw', color: '#F59E0B', title: 'Tierpfleger' },
+  { achievementId: 'pet_feed_365', stat: 'petFeeds', target: 365, reward: 1500, name: 'Ein Jahr Futter', description: '365-mal einen Begleiter gefüttert.', rarity: 'legendary', glyph: 'star', color: '#F5C451', title: 'Hüter der Tiere' },
+  { achievementId: 'pet_form_2', stat: 'petForm', target: 2, reward: 120, name: 'Großgezogen', description: 'Ein Begleiter hat seine Jugendform erreicht.', rarity: 'rare', glyph: 'egg', color: '#86EFAC', title: 'Züchter' },
+  { achievementId: 'pet_form_3', stat: 'petForm', target: 3, reward: 500, name: 'Erwachsen geworden', description: 'Ein Begleiter hat seine Erwachsenenform erreicht.', rarity: 'epic', glyph: 'shield', color: '#7DD3FC', title: 'Rudelführer' },
+  { achievementId: 'pet_form_4', stat: 'petForm', target: 4, reward: 2500, name: 'Kronenform', description: 'Ein Begleiter hat seine Kronenform erreicht.', rarity: 'mythic', glyph: 'crown', color: '#F5C451', title: 'Legendenhüter' },
+  { achievementId: 'pets_3', stat: 'pets', target: 3, reward: 300, name: 'Kleiner Zoo', description: 'Drei Begleiter besessen.', rarity: 'epic', glyph: 'paw', color: '#C4B5FD', title: 'Zoodirektor' },
+  // Leicht zum Einstieg, schwer für die Ausdauernden.
+  { achievementId: 'question_1', stat: 'msg_question', target: 1, reward: 15, name: 'Erste Frage', description: 'Deine erste Frage im Chat gestellt.', rarity: 'common', glyph: 'chat', color: '#93C5FD', title: 'Fragezeichen' },
+  { achievementId: 'media_1', stat: 'msg_media', target: 1, reward: 15, name: 'Schnappschuss', description: 'Dein erstes Bild oder Video geteilt.', rarity: 'common', glyph: 'sun', color: '#FBBF24', title: 'Hobbyfotograf' },
+  { achievementId: 'collector_100', stat: 'items', target: 100, reward: 800, name: 'Schatzkammer', description: '100 Cosmetics in deiner Sammlung.', rarity: 'legendary', glyph: 'diamond', color: '#A5F3FC', title: 'Schatzmeister' },
+  { achievementId: 'quests_365', stat: 'quest_days', target: 365, reward: 3000, name: 'Ein Jahr Aufgaben', description: 'An 365 Tagen alle Tagesaufgaben geschafft.', rarity: 'mythic', glyph: 'clock', color: '#F5C451', title: 'Unermüdlich' },
+  { achievementId: 'achievements_75', stat: 'achievements', target: 75, reward: 2000, name: 'Fast alles', description: '75 Erfolge freigeschaltet.', rarity: 'mythic', glyph: 'trophy', color: '#A78BFA', title: 'Vollender' },
 ];
 
 export const RANKING_ITEMS = { winnerBadge: 'rank-badge-champion', winnerTitle: 'rank-title-champion', podiumBadge: 'rank-badge-podium' } as const;

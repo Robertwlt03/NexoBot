@@ -9,6 +9,7 @@ import { normalizeSettings } from './profile.js';
 import { COSMETIC_SLOTS } from '../../shared/cosmetics.js';
 import { T, cosmeticsPool, requirePool, withTx } from './db.js';
 import { earnTx } from './wallet.js';
+import { getPetOverview } from './pets.js';
 
 export type AchievementStats = Record<AchievementStat, number>;
 
@@ -47,10 +48,11 @@ const DERIVED_SQL = `SELECT
 /** Every stat an achievement can watch, from stored data and the activity counters. */
 async function readStats(userId: string): Promise<{ stats: AchievementStats; unlocked: Map<string, Date> }> {
   const pool = requirePool();
-  const [derived, counters, unlocked] = await Promise.all([
+  const [derived, counters, unlocked, pets] = await Promise.all([
     pool.query<Record<string, unknown>>(DERIVED_SQL, [userId]),
     pool.query<{ stat: string; value: string }>(`SELECT stat, value FROM ${T.user_stats} WHERE user_id = $1`, [userId]),
     pool.query<{ achievement_id: string; unlocked_at: Date }>(`SELECT achievement_id, unlocked_at FROM ${T.user_achievements} WHERE user_id = $1`, [userId]),
+    getPetOverview(userId, new Date(), pool),
   ]);
   const row = derived.rows[0] ?? {};
   const stored = new Map(counters.rows.map((entry) => [entry.stat, Number(entry.value)]));
@@ -69,6 +71,10 @@ async function readStats(userId: string): Promise<{ stats: AchievementStats; unl
     voiceMinutes: Math.floor(counter('voice_ms') / 60_000),
     gamesPlayed: GAME_IDS.filter((game) => counter(`game_${game}`) > 0).length,
     achievements: unlocked.rows.length,
+    petFeeds: counter('pet_feeds'),
+    // The highest form any pet reached (a sad spell keeps the form, so this never drops).
+    petForm: Math.max(0, ...pets.pets.map((pet) => pet.stage)),
+    pets: pets.pets.length,
   } as AchievementStats;
   return { stats, unlocked: new Map(unlocked.rows.map((entry) => [entry.achievement_id, entry.unlocked_at])) };
 }

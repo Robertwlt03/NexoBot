@@ -150,7 +150,10 @@ export function meRouter(client: NexoClient): Router {
   router.post('/pets/feed', async (req, res) => {
     const itemId = (req.body as { itemId?: unknown } | undefined)?.itemId;
     if (typeof itemId !== 'string') return sendError(res, 400, 'Welches Tier soll fressen?');
-    res.json(await feedPet(locals(res).session.userId, itemId));
+    const { userId } = locals(res).session;
+    const overview = await feedPet(userId, itemId);
+    await syncAchievements(userId);
+    res.json(overview);
   });
 
   router.get('/quests', async (_req, res) => {
