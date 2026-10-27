@@ -21,7 +21,7 @@ export async function petMessage(userId: string, canAttach: boolean) {
   const link = (label: string, path: string) => (dashboard ? [new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel(label).setURL(`${dashboard}/me${path}`)] : []);
   const pets = overview.pets.filter((care) => catalog.get(care.itemId)?.slot === 'pet')
     .sort((a, b) => Number(b.itemId === settings.equipped.pet) - Number(a.itemId === settings.equipped.pet));
-  const foodLine = `🍖 Futter **${overview.food} / ${overview.foodMax}** · neue Portion für alle drei Tagesaufgaben (${cmd('profil aufgaben')})`;
+  const foodLine = `🍖 Futtervorrat **${overview.food} / ${overview.foodMax}** · eine Portion pro Fütterung, neue für alle drei Tagesaufgaben (${cmd('profil aufgaben')})`;
 
   if (pets.length === 0) {
     return {
@@ -37,7 +37,7 @@ export async function petMessage(userId: string, canAttach: boolean) {
   const from = main.stageFrom;
   const progress = main.nextAt === null
     ? `${main.care} Pflegetage · Kronenform erreicht`
-    : `${textBar(main.care - from, main.nextAt - from)} ${main.care} / ${main.nextAt} Pflegetage bis zur **${forms[main.stage as 1 | 2 | 3]}**`;
+    : `${textBar(main.care - from, main.nextAt - from)} ${main.care} / ${main.nextAt} Pflegetage · nächste Form: **${forms[main.stage as 1 | 2 | 3]}**`;
   const mood = main.hungry ? '😢 Traurig: ein Tag ohne Futter. Die Form bleibt, aber der Weg zur nächsten beginnt neu.' : main.fedToday ? '😋 Satt, heute schon gefüttert.' : '🙂 Freut sich auf Futter.';
   const feed = new ButtonBuilder().setCustomId(`${PET_FEED_BUTTON}:${main.itemId}`).setStyle(ButtonStyle.Primary)
     .setLabel(main.fedToday ? 'Heute schon satt' : 'Füttern').setDisabled(main.fedToday || overview.food === 0);

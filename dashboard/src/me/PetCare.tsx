@@ -37,7 +37,7 @@ function CareBar({ care, pet }: { care: PetCare; pet: PetData }) {
         <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${Math.max(4, share * 100)}%` }} />
       </div>
       <div className="mt-1 text-[11.5px] tabular-nums text-faint">
-        {care.nextAt === null ? `${care.care} Pflegetage · höchste Form` : `${care.care} / ${care.nextAt} Pflegetage bis zur ${PET_FORM_NAMES[pet.species][care.stage as 1 | 2 | 3]}`}
+        {care.nextAt === null ? `${care.care} Pflegetage · höchste Form` : `${care.care} / ${care.nextAt} Pflegetage · nächste Form: ${PET_FORM_NAMES[pet.species][care.stage as 1 | 2 | 3]}`}
       </div>
     </div>
   );
@@ -75,11 +75,11 @@ export function PetCareCard() {
     <section className="card !p-5">
       <div className="flex items-center justify-between gap-3">
         <span className="text-[13px] text-mute">Begleiter</span>
-        <span className="flex items-center gap-1.5 text-[12.5px] text-mute" title="Futter gibt es nur für alle drei Tagesaufgaben, höchstens drei Portionen auf Vorrat.">
+        <span className="flex items-center gap-1.5 text-[12.5px] text-mute" title="Futtervorrat: eine Portion für alle drei Tagesaufgaben, höchstens drei auf Vorrat. Jede Fütterung kostet eine Portion.">
           {Array.from({ length: foodMax }, (_, i) => (
             <span key={i} className={`h-2.5 w-2.5 rounded-full ${i < food ? 'bg-accent' : 'border border-white/20'}`} />
           ))}
-          Futter {food} / {foodMax}
+          Vorrat {food} / {foodMax}
         </span>
       </div>
       {ordered.map((care, index) => {
