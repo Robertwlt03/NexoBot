@@ -34,12 +34,13 @@ export function ServerPicker() {
   return (
     <div ref={root} className="relative min-h-full bg-canvas">
       <header className="sticky top-0 z-20 border-b border-white/[.05] bg-canvas/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-5 md:px-8">
+        {/* 82px: the user panel (58px) with the same 12px above and below as at the foot of the dashboard sidebar. */}
+        <div className="mx-auto flex h-[82px] max-w-6xl items-center gap-4 px-5 md:px-8">
           <Link to="/servers" className="flex items-center gap-2.5 text-ink hover:no-underline">
             <NexoLogo className="h-9 w-auto" animated={false} />
             <span className="font-display text-lg font-semibold tracking-tight">Nexo</span>
           </Link>
-          <div className="ml-auto w-[240px] max-w-[60vw]"><UserPanel compact /></div>
+          <div className="ml-auto w-[240px] max-w-[60vw]"><UserPanel className="" /></div>
         </div>
       </header>
 

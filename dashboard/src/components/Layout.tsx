@@ -83,7 +83,8 @@ export function SideMenu({ open, onClose, children }: { open: boolean; onClose: 
   );
 }
 
-export function UserPanel({ compact = false }: { compact?: boolean }) {
+/** The member with links to their profile and to log out, in its box; `className` places it (the sidebars keep 12px around it). */
+export function UserPanel({ className = 'm-3' }: { className?: string }) {
   const user = useContext(UserContext);
   const logout = async () => {
     await fetch('/dashboard/auth/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => undefined);
@@ -91,7 +92,7 @@ export function UserPanel({ compact = false }: { compact?: boolean }) {
   };
   if (!user) return null;
   return (
-    <div className={`flex items-center gap-2.5 ${compact ? '' : 'm-3 rounded-2xl border border-white/[.06] bg-surface px-3 py-2.5'}`}>
+    <div className={`flex items-center gap-2.5 rounded-2xl border border-white/[.06] bg-surface px-3 py-2.5 ${className}`}>
       <Link to="/me" title="Mein Profil öffnen" className="-m-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-xl p-1 text-body transition-colors hover:bg-white/[.04] hover:no-underline">
         <img src={user.avatarUrl} alt="" className="h-9 w-9 rounded-full ring-1 ring-white/15" />
         <span className="min-w-0 flex-1 leading-tight">
