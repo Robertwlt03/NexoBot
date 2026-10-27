@@ -286,17 +286,21 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
           <div className="mb-3 sm:hidden">
             <Select value={slot} onChange={setSlot} options={kinds.map(([id, label, count]) => ({ value: id, label: id === 'event' ? `Nur während „${label}“ (${count})` : `${label} (${count})` }))} />
           </div>
-          <div className="grid grid-cols-2 items-center gap-3 md:grid-cols-[1fr_170px_170px_auto_auto]">
-            <div className="col-span-2 md:col-span-1"><TextInput value={query} onChange={setQuery} placeholder="Artikel suchen …" /></div>
-            {/* Each select gets the full row on phones, so its label is not cut off. */}
-            <div className="max-sm:col-span-2"><Select value={rarity} onChange={setRarity} options={[{ value: 'all', label: 'Alle Seltenheiten' }, ...RARITIES.map((r) => ({ value: r, label: RARITY_LABELS[r] }))]} /></div>
-            <div className="max-sm:col-span-2"><Select value={sort} onChange={setSort} options={[{ value: 'new', label: 'Neueste zuerst' }, { value: 'price-asc', label: 'Preis aufsteigend' }, { value: 'price-desc', label: 'Preis absteigend' }]} /></div>
-            <label className="col-span-2 flex cursor-pointer items-center gap-2.5 text-[13.5px] text-body md:col-span-1">
-              <Switch checked={affordable} onChange={setAffordable} label="Nur leistbar" /> Nur leistbar
-            </label>
-            <label className="col-span-2 flex cursor-pointer items-center gap-2.5 text-[13.5px] text-body md:col-span-1">
-              <Switch checked={deals} onChange={setDeals} label="Nur im Angebot" /> Nur im Angebot
-            </label>
+          {/* Laid out by the panel's own width (not the screen's, the sidebar takes part of it): narrow, every control gets
+              its row; from 768px the search and both selects share a row with the switches below; from 1024px it is one
+              row. The search never drops under 200px, the switch labels never wrap. */}
+          <div className="@container">
+            <div className="grid grid-cols-2 items-center gap-3 @3xl:grid-cols-[minmax(200px,1fr)_180px_180px] @5xl:grid-cols-[minmax(200px,1fr)_180px_180px_auto_auto]">
+              <div className="col-span-2 @3xl:col-span-1"><TextInput value={query} onChange={setQuery} placeholder="Artikel suchen …" /></div>
+              <div className="col-span-2 @md:col-span-1"><Select value={rarity} onChange={setRarity} options={[{ value: 'all', label: 'Alle Seltenheiten' }, ...RARITIES.map((r) => ({ value: r, label: RARITY_LABELS[r] }))]} /></div>
+              <div className="col-span-2 @md:col-span-1"><Select value={sort} onChange={setSort} options={[{ value: 'new', label: 'Neueste zuerst' }, { value: 'price-asc', label: 'Preis aufsteigend' }, { value: 'price-desc', label: 'Preis absteigend' }]} /></div>
+              <label className="col-span-2 flex cursor-pointer items-center gap-2.5 whitespace-nowrap text-[13.5px] text-body @md:col-span-1">
+                <Switch checked={affordable} onChange={setAffordable} label="Nur leistbar" /> Nur leistbar
+              </label>
+              <label className="col-span-2 flex cursor-pointer items-center gap-2.5 whitespace-nowrap text-[13.5px] text-body @md:col-span-1">
+                <Switch checked={deals} onChange={setDeals} label="Nur im Angebot" /> Nur im Angebot
+              </label>
+            </div>
           </div>
         </div>
       )}
