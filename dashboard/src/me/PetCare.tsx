@@ -2,7 +2,7 @@
 // Food only comes from finishing all three daily quests; each pet eats once a day (rules in src/shared/pets.ts).
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router';
-import { PET_STAGE_NAMES, drawPet, type PetCare } from '../../../src/shared/pets';
+import { PET_FORM_NAMES, PET_STAGE_NAMES, drawPet, type PetCare } from '../../../src/shared/pets';
 import type { PetData } from '../../../src/shared/cosmetics';
 import type { PetOverview } from '../../../src/web/dto/profile';
 import { useMe, useMutation } from './api';
@@ -25,11 +25,11 @@ export function PetPortrait({ pet, stage, hungry, size }: { pet: PetData; stage:
   return <canvas ref={canvas} style={{ width: size, height: size }} aria-hidden="true" />;
 }
 
-const mood = (care: PetCare) => (care.hungry ? 'Hat Hunger und wächst gerade nicht' : care.fedToday ? 'Satt und zufrieden' : 'Freut sich auf Futter');
+const mood = (care: PetCare) => (care.hungry ? 'Traurig: ein Tag ohne Futter. Die Form bleibt, der Weg zur nächsten beginnt neu.' : care.fedToday ? 'Satt und zufrieden' : 'Freut sich auf Futter');
 
 /** Care days towards the next form as a bar (full at "Kronenform"). */
-function CareBar({ care }: { care: PetCare }) {
-  const from = [0, 5, 15, 40][care.stage - 1];
+function CareBar({ care, pet }: { care: PetCare; pet: PetData }) {
+  const from = care.stageFrom;
   const share = care.nextAt === null ? 1 : (care.care - from) / (care.nextAt - from);
   return (
     <div className="mt-2">
@@ -37,7 +37,7 @@ function CareBar({ care }: { care: PetCare }) {
         <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${Math.max(4, share * 100)}%` }} />
       </div>
       <div className="mt-1 text-[11.5px] tabular-nums text-faint">
-        {care.nextAt === null ? `${care.care} Pflegetage · höchste Form` : `${care.care} / ${care.nextAt} Pflegetage bis ${PET_STAGE_NAMES[care.stage as 1 | 2 | 3]}`}
+        {care.nextAt === null ? `${care.care} Pflegetage · höchste Form` : `${care.care} / ${care.nextAt} Pflegetage bis zur ${PET_FORM_NAMES[pet.species][care.stage as 1 | 2 | 3]}`}
       </div>
     </div>
   );
@@ -93,11 +93,11 @@ export function PetCareCard() {
                 <div className="grid shrink-0 place-items-center rounded-xl bg-black/20"><PetPortrait pet={pet} stage={care.stage} hungry={care.hungry} size={104} /></div>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[15px] font-medium text-ink">{item.name}</div>
-                  <div className="text-[12.5px] text-accent-text">{PET_STAGE_NAMES[care.stage - 1]}</div>
+                  <div className="text-[12.5px] text-accent-text">{PET_FORM_NAMES[pet.species][care.stage - 1]} · {PET_STAGE_NAMES[care.stage - 1]}</div>
                   <div className={`mt-1 text-[12.5px] ${care.hungry ? 'text-warn' : 'text-mute'}`}>{mood(care)}</div>
                 </div>
               </div>
-              <CareBar care={care} />
+              <CareBar care={care} pet={pet} />
               <div className="mt-3">{feedButton(care)}</div>
             </div>
           );
@@ -107,13 +107,13 @@ export function PetCareCard() {
             <PetPortrait pet={pet} stage={care.stage} hungry={care.hungry} size={44} />
             <div className="min-w-0 flex-1">
               <div className="truncate text-[13.5px] text-ink">{item.name}</div>
-              <div className={`text-[12px] ${care.hungry ? 'text-warn' : 'text-faint'}`}>{PET_STAGE_NAMES[care.stage - 1]} · {care.hungry ? 'hungrig' : care.fedToday ? 'satt' : `${care.care} Pflegetage`}</div>
+              <div className={`text-[12px] ${care.hungry ? 'text-warn' : 'text-faint'}`}>{PET_FORM_NAMES[pet.species][care.stage - 1]} · {care.hungry ? 'traurig' : care.fedToday ? 'satt' : `${care.care} Pflegetage`}</div>
             </div>
             {feedButton(care, true)}
           </div>
         );
       })}
-      <p className="mt-3 text-[11.5px] text-faint">Futter gibt es für alle drei Tagesaufgaben, nicht im Shop. Jedes Tier frisst einmal am Tag und wächst mit jedem Pflegetag.</p>
+      <p className="mt-3 text-[11.5px] text-faint">Futter gibt es für alle drei Tagesaufgaben, nicht im Shop. Jedes Tier frisst einmal am Tag. Verpasst du einen Tag, wird es traurig und der Weg zur nächsten Form beginnt neu.</p>
     </section>
   );
 }

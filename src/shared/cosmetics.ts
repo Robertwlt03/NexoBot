@@ -33,7 +33,11 @@ export const FRAME_STYLES = ['solid', 'gradient', 'glow', 'double', 'dashed', 'n
 export interface FrameData { style: (typeof FRAME_STYLES)[number]; colors: string[]; width: number }
 /** Badge glyph: one of BADGE_GLYPHS (drawn as vector shapes by the renderer, no emoji fonts needed). */
 export interface BadgeData { glyph: BadgeGlyph; color: string }
-export const PET_SPECIES = ['fox', 'owl', 'cat', 'axolotl', 'dragon', 'bunny', 'penguin', 'panda', 'frog'] as const;
+export const PET_SPECIES = [
+  'fox', 'owl', 'cat', 'axolotl', 'dragon', 'bunny', 'penguin', 'panda', 'frog',
+  'butterfly', 'chicken', 'dog', 'wolf', 'horse', 'turtle', 'koi', 'snail', 'hedgehog', 'bat', 'squirrel', 'hamster', 'bee', 'octopus', 'jellyfish',
+  'seahorse', 'crab', 'snake', 'chameleon', 'sloth', 'raccoon', 'sparrow', 'parrot', 'mushroom', 'slime', 'ghost', 'golem', 'salamander', 'whale', 'bear',
+] as const;
 /** A companion on the profile card (shared/pets.ts draws it). */
 export interface PetData { species: (typeof PET_SPECIES)[number]; color: string }
 export interface TitleData { text: string; color: string }

@@ -2383,7 +2383,7 @@ export function renderItemPreview<I extends ProfileImage>(
       break;
     case 'badge': zoomAt(2.2); drawBadges(ctx, [item.data], BADGE_SIZE / 2, -BADGE_SIZE / 2); break;
     case 'sticker': zoomAt(2.2); drawSticker(ctx, item.data, 0, 0); break;
-    case 'pet': drawPet(ctx, item.data, w / 2, h / 2 - 6, h * 0.36, 2); break;
+    case 'pet': drawPet(ctx, item.data, w / 2, h / 2 - 6, h * 0.36, 3); break;
     case 'xpBar': drawXpBar(ctx, { x: w * 0.12, y: h / 2 - 10, w: w * 0.76, h: 20 }, 0.66, item.data, accent); break;
     case 'nameStyle': drawName(ctx, subject.name, w / 2, h / 2 + 14, 'center', 44, 'inter', item.data, w * 0.86); break;
     case 'font': drawName(ctx, subject.name, w / 2, h / 2 + 14, 'center', 44, item.data.font, null, w * 0.86); break;

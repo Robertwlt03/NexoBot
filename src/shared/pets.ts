@@ -4,44 +4,35 @@
 //
 // Care, after the CS2 chickens: food comes only from finishing all three daily quests (never bought), at most
 // PET_FOOD_MAX portions in stock, and each pet eats once per Berlin day. Every feeding is a care day; the care days
-// decide the stage. Two days without food and the pet is hungry: it looks sad and, since only feeding counts, stops
-// growing until it is fed again.
+// decide the form, and rarer pets need far more of them (PET_STAGE_CARE). Miss a day and the pet is sad: it never
+// leaves and keeps its form, but the way to the next form starts over.
 
-import type { PetData } from './cosmetics.js';
-
-/** The canvas calls the drawer needs (a subset of the profile card context). */
-interface PetCtx {
-  fillStyle: string | object; strokeStyle: string | object; lineWidth: number; lineCap: string; lineJoin: string; globalAlpha: number;
-  save(): void; restore(): void; beginPath(): void; closePath(): void;
-  moveTo(x: number, y: number): void; lineTo(x: number, y: number): void;
-  arc(x: number, y: number, r: number, a0: number, a1: number, ccw?: boolean): void;
-  quadraticCurveTo(cx: number, cy: number, x: number, y: number): void;
-  bezierCurveTo(c1x: number, c1y: number, c2x: number, c2y: number, x: number, y: number): void;
-  fill(): void; stroke(): void; translate(x: number, y: number): void; rotate(a: number): void; scale(x: number, y: number): void;
-  createRadialGradient(x0: number, y0: number, r0: number, x1: number, y1: number, r1: number): { addColorStop(offset: number, color: string): void };
-}
-
-/** A fill: a colour or a gradient from the context. */
-type Paint = string | object;
+import type { Rarity } from './cosmetics.js';
 
 // ---------- Care ----------
 
 export type PetStage = 1 | 2 | 3 | 4;
 export const PET_STAGE_NAMES = ['Babyform', 'Jugendform', 'Erwachsenenform', 'Kronenform'] as const;
-/** Care days from which each stage starts. */
-export const PET_STAGE_CARE = [0, 5, 15, 40] as const;
+/** Care days from which each form starts, by rarity: rarer pets take far longer. */
+export const PET_STAGE_CARE: Record<Rarity, readonly [number, number, number, number]> = {
+  common: [0, 10, 30, 70],
+  rare: [0, 14, 45, 100],
+  epic: [0, 21, 60, 140],
+  legendary: [0, 30, 90, 200],
+  mythic: [0, 40, 120, 250],
+};
 /** Food portions a member can keep in stock. */
 export const PET_FOOD_MAX = 3;
 /** Days without food after which a pet is hungry. */
 export const PET_HUNGRY_AFTER = 2;
 
-/** Stage from the care days (feedings) of a pet. */
-export function petStage(care: number): PetStage {
-  return (PET_STAGE_CARE.filter((from) => care >= from).length as PetStage);
+/** Form from the care days (feedings) of a pet of `rarity`. */
+export function petStage(care: number, rarity: Rarity = 'rare'): PetStage {
+  return (PET_STAGE_CARE[rarity].filter((from) => care >= from).length as PetStage);
 }
-/** Care days the next stage needs, or null at the last stage. */
-export function nextStageAt(care: number): number | null {
-  return PET_STAGE_CARE.find((from) => from > care) ?? null;
+/** Care days the next form needs, or null at the last one. */
+export function nextStageAt(care: number, rarity: Rarity = 'rare'): number | null {
+  return PET_STAGE_CARE[rarity].find((from) => from > care) ?? null;
 }
 
 /** Whole days from Berlin day `from` to `to` (both YYYY-MM-DD). */
@@ -51,8 +42,11 @@ export function daysBetween(from: string, to: string): number {
 
 export interface PetCare {
   itemId: string;
+  /** Care days that count: after a missed day only the start of the current form. */
   care: number;
   stage: PetStage;
+  /** Care days the current form started at. */
+  stageFrom: number;
   /** Care days the next stage starts at (null at "Kronenform"). */
   nextAt: number | null;
   /** Berlin day of the last feeding (YYYY-MM-DD). */
@@ -62,9 +56,14 @@ export interface PetCare {
 }
 
 /** A pet's state from its care days and the day it last ate (`today` as YYYY-MM-DD in Berlin). */
-export function petCare(itemId: string, care: number, lastFed: string, today: string): PetCare {
+export function petCare(itemId: string, rarity: Rarity, care: number, lastFed: string, today: string): PetCare {
   const since = daysBetween(lastFed, today);
-  return { itemId, care, stage: petStage(care), nextAt: nextStageAt(care), lastFed, fedToday: since <= 0, hungry: since >= PET_HUNGRY_AFTER };
+  const hungry = since >= PET_HUNGRY_AFTER;
+  const stage = petStage(care, rarity);
+  const stageFrom = PET_STAGE_CARE[rarity][stage - 1];
+  // Sad: the form stays, the way to the next one starts over.
+  const counted = hungry ? stageFrom : care;
+  return { itemId, care: counted, stage, stageFrom, nextAt: nextStageAt(counted, rarity), lastFed, fedToday: since <= 0, hungry };
 }
 
 /** Size factor of the avatar radius per stage (the crown form keeps the adult size and gets its aura and crown instead). */
@@ -76,452 +75,4 @@ export function petPoint(avatar: { cx: number; cy: number; r: number }, stage: n
   return { x: avatar.cx - avatar.r * 0.78, y: avatar.cy + avatar.r * 0.86 - size, size };
 }
 
-// ---------- Colours ----------
-
-function rgb(hex: string): [number, number, number] {
-  const n = Number.parseInt(hex.replace('#', '').padEnd(6, '0').slice(0, 6), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-function mixed(a: string, b: string, t: number): string {
-  const [x, y] = [rgb(a), rgb(b)];
-  return `rgb(${x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(', ')})`;
-}
-
-// ---------- Shapes (design units) ----------
-
-function ellipse(ctx: PetCtx, x: number, y: number, rx: number, ry: number, rotation = 0) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(rotation);
-  ctx.scale(rx, ry);
-  ctx.moveTo(1, 0);
-  ctx.arc(0, 0, 1, 0, Math.PI * 2);
-  ctx.restore();
-}
-
-function shape(ctx: PetCtx, fill: Paint, line: string | null, path: () => void) {
-  ctx.beginPath();
-  path();
-  ctx.fillStyle = fill;
-  ctx.fill();
-  if (line) {
-    ctx.strokeStyle = line;
-    ctx.stroke();
-  }
-}
-
-/** Mood and eye size of the pet being drawn (set by drawPet; the drawing is synchronous). */
-let hungry = false;
-let eyeScale = 1;
-
-/** Glossy eyes: a dark iris with a soft lighter rim, two catch lights. Hungry, the lids droop and a tear runs. */
-function eyes(ctx: PetCtx, x: number, y: number, size: number, ink: string) {
-  const r = size * eyeScale;
-  for (const side of [-1, 1]) {
-    const cx = side * x;
-    const iris = ctx.createRadialGradient(cx, y + r * 0.5, r * 0.2, cx, y, r * 1.15);
-    iris.addColorStop(0, mixed(ink, '#7A6CFF', 0.35));
-    iris.addColorStop(0.7, ink);
-    iris.addColorStop(1, ink);
-    shape(ctx, iris, null, () => ellipse(ctx, cx, y, r, r * 1.12));
-    shape(ctx, '#FFFFFF', null, () => ellipse(ctx, cx + r * 0.32, y - r * 0.42, r * 0.38, r * 0.38));
-    shape(ctx, '#FFFFFF', null, () => ellipse(ctx, cx - r * 0.38, y + r * 0.42, r * 0.16, r * 0.16));
-    if (hungry) {
-      // Heavy upper lid in the face colour's dark line.
-      shape(ctx, ink, null, () => {
-        ctx.moveTo(cx - r * 1.3, y - r * 0.2);
-        ctx.quadraticCurveTo(cx, y - r * 1.6, cx + r * 1.3, y - r * 0.2);
-        ctx.quadraticCurveTo(cx, y + r * 0.15, cx - r * 1.3, y - r * 0.2);
-      });
-    }
-  }
-  if (hungry) {
-    shape(ctx, '#8FD3FF', '#3B82C4', () => {
-      const tx = x + r * 0.2;
-      ctx.moveTo(tx, y + r * 1.2);
-      ctx.quadraticCurveTo(tx + r * 0.9, y + r * 2.4, tx, y + r * 2.8);
-      ctx.quadraticCurveTo(tx - r * 0.9, y + r * 2.4, tx, y + r * 1.2);
-    });
-  }
-}
-
-function cheeks(ctx: PetCtx, x: number, y: number) {
-  if (hungry) return;
-  ctx.globalAlpha = 0.45;
-  for (const side of [-1, 1]) shape(ctx, '#FF8FA3', null, () => ellipse(ctx, side * x, y, 4.5, 3));
-  ctx.globalAlpha = 1;
-}
-
-type Drawer = (ctx: PetCtx, main: Paint, light: Paint, dark: Paint, line: string) => void;
-
-const fox: Drawer = (ctx, main, light, dark, line) => {
-  // Tail curled around the right side, with a white tip.
-  shape(ctx, main, line, () => {
-    ctx.moveTo(12, 44);
-    ctx.bezierCurveTo(44, 50, 56, 18, 40, -2);
-    ctx.bezierCurveTo(36, 16, 26, 30, 10, 30);
-    ctx.closePath();
-  });
-  shape(ctx, '#FFF6EC', line, () => {
-    ctx.moveTo(40, -2);
-    ctx.bezierCurveTo(48, 8, 47, 14, 44, 20);
-    ctx.quadraticCurveTo(40, 10, 34, 8);
-    ctx.closePath();
-  });
-  shape(ctx, main, line, () => ellipse(ctx, 0, 24, 25, 25));
-  shape(ctx, '#FFF6EC', null, () => ellipse(ctx, 0, 28, 13, 17));
-  for (const side of [-1, 1]) {
-    shape(ctx, main, line, () => { ctx.moveTo(side * 24, -22); ctx.lineTo(side * 15, -50); ctx.lineTo(side * 3, -30); ctx.closePath(); });
-    shape(ctx, dark, null, () => { ctx.moveTo(side * 19, -26); ctx.lineTo(side * 15, -42); ctx.lineTo(side * 8, -31); ctx.closePath(); });
-  }
-  shape(ctx, main, line, () => ellipse(ctx, 0, -12, 27, 22));
-  shape(ctx, '#FFF6EC', null, () => { ctx.moveTo(-26, -6); ctx.quadraticCurveTo(-12, -2, 0, 10); ctx.quadraticCurveTo(12, -2, 26, -6); ctx.quadraticCurveTo(14, 12, 0, 10); ctx.quadraticCurveTo(-14, 12, -26, -6); });
-  eyes(ctx, 10, -14, 3.6, '#2A1A12');
-  shape(ctx, '#2A1A12', null, () => ellipse(ctx, 0, -3, 3.4, 2.6));
-  cheeks(ctx, 17, -4);
-  for (const side of [-1, 1]) shape(ctx, light, line, () => ellipse(ctx, side * 10, 47, 7, 4.5));
-};
-
-const owl: Drawer = (ctx, main, light, dark, line) => {
-  for (const side of [-1, 1]) {
-    shape(ctx, main, line, () => { ctx.moveTo(side * 26, -24); ctx.lineTo(side * 28, -48); ctx.lineTo(side * 10, -32); ctx.closePath(); });
-  }
-  shape(ctx, main, line, () => ellipse(ctx, 0, 6, 31, 42));
-  shape(ctx, light, null, () => ellipse(ctx, 0, 20, 19, 25));
-  ctx.lineWidth *= 0.8;
-  for (const [x, y] of [[-8, 12], [8, 12], [0, 22], [-8, 32], [8, 32]]) {
-    ctx.beginPath();
-    ctx.moveTo(x - 3.5, y - 2);
-    ctx.quadraticCurveTo(x, y + 2.5, x + 3.5, y - 2);
-    ctx.strokeStyle = dark;
-    ctx.stroke();
-  }
-  ctx.lineWidth /= 0.8;
-  for (const side of [-1, 1]) shape(ctx, dark, line, () => ellipse(ctx, side * 29, 14, 8, 21, side * 0.18));
-  for (const side of [-1, 1]) shape(ctx, '#FFFDF5', line, () => ellipse(ctx, side * 12, -12, 12.5, 12.5));
-  eyes(ctx, 12, -12, 5.6, '#1E1A2B');
-  shape(ctx, '#F5A524', line, () => { ctx.moveTo(-4.5, -4); ctx.lineTo(4.5, -4); ctx.lineTo(0, 4); ctx.closePath(); });
-  for (const side of [-1, 1]) shape(ctx, '#F5A524', line, () => ellipse(ctx, side * 9, 47, 6, 3.5));
-};
-
-const cat: Drawer = (ctx, main, light, dark, line) => {
-  // Tail up behind the body.
-  ctx.beginPath();
-  ctx.moveTo(16, 40);
-  ctx.bezierCurveTo(46, 40, 48, 8, 38, -14);
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = line;
-  ctx.lineWidth += 8;
-  ctx.stroke();
-  ctx.strokeStyle = main;
-  ctx.lineWidth -= 4.4;
-  ctx.stroke();
-  ctx.lineWidth -= 3.6;
-  shape(ctx, main, line, () => ellipse(ctx, 0, 25, 23, 24));
-  shape(ctx, light, null, () => ellipse(ctx, 0, 30, 12, 16));
-  for (const side of [-1, 1]) {
-    shape(ctx, main, line, () => { ctx.moveTo(side * 26, -20); ctx.quadraticCurveTo(side * 26, -42, side * 20, -46); ctx.quadraticCurveTo(side * 12, -38, side * 4, -32); ctx.closePath(); });
-    shape(ctx, '#FFB3C1', null, () => { ctx.moveTo(side * 21, -26); ctx.quadraticCurveTo(side * 21, -38, side * 19, -40); ctx.lineTo(side * 10, -32); ctx.closePath(); });
-  }
-  shape(ctx, main, line, () => ellipse(ctx, 0, -12, 28, 23));
-  ctx.strokeStyle = dark;
-  for (const x of [-7, 0, 7]) {
-    ctx.beginPath();
-    ctx.moveTo(x, -33);
-    ctx.lineTo(x * 0.8, -26);
-    ctx.stroke();
-  }
-  eyes(ctx, 11, -13, 3.8, '#1E1A2B');
-  shape(ctx, '#FF8FA3', null, () => { ctx.moveTo(-3, -5); ctx.lineTo(3, -5); ctx.lineTo(0, -1.5); ctx.closePath(); });
-  ctx.strokeStyle = line;
-  ctx.beginPath();
-  ctx.moveTo(-5, 1);
-  ctx.quadraticCurveTo(-2.5, 4, 0, 0);
-  ctx.quadraticCurveTo(2.5, 4, 5, 1);
-  ctx.stroke();
-  ctx.globalAlpha = 0.6;
-  for (const side of [-1, 1]) {
-    for (const dy of [-3, 2]) {
-      ctx.beginPath();
-      ctx.moveTo(side * 14, dy - 2);
-      ctx.lineTo(side * 31, dy - 4 + (dy > 0 ? 4 : 0));
-      ctx.stroke();
-    }
-  }
-  ctx.globalAlpha = 1;
-  cheeks(ctx, 17, -4);
-  for (const side of [-1, 1]) shape(ctx, light, line, () => ellipse(ctx, side * 10, 47, 7, 4.5));
-};
-
-const axolotl: Drawer = (ctx, main, light, dark, line) => {
-  shape(ctx, main, line, () => { ctx.moveTo(14, 34); ctx.bezierCurveTo(34, 40, 48, 30, 50, 18); ctx.bezierCurveTo(40, 26, 30, 24, 16, 20); ctx.closePath(); });
-  shape(ctx, main, line, () => ellipse(ctx, 0, 28, 24, 19));
-  shape(ctx, light, null, () => ellipse(ctx, 0, 32, 14, 11));
-  for (const side of [-1, 1]) {
-    for (const [i, angle] of [[0, -0.7], [1, -0.15], [2, 0.4]] as const) {
-      shape(ctx, dark, line, () => ellipse(ctx, side * (36 + (i === 1 ? 4 : 0)), -16 + i * 11, 11, 4.8, side * angle));
-    }
-  }
-  shape(ctx, main, line, () => ellipse(ctx, 0, -8, 33, 25));
-  eyes(ctx, 17, -11, 3.6, '#1E1A2B');
-  ctx.beginPath();
-  ctx.moveTo(-8, 2);
-  ctx.quadraticCurveTo(0, 8, 8, 2);
-  ctx.strokeStyle = line;
-  ctx.stroke();
-  cheeks(ctx, 23, 0);
-  for (const side of [-1, 1]) shape(ctx, main, line, () => ellipse(ctx, side * 14, 46, 6.5, 4));
-};
-
-const dragon: Drawer = (ctx, main, light, dark, line) => {
-  for (const side of [-1, 1]) {
-    shape(ctx, dark, line, () => {
-      ctx.moveTo(side * 12, 8);
-      ctx.lineTo(side * 48, -20);
-      ctx.quadraticCurveTo(side * 46, -2, side * 40, 4);
-      ctx.quadraticCurveTo(side * 36, 2, side * 32, 10);
-      ctx.quadraticCurveTo(side * 26, 10, side * 20, 20);
-      ctx.closePath();
-    });
-  }
-  shape(ctx, main, line, () => { ctx.moveTo(14, 42); ctx.bezierCurveTo(40, 50, 52, 34, 44, 22); ctx.bezierCurveTo(40, 32, 30, 34, 14, 30); ctx.closePath(); });
-  shape(ctx, dark, line, () => { ctx.moveTo(44, 22); ctx.lineTo(50, 12); ctx.lineTo(52, 24); ctx.closePath(); });
-  shape(ctx, main, line, () => ellipse(ctx, 0, 25, 24, 24));
-  shape(ctx, light, null, () => ellipse(ctx, 0, 29, 13, 17));
-  ctx.strokeStyle = mixed('#FFE7A3', '#000000', 0.25);
-  for (const y of [20, 28, 36]) {
-    ctx.beginPath();
-    ctx.moveTo(-9, y);
-    ctx.lineTo(9, y);
-    ctx.stroke();
-  }
-  for (const side of [-1, 1]) {
-    shape(ctx, '#FFF1C9', line, () => { ctx.moveTo(side * 18, -28); ctx.quadraticCurveTo(side * 26, -42, side * 22, -52); ctx.quadraticCurveTo(side * 16, -40, side * 8, -32); ctx.closePath(); });
-  }
-  shape(ctx, main, line, () => ellipse(ctx, 0, -12, 27, 22));
-  shape(ctx, light, line, () => ellipse(ctx, 0, -1, 15, 9));
-  for (const side of [-1, 1]) shape(ctx, line, null, () => ellipse(ctx, side * 5, -2, 1.6, 1.3));
-  eyes(ctx, 11, -16, 3.8, '#1E1A2B');
-  cheeks(ctx, 19, -6);
-  for (const side of [-1, 1]) shape(ctx, main, line, () => ellipse(ctx, side * 10, 47, 7, 4.5));
-};
-
-const bunny: Drawer = (ctx, main, light, dark, line) => {
-  shape(ctx, '#FFFDF8', line, () => ellipse(ctx, 25, 38, 9, 8));
-  shape(ctx, main, line, () => ellipse(ctx, 0, 26, 24, 23));
-  shape(ctx, light, null, () => ellipse(ctx, 0, 31, 13, 15));
-  for (const side of [-1, 1]) {
-    shape(ctx, main, line, () => ellipse(ctx, side * 11, -36, 8.5, 19, side * 0.2));
-    shape(ctx, '#FFB3C1', null, () => ellipse(ctx, side * 11, -34, 4.2, 13, side * 0.2));
-  }
-  shape(ctx, main, line, () => ellipse(ctx, 0, -8, 26, 22));
-  shape(ctx, light, null, () => ellipse(ctx, 0, 0, 13, 8));
-  eyes(ctx, 11, -11, 3.8, '#1E1A2B');
-  shape(ctx, '#FF8FA3', null, () => ellipse(ctx, 0, -2, 3, 2.2));
-  ctx.strokeStyle = line;
-  ctx.beginPath();
-  ctx.moveTo(-5, 3);
-  ctx.quadraticCurveTo(-2.5, 6, 0, 2);
-  ctx.quadraticCurveTo(2.5, 6, 5, 3);
-  ctx.stroke();
-  shape(ctx, '#FFFFFF', line, () => { ctx.moveTo(-2.4, 4); ctx.lineTo(2.4, 4); ctx.lineTo(2.4, 8); ctx.lineTo(-2.4, 8); ctx.closePath(); });
-  cheeks(ctx, 17, -1);
-  for (const side of [-1, 1]) shape(ctx, light, line, () => ellipse(ctx, side * 11, 47, 8, 4.5));
-  void dark;
-};
-
-const penguin: Drawer = (ctx, main, light, dark, line) => {
-  for (const side of [-1, 1]) shape(ctx, dark, line, () => ellipse(ctx, side * 27, 14, 7, 18, side * -0.35));
-  shape(ctx, main, line, () => ellipse(ctx, 0, 8, 28, 40));
-  shape(ctx, '#FFFDF7', null, () => ellipse(ctx, 0, 20, 19, 27));
-  shape(ctx, '#FFFDF7', null, () => ellipse(ctx, 0, -10, 21, 15));
-  eyes(ctx, 8, -13, 3.6, '#1E1A2B');
-  shape(ctx, '#F59E0B', line, () => { ctx.moveTo(-5.5, -5); ctx.quadraticCurveTo(0, -8, 5.5, -5); ctx.lineTo(0, 2); ctx.closePath(); });
-  cheeks(ctx, 15, -3);
-  for (const side of [-1, 1]) shape(ctx, '#F59E0B', line, () => ellipse(ctx, side * 10, 47, 8, 4));
-  void light;
-};
-
-const panda: Drawer = (ctx, main, light, dark, line) => {
-  const ink = '#2B2B33';
-  for (const side of [-1, 1]) shape(ctx, ink, line, () => ellipse(ctx, side * 20, -29, 9, 9));
-  shape(ctx, main, line, () => ellipse(ctx, 0, 26, 25, 23));
-  shape(ctx, light, null, () => ellipse(ctx, 0, 30, 13, 14));
-  for (const side of [-1, 1]) shape(ctx, ink, line, () => ellipse(ctx, side * 20, 22, 8, 13, side * 0.4));
-  for (const side of [-1, 1]) shape(ctx, ink, line, () => ellipse(ctx, side * 12, 45, 9, 5.5));
-  shape(ctx, main, line, () => ellipse(ctx, 0, -10, 28, 23));
-  for (const side of [-1, 1]) shape(ctx, ink, null, () => ellipse(ctx, side * 11, -10, 7.5, 9.5, side * -0.5));
-  for (const side of [-1, 1]) shape(ctx, '#FFFFFF', null, () => ellipse(ctx, side * 11, -11, 4.4, 4.8));
-  eyes(ctx, 11, -11, 3, '#1E1A2B');
-  shape(ctx, ink, null, () => ellipse(ctx, 0, -1, 3.6, 2.6));
-  ctx.strokeStyle = ink;
-  ctx.beginPath();
-  ctx.moveTo(-4.5, 4);
-  ctx.quadraticCurveTo(-2.2, 6.5, 0, 2.5);
-  ctx.quadraticCurveTo(2.2, 6.5, 4.5, 4);
-  ctx.stroke();
-  cheeks(ctx, 19, 1);
-  void dark;
-};
-
-const frog: Drawer = (ctx, main, light, dark, line) => {
-  for (const side of [-1, 1]) shape(ctx, dark, line, () => ellipse(ctx, side * 24, 38, 13, 9, side * 0.3));
-  shape(ctx, main, line, () => ellipse(ctx, 0, 22, 26, 24));
-  shape(ctx, light, null, () => ellipse(ctx, 0, 28, 16, 15));
-  shape(ctx, main, line, () => ellipse(ctx, 0, -6, 30, 20));
-  for (const side of [-1, 1]) shape(ctx, main, line, () => ellipse(ctx, side * 15, -23, 11, 11));
-  for (const side of [-1, 1]) shape(ctx, '#FFFDF5', null, () => ellipse(ctx, side * 15, -23, 8, 8));
-  eyes(ctx, 15, -23, 4.2, '#1E1A2B');
-  ctx.strokeStyle = line;
-  ctx.beginPath();
-  ctx.moveTo(-15, -2);
-  ctx.quadraticCurveTo(0, hungry ? 0 : 8, 15, -2);
-  ctx.stroke();
-  cheeks(ctx, 21, 1);
-  for (const side of [-1, 1]) shape(ctx, light, line, () => ellipse(ctx, side * 12, 46, 8, 4.5));
-};
-
-const DRAWERS: Record<PetData['species'], Drawer> = { fox, owl, cat, axolotl, dragon, bunny, penguin, panda, frog };
-
-/** Soft light from the upper left over the whole animal: one gradient per tone, shared by all its shapes. */
-function lit(ctx: PetCtx, color: string) {
-  const paint = ctx.createRadialGradient(-20, -32, 4, -8, -6, 92);
-  paint.addColorStop(0, mixed(color, '#FFFFFF', 0.38));
-  paint.addColorStop(0.5, color);
-  paint.addColorStop(1, mixed(color, '#000000', 0.22));
-  return paint;
-}
-
-/** Four-point sparkle. */
-function sparkle(ctx: PetCtx, x: number, y: number, r: number, fill: string, line: string | null) {
-  shape(ctx, fill, line, () => {
-    for (let i = 0; i < 8; i += 1) {
-      const radius = i % 2 ? r * 0.35 : r;
-      const a = (i / 8) * Math.PI * 2 - Math.PI / 2;
-      if (i) ctx.lineTo(x + Math.cos(a) * radius, y + Math.sin(a) * radius); else ctx.moveTo(x + Math.cos(a) * radius, y + Math.sin(a) * radius);
-    }
-    ctx.closePath();
-  });
-}
-
-const GOLD = '#F5C542';
-
-/** Eye size per stage: babies have the biggest eyes. */
-const EYE_SCALE = [1.35, 1.15, 1, 1];
-
-/** Half an eggshell worn as a hat (Babyform). */
-function eggshell(ctx: PetCtx) {
-  ctx.save();
-  ctx.translate(-3, -33);
-  ctx.rotate(-0.18);
-  ctx.lineWidth = 2;
-  shape(ctx, '#FFF8EC', '#B8A58A', () => {
-    ctx.moveTo(-13, 2);
-    ctx.bezierCurveTo(-13, -13, 13, -13, 13, 2);
-    for (const [px, py] of [[10, -1.5], [7, 3], [4, -1.5], [1, 3], [-2, -1.5], [-5, 3], [-8, -1.5], [-11, 3]] as const) ctx.lineTo(px, py);
-    ctx.closePath();
-  });
-  shape(ctx, '#E8D9C0', null, () => ellipse(ctx, -4, -5, 1.7, 1.2));
-  shape(ctx, '#E8D9C0', null, () => ellipse(ctx, 5, -7.5, 1.2, 0.9));
-  ctx.restore();
-}
-
-/** Neckerchief in teal with light dots (Jugendform). */
-function neckerchief(ctx: PetCtx) {
-  ctx.lineWidth = 2;
-  shape(ctx, '#2BB3A3', '#0F5E55', () => {
-    ctx.moveTo(-16, 6);
-    ctx.quadraticCurveTo(0, 12, 16, 6);
-    ctx.lineTo(3, 22);
-    ctx.quadraticCurveTo(0, 24.5, -3, 22);
-    ctx.closePath();
-  });
-  for (const [px, py] of [[-7, 10], [6, 10], [0, 16]] as const) shape(ctx, '#E6FFFB', null, () => ellipse(ctx, px, py, 1.3, 1.3));
-}
-
-/** Leather collar with a gold tag (Erwachsenenform and up). */
-function collar(ctx: PetCtx) {
-  ctx.lineWidth = 2;
-  shape(ctx, '#B4232F', '#5C0F16', () => {
-    ctx.moveTo(-17, 6);
-    ctx.quadraticCurveTo(0, 15, 17, 6);
-    ctx.lineTo(17, 11);
-    ctx.quadraticCurveTo(0, 20, -17, 11);
-    ctx.closePath();
-  });
-  shape(ctx, GOLD, '#8A6410', () => ellipse(ctx, 0, 19, 4.4, 4.4));
-  shape(ctx, '#FFF3C4', null, () => ellipse(ctx, -1.2, 17.6, 1.3, 1.3));
-}
-
-/** Tilted crown on the head and light points around (Kronenform). */
-function crown(ctx: PetCtx) {
-  ctx.save();
-  ctx.translate(2, -34);
-  ctx.rotate(0.12);
-  ctx.lineWidth = 2;
-  shape(ctx, GOLD, '#8A6410', () => {
-    ctx.moveTo(-12, 4);
-    ctx.lineTo(-13, -9);
-    ctx.lineTo(-6, -2);
-    ctx.lineTo(0, -13);
-    ctx.lineTo(6, -2);
-    ctx.lineTo(13, -9);
-    ctx.lineTo(12, 4);
-    ctx.closePath();
-  });
-  shape(ctx, '#E5484D', null, () => ellipse(ctx, 0, -1, 2.4, 2.4));
-  for (const side of [-1, 1]) shape(ctx, '#3DD6C6', null, () => ellipse(ctx, side * 7, 0, 1.6, 1.6));
-  ctx.restore();
-  sparkle(ctx, 42, -30, 6, '#FFF3C4', null);
-  sparkle(ctx, -46, 8, 4.5, '#FFF3C4', null);
-  sparkle(ctx, 40, 30, 3.5, '#FFE27A', null);
-}
-
-/**
- * Draws the companion standing on (x, y + size), `size` = half its height. Each form looks different: Babyform is
- * stubby with big eyes and an eggshell hat, Jugendform wears a neckerchief, Erwachsenenform a collar with a gold tag
- * and a sparkle, Kronenform adds a crown, golden aura and light points. Hungry, it droops.
- */
-export function drawPet(ctx: PetCtx, pet: PetData, x: number, y: number, size: number, stage = 1, isHungry = false) {
-  const form = Math.min(4, Math.max(1, Math.round(stage)));
-  const k = size / 50;
-  const base = pet.species === 'dragon' ? '#FFE7A3' : mixed(pet.color, '#FFFFFF', 0.55);
-  const dark = mixed(pet.color, '#000000', 0.28);
-  const line = mixed(pet.color, '#000000', 0.62);
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(k, k);
-  if (form === 4) {
-    const aura = ctx.createRadialGradient(0, 4, 10, 0, 4, 66);
-    aura.addColorStop(0, 'rgba(255, 214, 102, 0.55)');
-    aura.addColorStop(0.6, 'rgba(255, 196, 64, 0.18)');
-    aura.addColorStop(1, 'rgba(255, 196, 64, 0)');
-    shape(ctx, aura, null, () => ellipse(ctx, 0, 4, 66, 66));
-  }
-  // Soft contact shadow on whatever it sits on.
-  const ground = ctx.createRadialGradient(0, 50, 2, 0, 50, 34);
-  ground.addColorStop(0, 'rgba(0, 0, 0, 0.38)');
-  ground.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  shape(ctx, ground, null, () => ellipse(ctx, 0, 50, 34, 6.5));
-  // A baby is stubbier: wider and lower, squashed towards the ground.
-  if (form === 1) {
-    ctx.translate(0, 50);
-    ctx.scale(1.08, 0.9);
-    ctx.translate(0, -50);
-  }
-  ctx.lineWidth = 2.4;
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-  hungry = isHungry;
-  eyeScale = EYE_SCALE[form - 1];
-  if (isHungry) ctx.translate(0, 2);
-  DRAWERS[pet.species](ctx, lit(ctx, pet.color), lit(ctx, base), lit(ctx, dark), line);
-  if (form === 1) eggshell(ctx);
-  if (form === 2) neckerchief(ctx);
-  if (form >= 3) collar(ctx);
-  if (form === 3) sparkle(ctx, -40, -38, 8, '#FFE27A', line);
-  if (form === 4) crown(ctx);
-  hungry = false;
-  eyeScale = 1;
-  ctx.restore();
-}
+export { drawPet, PET_FORM_NAMES, type PetCtx } from './petArt.js';
