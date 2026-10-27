@@ -91,11 +91,15 @@ export function PetCareCard() {
     <section className="card !p-5">
       <div className="flex items-center justify-between gap-3">
         <span className="text-[13px] text-mute">Begleiter</span>
-        <span className="flex items-center gap-1.5 text-[12.5px] text-mute" title="Futtervorrat: eine Portion für alle drei Tagesaufgaben, höchstens drei auf Vorrat. Jede Fütterung kostet eine Portion.">
-          {Array.from({ length: foodMax }, (_, i) => (
-            <span key={i} className={`h-2.5 w-2.5 rounded-full ${i < food ? 'bg-accent' : 'border border-white/20'}`} />
-          ))}
-          <FoodIcon size={16} /> Vorrat {food} / {foodMax}
+        {/* The stock as one unit: the label, then a bowl per portion; free places are faint grey bowls. */}
+        <span className="flex items-center gap-2 text-[12.5px] text-mute" role="img" aria-label={`Futtervorrat: ${food} von ${foodMax}`}
+          title="Futtervorrat: eine Portion für alle drei Tagesaufgaben, höchstens drei auf Vorrat. Jede Fütterung kostet eine Portion.">
+          Vorrat
+          <span className="flex items-center gap-1">
+            {Array.from({ length: foodMax }, (_, i) => (
+              <span key={i} className={i < food ? '' : 'opacity-30 grayscale'}><FoodIcon size={18} /></span>
+            ))}
+          </span>
         </span>
       </div>
       {ordered.map((care, index) => {
