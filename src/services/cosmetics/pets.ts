@@ -73,12 +73,19 @@ export async function getEquippedPetLook(userId: string): Promise<{ stage: numbe
   }
 }
 
-/** One portion of food for finishing all daily quests, up to the stock limit (inside the quest payout). */
-export async function grantPetFood(client: Queryable, userId: string): Promise<void> {
-  await client.query(
+/** One portion of food for finishing all daily quests, if the stock has room (inside the quest payout). True when it came. */
+export async function grantPetFood(client: Queryable, userId: string): Promise<boolean> {
+  const result = await client.query(
     `INSERT INTO ${T.user_stats} AS s (user_id, stat, value) VALUES ($1, '${FOOD}', 1)
-     ON CONFLICT (user_id, stat) DO UPDATE SET value = LEAST(s.value + 1, $2)`, [userId, PET_FOOD_MAX],
+     ON CONFLICT (user_id, stat) DO UPDATE SET value = s.value + 1 WHERE s.value < $2`, [userId, PET_FOOD_MAX],
   );
+  return (result.rowCount ?? 0) > 0;
+}
+
+/** Food portions in stock. */
+export async function petFoodStock(userId: string, q: Queryable = requirePool()): Promise<number> {
+  const result = await q.query<{ value: string }>(`SELECT value FROM ${T.user_stats} WHERE user_id = $1 AND stat = '${FOOD}'`, [userId]);
+  return Number(result.rows[0]?.value ?? 0);
 }
 
 /** Feeds one of the member's pets: one portion, once per Berlin day; counts a care day (after a sad spell from the start of its form). */

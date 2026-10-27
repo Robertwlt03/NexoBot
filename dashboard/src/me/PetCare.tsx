@@ -2,7 +2,7 @@
 // Food only comes from finishing all three daily quests; each pet eats once a day (rules in src/shared/pets.ts).
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router';
-import { PET_FORM_NAMES, PET_STAGE_NAMES, drawPet, type PetCare } from '../../../src/shared/pets';
+import { PET_FORM_NAMES, PET_STAGE_NAMES, drawFoodBowl, drawPet, type PetCare } from '../../../src/shared/pets';
 import type { PetData } from '../../../src/shared/cosmetics';
 import type { PetOverview } from '../../../src/web/dto/profile';
 import { useMe, useMutation } from './api';
@@ -23,6 +23,22 @@ export function PetPortrait({ pet, stage, hungry, size }: { pet: PetData; stage:
     drawPet(ctx, pet, size / 2, size / 2 - size * 0.06, size * 0.36, stage, hungry);
   }, [pet, stage, hungry, size]);
   return <canvas ref={canvas} style={{ width: size, height: size }} aria-hidden="true" />;
+}
+
+/** The food bowl, the same picture the bot uses as its Discord emoji. */
+export function FoodIcon({ size = 18, label }: { size?: number; label?: string }) {
+  const canvas = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const el = canvas.current;
+    const ctx = el?.getContext('2d');
+    if (!el || !ctx) return;
+    const ratio = window.devicePixelRatio || 1;
+    el.width = size * ratio;
+    el.height = size * ratio;
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    drawFoodBowl(ctx, size / 2, size * 0.47, size * 0.95);
+  }, [size]);
+  return <canvas ref={canvas} style={{ width: size, height: size, flex: 'none' }} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true} />;
 }
 
 const mood = (care: PetCare) => (care.hungry ? 'Traurig: ein Tag ohne Futter. Die Form bleibt, der Weg zur nächsten beginnt neu.' : care.fedToday ? 'Satt und zufrieden' : 'Freut sich auf Futter');
@@ -79,7 +95,7 @@ export function PetCareCard() {
           {Array.from({ length: foodMax }, (_, i) => (
             <span key={i} className={`h-2.5 w-2.5 rounded-full ${i < food ? 'bg-accent' : 'border border-white/20'}`} />
           ))}
-          Vorrat {food} / {foodMax}
+          <FoodIcon size={16} /> Vorrat {food} / {foodMax}
         </span>
       </div>
       {ordered.map((care, index) => {

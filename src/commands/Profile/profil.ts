@@ -21,6 +21,7 @@ import { canAttachFiles, loadProfileCardData, profileCardAttachment, yearCardAtt
 import { loadYearReview } from '../../services/cosmetics/yearReview.js';
 import { cosmeticsPool } from '../../services/cosmetics/db.js';
 import { petMessage } from './modules/pet.js';
+import { foodEmoji } from '../../shared/pets.js';
 
 const COIN_TEXT = '🟤 Bronze · ⚪ Silber (100 Bronze) · 🟡 Gold (100 Silber) · 💠 Platin (100 Gold)';
 
@@ -150,7 +151,10 @@ export default {
       const blocks: NexoBlock[] = quests.map((quest) => ({ text: quest.done
         ? `✅ ~~${quest.label}~~\n-# geschafft · ${formatCoins(quest.reward)}`
         : `⬜ **${quest.label}**\n${textBar(quest.current, quest.target)} ${quest.current}/${quest.target} · ${formatCoins(quest.reward)}` }));
-      blocks.push({ text: bonus.done ? `Bonus für alle drei kassiert: ${formatCoins(bonus.reward)}` : `Alle drei geschafft: **${formatCoins(bonus.reward)}** extra` });
+      const food = bonus.food ? ` · ${foodEmoji()} +1 Futter` : '';
+      blocks.push({ text: bonus.done
+        ? `Bonus für alle drei kassiert: ${formatCoins(bonus.reward)}${food}`
+        : `Alle drei geschafft: **${formatCoins(bonus.reward)}** extra${food || ' · Futtervorrat voll'}` });
       const guild = interaction.guild!;
       const goals = await communityGoals(interaction.user.id, [{ id: guild.id, name: guild.name, iconUrl: null }], pendingCommunity(interaction.user.id));
       if (goals.length) blocks.push({ separator: true });

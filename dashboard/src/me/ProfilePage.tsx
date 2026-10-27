@@ -17,7 +17,7 @@ import {
   cardSubject, countdown, equipItem, isEquipped, num, reducedMotion, resolveCosmetics, unequipItem, useCountUp, useDraft, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
 import { Glyph, ItemVisual, Bernis, CoinStacks, RARITY_CLASS } from './visuals';
-import { PetCareCard } from './PetCare';
+import { FoodIcon, PetCareCard } from './PetCare';
 
 const STREAK_DAYS = DAILY_BONUS.maxStreakBonus / DAILY_BONUS.perStreakDay;
 
@@ -177,6 +177,7 @@ function QuestsCard() {
         <Glyph name="gift" size={16} />
         <span className="min-w-0 flex-1">{bonus.done ? 'Alle geschafft – Bonus kassiert!' : 'Alle drei geschafft:'}</span>
         <span className="shrink-0">+<Bernis amount={bonus.reward} nowrap /></span>
+        {bonus.food && <span className="flex shrink-0 items-center gap-1" title={bonus.done ? 'Eine Portion Futter für deine Begleiter' : 'Eine Portion Futter für deine Begleiter, dein Vorrat hat noch Platz'}>+1 <FoodIcon size={17} label="Futter" /></span>}
       </div>
       <p className="mt-2 text-[11.5px] text-faint">Zählt auf allen Servern mit Nexo. Fertige Aufgaben zahlen sich von selbst aus.</p>
     </section>

@@ -5,7 +5,7 @@ import { AttachmentBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { ACCENTS, nexoCard, textBar, type NexoBlock } from '../../../utils/nexoMessage.js';
 import { cmd } from '../../../utils/commandMention.js';
 import { publicDashboardUrl } from '../../../web/dashboard.js';
-import { PET_FORM_NAMES, PET_STAGE_NAMES } from '../../../shared/pets.js';
+import { PET_FORM_NAMES, PET_STAGE_NAMES, foodEmoji } from '../../../shared/pets.js';
 import type { PetData } from '../../../shared/cosmetics.js';
 import { getPetOverview } from '../../../services/cosmetics/pets.js';
 import { loadCatalog } from '../../../services/cosmetics/catalog.js';
@@ -21,7 +21,7 @@ export async function petMessage(userId: string, canAttach: boolean) {
   const link = (label: string, path: string) => (dashboard ? [new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel(label).setURL(`${dashboard}/me${path}`)] : []);
   const pets = overview.pets.filter((care) => catalog.get(care.itemId)?.slot === 'pet')
     .sort((a, b) => Number(b.itemId === settings.equipped.pet) - Number(a.itemId === settings.equipped.pet));
-  const foodLine = `🍖 Futtervorrat **${overview.food} / ${overview.foodMax}** · eine Portion pro Fütterung, neue für alle drei Tagesaufgaben (${cmd('profil aufgaben')})`;
+  const foodLine = `${foodEmoji()} Futtervorrat **${overview.food} / ${overview.foodMax}** · eine Portion pro Fütterung, neue für alle drei Tagesaufgaben (${cmd('profil aufgaben')})`;
 
   if (pets.length === 0) {
     return {

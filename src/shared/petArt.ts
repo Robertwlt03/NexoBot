@@ -1536,3 +1536,36 @@ export function drawPet(ctx: PetCtx, pet: PetData, x: number, y: number, size: n
   hungry = false;
   ctx.restore();
 }
+
+// ---------- Food ----------
+
+/** The food icon: a red bowl heaped with kibble and a paw print, `size` wide, centred on (x, y). Dashboard and emoji. */
+export function drawFoodBowl(ctx: PetCtx, x: number, y: number, size: number) {
+  const k = size / 100;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(k, k);
+  ctx.lineWidth = 4;
+  ctx.lineJoin = 'round';
+  const line = '#4A1A12';
+  // Kibble heaped over the rim, light from the upper left like the pets.
+  for (const [px, py, r] of [[-26, -6, 11], [-8, -14, 12], [12, -12, 12], [28, -4, 10], [-14, 2, 10], [6, 0, 11], [20, 6, 9]] as const) {
+    shape(ctx, lit(ctx, '#B5703A'), '#5A3418', () => ellipse(ctx, px, py, r, r * 0.82));
+    patch0(ctx, 'rgba(255, 230, 190, 0.55)', px - r * 0.35, py - r * 0.35, r * 0.3, r * 0.22);
+  }
+  shape(ctx, lit(ctx, '#E5484D'), line, () => {
+    ctx.moveTo(-46, 4);
+    ctx.lineTo(46, 4);
+    ctx.bezierCurveTo(44, 30, 30, 40, 0, 40);
+    ctx.bezierCurveTo(-30, 40, -44, 30, -46, 4);
+    ctx.closePath();
+  });
+  shape(ctx, '#F87171', line, () => ellipse(ctx, 0, 4, 46, 6));
+  // Paw print on the bowl.
+  shape(ctx, '#FFF1EC', null, () => ellipse(ctx, 0, 26, 7, 6));
+  for (const [px, py] of [[-9, 16], [-3, 13], [3, 13], [9, 16]] as const) shape(ctx, '#FFF1EC', null, () => ellipse(ctx, px, py, 2.6, 3));
+  ctx.restore();
+}
+function patch0(ctx: PetCtx, fill: string, x: number, y: number, rx: number, ry: number) {
+  shape(ctx, fill, null, () => ellipse(ctx, x, y, rx, ry));
+}

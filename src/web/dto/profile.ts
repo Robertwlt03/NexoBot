@@ -57,7 +57,12 @@ export interface DailyClaimResult { claimed: number; wallet: WalletSummary; dail
 
 export interface DailyQuest { id: string; label: string; current: number; target: number; reward: number; done: boolean }
 /** Three tasks per Berlin day, paid automatically once done; all three pay `bonus.reward` on top. */
-export interface DailyQuests { quests: DailyQuest[]; bonus: { reward: number; done: boolean }; resetsAt: string }
+export interface DailyQuests {
+  quests: DailyQuest[];
+  /** All three done: Bernis plus a portion of pet food. `food`: before, whether the stock has room for it; after, whether it came. */
+  bonus: { reward: number; done: boolean; food: boolean };
+  resetsAt: string;
+}
 /** A server's shared goal during a running event (messages written there by everyone). */
 export interface CommunityGoal {
   eventId: string; eventName: string; endsAt: string;

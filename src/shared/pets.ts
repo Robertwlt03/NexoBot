@@ -75,4 +75,11 @@ export function petPoint(avatar: { cx: number; cy: number; r: number }, stage: n
   return { x: avatar.cx - avatar.r * 0.78, y: avatar.cy + avatar.r * 0.86 - size, size };
 }
 
-export { drawPet, PET_FORM_NAMES, type PetCtx } from './petArt.js';
+export { drawFoodBowl, drawPet, PET_FORM_NAMES, type PetCtx } from './petArt.js';
+
+/** The food icon in Discord texts: the bot's application emoji once it is uploaded, a unicode bowl before. */
+let foodEmojiText = '🍖';
+export const foodEmoji = () => foodEmojiText;
+export function setFoodEmoji(text: string): void {
+  foodEmojiText = text;
+}
