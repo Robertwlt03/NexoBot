@@ -38,3 +38,11 @@ test('message xp respects range, multiplier and cooldown', () => {
   assert.equal(isOnCooldown(cfg, 1000, 1000 + 19_999), true);
   assert.equal(isOnCooldown(cfg, 1000, 1000 + 20_000), false);
 });
+
+test('xp shown for the next level is what applyXp needs to level up', async () => {
+  const { leaderboardEmbed } = await import('../src/services/leveling/views.js');
+  const needed = getXpForLevel(5);
+  assert.deepEqual(applyXp({ ...fresh, level: 5 }, needed, 0).reached, [6]);
+  const text = leaderboardEmbed([{ userId: '1', xp: 0, level: 5, totalXp: 900, rank: 1 }]).toJSON().fields?.[0]?.value ?? '';
+  assert.match(text, new RegExp(`\\(0/${needed} XP\\)`));
+});

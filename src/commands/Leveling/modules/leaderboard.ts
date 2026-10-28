@@ -1,8 +1,7 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { logger } from '../../../utils/logger.js';
-import { NexoBotError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { getLeaderboard, getLevelingConfig } from '../../../services/leveling/leveling.js';
-import { disabledEmbed, leaderboardEmbed } from '../../../services/leveling/views.js';
+import { disabledEmbed, emptyLeaderboardEmbed, leaderboardEmbed } from '../../../services/leveling/views.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import type { Command } from '../../../types/index.js';
@@ -28,15 +27,8 @@ export default {
 
     const leaderboard = await getLeaderboard(client, interaction.guildId!, 10);
 
-    if (leaderboard.length === 0) {
-      throw new NexoBotError(
-        'No leaderboard data found',
-        ErrorTypes.DATABASE,
-        'Noch keine Level-Daten vorhanden. Schreib Nachrichten, um XP zu sammeln!'
-      );
-    }
-
-    await InteractionHelper.safeEditReply(interaction, { embeds: [leaderboardEmbed(leaderboard)] });
+    const embed = leaderboard.length ? leaderboardEmbed(leaderboard) : emptyLeaderboardEmbed();
+    await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
     logger.debug(`Leaderboard displayed for guild ${interaction.guildId}`);
   }
 } satisfies Command;
