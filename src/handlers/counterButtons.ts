@@ -1,6 +1,6 @@
 import type { ButtonHandler } from '../types/index.js';
-import { createEmbed, successEmbed } from '../utils/embeds.js';
-import { performDeletionByCounterId } from '../services/serverstatsService.js';
+import { performDeletionByCounterId } from '../services/serverstats/serverstats.js';
+import { cancelledEmbed, deletedEmbed } from '../services/serverstats/views.js';
 import { logger } from '../utils/logger.js';
 import { ErrorTypes, replyUserError, handleInteractionError } from '../utils/errorHandler.js';
 
@@ -35,11 +35,7 @@ export const counterDeleteActionHandler = {
 
       if (action === 'cancel') {
         await interaction.editReply({
-          embeds: [createEmbed({
-            title: '❌ Abgebrochen',
-            description: 'Löschen des Zählers abgebrochen.',
-            color: 'error'
-          })],
+          embeds: [cancelledEmbed()],
           components: []
         }).catch(logger.error);
         return;
@@ -50,10 +46,10 @@ export const counterDeleteActionHandler = {
         return;
       }
 
-      const { message } = await performDeletionByCounterId(client, interaction.guild!, counterId);
+      const result = await performDeletionByCounterId(client, interaction.guild!, counterId);
 
       await interaction.editReply({
-        embeds: [successEmbed(message)],
+        embeds: [deletedEmbed(result)],
         components: []
       }).catch(logger.error);
     } catch (error) {

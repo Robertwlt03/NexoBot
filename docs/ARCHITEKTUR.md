@@ -52,7 +52,7 @@ Sammeldatei Schritt für Schritt, bis sie am Ende verschwindet.
 - [x] Leveling (Pilot, PR #32): Kern, Store mit einer Ranglisten-Abfrage, Views
 - [x] Geburtstage: `birthdayService.ts`, Commands `Birthday/`, Web `birthdays.ts`; Daten aus `utils/database.ts`
       (`getGuildBirthdays`, `setBirthday`, `deleteBirthday`); `/birthday next` holt Mitglieder einzeln
-- [ ] Server-Statistiken: `serverstatsService.ts`, Commands `ServerStats/`, Buttons `counter`, Web `serverstats.ts`
+- [x] Server-Statistiken: `serverstatsService.ts`, Commands `ServerStats/`, Buttons `counter`, Web `serverstats.ts`
 - [ ] Gewinnspiele: `giveawayService.ts`, `giveawayActions.ts`, `utils/giveaways.ts`, Buttons `giveaway`; der Service
       baut heute Embeds und Buttons (in die View verschieben)
 - [ ] Join-to-Create: `joinToCreateService.ts`, Event `voiceStateUpdate.ts`, Web `jointocreate.ts`; Daten aus

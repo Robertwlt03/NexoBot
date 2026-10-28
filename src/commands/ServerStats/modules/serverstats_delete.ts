@@ -1,7 +1,6 @@
-import { getColor } from '../../../config/bot.js';
-import { PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
-import { createEmbed } from '../../../utils/embeds.js';
-import { getServerCounters, getCounterTypeDisplay } from '../../../services/serverstatsService.js';
+import { PermissionFlagsBits } from 'discord.js';
+import { findCounter } from '../../../services/serverstats/serverstats.js';
+import { deleteConfirmation } from '../../../services/serverstats/views.js';
 import { logger } from '../../../utils/logger.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
@@ -26,39 +25,18 @@ export async function handleDelete(interaction: ChatInputCommandInteraction, cli
     }
 
     try {
-        const counters = await getServerCounters(client, guild.id);
+        const { hasCounters, counter, channel } = await findCounter(client, guild, counterId);
 
-        if (counters.length === 0) {
+        if (!hasCounters) {
             await replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: 'Keine Zähler zum Löschen gefunden.' }).catch(logger.error);
             return;
         }
-
-        const counterToDelete = counters.find(c => c.id === counterId);
-        if (!counterToDelete) {
+        if (!counter) {
             await replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: `Zähler mit der ID \`${counterId}\` nicht gefunden. Nutze \`/serverstats list\`, um alle Zähler anzusehen.` }).catch(logger.error);
             return;
         }
 
-        const channel = guild.channels.cache.get(counterToDelete.channelId);
-
-        const embed = createEmbed({
-            title: "Zähler & Kanal löschen",
-            description: `Willst du diesen Zähler und seinen Kanal wirklich löschen?\n\n**ID:** \`${counterToDelete.id}\`\n**Typ:** ${getCounterTypeDisplay(counterToDelete.type)}\n**Kanal:** ${channel || 'Gelöschter Kanal'}\n\n **Der Kanal wird dauerhaft gelöscht!**`,
-            color: getColor('error')
-        });
-
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder()
-                .setCustomId(`counter-delete:confirm:${counterToDelete.id}:${interaction.user.id}`)
-                .setLabel("Löschen bestätigen")
-                .setStyle(ButtonStyle.Danger),
-            new ButtonBuilder()
-                .setCustomId(`counter-delete:cancel:${counterToDelete.id}:${interaction.user.id}`)
-                .setLabel("Abbrechen")
-                .setStyle(ButtonStyle.Secondary)
-        );
-
-        await InteractionHelper.safeEditReply(interaction, { embeds: [embed], components: [row] }).catch(logger.error);
+        await InteractionHelper.safeEditReply(interaction, deleteConfirmation(counter, channel, interaction.user.id)).catch(logger.error);
 
     } catch (error) {
         logger.error("Error in handleDelete:", error);

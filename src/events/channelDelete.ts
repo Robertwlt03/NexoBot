@@ -5,7 +5,7 @@ import {
     getTicketData,
     saveTicketData
 } from '../utils/database.js';
-import { getServerCounters, saveServerCounters } from '../services/serverstatsService.js';
+import { removeCounterForChannel } from '../services/serverstats/serverstats.js';
 import { logger } from '../utils/logger.js';
 import type { BotEvent } from '../types/index.js';
 
@@ -27,6 +27,12 @@ export default {
             }
         }
 
+        // Counter channels can be text or voice channels.
+        if (!channel.isDMBased()) {
+            await removeCounterForChannel(client, channel.guild.id, channel.id)
+                .catch((error) => logger.warn(`Could not remove the counter of deleted channel ${channel.id}:`, error));
+        }
+
 if (channel.type !== 2 && channel.type !== 4) {
             return;
         }
@@ -35,22 +41,6 @@ if (channel.type !== 2 && channel.type !== 4) {
 
         try {
             
-            const counters = await getServerCounters(client, guildId);
-            const orphanedCounter = counters.find(c => c.channelId === channel.id);
-            
-            if (orphanedCounter) {
-                logger.info(`Counter channel ${channel.name} (${channel.id}) was deleted, removing counter ${orphanedCounter.id} from database`);
-                
-                const updatedCounters = counters.filter(c => c.channelId !== channel.id);
-                const success = await saveServerCounters(client, guildId, updatedCounters);
-                
-                if (success) {
-                    logger.info(`Successfully removed orphaned counter ${orphanedCounter.id} (type: ${orphanedCounter.type}) from guild ${guildId}`);
-                } else {
-                    logger.warn(`Failed to remove orphaned counter ${orphanedCounter.id} from guild ${guildId}`);
-                }
-            }
-
             const config = await getJoinToCreateConfig(client, guildId);
 
             if (!config.enabled) {
