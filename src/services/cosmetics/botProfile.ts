@@ -3,31 +3,13 @@
 // Checked every 30 minutes; a server is only touched when its look has to change.
 
 import cron from 'node-cron';
-import { createCanvas } from '@napi-rs/canvas';
 import { Events, type Client } from 'discord.js';
-import type { BadgeGlyph } from '../../shared/cosmetics.js';
-import { PROFILE_FONTS, createRng, drawGlyph, seedFrom } from '../../shared/profileCard.js';
+import { EVENT_TINT, eventTheme } from '../../shared/eventIcons.js';
 import type { ShopEvent } from '../../web/dto/profile.js';
 import { logger } from '../../utils/logger.js';
-import '../welcomeCardRenderer.js'; // registers the card fonts
 import { loadStoredEvents, runningEvents } from './events.js';
 import { cosmeticsPool } from './db.js';
-
-/** Colours (ground, highlight) and the symbol scattered over the banner, per built-in event. */
-const LOOKS: Record<string, { colors: [string, string]; glyph: BadgeGlyph }> = {
-  'new-year': { colors: ['#172554', '#F5C451'], glyph: 'star' },
-  valentine: { colors: ['#881337', '#FDA4AF'], glyph: 'heart' },
-  carnival: { colors: ['#4C1D95', '#FBBF24'], glyph: 'mask' },
-  easter: { colors: ['#14532D', '#FDE68A'], glyph: 'egg' },
-  'summer-sale': { colors: ['#075985', '#FDE047'], glyph: 'sun' },
-  autumn: { colors: ['#7C2D12', '#FBBF24'], glyph: 'leaf' },
-  halloween: { colors: ['#3B0764', '#FB923C'], glyph: 'pumpkin' },
-  'black-friday': { colors: ['#0A0A0A', '#F5C451'], glyph: 'diamond' },
-  christmas: { colors: ['#14532D', '#E0F2FE'], glyph: 'snowflake' },
-};
-const CUSTOM_LOOK = { colors: ['#1F2937', '#8FB36B'] as [string, string], glyph: 'star' as BadgeGlyph };
-
-export const lookFor = (event: ShopEvent) => LOOKS[event.id] ?? CUSTOM_LOOK;
+import { renderProfileBanner } from './profileArt.js';
 
 /** Bio text for the event (Discord allows 190 characters). Pure, for tests. */
 export function eventBio(event: ShopEvent): string {
@@ -35,35 +17,13 @@ export function eventBio(event: ShopEvent): string {
   return `🎉 ${event.name} läuft${deal}! Gemeinschaftsziel, Tagesaufgaben und Event-Artikel: /profil aufgaben und /profil shop`.slice(0, 190);
 }
 
-/** 960×384 banner (Discord's 5:2): the event colours, scattered symbols and the event name. */
-export function renderEventBanner(event: ShopEvent): Buffer {
-  const W = 960;
-  const H = 384;
-  const { colors: [ground, highlight], glyph } = lookFor(event);
-  const canvas = createCanvas(W, H);
-  const ctx = canvas.getContext('2d');
-  const gradient = ctx.createLinearGradient(0, 0, W, H);
-  gradient.addColorStop(0, ground);
-  gradient.addColorStop(1, '#09090C');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, W, H);
-  const rng = createRng(seedFrom(event.id));
-  for (let i = 0; i < 26; i += 1) {
-    ctx.globalAlpha = 0.18 + rng() * 0.35;
-    // Right half only, so the name on the left stays clear.
-    drawGlyph(ctx as never, glyph, W * 0.6 + rng() * W * 0.44, rng() * H, 22 + rng() * 46, highlight, (rng() - 0.5) * 0.8);
-  }
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = `700 56px "${PROFILE_FONTS.unbounded}"`;
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillText(event.name, 56, H / 2 + 10, W * 0.52);
-  if (event.discount > 0) {
-    ctx.font = `700 32px "${PROFILE_FONTS.inter}"`;
-    ctx.fillStyle = highlight;
-    ctx.fillText(`−${event.discount} % im Nexo-Shop`, 58, H / 2 + 64);
-  }
-  return canvas.toBuffer('image/png');
+/** The event's per-server banner: the profile banner with the event's colour, discount, name and icons. */
+export function renderEventBanner(event: ShopEvent): Promise<Buffer> {
+  const theme = eventTheme(event);
+  return renderProfileBanner({
+    format: 'server', seed: event.id, tint: EVENT_TINT[theme], icon: theme, title: event.name,
+    tag: event.discount > 0 ? `−${event.discount} %` : undefined,
+  });
 }
 
 /** What each server currently shows: the event id, or '' for the normal profile (unknown after a restart). */
@@ -73,7 +33,7 @@ export async function syncBotProfiles(client: Client): Promise<void> {
   if (!cosmeticsPool() || !client.isReady()) return;
   const event = runningEvents(new Date(), await loadStoredEvents())[0] ?? null;
   const want = event?.id ?? '';
-  const banner = event ? renderEventBanner(event) : null;
+  const banner = event ? await renderEventBanner(event) : null;
   for (const guild of client.guilds.cache.values()) {
     // After a restart we do not know the look: a per-server banner means an event look is still on.
     const current = applied.get(guild.id) ?? (guild.members.me?.banner ? '?' : '');

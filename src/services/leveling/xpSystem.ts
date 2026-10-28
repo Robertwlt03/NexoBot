@@ -91,7 +91,7 @@ export const addXp = wrapServiceBoundary(async function addXp(client: NexoClient
       level: levelData.level,
       xp: levelData.xp,
       totalXp: levelData.totalXp,
-      xpNeeded: getXpForLevel(levelData.level + 1),
+      xpNeeded: getXpForLevel(levelData.level),
       leveledUp: didLevelUp,
     };
   });
@@ -161,7 +161,7 @@ async function sendLevelUpAnnouncement(client: NexoClient, guild: Guild, member:
       .replace(/{user}/g, member.toString())
       .replace(/{level}/g, String(levelData.level))
       .replace(/{xp}/g, String(levelData.xp))
-      .replace(/{xpNeeded}/g, String(getXpForLevel(levelData.level + 1)));
+      .replace(/{xpNeeded}/g, String(getXpForLevel(levelData.level)));
 
     // Level-up card in the member's style; without AttachFiles or on render errors only the text is sent.
     const card = permissions.has('AttachFiles') ? await levelUpCardAttachment(client, member, levelData.level, reward) : null;

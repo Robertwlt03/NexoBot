@@ -21,11 +21,19 @@ export function disabledEmbed(): EmbedBuilder {
         .setDescription('Das Leveling-System ist auf diesem Server derzeit deaktiviert.');
 }
 
+/** Shown instead of an error while nobody on the server has XP yet. */
+export function emptyLeaderboardEmbed(): EmbedBuilder {
+    return new EmbedBuilder()
+        .setTitle('Level-Bestenliste')
+        .setColor('#2ecc71')
+        .setDescription('Noch keine Level-Daten vorhanden. Schreib Nachrichten, um XP zu sammeln!');
+}
+
 export function leaderboardEmbed(leaderboard: LeaderboardEntry[]): EmbedBuilder {
     const medals = ['🥇', '🥈', '🥉'];
     const lines = leaderboard.map((user, index) => {
         const rankPrefix = medals[index] ?? `**${index + 1}.**`;
-        return `${rankPrefix} <@${user.userId}> – Level ${user.level} (${user.xp}/${getXpForLevel(user.level + 1)} XP)`;
+        return `${rankPrefix} <@${user.userId}> – Level ${user.level} (${user.xp}/${getXpForLevel(user.level)} XP)`;
     });
     return new EmbedBuilder()
         .setTitle('Level-Bestenliste')
@@ -42,7 +50,7 @@ function progressBar(percentage: number, length: number): string {
 
 /** Text fallback of the rank card. */
 export function rankEmbed(member: GuildMember, data: LevelData): EmbedBuilder {
-    const xpNeeded = getXpForLevel(data.level + 1);
+    const xpNeeded = getXpForLevel(data.level);
     const progress = progressPercent(data.xp, xpNeeded);
     return new EmbedBuilder()
         .setTitle(`Rang von ${member.displayName}`)
@@ -124,7 +132,6 @@ export function buildDashboardEmbed(cfg: GuildLevelingConfig, guild: Guild) {
             { name: 'Ankündigungen', value: cfg.announceLevelUp !== false ? '**Aktiviert**' : '**Deaktiviert**', inline: true },
             { name: 'XP pro Nachricht', value: `\`${xpMin} – ${xpMax}\``, inline: true },
             { name: 'XP-Cooldown', value: `\`${cooldown}s\``, inline: true },
-            { name: '\u200B', value: '\u200B', inline: true },
             { name: 'Level-up-Nachricht', value: msgPreview, inline: false },
             { name: 'Rollen-Belohnungen', value: rewardsValue, inline: false },
             { name: 'Ignorierte Kanäle', value: ignoredChValue, inline: true },

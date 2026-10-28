@@ -6,21 +6,21 @@ Dringlichkeit sortiert; erledigte Punkte werden abgehakt.
 
 ## Fehler
 
-- [ ] **XP-Anzeige ein Level zu hoch.** Die Rangliste zeigt bei Level 5 „0/530 XP“, die Rang-Karte richtig „0/425 XP“.
+- [x] **XP-Anzeige ein Level zu hoch.** Die Rangliste zeigt bei Level 5 „0/530 XP“, die Rang-Karte richtig „0/425 XP“.
       Beim Aufsteigen rechnet der Bot mit `getXpForLevel(level)` (`services/leveling/core.ts`, `applyXp`), vier Stellen
       zeigen aber `getXpForLevel(level + 1)` (Stand PR #32): die Rangliste und das Level-Embed in `services/leveling/views.ts`
       (Zeilen 28 und 45) sowie `xpNeeded` und der Platzhalter `{xpNeeded}` der Level-up-Nachricht in
       `services/leveling/xpSystem.ts` (Zeilen 94 und 164). War schon vor dem Umbau so. Vorschlag: überall `level`
       nehmen und mit einem Test in `tests/levelingCore.test.ts` absichern.
-- [ ] **Event-Banner im Bot-Profil: Text liegt unter dem Profilbild.** `services/cosmetics/botProfile.ts` zeichnet den
+- [x] **Event-Banner im Bot-Profil: Text liegt unter dem Profilbild.** `services/cosmetics/botProfile.ts` zeichnet den
       Eventnamen auf halber Höhe und die Rabattzeile („−15 % im Nexo-Shop“) darunter, beides links. Genau dort legt
       Discord das Profilbild über das Banner, deshalb ist die Rabattzeile bei allen Events mit Rabatt nur noch als
       „–1… -Shop“ zu sehen (geprüft für alle neun festen Events und ein eigenes Event).
-- [ ] **Event-Banner: Discord schneidet oben und unten ab.** Das Banner ist 960 × 384 (5 : 2), das Profil zeigt es aber
+- [x] **Event-Banner: Discord schneidet oben und unten ab.** Das Banner ist 960 × 384 (5 : 2), das Profil zeigt es aber
       etwa im Verhältnis 17 : 6. Oben und unten fallen rund 24 px weg, Symbole am Rand werden angeschnitten.
-- [ ] **Event-Banner: lange Namen werden gestaucht.** Der Name hat eine feste Höchstbreite (`W * 0.52`); ein eigenes
+- [x] **Event-Banner: lange Namen werden gestaucht.** Der Name hat eine feste Höchstbreite (`W * 0.52`); ein eigenes
       Event wie „Sommerfest im Café“ wird schmal gedrückt statt kleiner gesetzt oder umbrochen.
-- [ ] **Leere Rangliste meldet „Datenbankfehler“.** `commands/Leveling/modules/leaderboard.ts` wirft bei leerer Liste
+- [x] **Leere Rangliste meldet „Datenbankfehler“.** `commands/Leveling/modules/leaderboard.ts` wirft bei leerer Liste
       einen `NexoBotError` vom Typ `DATABASE`; der Nutzer sieht einen roten „Datenbankfehler“ mit Ref-Nummer, obwohl
       nichts kaputt ist. Vorschlag: eine normale Info-Karte („Noch keine Level-Daten …“) statt eines Fehlers.
 
@@ -39,12 +39,12 @@ Dringlichkeit sortiert; erledigte Punkte werden abgehakt.
 
 ## Profil des Bots
 
-- [ ] **Event-Banner neu aufteilen.** Vorschlag: Name und Rabatt in die obere Hälfte und nach rechts, die Symbole nach
+- [x] **Event-Banner neu aufteilen.** Vorschlag: Name und Rabatt in die obere Hälfte und nach rechts, die Symbole nach
       links oben und in die Mitte, die linke untere Ecke (etwa 35 % Breite, untere 45 % Höhe) frei für das Profilbild.
       Alles mit rund 30 px Abstand zum oberen und unteren Rand, damit Discords Zuschnitt nichts abschneidet. Lange
       Namen kleiner setzen statt stauchen. Nach dem Umbau alle Events als Vorschau mit Profilbild prüfen (wie in
       dieser Prüfung).
-- [ ] **Event-Banner im gleichen Stil wie das Dashboard.** Die Event-Banner sind heute Farbverläufe mit verstreuten
+- [x] **Event-Banner im gleichen Stil wie das Dashboard.** Die Event-Banner sind heute Farbverläufe mit verstreuten
       Symbolen. Vorschlag: das Walnussholz mit der eingebrannten Ranke als Grund nehmen (wie die Seitenköpfe im
       Dashboard und das neue Profil-Banner) und das Event nur über Farbe, Symbole und Namen zeigen.
 - [ ] **Event-Look überdeckt das Test-Banner.** Der Test-Bot läuft gegen dieselbe Datenbank und setzt während eines
@@ -68,7 +68,7 @@ Dringlichkeit sortiert; erledigte Punkte werden abgehakt.
 
 ## Kleinigkeiten
 
-- [ ] **Leeres Feld im `/level`-Dashboard.** Ein Leerfeld (`​`) für die Spaltenaufteilung erscheint im schmalen
+- [x] **Leeres Feld im `/level`-Dashboard.** Ein Leerfeld (`​`) für die Spaltenaufteilung erscheint im schmalen
       Discord-Fenster als einzelner Doppelpunkt. War schon vor dem Umbau so. Vorschlag: das Feld weglassen, die
       Karten-Darstellung braucht es nicht.
 - [ ] **README-Banner veraltet.** `assets/banner*.webp` zeigen noch den älteren Stil; das Dashboard nutzt inzwischen
