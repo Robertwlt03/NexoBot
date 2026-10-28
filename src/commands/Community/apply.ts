@@ -1,41 +1,24 @@
-import { getColor, getDefaultApplicationQuestions } from '../../config/bot.js';
+import { getDefaultApplicationQuestions } from '../../config/bot.js';
 import { SlashCommandBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import type { ChatInputCommandInteraction, ModalSubmitInteraction } from 'discord.js';
 import type { Command } from '../../types/index.js';
 import { createEmbed, successEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 import { handleInteractionError, withErrorHandling, createError, ErrorTypes, replyUserError } from '../../utils/errorHandler.js';
-import ApplicationService from '../../services/applicationService.js';
+import ApplicationService, { getApplicationStatusPresentation } from '../../services/applicationService.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { logEvent, EVENT_TYPES, resolveApplicationLogChannel } from '../../services/loggingService.js';
 import { formatLogLine, resolveUserAuthor } from '../../utils/logging/logEmbeds.js';
 import { getGuildConfig } from '../../services/config/guildConfig.js';
-import { 
-    getApplicationSettings, 
-    getUserApplications, 
-    createApplication, 
+import {
+    getApplicationSettings,
+    getUserApplications,
     getApplication,
     getApplicationRoles,
     updateApplication,
     getApplicationRoleSettings
 } from '../../utils/database.js';
 import type { ApplicationAnswer, ApplicationSettings } from '../../utils/database.js';
-
-function getApplicationStatusPresentation(statusValue: unknown) {
-    const normalized = typeof statusValue === 'string' ? statusValue.trim().toLowerCase() : 'unknown';
-    const statusLabel =
-        normalized === 'pending' ? 'In Bearbeitung' :
-        normalized === 'approved' ? 'Angenommen' :
-        normalized === 'denied' ? 'Abgelehnt' :
-        'Unbekannt';
-    const statusEmoji =
-        normalized === 'pending' ? '🟡' :
-        normalized === 'approved' ? '🟢' :
-        normalized === 'denied' ? '🔴' :
-        '⚪';
-
-    return { normalized, statusLabel, statusEmoji };
-}
 
 export default {
     slashOnly: true,
@@ -78,7 +61,7 @@ export default {
             return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Dieser Command kann nur auf einem Server genutzt werden.' });
         }
 
-        const { options, guild, member } = interaction;
+        const { options, guild } = interaction;
         const subcommand = options.getSubcommand();
 
         if (subcommand !== "submit") {
@@ -271,7 +254,6 @@ async function handleList(interaction: ChatInputCommandInteraction) {
 
 async function handleSubmit(interaction: ChatInputCommandInteraction, settings: ApplicationSettings) {
     const applicationName = interaction.options.getString("application");
-    const member = interaction.member;
 
     const applicationRoles = await getApplicationRoles(interaction.client, interaction.guild!.id);
     

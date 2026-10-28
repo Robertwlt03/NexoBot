@@ -1,7 +1,7 @@
 // logEmbeds.js — shared helpers for clean, scannable log embeds
 
 import { EmbedBuilder } from 'discord.js';
-import type { APIEmbedField, Client, ColorResolvable, Guild, Role } from 'discord.js';
+import type { APIEmbedField, Client, ColorResolvable, Role } from 'discord.js';
 
 export interface LogField {
   name: string;
@@ -16,14 +16,6 @@ export interface LogDescriptionOptions {
   lines?: string[];
   quoted?: boolean;
   meta?: LogMetaEntry[];
-}
-
-export interface LogFooterOptions {
-  guild?: Guild | null;
-  executorId?: string | null;
-  executorTag?: string | null;
-  executorAvatar?: string | null;
-  footerText?: string | null;
 }
 
 export interface LogAuthor {
@@ -109,30 +101,6 @@ export function splitComparisonFields(fields: LogField[] = []): ComparisonFields
   }
 
   return comparison;
-}
-
-export function applyLogFooter(embed: EmbedBuilder, { guild, executorId, executorTag, executorAvatar, footerText }: LogFooterOptions = {}): EmbedBuilder {
-  if (footerText) {
-    embed.setFooter({ text: footerText.slice(0, 2048), iconURL: executorAvatar || undefined });
-    return embed;
-  }
-
-  if (executorId && executorTag) {
-    embed.setFooter({
-      text: `${executorTag} • `,
-      iconURL: executorAvatar || undefined,
-    });
-    return embed;
-  }
-
-  if (guild) {
-    embed.setFooter({
-      text: guild.name,
-      iconURL: guild.iconURL() || undefined,
-    });
-  }
-
-  return embed;
 }
 
 export function appendContentSection(description: string = '', label: string, content: string | null | undefined): string {

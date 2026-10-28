@@ -1,6 +1,6 @@
 import type { Command } from '../../../types/index.js';
 import { SlashCommandBuilder, MessageFlags, type GuildMember } from 'discord.js';
-import { createEmbed, errorEmbed, successEmbed, infoEmbed, warningEmbed } from '../../../utils/embeds.js';
+import { successEmbed } from '../../../utils/embeds.js';
 import { shopItems } from '../../../config/shop/items.js';
 import { getEconomyData, setEconomyData } from '../../../utils/economy.js';
 import { getGuildConfig } from '../../../services/config/guildConfig.js';

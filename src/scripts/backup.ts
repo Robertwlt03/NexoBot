@@ -1,43 +1,14 @@
 import { spawnSync } from 'node:child_process';
-import { mkdir, readdir, stat, unlink } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { logger } from '../utils/logger.js';
+import { ensureCommand, parseArgs, pruneBackups } from './cli.js';
 import { getEnv, type Env } from '../config/env.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
-
-type CliArgs = Record<string, string | true>;
-
-function parseArgs(argv: string[]): CliArgs {
-  const args: CliArgs = {};
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const token = argv[index];
-    if (!token.startsWith('--')) {
-      continue;
-    }
-
-    const [rawKey, inlineValue] = token.slice(2).split('=');
-    if (typeof inlineValue !== 'undefined') {
-      args[rawKey] = inlineValue;
-      continue;
-    }
-
-    const nextToken = argv[index + 1];
-    if (!nextToken || nextToken.startsWith('--')) {
-      args[rawKey] = true;
-      continue;
-    }
-
-    args[rawKey] = nextToken;
-    index += 1;
-  }
-
-  return args;
-}
 
 function assertEnv(name: keyof Env): string {
   const value = getEnv()[name];
@@ -47,53 +18,10 @@ function assertEnv(name: keyof Env): string {
   return value;
 }
 
-function ensureCommand(command: string): void {
-  const result = spawnSync(command, ['--version'], {
-    encoding: 'utf8',
-    stdio: 'pipe',
-    shell: process.platform === 'win32'
-  });
-
-  if (result.status !== 0) {
-    throw new Error(`${command} is required but was not found in PATH.`);
-  }
-}
-
 function createTimestamp() {
   const now = new Date();
   const pad = (value: number) => String(value).padStart(2, '0');
   return `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}-${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}`;
-}
-
-async function pruneBackups(backupDir: string, retentionDays: number): Promise<void> {
-  if (!Number.isFinite(retentionDays) || retentionDays <= 0) {
-    return;
-  }
-
-  const entries = await readdir(backupDir, { withFileTypes: true });
-  const cutoff = Date.now() - (retentionDays * 24 * 60 * 60 * 1000);
-  let removed = 0;
-
-  for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith('.dump')) {
-      continue;
-    }
-
-    const fullPath = path.join(backupDir, entry.name);
-    const fileStats = await stat(fullPath);
-    if (fileStats.mtimeMs < cutoff) {
-      await unlink(fullPath);
-      removed += 1;
-    }
-  }
-
-  if (removed > 0) {
-    logger.info(`Pruned ${removed} old backup file(s)`, {
-      event: 'backup.prune.completed',
-      removed,
-      retentionDays
-    });
-  }
 }
 
 async function run() {

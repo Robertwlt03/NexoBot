@@ -1,6 +1,6 @@
 import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags } from 'discord.js';
 import type { ModalSubmitInteraction } from 'discord.js';
-import type { ButtonHandler, ModalHandler, NexoClient } from '../types/index.js';
+import type { ButtonHandler, NexoClient } from '../types/index.js';
 import { successEmbed } from '../utils/embeds.js';
 import { WarningService } from '../services/moderation/warningService.js';
 import { InteractionHelper } from '../utils/interactionHelper.js';
@@ -49,9 +49,6 @@ const warningClearAllHandler = {
       if (interaction.user.id !== originalModeratorId) {
         return await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'Nur der Moderator, der diese Verwarnungen aufgerufen hat, kann sie zurücksetzen.' });
       }
-
-      const targetUser = await client.users.fetch(targetUserId).catch(() => null);
-      const targetName = targetUser ? targetUser.username : 'diesen Nutzer';
 
       const clearModal = new ModalBuilder()
         .setCustomId(`warning_clear_confirm_modal:${targetUserId}:${interaction.user.id}`)
@@ -166,8 +163,3 @@ export {
   warningDeleteModalHandler,
   warningClearConfirmModalHandler,
 };
-
-export default {
-  name: 'warning_delete_modal',
-  execute: warningDeleteModalHandler
-} satisfies ModalHandler;

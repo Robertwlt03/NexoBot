@@ -102,7 +102,7 @@ const DOT_BOOST = 1.6;
  * Icons give a few details (dots) their own strokeWidth on the 24px grid; scale those like the rest of the icon, so
  * a dot stays a dot instead of turning into a blob.
  */
-function scaleStrokes(node: ReactNode, factor: number): ReactNode {
+export function scaleStrokes(node: ReactNode, factor: number): ReactNode {
   return Children.map(node, (child) => {
     if (!isValidElement<{ strokeWidth?: number | string; children?: ReactNode }>(child)) return child;
     const { strokeWidth, children } = child.props;

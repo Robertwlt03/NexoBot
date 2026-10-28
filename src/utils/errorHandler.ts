@@ -26,7 +26,7 @@ import type { NexoInteraction } from './interactionHelper.js';
 
 // Re-export so consumers only ever need to import from errorHandler.js
 export { ErrorCodes, getErrorMetadata, resolveErrorCode, getDefaultErrorCodeByType } from './errorRegistry.js';
-export { ensureTypedServiceError, wrapServiceBoundary, wrapServiceClassMethods } from './serviceErrorBoundary.js';
+export { wrapServiceBoundary, wrapServiceClassMethods } from './serviceErrorBoundary.js';
 
 export const ErrorTypes = {
     VALIDATION: 'validation',
@@ -684,16 +684,3 @@ export function createError(message: string, type: ErrorType = ErrorTypes.UNKNOW
 
     return new NexoBotError(message, type, userMessage, normalizedContext);
 }
-
-export default {
-    ErrorTypes,
-    NexoBotError,
-    categorizeError,
-    getUserMessage,
-    replyUserError,
-    handleInteractionError,
-    handleTaskError,
-    runSafeTask,
-    withErrorHandling,
-    createError
-};

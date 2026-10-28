@@ -1,6 +1,6 @@
 // abuseProtection.js
 
-import { checkRateLimit, getRateLimitStatus, clearAllRateLimits } from './rateLimiter.js';
+import { checkRateLimit, getRateLimitStatus } from './rateLimiter.js';
 import { logger } from './logger.js';
 import type { ChatInputCommandInteraction } from 'discord.js';
 import type { AbuseProtectionPolicy, Command } from '../types/index.js';
@@ -219,9 +219,4 @@ export async function enforceAbuseProtection(
     remainingMs,
     policy
   };
-}
-
-export function resetAbuseProtectionState(): void {
-  blockedAttemptStore.clear();
-  clearAllRateLimits();
 }

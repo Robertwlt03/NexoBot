@@ -3,7 +3,7 @@
 
 import express from 'express';
 import { PermissionFlagsBits } from 'discord.js';
-import type { Guild, GuildMember } from 'discord.js';
+import type { Guild } from 'discord.js';
 import type { DashboardModule } from './index.js';
 import {
   LEVELING_LEADERBOARD_MAX, LEVELING_MAX_LEVEL, LEVELING_PAGE_SIZE,
@@ -18,6 +18,7 @@ import {
 import { reconcileLevelRoles } from '../../services/leveling/levelRoleSyncService.js';
 import { botHasPermission } from '../../utils/permissionGuard.js';
 import type { NexoClient } from '../../types/index.js';
+import { fetchMember } from '../moduleSupport.js';
 
 const DEFAULT_MESSAGE = '{user} ist auf Level {level} aufgestiegen!';
 
@@ -66,12 +67,6 @@ function toMember(guild: Guild, userId: string, data: LevelData, fallbackName?: 
   };
 }
 
-async function fetchMember(guild: Guild, value: unknown): Promise<GuildMember> {
-  if (typeof value !== 'string' || !/^\d{17,20}$/.test(value.trim())) throw badRequest('Bitte gib eine gültige Nutzer-ID ein.');
-  const member = await guild.members.fetch(value.trim()).catch(() => null);
-  if (!member) throw badRequest('Der angegebene Nutzer ist nicht auf diesem Server.');
-  return member;
-}
 
 export const levelingModule: DashboardModule = {
   id: 'leveling',

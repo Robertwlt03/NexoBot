@@ -1,7 +1,6 @@
 import { MessageFlags } from 'discord.js';
 import type { ButtonInteraction, GuildMember } from 'discord.js';
 import type { NexoClient } from '../types/index.js';
-import { logger } from '../utils/logger.js';
 import { handleInteractionError } from '../utils/errorHandler.js';
 import { getGuildMusicData } from '../services/music/playerStore.js';
 import {

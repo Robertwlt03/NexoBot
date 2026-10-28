@@ -51,14 +51,3 @@ export function getGuildMusicData(guildId: string): GuildMusicData {
     }
     return guildStore.get(guildId)!;
 }
-
-export function deleteGuildMusicData(guildId: string): void {
-    const guildData = guildStore.get(guildId);
-    if (guildData) {
-        clearUpdateInterval(guildData);
-        if (guildData.idleTimeout) {
-            clearTimeout(guildData.idleTimeout);
-        }
-    }
-    guildStore.delete(guildId);
-}

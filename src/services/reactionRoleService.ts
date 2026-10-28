@@ -217,40 +217,6 @@ export async function createReactionRoleMessage(
     }
 }
 
-export async function addReactionRole(client: NexoClient, guildId: string, messageId: string, emoji: string, roleId: string): Promise<boolean> {
-    try {
-        validateGuildId(guildId);
-        validateMessageId(messageId);
-        validateRoleId(roleId);
-        await validateRoleSafety(client, guildId, roleId);
-        
-        const key = getReactionRoleKey(guildId, messageId);
-        const data: ReactionRoleMessage = await getReactionRoleMessage(client, guildId, messageId) || {
-            messageId,
-            guildId,
-            channelId: '',
-            roles: {}
-        };
-
-        (data.roles as Record<string, string>)[emoji] = roleId;
-        
-        await client.db.set(key, data);
-        logger.info(`Added reaction role for emoji ${emoji} to message ${messageId} in guild ${guildId}`);
-        return true;
-    } catch (error) {
-        if ((error as Error).name === 'NexoBotError') {
-            throw error;
-        }
-        logger.error(`Error adding reaction role in guild ${guildId}:`, error);
-        throw createError(
-            `Database error adding reaction role`,
-            ErrorTypes.DATABASE,
-            'Die Reaktionsrolle konnte nicht hinzugefügt werden. Bitte versuch es erneut.',
-            { guildId, messageId, originalError: (error as Error).message }
-        );
-    }
-}
-
 export async function deleteReactionRoleMessage(client: NexoClient, guildId: string, messageId: string): Promise<boolean> {
     try {
         validateGuildId(guildId);
@@ -277,43 +243,6 @@ export async function deleteReactionRoleMessage(client: NexoClient, guildId: str
             `Database error deleting reaction role message`,
             ErrorTypes.DATABASE,
             'Die Reaktionsrollen-Nachricht konnte nicht gelöscht werden. Bitte versuch es erneut.',
-            { guildId, messageId, originalError: (error as Error).message }
-        );
-    }
-}
-
-export async function removeReactionRole(client: NexoClient, guildId: string, messageId: string, emoji: string): Promise<boolean> {
-    try {
-        validateGuildId(guildId);
-        validateMessageId(messageId);
-        
-        const key = getReactionRoleKey(guildId, messageId);
-        const data = await getReactionRoleMessage(client, guildId, messageId);
-        
-        if (!data || !(data.roles as Record<string, string>)[emoji]) {
-            return false;
-        }
-
-        delete (data.roles as Record<string, string>)[emoji];
-
-        if (Object.keys(data.roles).length === 0) {
-            await client.db.delete(key);
-            logger.info(`Removed last reaction role from message ${messageId}, deleted message data`);
-        } else {
-            await client.db.set(key, data);
-            logger.info(`Removed reaction role for emoji ${emoji} from message ${messageId}`);
-        }
-        
-        return true;
-    } catch (error) {
-        if ((error as Error).name === 'NexoBotError') {
-            throw error;
-        }
-        logger.error(`Error removing reaction role in guild ${guildId}:`, error);
-        throw createError(
-            `Database error removing reaction role`,
-            ErrorTypes.DATABASE,
-            'Die Reaktionsrolle konnte nicht entfernt werden. Bitte versuch es erneut.',
             { guildId, messageId, originalError: (error as Error).message }
         );
     }
@@ -402,46 +331,6 @@ export async function getAllReactionRoleMessages(client: NexoClient, guildId: st
             ErrorTypes.DATABASE,
             'Die Reaktionsrollen-Nachrichten konnten nicht geladen werden. Bitte versuch es erneut.',
             { guildId, originalError: (error as Error).message }
-        );
-    }
-}
-
-export async function setReactionRoleChannel(client: NexoClient, guildId: string, messageId: string, channelId: string): Promise<boolean> {
-    try {
-        validateGuildId(guildId);
-        validateMessageId(messageId);
-        
-        if (!channelId || typeof channelId !== 'string' || !/^\d{17,19}$/.test(channelId)) {
-            throw createError(
-                `Invalid channel ID: ${channelId}`,
-                ErrorTypes.VALIDATION,
-                'Ungültige Kanal-ID angegeben.',
-                { channelId }
-            );
-        }
-        
-        const key = getReactionRoleKey(guildId, messageId);
-        const data: ReactionRoleMessage = await getReactionRoleMessage(client, guildId, messageId) || {
-            messageId,
-            guildId,
-            channelId: '',
-            roles: {}
-        };
-
-        data.channelId = channelId;
-        await client.db.set(key, data);
-        logger.info(`Set channel ${channelId} for reaction role message ${messageId}`);
-        return true;
-    } catch (error) {
-        if ((error as Error).name === 'NexoBotError') {
-            throw error;
-        }
-        logger.error(`Error setting channel for reaction role message ${messageId}:`, error);
-        throw createError(
-            `Database error setting reaction role channel`,
-            ErrorTypes.DATABASE,
-            'Der Reaktionsrollen-Kanal konnte nicht aktualisiert werden. Bitte versuch es erneut.',
-            { guildId, messageId, channelId, originalError: (error as Error).message }
         );
     }
 }

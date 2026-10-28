@@ -1,5 +1,4 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import { joinVoiceChannel, replyMusicSuccess } from '../../../services/music/musicActions.js';
 import { deferMusicCommand } from '../../../services/music/prefixSupport.js';
 import type { Command } from '../../../types/index.js';

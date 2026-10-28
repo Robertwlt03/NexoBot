@@ -95,7 +95,6 @@ export async function loadCommands(client: NexoClient): Promise<Collection<strin
         try {
             const normalizedPath = filePath.replace(/\\/g, '/');
             
-            const commandName = path.parse(filePath).name;
             const commandDir = path.dirname(filePath);
             const category = path.basename(commandDir);
             
@@ -131,23 +130,7 @@ export async function loadCommands(client: NexoClient): Promise<Collection<strin
         }
     }
     
-    const commandsWithSubcommands = Array.from(client.commands.values()).filter(cmd => {
-        const subcommands = getSubcommandInfo(cmd.data.toJSON());
-        return subcommands.length > 0;
-    });
-    
-    const totalSubcommands = commandsWithSubcommands.reduce((total, cmd) => {
-        return total + getSubcommandInfo(cmd.data.toJSON()).length;
-    }, 0);
-    
-    const uniqueCommands = new Set<string>();
-    for (const [name, command] of client.commands.entries()) {
-        if (command.data && command.data.name) {
-            uniqueCommands.add(command.data.name);
-        }
-    }
-    
-    logger.info(`Loaded ${uniqueCommands.size} commands`);
+    logger.info(`Loaded ${client.commands.size} commands`);
     return client.commands;
 }
 

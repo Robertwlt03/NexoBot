@@ -3,8 +3,8 @@ import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } f
 import type { ChatInputCommandInteraction, Guild, TextChannel } from 'discord.js';
 import { infoEmbed, successEmbed } from '../../../utils/embeds.js';
 import { getGuildConfig, setGuildConfig } from '../../../services/config/guildConfig.js';
-import { withErrorHandling, createError, ErrorTypes, replyUserError } from '../../../utils/errorHandler.js';
-import { removeVerification, verifyUser } from '../../../services/verificationService.js';
+import { withErrorHandling, createError, ErrorTypes } from '../../../utils/errorHandler.js';
+import { removeVerification } from '../../../services/verificationService.js';
 import { logger } from '../../../utils/logger.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import { getWelcomeConfig } from '../../../utils/database.js';

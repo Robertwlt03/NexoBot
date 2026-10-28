@@ -16,7 +16,7 @@ import { locals } from '../dashboard.js';
 import { HttpError, badRequest, body, bool } from '../http.js';
 import { resolveNames } from '../moduleSupport.js';
 import {
-  addDays, buildHeatmap, countActiveMembers, dayKey, deleteMemberStats, fillDays, insightRangeOf, isMemberTrackingEnabled, isSnowflake,
+  addDays, buildHeatmap, countActiveMembers, dayKey, deleteMemberStats, fillDays, insightRangeOf, isMemberTrackingEnabled,
   readDailyStats, readDetailStats, setMemberTrackingCache,
 } from '../../services/statsTracker.js';
 import { patchGuildConfig } from '../../services/config/guildConfig.js';
@@ -33,6 +33,7 @@ import { getGuildGiveaways } from '../../utils/giveaways.js';
 import { getUpcomingBirthdays } from '../../services/birthdayService.js';
 import { getApplications } from '../../utils/database.js';
 import { getCountingGameConfig } from '../../services/countingGameService.js';
+import { isSnowflake } from '../../utils/validation.js';
 import { logger } from '../../utils/logger.js';
 import type { NexoClient } from '../../types/index.js';
 

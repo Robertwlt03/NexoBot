@@ -5,6 +5,7 @@ import { logger } from '../../../utils/logger.js';
 import { ModerationService } from '../../../services/moderation/moderationService.js';
 import { replyUserError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
+import { isSnowflake } from '../../../utils/validation.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -38,7 +39,7 @@ export default {
         const rawTarget = interaction.options.getString("target");
         const targetId = rawTarget!.replace(/[<@!>]/g, '').trim();
 
-        if (!/^\d{17,20}$/.test(targetId)) {
+        if (!isSnowflake(targetId)) {
             return replyUserError(interaction, {
                 type: ErrorTypes.USER_INPUT,
                 message: 'Bitte gib eine gültige Nutzer-ID oder Erwähnung an.',

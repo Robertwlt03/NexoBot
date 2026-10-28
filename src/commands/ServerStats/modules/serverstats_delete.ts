@@ -1,7 +1,7 @@
 import { getColor } from '../../../config/bot.js';
 import { PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { createEmbed } from '../../../utils/embeds.js';
-import { getServerCounters, getCounterEmoji, getCounterTypeLabel } from '../../../services/serverstatsService.js';
+import { getServerCounters, getCounterTypeDisplay } from '../../../services/serverstatsService.js';
 import { logger } from '../../../utils/logger.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
@@ -64,8 +64,4 @@ export async function handleDelete(interaction: ChatInputCommandInteraction, cli
         logger.error("Error in handleDelete:", error);
         await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Beim Abrufen der Zähler ist ein Fehler aufgetreten. Bitte versuche es erneut.' }).catch(logger.error);
     }
-}
-
-function getCounterTypeDisplay(type: string) {
-    return `${getCounterEmoji(type)} ${getCounterTypeLabel(type)}`;
 }

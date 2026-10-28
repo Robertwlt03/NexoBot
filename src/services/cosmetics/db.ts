@@ -36,5 +36,3 @@ export async function withTx<R>(fn: (client: pg.PoolClient) => Promise<R>): Prom
     client.release();
   }
 }
-
-export const isSnowflake = (value: unknown): value is string => typeof value === 'string' && /^\d{17,20}$/.test(value);

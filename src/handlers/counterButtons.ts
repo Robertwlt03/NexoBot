@@ -1,4 +1,3 @@
-import { MessageFlags } from 'discord.js';
 import type { ButtonHandler } from '../types/index.js';
 import { createEmbed, successEmbed } from '../utils/embeds.js';
 import { performDeletionByCounterId } from '../services/serverstatsService.js';

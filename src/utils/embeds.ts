@@ -1,7 +1,7 @@
 // embeds.js
 
 import { EmbedBuilder } from 'discord.js';
-import type { APIEmbedField, EmbedAuthorOptions, EmbedFooterOptions, RestOrArray, User } from 'discord.js';
+import type { APIEmbedField, EmbedAuthorOptions, EmbedFooterOptions, RestOrArray } from 'discord.js';
 import { getColor, botConfig } from '../config/bot.js';
 import { COIN_TIERS } from '../shared/coins.js';
 
@@ -116,7 +116,6 @@ function isImportantFooter(footerText: string): boolean {
 
 const originalSetDescription = EmbedBuilder.prototype.setDescription;
 const originalSetFooter: LegacySetter<FooterInput> = EmbedBuilder.prototype.setFooter;
-const originalSetTimestamp = EmbedBuilder.prototype.setTimestamp;
 
 EmbedBuilder.prototype.setDescription = function(this: TaggedEmbedBuilder, description: string | null = '') {
   const descString = sanitizeEmbedText(description || '');
@@ -330,24 +329,6 @@ function buildNotificationEmbed(title: string | null | undefined, body: string |
   });
 }
 
-/**
- * @deprecated Prefer buildUserErrorEmbed or replyUserError from errorHandler.js.
- */
-export function errorEmbed(title?: string | null, detail: unknown = null, options: { showDetails?: boolean } = {}): EmbedBuilder {
-  const { showDetails = process.env.NODE_ENV !== 'production' } = options;
-  let body = detail;
-
-  if (detail && showDetails && typeof detail !== 'string') {
-    const detailText = (detail as { message?: unknown }).message || String(detail);
-    body = formatCodeBlock(detailText);
-  }
-
-  const description = body ? String(body).trim() : '';
-  const titleOverride = title && title !== 'Error' && title !== 'Fehler' ? title : undefined;
-
-  return buildUserErrorEmbed('unknown', description, { titleOverride });
-}
-
 /** @param {string} titleOrBody - With one arg: body text. With two args: title and body. */
 export function successEmbed(title?: string | null, body: string | null = ''): EmbedBuilder {
   if (arguments.length === 1) {
@@ -375,56 +356,6 @@ export function warningEmbed(title?: string | null, body: string | null = ''): E
   return buildNotificationEmbed(title || 'Warnung', body, 'warning');
 }
 
-export function formatUser(user: User): string {
-  return `${user} (${user.tag} | ${user.id})`;
-}
-
-export function formatDate(date: Date): string {
-  return `<t:${Math.floor(date.getTime() / 1000)}:F>`;
-}
-
-export function formatRelativeTime(date: Date): string {
-  return `<t:${Math.floor(date.getTime() / 1000)}:R>`;
-}
-
-export function formatCodeBlock(content: unknown, language: string = ''): string {
-  return `\`\`\`${language}\n${content}\n\`\`\``;
-}
-
-export function formatInlineCode(content: unknown): string {
-  return `\`${content}\``;
-}
-
-export function formatBold(content: unknown): string {
-  return `**${content}**`;
-}
-
-export function formatItalic(content: unknown): string {
-  return `*${content}*`;
-}
-
-export function formatUnderline(content: unknown): string {
-  return `__${content}__`;
-}
-
-export function formatStrikethrough(content: unknown): string {
-  return `~~${content}~~`;
-}
-
-export function formatSpoiler(content: unknown): string {
-  return `||${content}||`;
-}
-
-export function formatQuote(content: unknown): string {
-  return `> ${content}`;
-}
-
-export function formatList(items: unknown[], ordered: boolean = false): string {
-  return items
-    .map((item, index) => (ordered ? `${index + 1}.` : '•') + `${item}`)
-    .join('\n');
-}
-
 export function formatDuration(ms: number): string {
   if (ms < 0) return '0s';
 
@@ -440,11 +371,4 @@ export function formatDuration(ms: number): string {
   if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
 
   return parts.join('');
-}
-
-export function formatProgressBar(current: number, max: number, size: number = 10): string {
-  const progress = Math.min(Math.max(0, current / max), 1);
-  const filled = Math.round(size * progress);
-  const empty = size - filled;
-  return `[${'█'.repeat(filled)}${'░'.repeat(empty)}] ${Math.round(progress * 100)}%`;
 }

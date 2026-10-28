@@ -1,6 +1,5 @@
 // memoryStorage.js
 
-import { logger } from './logger.js';
 import type { KeyValueStore } from './database/wrapper.js';
 
 class MemoryStorage implements KeyValueStore {

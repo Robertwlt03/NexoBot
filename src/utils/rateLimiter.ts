@@ -56,12 +56,3 @@ export function getRateLimitStatus(key: string, windowMs = 60000): RateLimitStat
     attempts: entry.count
   };
 }
-
-export function clearRateLimit(key: string): void {
-  rateLimitStore.delete(key);
-}
-
-export function clearAllRateLimits(): void {
-  rateLimitStore.clear();
-  logger.info('All rate limits cleared');
-}

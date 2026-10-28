@@ -27,8 +27,6 @@ export interface NewApplicationRole {
   questions: string[];
 }
 
-export type ApplicationStatus = 'pending' | 'approved' | 'denied';
-
 export interface ApplicationEntry {
   id: string;
   userId: string;

@@ -2,7 +2,7 @@ import { getColor } from '../../../config/bot.js';
 import { PermissionFlagsBits } from 'discord.js';
 import type { ServerCounter } from '../../../services/serverstatsService.js';
 import { createEmbed } from '../../../utils/embeds.js';
-import { getServerCounters, saveServerCounters, getCounterEmoji as getCounterTypeEmoji, getCounterTypeLabel, getGuildCounterStats } from '../../../services/serverstatsService.js';
+import { getServerCounters, saveServerCounters, getCounterEmoji as getCounterTypeEmoji, getCounterTypeDisplay, getGuildCounterStats } from '../../../services/serverstatsService.js';
 import { logger } from '../../../utils/logger.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
@@ -126,15 +126,6 @@ export async function handleList(interaction: ChatInputCommandInteraction, clien
         await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Beim Abrufen der Zähler ist ein Fehler aufgetreten. Bitte versuche es erneut.' }).catch(logger.error);
     }
 }
-
-function getCounterTypeDisplay(type: string) {
-    return `${getCounterTypeEmoji(type)} ${getCounterTypeLabel(type)}`;
-}
-
-function getCounterEmoji(type: string) {
-    return getCounterTypeEmoji(type);
-}
-
 function getCurrentCount(stats: Awaited<ReturnType<typeof getGuildCounterStats>>, type: string) {
     switch (type) {
         case "members":

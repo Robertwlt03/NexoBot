@@ -1,7 +1,7 @@
 // Item tiles (painted by the card renderer, see ItemPreviewCanvas), the member-area icons and currency helpers.
 import { Fragment, useContext, useEffect, useMemo, useRef } from 'react';
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
-import { CURRENCY, RARITY_LABELS, SLOT_LABELS } from '../../../src/shared/cosmetics';
+import { CURRENCY, RARITY_LABELS } from '../../../src/shared/cosmetics';
 import { CoinIcon } from '../components/CoinIcon';
 import { COIN_TIERS, splitCoins } from '../../../src/shared/coins';
 import { ItemPreviewCanvas } from '../components/ProfileCardPreview';
@@ -166,8 +166,6 @@ export function Price({ price, finalPrice, className = '' }: { price: number; fi
     </span>
   );
 }
-
-export const slotLabel = (item: CosmeticItem) => SLOT_LABELS[item.slot];
 
 // ---------- Item previews ----------
 

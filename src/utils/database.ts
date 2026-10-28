@@ -13,73 +13,44 @@ export {
     initializeDatabase,
     getFromDb,
     setInDb,
-    deleteFromDb,
 } from './database/wrapper.js';
 
 export {
-    getGuildConfigKey,
     getGuildBirthdaysKey,
-    getBirthdayLeftBackupKey,
     getBirthdayTrackingKey,
-    getTicketKey,
-    getTicketCounterKey,
-    getInviteTrackingKey,
-    getMemberInvitesKey,
-    getInviteUsesKey,
-    getFakeAccountKey,
     getEconomyKey,
     getEconomyPrefix,
     getAFKKey,
     getWelcomeConfigKey,
-    getLevelingKey,
     getUserLevelKey,
     getUserLevelPrefix,
     getApplicationRolesKey,
     getApplicationSettingsKey,
     getUserApplicationsKey,
     getApplicationKey,
-    getApplicationsPrefix,
     getJoinToCreateConfigKey,
-    getJoinToCreateChannelsKey,
     getWarningsKey,
     getWarningsPrefix,
     getUserNotesKey,
-    getUserNotesListKey,
-    getReactionRoleKey,
-    getReactionRolesPrefix,
-    getServerCountersKey,
-    getGiveawayEntryKey,
-    getGiveawayLockKey,
-    canonicalizeKey,
-    getLegacyVariantsForCanonical,
 } from './database/keys.js';
 
 export {
     getTicketData,
     getOpenTicketCountForUser,
     saveTicketData,
-    deleteTicketData,
-    getTicketCounter,
     incrementTicketCounter,
-    getGuildTicketStats,
 } from './database/tickets.js';
 
 import { db, getFromDb, setInDb } from './database/wrapper.js';
+import { unwrapReplitData } from './database/guildConfigStorage.js';
 import {
-    getGuildConfigKey,
     getGuildBirthdaysKey,
-    getLevelingKey,
-    getUserLevelKey,
     getApplicationRolesKey,
     getApplicationSettingsKey,
     getUserApplicationsKey,
     getApplicationKey,
     getJoinToCreateConfigKey,
-    getJoinToCreateChannelsKey,
     getWelcomeConfigKey,
-    getEconomyKey,
-    getAFKKey,
-    getUserLevelPrefix,
 } from './database/keys.js';
 
 export async function insertVerificationAudit(record: VerificationAuditRecord): Promise<boolean> {
@@ -114,37 +85,10 @@ export async function insertVerificationAudit(record: VerificationAuditRecord): 
     }
 }
 
-/** Legacy Replit DB envelope `{ ok, value }`. */
-interface ReplitEnvelope<T> {
-    ok?: unknown;
-    value?: T;
-}
-
-/** Unwraps legacy `{ ok, value }` envelopes; T is the caller's stored payload type. */
-export function unwrapReplitData<T>(data: T): T {
-    if (
-        typeof data === "object" &&
-        data !== null &&
-        (data as ReplitEnvelope<T>).ok !== undefined &&
-        (data as ReplitEnvelope<T>).value !== undefined
-    ) {
-        return unwrapReplitData((data as ReplitEnvelope<T>).value as T);
-    }
-    return data;
-}
-
 // Guild config access: import from services/config/guildConfig.js only.
 // Low-level storage lives in ./database/guildConfigStorage.js
 
 export { pgDb };
-
-export const getMessage = (key: string, replacements: Record<string, unknown> = {}): string => {
-    let message = (BotConfig.messages as Partial<Record<string, string>>)[key] || key;
-    for (const [k, v] of Object.entries(replacements)) {
-        message = message.replace(new RegExp(`\\{${k}\\}`, "g"), String(v));
-    }
-    return message;
-};
 
 export const getColor = (path: string, fallback = "#000000"): string => {
     const parts = path.split(".");
@@ -499,210 +443,6 @@ export async function updateWelcomeConfig(client: NexoClient, guildId: string, u
     }
 }
 
-export interface LevelingConfig {
-    enabled: boolean;
-    xpPerMessage: number;
-    xpPerMinute: number;
-    cooldownEnabled: boolean;
-    messageLengthMultiplier: boolean;
-    levelUpMessages: boolean;
-    levelUpChannel: string | null;
-    roles: Record<string, string>;
-    milestones: Record<string, unknown>;
-    [key: string]: unknown;
-}
-
-export async function getLevelingConfig(client: NexoClient, guildId: string): Promise<LevelingConfig> {
-    const key = getLevelingKey(guildId);
-    try {
-        const config = await getFromDb<LevelingConfig>(key, {
-            enabled: false,
-            xpPerMessage: 10,
-            xpPerMinute: 60,
-            cooldownEnabled: true,
-            messageLengthMultiplier: true,
-            levelUpMessages: true,
-            levelUpChannel: null,
-            roles: {},
-            milestones: {}
-        });
-        
-        return config;
-    } catch (error) {
-        logger.error('Error getting leveling config:', error);
-        return {
-            enabled: false,
-            xpPerMessage: 10,
-            xpPerMinute: 60,
-            cooldownEnabled: true,
-            messageLengthMultiplier: true,
-            levelUpMessages: true,
-            levelUpChannel: null,
-            roles: {},
-            milestones: {}
-        };
-    }
-}
-
-export async function saveLevelingConfig(client: NexoClient, guildId: string, config: LevelingConfig): Promise<boolean> {
-    const key = getLevelingKey(guildId);
-    try {
-        await setInDb(key, config);
-        return true;
-    } catch (error) {
-        logger.error(`Error saving leveling config for guild ${guildId}:`, error);
-        return false;
-    }
-}
-
-/** Stored per-user level record (`guild:{guildId}:leveling:users:{userId}`). */
-export interface UserLevelRecord {
-    xp?: number;
-    level?: number;
-    totalXp?: number;
-    lastMessage?: number;
-    rank?: number;
-    [key: string]: unknown;
-}
-
-export interface UserLevelData {
-    xp: number;
-    level: number;
-    totalXp: number;
-    lastMessage: number;
-    rank: number;
-    xpToNextLevel: number;
-}
-
-export async function getUserLevelData(client: NexoClient, guildId: string, userId: string): Promise<UserLevelData> {
-    const key = getUserLevelKey(guildId, userId);
-    try {
-        const data = await getFromDb<UserLevelRecord>(key, null);
-        if (!data) {
-            return {
-                xp: 0,
-                level: 0,
-                totalXp: 0,
-                lastMessage: 0,
-                rank: 0,
-                xpToNextLevel: getXpForLevel(1)
-            };
-        }
-        
-        const levelData = {
-            xp: data.xp || 0,
-            level: data.level || 0,
-            totalXp: data.totalXp || 0,
-            lastMessage: data.lastMessage || 0,
-            rank: data.rank || 0,
-            xpToNextLevel: getXpForLevel((data.level || 0) + 1)
-        };
-        
-        return levelData;
-    } catch (error) {
-        logger.error(`Error getting level data for user ${userId} in guild ${guildId}:`, error);
-        return {
-            xp: 0,
-            level: 0,
-            totalXp: 0,
-            lastMessage: 0,
-            rank: 0,
-            xpToNextLevel: getXpForLevel(1)
-        };
-    }
-}
-
-export async function saveUserLevelData(client: NexoClient, guildId: string, userId: string, data: UserLevelRecord): Promise<boolean> {
-    const key = getUserLevelKey(guildId, userId);
-    try {
-        const levelData = {
-            ...data,
-            xp: data.xp || 0,
-            level: data.level || 0,
-            totalXp: data.totalXp || 0,
-            lastMessage: data.lastMessage || 0,
-            rank: data.rank || 0,
-            updatedAt: Date.now()
-        };
-        
-        await setInDb(key, levelData);
-        return true;
-    } catch (error) {
-        logger.error(`Error saving level data for user ${userId} in guild ${guildId}:`, error);
-        return false;
-    }
-}
-
-export function getXpForLevel(level: number): number {
-    return 5 * Math.pow(level, 2) + 50 * level + 50;
-}
-
-export interface LeaderboardEntry {
-    userId: string;
-    xp: number;
-    level: number;
-    totalXp: number;
-    rank: number;
-}
-
-export async function getLeaderboard(client: NexoClient, guildId: string, limit = 10): Promise<LeaderboardEntry[]> {
-    try {
-        if (!client.db || typeof client.db.list !== "function") {
-            logger.error("Database client is not available for getLeaderboard.");
-            return [];
-        }
-
-        const prefix = getUserLevelPrefix(guildId);
-        let keys = await client.db.list(prefix);
-        
-        if (!Array.isArray(keys)) {
-            if (typeof keys === 'object' && keys !== null) {
-                keys = Object.keys(keys).filter(key => key.startsWith(prefix));
-            } else {
-                return [];
-            }
-        }
-        
-        if (keys.length === 0) {
-            return [];
-        }
-        
-        const userDataPromises = keys.map(async (key): Promise<LeaderboardEntry | null> => {
-            try {
-                const userId = key.replace(prefix, '');
-                const data = await client.db.get<UserLevelRecord>(key);
-                if (!data) return null;
-                
-                const unwrapped = unwrapReplitData(data);
-                return {
-                    userId,
-                    xp: unwrapped.xp || 0,
-                    level: unwrapped.level || 0,
-                    totalXp: unwrapped.totalXp || 0,
-rank: 0
-                };
-            } catch (error) {
-                logger.error(`Error processing leaderboard key ${key}:`, error);
-                return null;
-            }
-        });
-        
-        let userData = (await Promise.all(userDataPromises)).filter((entry): entry is LeaderboardEntry => Boolean(entry));
-        
-        userData.sort((a, b) => (b.totalXp || 0) - (a.totalXp || 0));
-        
-        userData = userData.map((user, index) => ({
-            ...user,
-            rank: index + 1
-        }));
-        
-        return userData.slice(0, limit);
-    } catch (error) {
-        logger.error(`Error getting leaderboard for guild ${guildId}:`, error);
-        return [];
-    }
-}
-
 export interface ApplicationRole {
     roleId: string;
     name: string;
@@ -1033,7 +773,7 @@ export interface Application extends ApplicationInput {
 
 export async function createApplication(client: NexoClient, application: ApplicationInput): Promise<Application> {
     const { guildId, userId } = application;
-    const applicationId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const applicationId = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     const key = getApplicationKey(guildId, applicationId);
     
     const newApplication: Application = {
@@ -1436,8 +1176,4 @@ export function formatChannelName(template: string, variables: ChannelNameVariab
 formatted = formatted.substring(0, 100);
     
     return formatted || 'Sprachkanal';
-}
-
-function generateCaseId(): string {
-    return `${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 4)}`;
 }

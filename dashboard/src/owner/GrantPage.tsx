@@ -3,7 +3,7 @@ import type { WalletSummary } from '../../../src/web/dto/profile';
 import { useUser } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
 import { Actions, Card, Field, Notice, NumberInput, PageHeader, TextInput } from '../components/ui';
-import { num, useMutation, useWalletUpdate } from '../me/api';
+import { useMutation, useWalletUpdate } from '../me/api';
 import { Bernis } from '../me/visuals';
 
 const SNOWFLAKE = /^\d{17,20}$/;

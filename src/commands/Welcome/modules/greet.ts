@@ -1,5 +1,4 @@
-import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
-import { InteractionHelper } from '../../../utils/interactionHelper.js';
+import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import { logger } from '../../../utils/logger.js';
 import { handleInteractionError, NexoBotError, ErrorTypes, replyUserError } from '../../../utils/errorHandler.js';
 import greetDashboard from './greet_dashboard.js';

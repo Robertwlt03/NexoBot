@@ -1,16 +1,11 @@
 // leveling.js
 
-import { EmbedBuilder } from 'discord.js';
-import type { Guild, GuildMember } from 'discord.js';
+import type { GuildMember } from 'discord.js';
 import type { NexoClient } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 import { getGuildConfig, setGuildConfig } from '../config/guildConfig.js';
 import { NexoBotError, ErrorTypes } from '../../utils/errorHandler.js';
-import { addXp } from './xpSystem.js';
 import { getUserLevelKey } from '../../utils/database/keys.js';
-
-const BASE_XP = 100;
-const XP_MULTIPLIER = 1.5;
 const MAX_LEVEL = 1000;
 const MIN_LEVEL = 0;
 
@@ -56,31 +51,6 @@ export function getXpForLevel(level: number): number {
     );
   }
   return 5 * Math.pow(level, 2) + 50 * level + 50;
-}
-
-export function getLevelFromXp(xp: number): { level: number; currentXp: number; xpNeeded: number } {
-  if (!Number.isInteger(xp) || xp < 0) {
-    throw new NexoBotError(
-      `Invalid XP: ${xp}`,
-      ErrorTypes.VALIDATION,
-      'XP müssen eine nicht-negative Zahl sein.'
-    );
-  }
-
-  let level = 0;
-  let xpNeeded = 0;
-  
-  while (xp >= getXpForLevel(level) && level < MAX_LEVEL) {
-    xpNeeded = getXpForLevel(level);
-    xp -= xpNeeded;
-    level++;
-  }
-  
-  return {
-    level: Math.min(level, MAX_LEVEL),
-    currentXp: xp,
-    xpNeeded: getXpForLevel(Math.min(level, MAX_LEVEL))
-  };
 }
 
 export function calculateTotalXp(level: number, currentXp = 0): number {
@@ -150,36 +120,6 @@ export async function getLeaderboard(client: NexoClient, guildId: string, limit 
       'Die Bestenliste konnte gerade nicht geladen werden.'
     );
   }
-}
-
-export function createLeaderboardEmbed(leaderboard: LeaderboardEntry[] | null | undefined, guild: Guild): EmbedBuilder {
-  const embed = new EmbedBuilder()
-    .setTitle(`🏆 Bestenliste von ${guild.name}`)
-    .setColor('#2ecc71')
-    .setTimestamp();
-    
-  if (!leaderboard || leaderboard.length === 0) {
-    embed.setDescription('Noch keine Nutzer auf der Bestenliste!');
-    return embed;
-  }
-  
-  const top3 = leaderboard.slice(0, 3);
-  const rest = leaderboard.slice(3);
-  
-  const top3Text = top3.map((user, index) => {
-    const medal = ['🥇', '🥈', '🥉'][index];
-    return `${medal} **#${user.rank}** ${user.username} - Level ${user.level} (${user.totalXp} XP)`;
-  }).join('\n');
-  
-  const restText = rest.map(user => {
-    return `**#${user.rank}** ${user.username} - Level ${user.level} (${user.totalXp} XP)`;
-  }).join('\n');
-  
-  embed.setDescription(
-    `**Top-Mitglieder**\n${top3Text}${restText ? '\n\n' + restText : ''}`
-  );
-  
-  return embed;
 }
 
 export async function getLevelingConfig(client: NexoClient, guildId: string): Promise<GuildLevelingConfig> {

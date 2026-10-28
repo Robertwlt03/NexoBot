@@ -13,7 +13,6 @@ import {
     ButtonStyle,
     ChannelType,
     MessageFlags,
-    ComponentType,
     EmbedBuilder,
 } from 'discord.js';
 import type { ChatInputCommandInteraction, Guild, SelectMenuModalData, StringSelectMenuInteraction } from 'discord.js';

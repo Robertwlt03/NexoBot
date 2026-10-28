@@ -158,11 +158,3 @@ export function getPrefixRestriction(
 
   return { blocked: false };
 }
-
-export function isPrefixRestrictedCommand(
-  command: PrefixCheckedCommand | null | undefined,
-  args: string[],
-  resolveSubcommandAlias: (name: string) => string,
-): boolean {
-  return getPrefixRestriction(command, args, resolveSubcommandAlias).blocked;
-}
