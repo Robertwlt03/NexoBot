@@ -42,7 +42,7 @@ Sammeldatei Schritt für Schritt, bis sie am Ende verschwindet.
 ### Vorbereitung
 
 - [x] `chore/cleanup` pushen, PR öffnen und mergen (toter Code, Duplikate; enthält schon Teile, die der Umbau braucht)
-- [ ] PR #32 (Leveling-Pilot) mit dem Test-Bot prüfen und mergen; Konflikte mit `chore/cleanup` stehen im PR-Text
+- [x] PR #32 (Leveling-Pilot) mit dem Test-Bot prüfen und mergen; Konflikte mit `chore/cleanup` stehen im PR-Text
 - [ ] Architektur-Test anlegen, der die Regeln prüft: Services ohne Wert-Import aus `discord.js`/`express`, Controller
       ohne direkten Datenbankzugriff. Bereits umgebaute Features stehen auf einer Liste, die mit jedem PR wächst
 
@@ -94,7 +94,8 @@ Sammeldatei Schritt für Schritt, bis sie am Ende verschwindet.
 
 ## Offene Befunde aus dem Aufräumen
 
-Diese Punkte gehören zum jeweiligen Feature-Umbau und werden dort erledigt.
+Diese Punkte gehören zum jeweiligen Feature-Umbau und werden dort erledigt. Was beim Test mit dem Test-Bot auffiel
+(Fehler, Banner, Werkzeuge), steht in `docs/BEFUNDE.md`.
 
 - Zwei `getColor` mit unterschiedlichem Rückgabetyp (`config/bot.ts` liefert eine Zahl, `utils/database.ts` einen
   Hex-String).
