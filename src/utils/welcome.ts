@@ -31,13 +31,6 @@ export interface WelcomeFormatData {
     [key: string]: unknown;
 }
 
-function replaceAll(message: string, token: string, value: unknown): string {
-    if (value === undefined || value === null) {
-        return message;
-    }
-    return message.split(token).join(String(value));
-}
-
 export function truncateForEmbedField(value: unknown, maxLength = 1024): string {
     const text = String(value ?? '').trim();
     if (!text) {
@@ -82,7 +75,7 @@ export function formatWelcomeMessage(message: unknown, data: WelcomeFormatData |
     let result = message;
     for (const [token, value] of Object.entries(tokens)) {
         if (value === undefined || value === null) continue;
-        result = replaceAll(result, token, String(value));
+        result = result.replaceAll(token, String(value));
     }
 
     return result;

@@ -850,7 +850,7 @@ export interface Application extends ApplicationInput {
 
 export async function createApplication(client: NexoClient, application: ApplicationInput): Promise<Application> {
     const { guildId, userId } = application;
-    const applicationId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const applicationId = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     const key = getApplicationKey(guildId, applicationId);
     
     const newApplication: Application = {

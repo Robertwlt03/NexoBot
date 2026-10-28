@@ -24,10 +24,6 @@ interface CalculationHistoryEntry {
 
 const calculationContexts = new Map<string, CalculationContext>();
 
-function evaluate(expression: string) {
-    return evaluateMathExpression(expression);
-}
-
 const calculationHistory = new Map<string, CalculationHistoryEntry[]>();
 const MAX_HISTORY = 5;
 
@@ -92,7 +88,7 @@ export default {
 
         let result;
         try {
-            result = evaluate(expression);
+            result = evaluateMathExpression(expression);
 
             let formattedResult;
             if (typeof result === "number") {

@@ -5,10 +5,6 @@ import { evaluateMathExpression } from '../utils/safeMathParser.js';
 
 import { replyUserError, ErrorTypes } from '../utils/errorHandler.js';
 import type { ModalHandler, NexoClient } from '../types/index.js';
-function evaluate(expression: string) {
-    return evaluateMathExpression(expression);
-}
-
 async function calculateModalHandler(interaction: ModalSubmitInteraction, client: NexoClient, args: string[]): Promise<unknown> {
     try {
         // JS called interaction.fields.first(), which does not exist on ModalSubmitFields (always threw); the field Collection is .fields.
@@ -39,7 +35,7 @@ async function calculateModalHandler(interaction: ModalSubmitInteraction, client
 
         let newResult;
         try {
-            newResult = evaluate(newExpression);
+            newResult = evaluateMathExpression(newExpression);
             
             let formattedNewResult;
             if (typeof newResult === "number") {
