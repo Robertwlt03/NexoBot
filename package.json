@@ -27,6 +27,7 @@
     "backup:db": "node dist/scripts/backup.js",
     "restore:db": "node dist/scripts/restore.js",
     "backup:drill": "node dist/scripts/restore-drill.js",
+    "brand:assets": "tsx src/scripts/brandAssets.ts",
     "test": "tsx --test tests/*.test.ts",
     "dev:dashboard": "vite --config dashboard/vite.config.ts",
     "storybook": "storybook dev -p 6006 --no-open",

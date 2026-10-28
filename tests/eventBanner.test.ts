@@ -27,3 +27,9 @@ test('the brush paints the frame and leaves the middle bare', async () => {
   assert.ok(edge > W * 0.4, `most of the top edge is painted (${edge}/${W})`);
   assert.equal(red(W / 2, H / 2), 0, 'the middle stays wood');
 });
+
+test('the uploaded profile banners come in Discord\'s 17:6 at twice the size', async () => {
+  const { renderProfileBanner } = await import('../src/services/cosmetics/profileArt.js');
+  const image = await loadImage(await renderProfileBanner({ format: 'app', seed: 'nexo-test', tint: '#FFC400', tag: 'TEST' }));
+  assert.deepEqual([image.width, image.height], [1360, 480]);
+});
