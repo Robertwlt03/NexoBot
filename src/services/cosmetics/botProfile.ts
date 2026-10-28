@@ -8,29 +8,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createCanvas, loadImage, type Image, type SKRSContext2D } from '@napi-rs/canvas';
 import { Events, type Client } from 'discord.js';
-import type { BadgeGlyph } from '../../shared/cosmetics.js';
-import { PROFILE_FONTS, createRng, drawGlyph, seedFrom } from '../../shared/profileCard.js';
+import { EVENT_TINT, eventIconSvg, eventTheme } from '../../shared/eventIcons.js';
+import { PROFILE_FONTS, createRng, seedFrom } from '../../shared/profileCard.js';
 import type { ShopEvent } from '../../web/dto/profile.js';
 import { logger } from '../../utils/logger.js';
 import '../welcomeCardRenderer.js'; // registers the card fonts
 import { loadStoredEvents, runningEvents } from './events.js';
 import { cosmeticsPool } from './db.js';
-
-/** Colours (ground, highlight) and the symbol scattered over the banner, per built-in event. */
-const LOOKS: Record<string, { colors: [string, string]; glyph: BadgeGlyph }> = {
-  'new-year': { colors: ['#172554', '#F5C451'], glyph: 'star' },
-  valentine: { colors: ['#881337', '#FDA4AF'], glyph: 'heart' },
-  carnival: { colors: ['#4C1D95', '#FBBF24'], glyph: 'mask' },
-  easter: { colors: ['#14532D', '#FDE68A'], glyph: 'egg' },
-  'summer-sale': { colors: ['#075985', '#FDE047'], glyph: 'sun' },
-  autumn: { colors: ['#7C2D12', '#FBBF24'], glyph: 'leaf' },
-  halloween: { colors: ['#3B0764', '#FB923C'], glyph: 'pumpkin' },
-  'black-friday': { colors: ['#0A0A0A', '#F5C451'], glyph: 'diamond' },
-  christmas: { colors: ['#14532D', '#E0F2FE'], glyph: 'snowflake' },
-};
-const CUSTOM_LOOK = { colors: ['#1F2937', '#8FB36B'] as [string, string], glyph: 'star' as BadgeGlyph };
-
-export const lookFor = (event: ShopEvent) => LOOKS[event.id] ?? CUSTOM_LOOK;
 
 /** Bio text for the event (Discord allows 190 characters). Pure, for tests. */
 export function eventBio(event: ShopEvent): string {
@@ -38,25 +22,36 @@ export function eventBio(event: ShopEvent): string {
   return `🎉 ${event.name} läuft${deal}! Gemeinschaftsziel, Tagesaufgaben und Event-Artikel: /profil aufgaben und /profil shop`.slice(0, 190);
 }
 
-/** The dashboard's walnut (assets/wood/CREDITS.md); the Dockerfile copies it next to dist. Null if it is missing. */
-let walnut: Promise<Image | null> | undefined;
-const WALNUT = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../../dashboard/src/assets/wood/walnut.webp');
-const walnutImage = () => (walnut ??= Promise.resolve().then(() => loadImage(readFileSync(WALNUT)))
-  .catch((error: unknown) => {
-    logger.warn('Holz für das Event-Banner fehlt:', (error as Error).message);
-    return null;
-  }));
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+const loaded = new Map<string, Promise<Image | null>>();
+/** An image from the repo (the Dockerfile copies these next to dist), loaded once; null if it is missing. */
+function asset(file: string): Promise<Image | null> {
+  let image = loaded.get(file);
+  if (!image) {
+    image = Promise.resolve().then(() => loadImage(readFileSync(path.join(ROOT, file)))).catch((error: unknown) => {
+      logger.warn(`Bild für das Event-Banner fehlt (${file}):`, (error as Error).message);
+      return null;
+    });
+    loaded.set(file, image);
+  }
+  return image;
+}
+/** The dashboard's walnut (assets/wood/CREDITS.md). */
+const WALNUT = 'dashboard/src/assets/wood/walnut.webp';
+/** The vine burnt into the dashboard's page headers (components/Engraving.tsx), rendered once to a transparent PNG. */
+// ponytail: a snapshot of Engraving.tsx; render it again if the vine there changes.
+const VINE = 'assets/brand/vine.png';
 
 /** A frame brushed onto the wood in the event colour: a ragged coat, then single bristle strokes over it. */
 function paintFrame(ctx: SKRSContext2D, W: number, H: number, color: string, rng: () => number) {
   // Thicker at the top and bottom: the profile cuts ~24px off there.
-  const band = { top: 46, bottom: 46, side: 24 };
+  const band = { top: 42, bottom: 42, side: 20 };
   ctx.save();
   ctx.fillStyle = color;
   ctx.strokeStyle = color;
   ctx.lineCap = 'round';
   // The coat: an even ring with a ragged inner edge.
-  ctx.globalAlpha = 0.48;
+  ctx.globalAlpha = 0.5;
   ctx.beginPath();
   ctx.rect(0, 0, W, H);
   const inner: [number, number][] = [];
@@ -91,56 +86,103 @@ function paintFrame(ctx: SKRSContext2D, W: number, H: number, color: string, rng
   ctx.restore();
 }
 
+/** Text brushed on in `color`: the letters with thin dry streaks scraped out of them, so the wood shows through. */
+function paintText(ctx: SKRSContext2D, text: string, x: number, y: number, font: string, color: string, rng: () => number) {
+  const { width, height } = ctx.canvas;
+  const layer = createCanvas(width, height);
+  const paint = layer.getContext('2d');
+  paint.font = font;
+  paint.textBaseline = 'alphabetic';
+  paint.fillStyle = color;
+  paint.fillText(text, x, y);
+  paint.globalCompositeOperation = 'destination-out';
+  paint.strokeStyle = '#000';
+  const top = y - parseInt(font.match(/(\d+)px/)?.[1] ?? '40', 10);
+  for (let i = 0; i < 26; i += 1) {
+    paint.globalAlpha = 0.25 + rng() * 0.5;
+    paint.lineWidth = 0.8 + rng() * 1.6;
+    const sy = top + rng() * (y - top + 12);
+    paint.beginPath();
+    paint.moveTo(x - 10 + rng() * 40, sy);
+    paint.lineTo(x + paint.measureText(text).width * (0.4 + rng() * 0.7), sy + (rng() - 0.5) * 4);
+    paint.stroke();
+  }
+  ctx.save();
+  ctx.shadowColor = 'rgba(16,11,7,0.7)';
+  ctx.shadowBlur = 10;
+  ctx.globalAlpha = 0.95;
+  ctx.drawImage(layer, 0, 0);
+  ctx.restore();
+}
+
+/** Where the event icons sit (x, y, size), right of the text and below the vine, like the fireflies of the test banner. */
+const ICON_SPOTS: readonly [number, number, number][] = [
+  [470, 250, 44], [590, 304, 36], [700, 232, 54], [822, 292, 40], [904, 214, 32], [548, 182, 30], [760, 332, 28], [655, 150, 28],
+];
+
 /**
- * 960×384 banner (Discord's 5:2) in the dashboard's look: walnut with a frame brushed on in the event colour, the
- * event's symbols and its name. The profile shows it about 17:6, cutting ~24px off the top and bottom, and puts the
- * avatar over the lower left; so the text sits in the upper left and the symbols keep clear of the cut edges.
+ * 960×384 banner (Discord's 5:2) in the look of the dashboard and the test bot's banner: walnut washed behind the
+ * text, the burnt vine, a frame brushed on in the event colour, "Nexo" in cream with the event name and discount
+ * brushed on, and the event's icons from the dashboard. The profile shows it about 17:6, cutting ~24px off the top
+ * and bottom, and puts the avatar over the lower left; so all text sits above y≈200 and nothing touches the cut edges.
  */
 export async function renderEventBanner(event: ShopEvent): Promise<Buffer> {
   const W = 960;
   const H = 384;
-  const { colors: [ground, highlight], glyph } = lookFor(event);
+  const theme = eventTheme(event);
+  const tint = EVENT_TINT[theme];
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
-  const wood = await walnutImage();
+  const [wood, vine, icon] = await Promise.all([asset(WALNUT), asset(VINE), loadImage(Buffer.from(eventIconSvg(theme)))]);
   if (wood) {
     // Cover: fill the height, centre the slab.
     const scale = H / wood.height;
     ctx.drawImage(wood, (W - wood.width * scale) / 2, 0, wood.width * scale, H);
   } else {
-    ctx.fillStyle = ground;
+    ctx.fillStyle = '#2e1f14';
     ctx.fillRect(0, 0, W, H);
   }
-  // Washed toward the dashboard's page colour behind the text, like the page headers.
+  // Washed toward the dashboard's page colour over the text column, the wood shows on the right (Backdrop.tsx).
   const wash = ctx.createLinearGradient(0, 0, W, 0);
   wash.addColorStop(0, 'rgba(22,17,12,0.62)');
-  wash.addColorStop(0.55, 'rgba(22,17,12,0.25)');
-  wash.addColorStop(1, 'rgba(22,17,12,0.1)');
+  wash.addColorStop(0.35, 'rgba(22,17,12,0.48)');
+  wash.addColorStop(0.7, 'rgba(22,17,12,0.1)');
   ctx.fillStyle = wash;
   ctx.fillRect(0, 0, W, H);
+  if (vine) ctx.drawImage(vine, W - vine.width, 0);
   const rng = createRng(seedFrom(event.id));
-  for (let i = 0; i < 26; i += 1) {
-    ctx.globalAlpha = 0.2 + rng() * 0.35;
-    // Right half only, so the name on the left stays clear.
-    drawGlyph(ctx as never, glyph, W * 0.6 + rng() * W * 0.34, 60 + rng() * (H - 120), 22 + rng() * 46, highlight, (rng() - 0.5) * 0.8);
+  ctx.save();
+  ctx.shadowColor = 'rgba(16,11,7,0.6)';
+  ctx.shadowBlur = 8;
+  for (const [x, y, size] of ICON_SPOTS) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate((rng() - 0.5) * 0.5);
+    ctx.drawImage(icon, -size / 2, -size / 2, size, size);
+    ctx.restore();
   }
-  ctx.globalAlpha = 1;
-  paintFrame(ctx, W, H, highlight, rng);
+  ctx.restore();
+  paintFrame(ctx, W, H, tint, rng);
+  // "Nexo" as in the test banner, the event brushed on beside and below it.
+  ctx.save();
   ctx.textBaseline = 'alphabetic';
-  ctx.shadowColor = 'rgba(16,11,7,0.85)';
+  ctx.font = `700 64px "${PROFILE_FONTS.unbounded}"`;
+  ctx.shadowColor = 'rgba(22,17,12,0.9)';
   ctx.shadowBlur = 14;
   ctx.fillStyle = '#F3EBE0';
+  ctx.fillText('Nexo', 60, 124);
+  const nexoEnd = 60 + ctx.measureText('Nexo').width;
+  ctx.restore();
+  if (event.discount > 0) paintText(ctx, `−${event.discount} %`, nexoEnd + 30, 112, `700 54px "${PROFILE_FONTS.caveat}"`, tint, rng);
   // Long names get a smaller size instead of being squeezed.
-  const nameFont = (size: number) => `700 ${size}px "${PROFILE_FONTS.unbounded}"`;
-  let size = 56;
-  ctx.font = nameFont(size);
-  while (ctx.measureText(event.name).width > W * 0.56 && size > 32) ctx.font = nameFont((size -= 2));
-  ctx.fillText(event.name, 64, 132);
-  if (event.discount > 0) {
-    ctx.font = `700 32px "${PROFILE_FONTS.inter}"`;
-    ctx.fillStyle = highlight;
-    ctx.fillText(`−${event.discount} % im Nexo-Shop`, 66, 184);
+  let size = 60;
+  const nameFont = () => `700 ${size}px "${PROFILE_FONTS.caveat}"`;
+  ctx.font = nameFont();
+  while (ctx.measureText(event.name).width > W * 0.5 && size > 34) {
+    size -= 2;
+    ctx.font = nameFont();
   }
+  paintText(ctx, event.name, 62, 186, nameFont(), tint, rng);
   return canvas.toBuffer('image/png');
 }
 

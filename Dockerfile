@@ -24,8 +24,9 @@ COPY --from=build /usr/src/app/dist ./dist
 COPY lavalink ./lavalink
 # Welcome card fonts (the bot registers them from ../../assets/fonts relative to dist/services).
 COPY assets/fonts ./assets/fonts
-# Walnut for the bot's event banner (services/cosmetics/botProfile.ts reads it relative to dist).
+# Walnut and vine for the bot's event banner (services/cosmetics/botProfile.ts reads them relative to dist).
 COPY dashboard/src/assets/wood/walnut.webp ./dashboard/src/assets/wood/walnut.webp
+COPY assets/brand/vine.png ./assets/brand/vine.png
 
 EXPOSE 3000
 

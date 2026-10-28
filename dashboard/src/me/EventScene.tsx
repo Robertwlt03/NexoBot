@@ -4,26 +4,10 @@
 // Flat shapes in a few muted tones, so the scene sits in the page instead of on it. All art is drawn here (no
 // third-party assets). Reduced motion: everything stands still.
 import type { CSSProperties, ReactNode } from 'react';
-import type { ShopEvent } from '../../../src/web/dto/profile';
 import type { GlyphName } from './visuals';
+import { EVENT_TINT, type EventTheme } from '../../../src/shared/eventIcons';
 
-export type EventTheme = 'love' | 'carnival' | 'easter' | 'summer' | 'autumn' | 'halloween' | 'sale' | 'winter' | 'newyear' | 'party';
-
-const BY_ID: Record<string, EventTheme> = {
-  valentine: 'love', carnival: 'carnival', easter: 'easter', 'summer-sale': 'summer', autumn: 'autumn',
-  halloween: 'halloween', 'black-friday': 'sale', christmas: 'winter', 'new-year': 'newyear',
-};
-// First match wins: "Sommer-Sale" is summer, not sale.
-const BY_WORD: [RegExp, EventTheme][] = [
-  [/valentin|liebe|love/, 'love'], [/fasching|karneval|fastnacht|carnival/, 'carnival'], [/ostern|easter|frühling|spring/, 'easter'],
-  [/halloween|grusel|spuk/, 'halloween'], [/herbst|autumn|laub/, 'autumn'], [/winter|weihnacht|xmas|christmas|advent|schnee/, 'winter'],
-  [/neujahr|silvester|new.?year/, 'newyear'], [/sommer|summer|sonne/, 'summer'], [/black.?friday|cyber|sale/, 'sale'],
-];
-
-export function eventTheme(event: Pick<ShopEvent, 'id' | 'name'>): EventTheme {
-  const text = `${event.id} ${event.name}`.toLowerCase();
-  return BY_ID[event.id] ?? BY_WORD.find(([pattern]) => pattern.test(text))?.[1] ?? 'party';
-}
+export { eventTheme, type EventTheme } from '../../../src/shared/eventIcons';
 
 type Particle = 'leaf' | 'snow' | 'flake' | 'ember' | 'confetti' | 'mote' | 'heart' | 'petal' | 'streamer';
 
@@ -36,16 +20,16 @@ interface Emitter { area: 'scene' | 'sky'; kinds: Particle[]; motion: 'fall' | '
 const sky = (kinds: Particle[], count: number): Emitter => ({ area: 'sky', kinds, motion: 'fall', x: [0, 100], y: [-6, -2], wind: [-40, 40], count });
 
 export const EVENT_THEMES: Record<EventTheme, { tint: string; glyph: GlyphName; emit: Emitter }> = {
-  love: { tint: '#fb7185', glyph: 'heart', emit: { area: 'scene', kinds: ['heart'], motion: 'rise', x: [45, 85], y: [55, 75], wind: [-90, 10], count: 10 } },
-  carnival: { tint: '#c084fc', glyph: 'mask', emit: { area: 'scene', kinds: ['confetti', 'confetti', 'streamer'], motion: 'fall', x: [0, 100], y: [4, 16], wind: [-60, 30], count: 18 } },
-  easter: { tint: '#86efac', glyph: 'egg', emit: { area: 'scene', kinds: ['petal'], motion: 'fall', x: [45, 92], y: [6, 30], wind: [-200, -60], count: 12 } },
-  summer: { tint: '#fbbf24', glyph: 'sun', emit: { area: 'sky', kinds: ['mote'], motion: 'rise', x: [0, 100], y: [86, 100], wind: [-20, 20], count: 14 } },
-  autumn: { tint: '#e0913a', glyph: 'leaf', emit: { area: 'scene', kinds: ['leaf'], motion: 'fall', x: [38, 96], y: [14, 52], wind: [-260, -70], count: 14 } },
-  halloween: { tint: '#f97316', glyph: 'pumpkin', emit: { area: 'scene', kinds: ['ember'], motion: 'rise', x: [52, 74], y: [80, 88], wind: [-50, 10], count: 12 } },
-  sale: { tint: '#facc15', glyph: 'tag', emit: sky(['confetti'], 10) },
-  winter: { tint: '#8fd3ff', glyph: 'snowflake', emit: sky(['snow', 'snow', 'flake'], 26) },
-  newyear: { tint: '#facc15', glyph: 'rocket', emit: sky(['confetti'], 20) },
-  party: { tint: '#a78bfa', glyph: 'gift', emit: { area: 'scene', kinds: ['confetti'], motion: 'fall', x: [0, 100], y: [4, 16], wind: [-60, 30], count: 16 } },
+  love: { tint: EVENT_TINT.love, glyph: 'heart', emit: { area: 'scene', kinds: ['heart'], motion: 'rise', x: [45, 85], y: [55, 75], wind: [-90, 10], count: 10 } },
+  carnival: { tint: EVENT_TINT.carnival, glyph: 'mask', emit: { area: 'scene', kinds: ['confetti', 'confetti', 'streamer'], motion: 'fall', x: [0, 100], y: [4, 16], wind: [-60, 30], count: 18 } },
+  easter: { tint: EVENT_TINT.easter, glyph: 'egg', emit: { area: 'scene', kinds: ['petal'], motion: 'fall', x: [45, 92], y: [6, 30], wind: [-200, -60], count: 12 } },
+  summer: { tint: EVENT_TINT.summer, glyph: 'sun', emit: { area: 'sky', kinds: ['mote'], motion: 'rise', x: [0, 100], y: [86, 100], wind: [-20, 20], count: 14 } },
+  autumn: { tint: EVENT_TINT.autumn, glyph: 'leaf', emit: { area: 'scene', kinds: ['leaf'], motion: 'fall', x: [38, 96], y: [14, 52], wind: [-260, -70], count: 14 } },
+  halloween: { tint: EVENT_TINT.halloween, glyph: 'pumpkin', emit: { area: 'scene', kinds: ['ember'], motion: 'rise', x: [52, 74], y: [80, 88], wind: [-50, 10], count: 12 } },
+  sale: { tint: EVENT_TINT.sale, glyph: 'tag', emit: sky(['confetti'], 10) },
+  winter: { tint: EVENT_TINT.winter, glyph: 'snowflake', emit: sky(['snow', 'snow', 'flake'], 26) },
+  newyear: { tint: EVENT_TINT.newyear, glyph: 'rocket', emit: sky(['confetti'], 20) },
+  party: { tint: EVENT_TINT.party, glyph: 'gift', emit: { area: 'scene', kinds: ['confetti'], motion: 'fall', x: [0, 100], y: [4, 16], wind: [-60, 30], count: 16 } },
 };
 
 /** Falling leaves: lit and shaded half per colour, like the autumn event icon (EventIcon.tsx). */
