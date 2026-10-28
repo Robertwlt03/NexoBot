@@ -252,36 +252,6 @@ export async function getUpcomingBirthdays(client: NexoClient, guildId: string, 
   }
 }
 
-export async function getTodaysBirthdays(client: NexoClient, guildId: string) {
-  try {
-    const birthdays = await getGuildBirthdays(client, guildId);
-    const today = new Date();
-    const currentMonth = today.getUTCMonth() + 1;
-    const currentDay = today.getUTCDate();
-
-    const todaysBirthdays: Array<{ userId: string; month: number; day: number; monthName: string }> = [];
-
-    for (const [userId, userData] of Object.entries(birthdays)) {
-      if (userData.month === currentMonth && userData.day === currentDay) {
-        todaysBirthdays.push({
-          userId,
-          month: userData.month,
-          day: userData.day,
-          monthName: getMonthName(userData.month)
-        });
-      }
-    }
-
-    return todaysBirthdays;
-  } catch (error) {
-    logger.error('Error in getTodaysBirthdays service', {
-      error: (error as Error).message,
-      guildId
-    });
-    throw error;
-  }
-}
-
 export async function checkBirthdays(client: NexoClient): Promise<void> {
   const today = new Date();
   const currentMonth = today.getUTCMonth() + 1;

@@ -51,7 +51,6 @@ import {
     getApplicationKey,
     getJoinToCreateConfigKey,
     getWelcomeConfigKey,
-    getUserLevelPrefix,
 } from './database/keys.js';
 
 export async function insertVerificationAudit(record: VerificationAuditRecord): Promise<boolean> {
@@ -441,82 +440,6 @@ export async function updateWelcomeConfig(client: NexoClient, guildId: string, u
     } catch (error) {
         logger.error(`Error updating welcome config for guild ${guildId}:`, error);
         throw error;
-    }
-}
-
-/** Stored per-user level record (`guild:{guildId}:leveling:users:{userId}`). */
-export interface UserLevelRecord {
-    xp?: number;
-    level?: number;
-    totalXp?: number;
-    lastMessage?: number;
-    rank?: number;
-    [key: string]: unknown;
-}
-
-export interface LeaderboardEntry {
-    userId: string;
-    xp: number;
-    level: number;
-    totalXp: number;
-    rank: number;
-}
-
-export async function getLeaderboard(client: NexoClient, guildId: string, limit = 10): Promise<LeaderboardEntry[]> {
-    try {
-        if (!client.db || typeof client.db.list !== "function") {
-            logger.error("Database client is not available for getLeaderboard.");
-            return [];
-        }
-
-        const prefix = getUserLevelPrefix(guildId);
-        let keys = await client.db.list(prefix);
-        
-        if (!Array.isArray(keys)) {
-            if (typeof keys === 'object' && keys !== null) {
-                keys = Object.keys(keys).filter(key => key.startsWith(prefix));
-            } else {
-                return [];
-            }
-        }
-        
-        if (keys.length === 0) {
-            return [];
-        }
-        
-        const userDataPromises = keys.map(async (key): Promise<LeaderboardEntry | null> => {
-            try {
-                const userId = key.replace(prefix, '');
-                const data = await client.db.get<UserLevelRecord>(key);
-                if (!data) return null;
-                
-                const unwrapped = unwrapReplitData(data);
-                return {
-                    userId,
-                    xp: unwrapped.xp || 0,
-                    level: unwrapped.level || 0,
-                    totalXp: unwrapped.totalXp || 0,
-rank: 0
-                };
-            } catch (error) {
-                logger.error(`Error processing leaderboard key ${key}:`, error);
-                return null;
-            }
-        });
-        
-        let userData = (await Promise.all(userDataPromises)).filter((entry): entry is LeaderboardEntry => Boolean(entry));
-        
-        userData.sort((a, b) => (b.totalXp || 0) - (a.totalXp || 0));
-        
-        userData = userData.map((user, index) => ({
-            ...user,
-            rank: index + 1
-        }));
-        
-        return userData.slice(0, limit);
-    } catch (error) {
-        logger.error(`Error getting leaderboard for guild ${guildId}:`, error);
-        return [];
     }
 }
 

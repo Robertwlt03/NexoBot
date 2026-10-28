@@ -3,9 +3,6 @@
 import { logger } from './logger.js';
 import { NexoBotError, ErrorTypes } from './errorHandler.js';
 import { unwrapReplitData } from './database/guildConfigStorage.js';
-import {
-    createGiveawayEmbed as createGiveawayEmbedService
-} from '../services/giveawayService.js';
 import type { NexoClient } from '../types/index.js';
 
 /** Stored giveaway record (`guild:{guildId}:giveaways`, keyed by messageId). */
@@ -135,15 +132,6 @@ export async function deleteGiveaway(client: NexoClient, guildId: string, messag
             throw error;
         }
         return false;
-    }
-}
-
-export function createGiveawayEmbed(giveaway: Giveaway, status: string, winners: string[] = []) {
-    try {
-        return createGiveawayEmbedService(giveaway, status, winners);
-    } catch (error) {
-        logger.error('Error creating giveaway embed:', error);
-        throw error;
     }
 }
 

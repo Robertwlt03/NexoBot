@@ -147,36 +147,6 @@ export function memberMeetsCommandPermissions(
 }
 
 /**
- * Check moderation command access and reply when denied.
- * @returns {Promise<boolean>}
- */
-export async function checkModerationPermissions(
-  interaction: ChatInputCommandInteraction,
-  guildConfig: ModeratorRoleConfig,
-  requiredPermissions: PermissionResolvable | null,
-  errorMessage = 'Du hast keine Berechtigung, diesen Command zu nutzen.'
-): Promise<boolean> {
-  // Guild commands: member is a full GuildMember (as the JS assumed).
-  if (memberHasModerationCommandAccess(interaction.member as GuildMember | null, guildConfig, requiredPermissions)) {
-    return true;
-  }
-
-  await replyUserError(interaction, {
-    type: ErrorTypes.PERMISSION,
-    message: errorMessage,
-    context: { source: 'permissionGuard.checkModerationPermissions' },
-  });
-
-  logger.warn('[PERMISSION_DENIED] Moderation command blocked', {
-    userId: interaction.user?.id,
-    guildId: interaction.guildId,
-    command: interaction.commandName,
-  });
-
-  return false;
-}
-
-/**
  * Enforce a command's default_member_permissions for prefix (and other non-Discord-gated) invocations.
  * Slash commands are gated by Discord, but prefix commands must mirror the same requirement in code.
  * @returns {Promise<boolean>} true when the member may proceed
@@ -249,59 +219,6 @@ export async function checkUserPermissions(
 
     logger.warn(
       `[PERMISSION_DENIED] User ${member.id} attempted command ${interaction.commandName} in guild ${interaction.guildId}`
-    );
-    return false;
-  }
-
-  return true;
-}
-
-export async function checkBotPermissions(
-  interaction: ChatInputCommandInteraction,
-  requiredPermissions: PermissionResolvable,
-  channel: GuildBasedChannel | null = null
-): Promise<boolean> {
-  // DM channels have no guild; the `.guild` check below rejects them.
-  const targetChannel = (channel || interaction.channel) as GuildBasedChannel | null;
-
-  if (!targetChannel || !targetChannel.guild) {
-    await replyUserError(interaction, {
-      type: ErrorTypes.UNKNOWN,
-      message: 'Der Kanal konnte nicht ermittelt werden.',
-      context: { source: 'permissionGuard.checkBotPermissions' }
-    });
-    return false;
-  }
-
-  const botMember = targetChannel.guild.members.me;
-  if (!botMember) {
-    await replyUserError(interaction, {
-      type: ErrorTypes.UNKNOWN,
-      message: 'Das Bot-Mitglied wurde auf diesem Server nicht gefunden.',
-      context: { source: 'permissionGuard.checkBotPermissions' }
-    });
-    return false;
-  }
-
-  const permissions = targetChannel.permissionsFor(botMember);
-  const missingPerms: PermissionResolvable[] = [];
-
-  const permArray = Array.isArray(requiredPermissions) ? requiredPermissions : [requiredPermissions];
-  for (const perm of permArray) {
-    if (!permissions.has(perm)) {
-      missingPerms.push(perm);
-    }
-  }
-
-  if (missingPerms.length > 0) {
-    await replyUserError(interaction, {
-      type: ErrorTypes.PERMISSION,
-      message: `Ich brauche folgende Berechtigungen in ${targetChannel}: ${missingPerms.join(', ')}`,
-      context: { source: 'permissionGuard.checkBotPermissions', subtype: 'bot_permission' }
-    });
-
-    logger.warn(
-      `[BOT_PERMISSION_DENIED] Bot missing permissions [${missingPerms.join(', ')}] in channel ${targetChannel.id}`
     );
     return false;
   }
