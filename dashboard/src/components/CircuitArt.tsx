@@ -3,8 +3,9 @@
 // long names grow to the left). Fixed size in CSS pixels (styles.css .cyber-hud), so it stays legible on small screens
 // instead of shrinking with the header; Backdrop.tsx lines it up with the right edge of the content column. A soft blur
 // under the icon gives the glow.
-import { Children, cloneElement, isValidElement, useId } from 'react';
+import { useId } from 'react';
 import type { ReactNode } from 'react';
+import { scaleStrokes } from './Engraving';
 
 const CYAN = '#00f0ff';
 
@@ -15,18 +16,6 @@ const ICON_SCALE = (SIZE - 40) / 24;
 const CORNERS = `M1 ${ARM}V1H${ARM}M${SIZE - ARM} 1H${SIZE - 1}V${ARM}M${SIZE - 1} ${SIZE - ARM}V${SIZE - 1}H${SIZE - ARM}M${ARM} ${SIZE - 1}H1V${SIZE - ARM}`;
 /** Icon line width on the 24px grid. */
 const ICON_LINE = 1.4;
-
-/** Details with their own strokeWidth on the 24px grid keep their ratio to the rest of the icon. */
-function scaleStrokes(node: ReactNode, factor: number): ReactNode {
-  return Children.map(node, (child) => {
-    if (!isValidElement<{ strokeWidth?: number | string; children?: ReactNode }>(child)) return child;
-    const { strokeWidth, children } = child.props;
-    return cloneElement(child, {
-      ...(strokeWidth !== undefined ? { strokeWidth: Number(strokeWidth) * factor } : {}),
-      ...(children ? { children: scaleStrokes(children, factor) } : {}),
-    });
-  });
-}
 
 export function CircuitArt({ art, label }: { art?: ReactNode; label?: string }) {
   const id = useId();
