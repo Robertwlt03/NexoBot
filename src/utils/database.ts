@@ -13,62 +13,37 @@ export {
     initializeDatabase,
     getFromDb,
     setInDb,
-    deleteFromDb,
 } from './database/wrapper.js';
 
 export {
-    getGuildConfigKey,
     getGuildBirthdaysKey,
-    getBirthdayLeftBackupKey,
     getBirthdayTrackingKey,
-    getTicketKey,
-    getTicketCounterKey,
-    getInviteTrackingKey,
-    getMemberInvitesKey,
-    getInviteUsesKey,
-    getFakeAccountKey,
     getEconomyKey,
     getEconomyPrefix,
     getAFKKey,
     getWelcomeConfigKey,
-    getLevelingKey,
     getUserLevelKey,
     getUserLevelPrefix,
     getApplicationRolesKey,
     getApplicationSettingsKey,
     getUserApplicationsKey,
     getApplicationKey,
-    getApplicationsPrefix,
     getJoinToCreateConfigKey,
-    getJoinToCreateChannelsKey,
     getWarningsKey,
     getWarningsPrefix,
     getUserNotesKey,
-    getUserNotesListKey,
-    getReactionRoleKey,
-    getReactionRolesPrefix,
-    getServerCountersKey,
-    getGiveawayEntryKey,
-    getGiveawayLockKey,
-    canonicalizeKey,
-    getLegacyVariantsForCanonical,
 } from './database/keys.js';
 
 export {
     getTicketData,
     getOpenTicketCountForUser,
     saveTicketData,
-    deleteTicketData,
-    getTicketCounter,
     incrementTicketCounter,
-    getGuildTicketStats,
 } from './database/tickets.js';
 
 import { db, getFromDb, setInDb } from './database/wrapper.js';
 import {
     getGuildBirthdaysKey,
-    getLevelingKey,
-    getUserLevelKey,
     getApplicationRolesKey,
     getApplicationSettingsKey,
     getUserApplicationsKey,
@@ -133,14 +108,6 @@ export function unwrapReplitData<T>(data: T): T {
 // Low-level storage lives in ./database/guildConfigStorage.js
 
 export { pgDb };
-
-export const getMessage = (key: string, replacements: Record<string, unknown> = {}): string => {
-    let message = (BotConfig.messages as Partial<Record<string, string>>)[key] || key;
-    for (const [k, v] of Object.entries(replacements)) {
-        message = message.replace(new RegExp(`\\{${k}\\}`, "g"), String(v));
-    }
-    return message;
-};
 
 export const getColor = (path: string, fallback = "#000000"): string => {
     const parts = path.split(".");
@@ -495,62 +462,6 @@ export async function updateWelcomeConfig(client: NexoClient, guildId: string, u
     }
 }
 
-export interface LevelingConfig {
-    enabled: boolean;
-    xpPerMessage: number;
-    xpPerMinute: number;
-    cooldownEnabled: boolean;
-    messageLengthMultiplier: boolean;
-    levelUpMessages: boolean;
-    levelUpChannel: string | null;
-    roles: Record<string, string>;
-    milestones: Record<string, unknown>;
-    [key: string]: unknown;
-}
-
-export async function getLevelingConfig(client: NexoClient, guildId: string): Promise<LevelingConfig> {
-    const key = getLevelingKey(guildId);
-    try {
-        const config = await getFromDb<LevelingConfig>(key, {
-            enabled: false,
-            xpPerMessage: 10,
-            xpPerMinute: 60,
-            cooldownEnabled: true,
-            messageLengthMultiplier: true,
-            levelUpMessages: true,
-            levelUpChannel: null,
-            roles: {},
-            milestones: {}
-        });
-        
-        return config;
-    } catch (error) {
-        logger.error('Error getting leveling config:', error);
-        return {
-            enabled: false,
-            xpPerMessage: 10,
-            xpPerMinute: 60,
-            cooldownEnabled: true,
-            messageLengthMultiplier: true,
-            levelUpMessages: true,
-            levelUpChannel: null,
-            roles: {},
-            milestones: {}
-        };
-    }
-}
-
-export async function saveLevelingConfig(client: NexoClient, guildId: string, config: LevelingConfig): Promise<boolean> {
-    const key = getLevelingKey(guildId);
-    try {
-        await setInDb(key, config);
-        return true;
-    } catch (error) {
-        logger.error(`Error saving leveling config for guild ${guildId}:`, error);
-        return false;
-    }
-}
-
 /** Stored per-user level record (`guild:{guildId}:leveling:users:{userId}`). */
 export interface UserLevelRecord {
     xp?: number;
@@ -559,78 +470,6 @@ export interface UserLevelRecord {
     lastMessage?: number;
     rank?: number;
     [key: string]: unknown;
-}
-
-export interface UserLevelData {
-    xp: number;
-    level: number;
-    totalXp: number;
-    lastMessage: number;
-    rank: number;
-    xpToNextLevel: number;
-}
-
-export async function getUserLevelData(client: NexoClient, guildId: string, userId: string): Promise<UserLevelData> {
-    const key = getUserLevelKey(guildId, userId);
-    try {
-        const data = await getFromDb<UserLevelRecord>(key, null);
-        if (!data) {
-            return {
-                xp: 0,
-                level: 0,
-                totalXp: 0,
-                lastMessage: 0,
-                rank: 0,
-                xpToNextLevel: getXpForLevel(1)
-            };
-        }
-        
-        const levelData = {
-            xp: data.xp || 0,
-            level: data.level || 0,
-            totalXp: data.totalXp || 0,
-            lastMessage: data.lastMessage || 0,
-            rank: data.rank || 0,
-            xpToNextLevel: getXpForLevel((data.level || 0) + 1)
-        };
-        
-        return levelData;
-    } catch (error) {
-        logger.error(`Error getting level data for user ${userId} in guild ${guildId}:`, error);
-        return {
-            xp: 0,
-            level: 0,
-            totalXp: 0,
-            lastMessage: 0,
-            rank: 0,
-            xpToNextLevel: getXpForLevel(1)
-        };
-    }
-}
-
-export async function saveUserLevelData(client: NexoClient, guildId: string, userId: string, data: UserLevelRecord): Promise<boolean> {
-    const key = getUserLevelKey(guildId, userId);
-    try {
-        const levelData = {
-            ...data,
-            xp: data.xp || 0,
-            level: data.level || 0,
-            totalXp: data.totalXp || 0,
-            lastMessage: data.lastMessage || 0,
-            rank: data.rank || 0,
-            updatedAt: Date.now()
-        };
-        
-        await setInDb(key, levelData);
-        return true;
-    } catch (error) {
-        logger.error(`Error saving level data for user ${userId} in guild ${guildId}:`, error);
-        return false;
-    }
-}
-
-export function getXpForLevel(level: number): number {
-    return 5 * Math.pow(level, 2) + 50 * level + 50;
 }
 
 export interface LeaderboardEntry {

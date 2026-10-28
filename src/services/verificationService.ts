@@ -698,14 +698,3 @@ export function validateAutoVerifyCriteria(criteria: string, accountAgeDays: num
     
     return { criteria, accountAgeDays };
 }
-
-export default {
-    verifyUser,
-    autoVerifyOnJoin,
-    removeVerification,
-    validateVerificationSetup,
-    validateBotCanAssignRole,
-    checkVerificationCooldown,
-    trackVerificationAttempt,
-    validateAutoVerifyCriteria
-};

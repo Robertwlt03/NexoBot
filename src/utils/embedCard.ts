@@ -230,10 +230,6 @@ export const messageTitle = (message: Parameters<typeof messageEmbed>[0]): strin
 export const hasEmbeds = (options: unknown): options is AnyPayload =>
   Boolean(options) && typeof options === 'object' && Array.isArray((options as AnyPayload).embeds) && (options as AnyPayload).embeds!.length > 0;
 
-/** The top-level button/select rows of a message (kept when an edit only changes its embed). */
-export const messageRows = (message: { components?: { type: number }[] } | null | undefined): unknown[] =>
-  (message?.components ?? []).filter((component) => component.type === ComponentType.ActionRow);
-
 /**
  * Edits that only set components (e.g. disabling buttons when a collector ends) would wipe a card: keep the
  * message's cards and replace only its rows. Payloads that bring their own cards or embeds pass through.

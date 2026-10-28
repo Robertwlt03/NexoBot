@@ -222,8 +222,6 @@ export function hueDistance(a: number, b: number): number {
   const d = Math.abs(a - b) % 360;
   return d > 180 ? 360 - d : d;
 }
-/** Hue (OKLCH). */
-export const chartHue = (color: string) => oklch(color)[2];
 
 // Colour-vision simulation (Machado et al. 2009, full severity) on linear RGB.
 type Matrix = readonly [readonly number[], readonly number[], readonly number[]];

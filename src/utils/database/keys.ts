@@ -5,7 +5,6 @@
 
 export const getGuildConfigKey = (guildId: string): string => `guild:${guildId}:config`;
 export const getGuildBirthdaysKey = (guildId: string): string => `guild:${guildId}:birthdays`;
-export const getBirthdayLeftBackupKey = (guildId: string): string => `guild:${guildId}:birthdays:left`;
 export const getBirthdayTrackingKey = (guildId: string): string => `guild:${guildId}:birthdays:tracking`;
 
 export function getTicketKey(guildId: string, channelId: string): string {
@@ -14,22 +13,6 @@ export function getTicketKey(guildId: string, channelId: string): string {
 
 export function getTicketCounterKey(guildId: string): string {
     return `guild:${guildId}:ticket:counter`;
-}
-
-export function getInviteTrackingKey(guildId: string): string {
-    return `guild:${guildId}:invites`;
-}
-
-export function getMemberInvitesKey(guildId: string, userId: string): string {
-    return `guild:${guildId}:invites:${userId}`;
-}
-
-export function getInviteUsesKey(guildId: string, inviteCode: string): string {
-    return `guild:${guildId}:invite_uses:${inviteCode}`;
-}
-
-export function getFakeAccountKey(guildId: string, userId: string): string {
-    return `guild:${guildId}:fake_account:${userId}`;
 }
 
 export function getEconomyKey(guildId: string, userId: string): string {
@@ -84,10 +67,6 @@ export function getJoinToCreateConfigKey(guildId: string): string {
     return `guild:${guildId}:jointocreate`;
 }
 
-export function getJoinToCreateChannelsKey(guildId: string): string {
-    return `guild:${guildId}:jointocreate:channels`;
-}
-
 export function getWarningsKey(guildId: string, userId: string): string {
     return `guild:${guildId}:warnings:${userId}`;
 }
@@ -114,14 +93,6 @@ export function getReactionRolesPrefix(guildId: string): string {
 
 export function getServerCountersKey(guildId: string): string {
     return `guild:${guildId}:counters`;
-}
-
-export function getGiveawayEntryKey(userId: string, giveawayId: string): string {
-    return `giveaway:${userId}:${giveawayId}`;
-}
-
-export function getGiveawayLockKey(messageId: string): string {
-    return `giveaway:lock:${messageId}`;
 }
 
 /**

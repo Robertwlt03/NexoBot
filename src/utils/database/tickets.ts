@@ -96,15 +96,6 @@ export async function saveTicketData(guildId: string, channelId: string, data: T
     await db.set(key, data);
 }
 
-export async function deleteTicketData(guildId: string, channelId: string): Promise<void> {
-    if (!db.initialized) {
-        await db.initialize();
-    }
-
-    const key = getTicketKey(guildId, channelId);
-    await db.delete(key);
-}
-
 export async function getTicketCounter(guildId: string): Promise<number> {
     if (!db.initialized) {
         await db.initialize();

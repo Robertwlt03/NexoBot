@@ -23,7 +23,6 @@ import { cardMessageEdit, hasEmbeds, isCardMessage, toCardPayload } from './embe
 import { paintFor } from '../services/messageTheme.js';
 import type { CoordinatedInteraction, PayloadResponder, ResponsePayload } from './responseCoordinator.js';
 import type { TraceContext } from './logger.js';
-import type { GuildConfig, NexoClient } from '../types/index.js';
 
 /** Properties NexoBot attaches to interaction objects at runtime. */
 export interface InteractionExtras {
@@ -455,30 +454,4 @@ export class InteractionHelper {
 
         return await this.safeReply(interaction, options);
     }
-}
-
-type SafeExecuteMethod = (
-    this: unknown,
-    interaction: NexoInteraction,
-    config: GuildConfig | null,
-    client: NexoClient,
-) => Promise<unknown>;
-
-export function withSafeExecuteDecorator(
-    target: object,
-    propertyName: string,
-    descriptor: TypedPropertyDescriptor<SafeExecuteMethod>,
-): TypedPropertyDescriptor<SafeExecuteMethod> {
-    const originalMethod = descriptor.value!;
-
-    descriptor.value = async function(this: unknown, interaction: NexoInteraction, config: GuildConfig | null, client: NexoClient) {
-        await InteractionHelper.safeExecute(
-            interaction,
-            () => originalMethod.call(this, interaction, config, client),
-            null,
-            { autoDefer: !interaction._isPrefixCommand },
-        );
-    };
-
-    return descriptor;
 }
