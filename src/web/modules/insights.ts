@@ -21,7 +21,7 @@ import {
 } from '../../services/statsTracker.js';
 import { patchGuildConfig } from '../../services/config/guildConfig.js';
 import { getUserNotes } from '../../services/moderation/userNotesService.js';
-import { getUserBirthday } from '../../services/birthdayService.js';
+import { getUserBirthday } from '../../services/birthdays/birthdays.js';
 import { getEconomyKey } from '../../utils/economy.js';
 import { listGuildTickets } from '../../utils/database/tickets.js';
 import { ACTION_LABELS, getModerationCases } from '../../utils/moderation.js';
@@ -30,7 +30,7 @@ import { getGuildTicketStats } from '../../utils/database/tickets.js';
 import { getLeaderboard, getRank, getUserLevelData } from '../../services/leveling/leveling.js';
 import { getEconomyLeaderboard } from '../../utils/economy.js';
 import { getGuildGiveaways } from '../../utils/giveaways.js';
-import { getUpcomingBirthdays } from '../../services/birthdayService.js';
+import { getUpcomingBirthdays } from '../../services/birthdays/birthdays.js';
 import { getApplications } from '../../utils/database.js';
 import { getCountingGameConfig } from '../../services/countingGameService.js';
 import { isSnowflake } from '../../utils/validation.js';

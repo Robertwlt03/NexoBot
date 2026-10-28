@@ -8,20 +8,18 @@ import type { BirthdaySettings } from '../dto/birthdays.js';
 import { locals } from '../dashboard.js';
 import { HttpError, body, channel, role } from '../http.js';
 import { requireBotPermissions, resolveNames } from '../moduleSupport.js';
-import { getGuildConfig, updateGuildConfig } from '../../services/config/guildConfig.js';
-import { deleteBirthday, getAllBirthdays, getUpcomingBirthdays } from '../../services/birthdayService.js';
+import { deleteBirthday, getAllBirthdays, getBirthdaySettings, getUpcomingBirthdays, saveBirthdaySettings } from '../../services/birthdays/birthdays.js';
 import type { NexoClient } from '../../types/index.js';
 
 async function readSettings(client: NexoClient, guild: Guild): Promise<BirthdaySettings> {
-  const [config, all, upcoming] = await Promise.all([
-    getGuildConfig(client, guild.id),
+  const [settings, all, upcoming] = await Promise.all([
+    getBirthdaySettings(client, guild.id),
     getAllBirthdays(client, guild.id),
     getUpcomingBirthdays(client, guild.id, 5),
   ]);
   const names = await resolveNames(client, guild, all.map((entry) => entry.userId));
   return {
-    channelId: config.birthdayChannelId ?? null,
-    roleId: config.birthdayRoleId ?? null,
+    ...settings,
     entries: all.map(({ userId, month, day }) => ({ userId, name: names[userId] ?? userId, month, day })),
     upcoming: upcoming.map(({ userId, month, day, daysUntil }) => ({ userId, name: names[userId] ?? userId, month, day, daysUntil })),
   };
@@ -44,14 +42,13 @@ export const birthdaysModule: DashboardModule = {
       if (channelId) {
         requireBotPermissions(guild, [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks], guild.channels.cache.get(channelId));
       }
-      await updateGuildConfig(client, guild.id, { birthdayChannelId: channelId, birthdayRoleId: roleId });
+      await saveBirthdaySettings(client, guild.id, { channelId, roleId });
       res.json(await readSettings(client, guild));
     });
 
     router.post('/entries/:userId/delete', async (req, res) => {
       const { guild } = locals(res);
-      const result = await deleteBirthday(client, guild.id, req.params.userId);
-      if (result.status === 'not_found') throw new HttpError(404, 'Für dieses Mitglied ist kein Geburtstag eingetragen.');
+      if (!(await deleteBirthday(client, guild.id, req.params.userId))) throw new HttpError(404, 'Für dieses Mitglied ist kein Geburtstag eingetragen.');
       res.json(await readSettings(client, guild));
     });
 

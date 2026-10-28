@@ -5,10 +5,9 @@ import { getWelcomeConfig } from '../utils/database.js';
 import { sendGreeting } from '../utils/welcome.js';
 import { logEvent, EVENT_TYPES } from '../services/loggingService.js';
 import { getServerCounters, updateCounter } from '../services/serverstatsService.js';
-import { setBirthday as dbSetBirthday } from '../utils/database.js';
+import { restoreBirthdayOnJoin } from '../services/birthdays/birthdays.js';
 import { logger } from '../utils/logger.js';
 import { recordJoin } from '../services/statsTracker.js';
-import type { BirthdayEntry } from '../utils/database.js';
 import type { VerificationConfig } from '../services/verificationService.js';
 import type { BotEvent, NexoClient } from '../types/index.js';
 import type { ErrorLike } from '../utils/errorHandler.js';
@@ -96,15 +95,7 @@ export default {
         }
 
         try {
-            const backupKey = `guild:${guild.id}:birthdays:left`;
-            const backup = (await member.client.db.get<Record<string, BirthdayEntry>>(backupKey)) || {};
-            if (backup[user.id]) {
-                const { month, day } = backup[user.id];
-                await dbSetBirthday(member.client, guild.id, user.id, month, day);
-                delete backup[user.id];
-                await member.client.db.set(backupKey, backup);
-                logger.debug(`Birthday restored for user ${user.id} in guild ${guild.id}`);
-            }
+            await restoreBirthdayOnJoin(member.client, guild.id, user.id);
         } catch (error) {
             logger.debug('Error restoring birthday on member join:', error);
         }

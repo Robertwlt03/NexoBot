@@ -3,6 +3,7 @@ import { InteractionHelper } from '../utils/interactionHelper.js';
 import { MessageFlags } from 'discord.js';
 import type { ButtonHandler } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { deleteBirthday } from '../services/birthdays/birthdays.js';
 
 import { replyUserError, ErrorTypes } from '../utils/errorHandler.js';
 import {
@@ -68,6 +69,14 @@ const wipedataConfirmHandler = {
           logger.error(`Error deleting key ${key}:`, error);
           deleteErrors.push(key);
         }
+      }
+
+      // Birthdays live in one row per member of the guild's birthday table, not under a per-user key.
+      try {
+        if (await deleteBirthday(client, guildId, userId)) deletedCount++;
+      } catch (error) {
+        logger.error('Error deleting birthday:', error);
+        deleteErrors.push('birthday');
       }
 
       try {
