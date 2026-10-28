@@ -1,25 +1,19 @@
-import { getColor } from '../../config/bot.js';
-import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, EmbedBuilder, LabelBuilder } from 'discord.js';
-import { successEmbed, warningEmbed } from '../../utils/embeds.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, ChannelType, ComponentType } from 'discord.js';
 import { logger } from '../../utils/logger.js';
 import { NexoBotError, ErrorTypes, replyUserError } from '../../utils/errorHandler.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import {
-    getChannelConfiguration,
-    updateChannelConfig,
-    hasManageGuildPermission,
-    logConfigurationChange,
-    createJoinToCreateTrigger,
-    removeJoinToCreateTrigger
-} from '../../services/joinToCreateService.js';
-import type { ButtonInteraction, CategoryChannel, ChatInputCommandInteraction, GuildMember, VoiceChannel } from 'discord.js';
+    createJoinToCreateTrigger, getTriggerSettings, removeJoinToCreateTrigger, updateTriggerSettings,
+} from '../../services/jointocreate/jointocreate.js';
+import {
+    TEMPLATE_CHOICES, bitrateModal, bitrateUpdatedEmbed, dashboard, nameTemplateModal, removeCancelledEmbed, removeConfirmation,
+    removedEmbed, setupDoneEmbed, templateUpdatedEmbed, userLimitModal, userLimitUpdatedEmbed,
+} from '../../services/jointocreate/views.js';
+import type { ButtonInteraction, CategoryChannel, ChatInputCommandInteraction, EmbedBuilder, GuildMember, ModalBuilder, ModalSubmitInteraction, VoiceChannel } from 'discord.js';
 import type { Command, NexoClient } from '../../types/index.js';
-import type { JoinToCreateChannelOptions } from '../../utils/database.js';
 
-// getChannelConfiguration infers `channelConfig` as `StoredChannelOptions | {}`; widen it to the stored option shape.
-type ChannelConfiguration = Omit<Awaited<ReturnType<typeof getChannelConfiguration>>, 'channelConfig'> & {
-    channelConfig: Partial<JoinToCreateChannelOptions>;
-};
+const canManage = (member: unknown) => Boolean((member as GuildMember | null)?.permissions?.has(PermissionFlagsBits.ManageGuild));
+const NO_PERMISSION = '❌ Du brauchst die Berechtigung **Server verwalten**, um diese Einstellungen zu ändern.';
 
 export default {
     data: new SlashCommandBuilder()
@@ -41,18 +35,7 @@ export default {
                     option
                         .setName("channel_name")
                         .setDescription("Vorlage für die Namen temporärer Sprachkanäle.")
-                        .addChoices(
-                            { name: "Raum von {username}", value: "Raum von {username}" },
-                            { name: "Kanal von {username}", value: "Kanal von {username}" },
-                            { name: "Lounge von {username}", value: "Lounge von {username}" },
-                            { name: "Bereich von {username}", value: "Bereich von {username}" },
-                            { name: "Raum von {displayName}", value: "Raum von {displayName}" },
-                            { name: "VC von {username}", value: "VC von {username}" },
-                            { name: "Musikraum von {username}", value: "Musikraum von {username}" },
-                            { name: "Gaming-Raum von {username}", value: "Gaming-Raum von {username}" },
-                            { name: "Chatraum von {username}", value: "Chatraum von {username}" },
-                            { name: "Privater Raum von {username}", value: "Privater Raum von {username}" }
-                        )
+                        .addChoices(...TEMPLATE_CHOICES.map((value) => ({ name: value, value })))
                 )
                 .addIntegerOption((option) =>
                     option
@@ -82,7 +65,7 @@ export default {
     async execute(interaction, config, client) {
         try {
             
-            if (!hasManageGuildPermission(interaction.member as GuildMember)) {
+            if (!canManage(interaction.member)) {
                 throw new NexoBotError(
                     'User lacks ManageGuild permission',
                     ErrorTypes.PERMISSION,
@@ -122,493 +105,133 @@ export default {
 } satisfies Command;
 
 async function handleSetupSubcommand(interaction: ChatInputCommandInteraction, client: NexoClient) {
+    const category = interaction.options.getChannel('category') as CategoryChannel | null;
+    const nameTemplate = interaction.options.getString('channel_name') || "Raum von {username}";
+    const userLimit = interaction.options.getInteger('user_limit') || 0;
+    const bitrate = interaction.options.getInteger('bitrate') || 64;
+
     try {
-        const category = interaction.options.getChannel('category') as CategoryChannel | null;
-        const nameTemplate = interaction.options.getString('channel_name') || "Raum von {username}";
-        const userLimit = interaction.options.getInteger('user_limit') || 0;
-        const bitrate = interaction.options.getInteger('bitrate') || 64;
-        const guildId = interaction.guild!.id;
-
-        logger.debug(`Setting up Join to Create in guild ${guildId} with template: ${nameTemplate}`);
-
-        const { channel: triggerChannel } = await createJoinToCreateTrigger(client, interaction.guild!, interaction.user.id, {
-            categoryId: category?.id,
-            nameTemplate,
-            userLimit,
-            bitrate
+        const { channel } = await createJoinToCreateTrigger(client, interaction.guild!, interaction.user.id, {
+            categoryId: category?.id, nameTemplate, userLimit, bitrate,
         });
-
-        const responseEmbed = successEmbed(
-            '✅ Einrichtung abgeschlossen',
-            `Join-to-Create-Kanal erstellt: ${triggerChannel}\n\n` +
-            `**Einstellungen:**\n` +
-            `• Vorlage: \`${nameTemplate}\`\n` +
-            `• Nutzerlimit: ${userLimit === 0 ? 'Unbegrenzt' : userLimit + ' Nutzer'}\n` +
-            `• Bitrate: ${bitrate} kbps\n` +
-            `${category ?`• Kategorie: ${category.name}`: '• Kategorie: Oberste Ebene'}`
-        );
-
-        return await InteractionHelper.safeEditReply(interaction, { embeds: [responseEmbed] });
-
+        await InteractionHelper.safeEditReply(interaction, {
+            embeds: [setupDoneEmbed(`<#${channel.id}>`, { nameTemplate, userLimit, bitrate }, category?.name ?? null)],
+        });
     } catch (error) {
+        if (error instanceof NexoBotError) throw error;
         logger.error('Error in handleSetupSubcommand:', error);
-        if (error instanceof NexoBotError) {
-            throw error;
-        }
-        throw new NexoBotError(
-            `Setup failed: ${(error as Error).message}`,
-            ErrorTypes.DISCORD_API,
-            'Join-to-Create konnte nicht eingerichtet werden. Bitte prüfe die Berechtigungen des Bots.'
-        );
+        throw new NexoBotError(`Setup failed: ${(error as Error).message}`, ErrorTypes.DISCORD_API,
+            'Join-to-Create konnte nicht eingerichtet werden. Bitte prüfe die Berechtigungen des Bots.');
     }
+}
+
+/** Shows the modal and waits for its submission by the same member; null when it timed out or was cancelled. */
+async function askModal(interaction: ButtonInteraction, modal: ModalBuilder) {
+    await interaction.showModal(modal);
+    const customId = modal.data.custom_id;
+    const submission = await interaction.awaitModalSubmit({
+        filter: (i) => i.customId === customId && i.user.id === interaction.user.id,
+        time: 60_000,
+    }).catch(() => null);
+    if (submission && !canManage(submission.member)) {
+        await submission.reply({ content: NO_PERMISSION, flags: MessageFlags.Ephemeral });
+        return null;
+    }
+    return submission;
 }
 
 async function handleConfigSubcommand(interaction: ChatInputCommandInteraction, client: NexoClient) {
-    try {
-        const triggerChannel = interaction.options.getChannel('trigger_channel') as VoiceChannel;
-        const guildId = interaction.guild!.id;
+    const triggerChannel = interaction.options.getChannel('trigger_channel') as VoiceChannel;
+    const guildId = interaction.guild!.id;
+    const mention = `<#${triggerChannel.id}>`;
+    const settings = await getTriggerSettings(client, guildId, triggerChannel.id);
 
-        const currentConfig: ChannelConfiguration = await getChannelConfiguration(client, guildId, triggerChannel.id);
-        const channelConfig = currentConfig.channelConfig || {};
+    await InteractionHelper.safeEditReply(interaction, dashboard(mention, triggerChannel.id, settings));
+    const message = await interaction.fetchReply();
+    const collector = message.createMessageComponentCollector({ componentType: ComponentType.Button, time: 300_000 });
 
-        const configEmbed = new EmbedBuilder()
-            .setTitle('Join-to-Create-Konfiguration')
-            .setDescription(`Konfiguration für ${triggerChannel}`)
-            .setColor(getColor('info'))
-            .addFields(
-                {
-                    name: 'Kanalnamen-Vorlage',
-                    value: `\`${channelConfig.nameTemplate || currentConfig.channelNameTemplate || "Raum von {username}"}\``,
-                    inline: false
-                },
-                {
-                    name: 'Nutzerlimit',
-                    value: `${(channelConfig.userLimit ?? currentConfig.userLimit ?? 0) === 0 ? 'Unbegrenzt' : (channelConfig.userLimit ?? currentConfig.userLimit ?? 0) + ' Nutzer'}`,
-                    inline: true
-                },
-                {
-                    name: 'Bitrate',
-                    value: `${(channelConfig.bitrate ?? currentConfig.bitrate ?? 64000) / 1000} kbps`,
-                    inline: true
-                }
-            )
-            .setFooter({ text: 'Nutze die Buttons unten, um Einstellungen zu ändern • Nur ein Trigger-Kanal pro Server möglich' })
-            .setTimestamp();
-
-        const nameButton = new ButtonBuilder()
-            .setCustomId(`jtc_config_name_${triggerChannel.id}`)
-            .setLabel('📝 Namensvorlage')
-            .setStyle(ButtonStyle.Primary);
-
-        const limitButton = new ButtonBuilder()
-            .setCustomId(`jtc_config_limit_${triggerChannel.id}`)
-            .setLabel('👥 Nutzerlimit')
-            .setStyle(ButtonStyle.Primary);
-
-        const bitrateButton = new ButtonBuilder()
-            .setCustomId(`jtc_config_bitrate_${triggerChannel.id}`)
-            .setLabel('🎵 Bitrate')
-            .setStyle(ButtonStyle.Primary);
-
-        const deleteButton = new ButtonBuilder()
-            .setCustomId(`jtc_config_delete_${triggerChannel.id}`)
-            .setLabel('🗑️ Kanal entfernen')
-            .setStyle(ButtonStyle.Danger);
-
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(nameButton, limitButton, bitrateButton, deleteButton);
-
-        await InteractionHelper.safeEditReply(interaction, {
-            embeds: [configEmbed],
-            components: [row]
-        });
-
-        const message = await interaction.fetchReply();
-
-        if (!message || typeof message.createMessageComponentCollector !== 'function') {
-            throw new NexoBotError(
-                'Failed to fetch interaction reply for collector setup',
-                ErrorTypes.DISCORD_API,
-                'Die Einstellungen konnten nicht geöffnet werden. Bitte führe `/jointocreate dashboard` erneut aus.'
-            );
+    const update = async (submission: ModalSubmitInteraction, changes: Parameters<typeof updateTriggerSettings>[3], action: string, reply: EmbedBuilder) => {
+        try {
+            await updateTriggerSettings(client, guildId, triggerChannel.id, changes, interaction.user.id, action);
+        } catch (error) {
+            // The button is answered by the modal already, so invalid input is answered on the submission.
+            if (!(error instanceof NexoBotError)) throw error;
+            await submission.reply({ content: `❌ ${error.userMessage}`, flags: MessageFlags.Ephemeral });
+            return;
         }
+        await submission.reply({ embeds: [reply], flags: MessageFlags.Ephemeral });
+    };
 
-        const collector = message.createMessageComponentCollector({
-            componentType: ComponentType.Button,
-            time: 300000
-        });
-
-        collector.on('collect', async (buttonInteraction) => {
-            try {
-                
-                if (!hasManageGuildPermission(buttonInteraction.member as GuildMember)) {
-                    await buttonInteraction.reply({
-                        content: '❌ Du brauchst die Berechtigung **Server verwalten**, um diese Steuerung zu nutzen.',
-                        flags: MessageFlags.Ephemeral
-                    });
-                    return;
-                }
-
-                const customId = buttonInteraction.customId;
-
-                if (customId.includes('jtc_config_name_')) {
-                    await handleNameTemplateModal(buttonInteraction, triggerChannel, currentConfig, client);
-                } else if (customId.includes('jtc_config_limit_')) {
-                    await handleUserLimitModal(buttonInteraction, triggerChannel, currentConfig, client);
-                } else if (customId.includes('jtc_config_bitrate_')) {
-                    await handleBitrateModal(buttonInteraction, triggerChannel, currentConfig, client);
-                } else if (customId.includes('jtc_config_delete_')) {
-                    await handleChannelDeletion(buttonInteraction, triggerChannel, currentConfig, client);
-                }
-            } catch (error) {
-                const userMessage = error instanceof NexoBotError
-                    ? error.userMessage || 'Ein Fehler ist aufgetreten.'
-                    : 'Bei der Verarbeitung deiner Anfrage ist ein Fehler aufgetreten.';
-
-                if (error instanceof NexoBotError) {
-                    logger.debug(`Button interaction validation error: ${(error as Error).message}`, error.context || {});
-                } else {
-                    logger.error('Unexpected error in config button interaction:', error);
-                }
-
-                await buttonInteraction.reply({
-                    content: `❌ ${userMessage}`,
-                    flags: MessageFlags.Ephemeral
-                }).catch(() => {});
+    collector.on('collect', async (button) => {
+        try {
+            if (!canManage(button.member)) {
+                await button.reply({ content: '❌ Du brauchst die Berechtigung **Server verwalten**, um diese Steuerung zu nutzen.', flags: MessageFlags.Ephemeral });
+                return;
             }
-        });
+            const current = await getTriggerSettings(client, guildId, triggerChannel.id);
+            const action = button.customId.slice('jtc_config_'.length, button.customId.lastIndexOf('_'));
 
-        collector.on('end', () => {
-            const disabledRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-                nameButton.setDisabled(true),
-                limitButton.setDisabled(true),
-                bitrateButton.setDisabled(true),
-                deleteButton.setDisabled(true)
-            );
-
-            message.edit({
-                components: [disabledRow],
-                embeds: [configEmbed.setFooter({ text: 'Sitzung abgelaufen. Führe den Command erneut aus, um Änderungen vorzunehmen.' })]
-            }).catch(() => {});
-        });
-
-    } catch (error) {
-        if (error instanceof NexoBotError) {
-            throw error;
-        }
-        throw new NexoBotError(
-            `Config failed: ${(error as Error).message}`,
-            ErrorTypes.DATABASE,
-            'Konfiguration konnte nicht geladen werden.'
-        );
-    }
-}
-
-async function handleNameTemplateModal(interaction: ButtonInteraction, triggerChannel: VoiceChannel, currentConfig: ChannelConfiguration, client: NexoClient) {
-    try {
-        const TEMPLATE_OPTIONS = [
-            { label: "Raum von {username}", value: "Raum von {username}" },
-            { label: "Kanal von {username}", value: "Kanal von {username}" },
-            { label: "Lounge von {username}", value: "Lounge von {username}" },
-            { label: "Bereich von {username}", value: "Bereich von {username}" },
-            { label: "Raum von {displayName}", value: "Raum von {displayName}" },
-            { label: "VC von {username}", value: "VC von {username}" },
-            { label: "Musikraum von {username}", value: "Musikraum von {username}" },
-            { label: "Gaming-Raum von {username}", value: "Gaming-Raum von {username}" },
-            { label: "Chatraum von {username}", value: "Chatraum von {username}" },
-            { label: "Privater Raum von {username}", value: "Privater Raum von {username}" },
-        ];
-
-        const currentTemplate = currentConfig.channelConfig?.nameTemplate
-            || currentConfig.channelNameTemplate
-            || "Raum von {username}";
-
-        // Keep a stored template that is not in the list (e.g. older English ones) selectable and preselected.
-        const templateOptions = TEMPLATE_OPTIONS.some(o => o.value === currentTemplate)
-            ? TEMPLATE_OPTIONS
-            : [{ label: currentTemplate.slice(0, 100), value: currentTemplate.slice(0, 100) }, ...TEMPLATE_OPTIONS];
-
-        const templateSelect = new StringSelectMenuBuilder()
-            .setCustomId('template')
-            .setPlaceholder('Wähle eine Namensvorlage...')
-            .setOptions(
-                templateOptions.map(o => ({
-                    label: o.label,
-                    value: o.value,
-                    default: o.value === currentTemplate,
-                })),
-            );
-
-        const templateLabel = new LabelBuilder()
-            .setLabel('Kanalnamen-Vorlage')
-            .setStringSelectMenuComponent(templateSelect);
-
-        const modal = new ModalBuilder()
-            .setCustomId(`jtc_name_modal_${triggerChannel.id}`)
-            .setTitle('Kanalnamen-Vorlage')
-            .addLabelComponents(templateLabel);
-
-        await interaction.showModal(modal);
-
-        const modalSubmission = await interaction.awaitModalSubmit({
-            filter: (i) => i.customId === `jtc_name_modal_${triggerChannel.id}` && i.user.id === interaction.user.id,
-            time: 60000
-        });
-
-        if (!hasManageGuildPermission(modalSubmission.member as GuildMember)) {
-            await modalSubmission.reply({
-                content: '❌ Du brauchst die Berechtigung **Server verwalten**, um diese Einstellungen zu ändern.',
-                flags: MessageFlags.Ephemeral
-            });
-            return;
-        }
-
-        const [newTemplate] = modalSubmission.fields.getStringSelectValues('template');
-
-        await updateChannelConfig(client, interaction.guild!.id, triggerChannel.id, {
-            nameTemplate: newTemplate
-        });
-
-        await logConfigurationChange(client, interaction.guild!.id, interaction.user.id, 'Kanalnamen-Vorlage aktualisiert', {
-            channelId: triggerChannel.id,
-            newTemplate
-        });
-
-        await modalSubmission.reply({
-            embeds: [successEmbed('Aktualisiert', `Kanalnamen-Vorlage geändert zu \`${newTemplate}\``)],
-            flags: MessageFlags.Ephemeral
-        });
-
-    } catch (error) {
-        if ((error as { code?: unknown }).code === 'INTERACTION_COLLECTOR_ERROR') {
-            return;
-        }
-        if (error instanceof NexoBotError) {
-            throw error;
-        }
-        logger.error('Unexpected error in name template modal:', error);
-        throw new NexoBotError(
-            `Modal error: ${(error as Error).message}`,
-            ErrorTypes.UNKNOWN,
-            'Beim Aktualisieren der Vorlage ist ein Fehler aufgetreten.'
-        );
-    }
-}
-
-async function handleUserLimitModal(interaction: ButtonInteraction, triggerChannel: VoiceChannel, currentConfig: ChannelConfiguration, client: NexoClient) {
-    try {
-        const currentLimit = currentConfig.channelConfig?.userLimit ?? currentConfig.userLimit ?? 0;
-
-        const modal = new ModalBuilder()
-            .setCustomId(`jtc_limit_modal_${triggerChannel.id}`)
-            .setTitle('Nutzerlimit festlegen')
-            .addComponents(
-                new ActionRowBuilder<TextInputBuilder>().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('user_limit')
-                        .setLabel('Nutzerlimit (0-99, 0 = unbegrenzt)')
-                        .setPlaceholder('Gib eine Zahl zwischen 0 und 99 ein')
-                        .setStyle(TextInputStyle.Short)
-                        .setRequired(true)
-                        .setMinLength(1)
-                        .setMaxLength(2)
-                        .setValue(currentLimit.toString())
-                )
-            );
-
-        await interaction.showModal(modal);
-
-        const modalSubmission = await interaction.awaitModalSubmit({
-            filter: (i) => i.customId === `jtc_limit_modal_${triggerChannel.id}` && i.user.id === interaction.user.id,
-            time: 60000
-        });
-
-        if (!hasManageGuildPermission(modalSubmission.member as GuildMember)) {
-            await modalSubmission.reply({
-                content: '❌ Du brauchst die Berechtigung **Server verwalten**, um diese Einstellungen zu ändern.',
-                flags: MessageFlags.Ephemeral
-            });
-            return;
-        }
-
-        const userInput = modalSubmission.fields.getTextInputValue('user_limit').trim();
-
-        await updateChannelConfig(client, interaction.guild!.id, triggerChannel.id, {
-            userLimit: parseInt(userInput)
-        });
-
-        await logConfigurationChange(client, interaction.guild!.id, interaction.user.id, 'Nutzerlimit aktualisiert', {
-            channelId: triggerChannel.id,
-            userLimit: parseInt(userInput)
-        });
-
-        await modalSubmission.reply({
-            embeds: [successEmbed('Aktualisiert', `Nutzerlimit geändert zu ${parseInt(userInput) === 0 ? 'Unbegrenzt' : parseInt(userInput) + ' Nutzer'}`)],
-            flags: MessageFlags.Ephemeral
-        });
-
-    } catch (error) {
-        if ((error as { code?: unknown }).code === 'INTERACTION_COLLECTOR_ERROR') {
-            return;
-        }
-        if (error instanceof NexoBotError) {
-            throw error;
-        }
-        logger.error('Unexpected error in user limit modal:', error);
-        throw new NexoBotError(
-            `Modal error: ${(error as Error).message}`,
-            ErrorTypes.UNKNOWN,
-            'Beim Aktualisieren des Nutzerlimits ist ein Fehler aufgetreten.'
-        );
-    }
-}
-
-async function handleBitrateModal(interaction: ButtonInteraction, triggerChannel: VoiceChannel, currentConfig: ChannelConfiguration, client: NexoClient) {
-    try {
-        const currentBitrate = ((currentConfig.channelConfig.bitrate ?? currentConfig.bitrate ?? 64000) / 1000);
-
-        const modal = new ModalBuilder()
-            .setCustomId(`jtc_bitrate_modal_${triggerChannel.id}`)
-            .setTitle('Bitrate festlegen')
-            .addComponents(
-                new ActionRowBuilder<TextInputBuilder>().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('bitrate')
-                        .setLabel('Bitrate in kbps (8-384)')
-                        .setPlaceholder('Gib eine Zahl zwischen 8 und 384 ein')
-                        .setStyle(TextInputStyle.Short)
-                        .setRequired(true)
-                        .setMinLength(1)
-                        .setMaxLength(3)
-                        .setValue(currentBitrate.toString())
-                )
-            );
-
-        await interaction.showModal(modal);
-
-        const modalSubmission = await interaction.awaitModalSubmit({
-            filter: (i) => i.customId === `jtc_bitrate_modal_${triggerChannel.id}` && i.user.id === interaction.user.id,
-            time: 60000
-        });
-
-        if (!hasManageGuildPermission(modalSubmission.member as GuildMember)) {
-            await modalSubmission.reply({
-                content: '❌ Du brauchst die Berechtigung **Server verwalten**, um diese Einstellungen zu ändern.',
-                flags: MessageFlags.Ephemeral
-            });
-            return;
-        }
-
-        const userInput = modalSubmission.fields.getTextInputValue('bitrate').trim();
-
-        await updateChannelConfig(client, interaction.guild!.id, triggerChannel.id, {
-            bitrate: parseInt(userInput) * 1000
-        });
-
-        await logConfigurationChange(client, interaction.guild!.id, interaction.user.id, 'Bitrate aktualisiert', {
-            channelId: triggerChannel.id,
-            bitrate: parseInt(userInput)
-        });
-
-        await modalSubmission.reply({
-            embeds: [successEmbed('Aktualisiert', `Bitrate geändert zu ${parseInt(userInput)} kbps`)],
-            flags: MessageFlags.Ephemeral
-        });
-
-    } catch (error) {
-        if ((error as { code?: unknown }).code === 'INTERACTION_COLLECTOR_ERROR') {
-            return;
-        }
-        if (error instanceof NexoBotError) {
-            throw error;
-        }
-        logger.error('Unexpected error in bitrate modal:', error);
-        throw new NexoBotError(
-            `Modal error: ${(error as Error).message}`,
-            ErrorTypes.UNKNOWN,
-            'Beim Aktualisieren der Bitrate ist ein Fehler aufgetreten.'
-        );
-    }
-}
-
-async function handleChannelDeletion(interaction: ButtonInteraction, triggerChannel: VoiceChannel, currentConfig: ChannelConfiguration, client: NexoClient) {
-    try {
-        const confirmRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder()
-                .setCustomId(`jtc_delete_confirm_${triggerChannel.id}`)
-                .setLabel('🗑️ Ja, löschen')
-                .setStyle(ButtonStyle.Danger),
-            new ButtonBuilder()
-                .setCustomId(`jtc_delete_cancel_${triggerChannel.id}`)
-                .setLabel('❌ Abbrechen')
-                .setStyle(ButtonStyle.Secondary)
-        );
-
-        await InteractionHelper.safeReply(interaction, {
-            embeds: [warningEmbed('Löschen bestätigen', `Willst du **${triggerChannel.name}** wirklich aus dem Join-to-Create-System entfernen?\n\nDas kann nicht rückgängig gemacht werden.`)],
-            components: [confirmRow],
-            flags: MessageFlags.Ephemeral
-        });
-
-        const message = await interaction.fetchReply();
-        const deleteCollector = message.createMessageComponentCollector({
-            componentType: ComponentType.Button,
-            filter: (i) => i.user.id === interaction.user.id && 
-                          (i.customId === `jtc_delete_confirm_${triggerChannel.id}` || 
-                           i.customId === `jtc_delete_cancel_${triggerChannel.id}`),
-            time: 600_000,
-            max: 1
-        });
-
-        deleteCollector.on('collect', async (buttonInteraction) => {
-            try {
-                
-                if (!hasManageGuildPermission(buttonInteraction.member as GuildMember)) {
-                    await buttonInteraction.reply({
-                        content: '❌ Du brauchst die Berechtigung **Server verwalten**, um Kanäle zu entfernen.',
-                        flags: MessageFlags.Ephemeral
-                    });
-                    return;
-                }
-
-                if (buttonInteraction.customId === `jtc_delete_confirm_${triggerChannel.id}`) {
-                    
-                    await removeJoinToCreateTrigger(client, interaction.guild!, triggerChannel.id, interaction.user.id);
-
-                    await buttonInteraction.update({
-                        embeds: [successEmbed('Entfernt', `**${triggerChannel.name}** wurde aus dem Join-to-Create-System entfernt.`)],
-                        components: []
-                    });
-
-                } else {
-                    await buttonInteraction.update({
-                        embeds: [successEmbed('Abgebrochen', 'Das Entfernen des Kanals wurde abgebrochen.')],
-                        components: []
-                    });
-                }
-            } catch (collectError) {
-                logger.error('Error handling delete confirmation:', collectError);
-                await buttonInteraction.reply({
-                    content: '❌ Bei der Verarbeitung deiner Anfrage ist ein Fehler aufgetreten.',
-                    flags: MessageFlags.Ephemeral
-                }).catch(() => {});
+            if (action === 'name') {
+                const submission = await askModal(button, nameTemplateModal(triggerChannel.id, current.nameTemplate));
+                if (!submission) return;
+                const [nameTemplate] = submission.fields.getStringSelectValues('template');
+                await update(submission, { nameTemplate }, 'Kanalnamen-Vorlage aktualisiert', templateUpdatedEmbed(nameTemplate));
+            } else if (action === 'limit') {
+                const submission = await askModal(button, userLimitModal(triggerChannel.id, current.userLimit));
+                if (!submission) return;
+                const userLimit = Number.parseInt(submission.fields.getTextInputValue('user_limit').trim(), 10);
+                await update(submission, { userLimit }, 'Nutzerlimit aktualisiert', userLimitUpdatedEmbed(userLimit));
+            } else if (action === 'bitrate') {
+                const submission = await askModal(button, bitrateModal(triggerChannel.id, current.bitrate / 1000));
+                if (!submission) return;
+                const kbps = Number.parseInt(submission.fields.getTextInputValue('bitrate').trim(), 10);
+                await update(submission, { bitrate: kbps * 1000 }, 'Bitrate aktualisiert', bitrateUpdatedEmbed(kbps));
+            } else if (action === 'delete') {
+                await confirmRemoval(button, triggerChannel, client);
             }
-        });
-
-        deleteCollector.on('end', (collected, reason) => {
-            if (reason === 'time' && collected.size === 0) {
-                message.edit({ components: [] }).catch(() => {});
-            }
-        });
-
-    } catch (error) {
-        if (error instanceof NexoBotError) {
-            throw error;
+        } catch (error) {
+            const userMessage = error instanceof NexoBotError ? error.userMessage || 'Ein Fehler ist aufgetreten.' : 'Bei der Verarbeitung deiner Anfrage ist ein Fehler aufgetreten.';
+            if (!(error instanceof NexoBotError)) logger.error('Unexpected error in Join to Create dashboard:', error);
+            const target = button.replied || button.deferred ? null : button;
+            await target?.reply({ content: `❌ ${userMessage}`, flags: MessageFlags.Ephemeral }).catch(() => {});
         }
-        logger.error('Unexpected error in handleChannelDeletion:', error);
-        throw new NexoBotError(
-            `Deletion error: ${(error as Error).message}`,
-            ErrorTypes.UNKNOWN,
-            'Beim Entfernen des Kanals ist ein Fehler aufgetreten.'
-        );
-    }
+    });
+
+    collector.on('end', async () => {
+        const latest = await getTriggerSettings(client, guildId, triggerChannel.id).catch(() => settings);
+        message.edit(dashboard(mention, triggerChannel.id, latest, true)).catch(() => {});
+    });
+}
+
+async function confirmRemoval(interaction: ButtonInteraction, triggerChannel: VoiceChannel, client: NexoClient) {
+    await InteractionHelper.safeReply(interaction, { ...removeConfirmation(triggerChannel.name, triggerChannel.id), flags: MessageFlags.Ephemeral });
+    const message = await interaction.fetchReply();
+    const collector = message.createMessageComponentCollector({
+        componentType: ComponentType.Button,
+        filter: (i) => i.user.id === interaction.user.id && i.customId.endsWith(`_${triggerChannel.id}`) && i.customId.startsWith('jtc_delete_'),
+        time: 600_000,
+        max: 1,
+    });
+
+    collector.on('collect', async (button) => {
+        try {
+            if (!canManage(button.member)) {
+                await button.reply({ content: '❌ Du brauchst die Berechtigung **Server verwalten**, um Kanäle zu entfernen.', flags: MessageFlags.Ephemeral });
+                return;
+            }
+            if (button.customId === `jtc_delete_confirm_${triggerChannel.id}`) {
+                await removeJoinToCreateTrigger(client, interaction.guild!, triggerChannel.id, interaction.user.id);
+                await button.update({ embeds: [removedEmbed(triggerChannel.name)], components: [] });
+            } else {
+                await button.update({ embeds: [removeCancelledEmbed()], components: [] });
+            }
+        } catch (error) {
+            logger.error('Error handling delete confirmation:', error);
+            await button.reply({ content: '❌ Bei der Verarbeitung deiner Anfrage ist ein Fehler aufgetreten.', flags: MessageFlags.Ephemeral }).catch(() => {});
+        }
+    });
+
+    collector.on('end', (collected, reason) => {
+        if (reason === 'time' && collected.size === 0) message.edit({ components: [] }).catch(() => {});
+    });
 }
