@@ -7,8 +7,9 @@ import { useApi, UserContext } from '../api';
 import { GuildIcon, UserPanel } from '../components/Layout';
 import { NexoLogo } from '../components/NexoLogo';
 import { PageBackdrop } from '../components/Backdrop';
-import { Empty, Notice, PageHeader, Spinner } from '../components/ui';
+import { Badge, Empty, Notice, PageHeader, Spinner } from '../components/ui';
 import { Icon } from '../icons';
+import { MOTION } from '../components/motion';
 
 gsap.registerPlugin(useGSAP);
 
@@ -24,7 +25,7 @@ export function ServerPicker() {
     if (!data?.length) return;
     const mm = gsap.matchMedia();
     mm.add('(prefers-reduced-motion: no-preference)', () => {
-      gsap.fromTo('.js-server', { y: 30, autoAlpha: 0, scale: 0.97 }, { y: 0, autoAlpha: 1, scale: 1, duration: 0.55, stagger: 0.07, ease: 'power3.out', clearProps: 'transform' });
+      gsap.fromTo('.js-server', { y: 30, autoAlpha: 0, scale: 0.97 }, { y: 0, autoAlpha: 1, scale: 1, duration: MOTION.slow, stagger: MOTION.step, ease: MOTION.enter, clearProps: 'transform' });
     });
     return () => mm.revert();
   }, { scope: root, dependencies: [data?.length ?? 0], revertOnUpdate: true });
@@ -33,12 +34,12 @@ export function ServerPicker() {
 
   return (
     <div ref={root} className="relative min-h-full bg-canvas">
-      <header className="sticky top-0 z-20 border-b border-white/[.05] bg-canvas/80 backdrop-blur-md">
+      <header className="sticky top-0 z-20 border-b border-line bg-canvas/80 backdrop-blur-md">
         {/* 82px: the user panel (58px) with the same 12px above and below as at the foot of the dashboard sidebar. */}
         <div className="mx-auto flex h-[82px] max-w-6xl items-center gap-4 px-5 md:px-8">
-          <Link to="/servers" className="flex items-center gap-2.5 text-ink hover:no-underline">
+          <Link to="/servers" className="flex items-center gap-2 text-ink hover:no-underline">
             <NexoLogo className="h-9 w-auto" animated={false} />
-            <span className="font-display text-lg font-semibold tracking-tight">Nexo</span>
+            <span className="font-display text-heading font-semibold tracking-tight">Nexo</span>
           </Link>
           <div className="ml-auto w-[240px] max-w-[60vw]"><UserPanel className="" /></div>
         </div>
@@ -63,21 +64,21 @@ export function ServerPicker() {
           {data && guilds.length === 0 && <Empty title="Keine Server zum Verwalten">Server erscheinen hier, sobald du auf einem die Berechtigung „Server verwalten“ hast. Dein Profil erreichst du jederzeit oben rechts über deinen Namen.</Empty>}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {guilds.map((guild) => (
-              <article key={guild.id} className="js-server group relative overflow-hidden rounded-[20px] border border-white/[.06] bg-surface transition duration-300 hover:-translate-y-0.5 hover:border-white/[.14]">
+              <article key={guild.id} className="js-server group relative overflow-hidden rounded-panel border border-line bg-surface transition duration-base hover:-translate-y-0.5 hover:border-line-strong">
                 {/* Fades out through a mask instead of a gradient in the card colour: no hard bottom edge that could show
                     as a line while the card lifts on hover. */}
                 <div className="relative h-24 overflow-hidden" style={{ maskImage: 'linear-gradient(to bottom, #000 15%, transparent)' }}>
                   {guild.iconUrl
-                    ? <img src={guild.iconUrl} alt="" className="absolute inset-0 h-full w-full scale-150 object-cover opacity-30 blur-2xl saturate-[.8] transition duration-500 group-hover:scale-[1.7] group-hover:opacity-40" />
-                    : <div className="absolute inset-0 bg-white/[.03]" />}
+                    ? <img src={guild.iconUrl} alt="" className="absolute inset-0 h-full w-full scale-150 object-cover opacity-30 blur-2xl saturate-[.8] transition duration-slow group-hover:scale-[1.7] group-hover:opacity-40" />
+                    : <div className="absolute inset-0 bg-tint" />}
                 </div>
                 <div className="relative -mt-10 px-5 pb-5">
-                  <GuildIcon guild={guild} className="h-14 w-14 rounded-2xl text-lg ring-4 ring-surface" />
+                  <GuildIcon guild={guild} className="h-14 w-14 rounded-box text-heading ring-4 ring-surface" />
                   <div className="mt-3 flex items-center gap-2">
-                    <h3 className="min-w-0 flex-1 truncate text-[15px] font-medium">{guild.name}</h3>
+                    <h3 className="min-w-0 flex-1 break-words text-title font-medium">{guild.name}</h3>
                     {guild.botPresent
-                      ? <span className="badge badge-on">Aktiv</span>
-                      : <span className="badge badge-off">Nicht eingeladen</span>}
+                      ? <Badge tone="pos">Aktiv</Badge>
+                      : <Badge tone="off">Nicht eingeladen</Badge>}
                   </div>
                   <div className="mt-4">
                     {guild.botPresent
@@ -90,13 +91,13 @@ export function ServerPicker() {
           </div>
           {data && guilds.length > 0 && (
             <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Link to="/me" className="flex items-start gap-4 rounded-[20px] border border-white/[.06] bg-surface p-5 text-ink transition hover:border-white/[.14] hover:no-underline">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent/15 text-accent"><Icon name="users" size={20} /></span>
-                <span><b className="block text-[15px] font-medium">Mein Profil</b><span className="text-[13.5px] text-mute">Profilkarte, Shop, Tagesbonus und Saison – auf allen Servern gleich.</span></span>
+              <Link to="/me" className="flex items-start gap-4 rounded-panel border border-line bg-surface p-5 text-ink transition hover:border-line-strong hover:no-underline">
+                <span className="icon-tile h-10 w-10"><Icon name="users" size={20} /></span>
+                <span><b className="block text-title font-medium">Mein Profil</b><span className="text-small text-mute">Profilkarte, Shop, Tagesbonus und Saison – auf allen Servern gleich.</span></span>
               </Link>
-              <div className="flex items-start gap-4 rounded-[20px] border border-dashed border-white/[.1] p-5">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/[.04] text-mute"><Icon name="settings" size={20} /></span>
-                <span><b className="block text-[15px] font-medium text-ink">Server fehlt?</b><span className="text-[13.5px] text-mute">Hier stehen Server, auf denen du „Server verwalten“ darfst. Nach einer Rechte-Änderung hilft „Aktualisieren“.</span></span>
+              <div className="flex items-start gap-4 rounded-panel border border-dashed border-line-strong p-5">
+                <span className="icon-tile h-10 w-10 text-mute"><Icon name="settings" size={20} /></span>
+                <span><b className="block text-title font-medium text-ink">Server fehlt?</b><span className="text-small text-mute">Hier stehen Server, auf denen du „Server verwalten“ darfst. Nach einer Rechte-Änderung hilft „Aktualisieren“.</span></span>
               </div>
             </div>
           )}

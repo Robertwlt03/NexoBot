@@ -15,13 +15,14 @@ import { Empty, Field, Notice, Pager, Select, Switch, TextInput } from '../compo
 import {
   cardSubject, countdown, equipItem, formatDate, isEquipped, reducedMotion, resolveCosmetics, startsIn, useEquip, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
-import { Glyph, ItemVisual, Bernis, Price, RARITY_TILE, RarityLabel, backgroundStyle } from './visuals';
+import { Glyph, ItemVisual, Bernis, Price, RARITY_CLASS, RARITY_TILE, RarityLabel, backgroundStyle } from './visuals';
 import { ProductDialog } from './ProductDialog';
 import { BundleSection } from './bundles';
 import { Celebration } from './Celebration';
 import { EventBackdrop, SCENE_ROOM, eventTheme } from './EventScene';
 import { EventIcon } from './EventIcon';
 import { Icon } from '../icons';
+import { MOTION } from '../components/motion';
 
 export type ShopVariant = 'shop' | 'blackmarket';
 
@@ -48,32 +49,32 @@ export function StoreCard({ listing, owned, variant, onOpen, className = '', lar
   const style = { '--tile': tint } as CSSProperties;
   return (
     <button type="button" onClick={onOpen} data-mode="dark" style={style}
-      className={`js-item game-tile group relative flex cursor-pointer flex-col overflow-hidden rounded-[20px] border-0 bg-[#0d0b0a] p-0 text-left font-[inherit] ring-1 ring-white/[.08] transition duration-300 hover:-translate-y-1 hover:ring-[color-mix(in_srgb,var(--tile)_70%,transparent)] hover:shadow-[0_22px_44px_-18px_color-mix(in_srgb,var(--tile)_55%,transparent)] ${large ? '' : 'aspect-[3/4]'} ${className}`}>
+      className={`js-item game-tile group relative flex cursor-pointer flex-col overflow-hidden rounded-panel border-0 bg-[#0d0b0a] p-0 text-left font-[inherit] ring-1 ring-line transition duration-base hover:-translate-y-1 hover:ring-[color-mix(in_srgb,var(--tile)_70%,transparent)] hover:shadow-[0_22px_44px_-18px_color-mix(in_srgb,var(--tile)_55%,transparent)] ${large ? '' : 'aspect-[3/4]'} ${className}`}>
       <div className="game-tile-field relative min-h-0 w-full flex-1 overflow-hidden">
         {item.slot === 'background' || item.slot === 'layout' ? (
           // Backgrounds and layouts: your own card as it is now (your frame, your look), wearing only this item. It
           // sits inside the tile with room on every side and a slight tilt, so it reads as a card, not a banner.
           <div className="absolute inset-0 flex items-center justify-center px-[9%]">
-            <div className="card-shape w-full -rotate-[5deg] shadow-[0_20px_44px_-14px_rgba(0,0,0,.9)] ring-1 ring-white/15 transition-transform duration-500 group-hover:-rotate-[3deg] group-hover:scale-[1.04]">
+            <div className="card-shape w-full -rotate-[5deg] shadow-[0_20px_44px_-14px_rgba(0,0,0,.9)] ring-1 ring-line-strong transition-transform duration-slow group-hover:-rotate-[3deg] group-hover:scale-[1.04]">
               <TryOnPreview items={[item]} resolution={0.5} />
             </div>
           </div>
         ) : (
-          <ItemVisual item={item} className={`h-full w-full rounded-none !bg-transparent transition-transform duration-500 ${large ? 'scale-[1.25] group-hover:scale-[1.32]' : 'scale-[1.3] group-hover:scale-[1.42]'}`} />
+          <ItemVisual item={item} className={`h-full w-full rounded-none !bg-transparent transition-transform duration-slow ${large ? 'scale-[1.25] group-hover:scale-[1.32]' : 'scale-[1.3] group-hover:scale-[1.42]'}`} />
         )}
-        <div className="absolute left-2.5 top-2.5 flex flex-wrap gap-1.5">
-          {listing.discount > 0 && <span className="rounded-md bg-[#facc15] px-1.5 py-0.5 text-[11.5px] font-bold text-[#1a1405]">−{listing.discount} %</span>}
-          {listing.availableUntil && variant === 'shop' && <span className="rounded-md bg-black/55 px-1.5 py-0.5 text-[11px] font-semibold text-white/90 backdrop-blur">Begrenzt</span>}
+        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+          {listing.discount > 0 && <span className="rounded-tag bg-pos px-1.5 py-0.5 text-micro font-bold text-canvas">−{listing.discount} %</span>}
+          {listing.availableUntil && variant === 'shop' && <span className="rounded-tag bg-black/55 px-1.5 py-0.5 text-micro font-semibold text-warn backdrop-blur">Begrenzt</span>}
         </div>
-        {owned && <span className="absolute right-2.5 top-2.5 flex h-6 items-center gap-1 rounded-md bg-black/55 px-1.5 text-[11px] font-semibold text-[#86efac] backdrop-blur"><Glyph name="check" size={13} /> Im Besitz</span>}
+        {owned && <span className="absolute right-3 top-3 flex h-6 items-center gap-1 rounded-tag bg-black/55 px-1.5 text-micro font-semibold text-pos backdrop-blur"><Glyph name="check" size={13} /> Im Besitz</span>}
       </div>
-      <div className="relative w-full px-3.5 pb-4 pt-2.5">
-        <div className="text-[10.5px] font-bold uppercase tracking-[.14em]" style={{ color: tint }}>{RARITY_LABELS[item.rarity]} · {SLOT_LABELS[item.slot]}</div>
-        <h3 className={`mt-1 truncate font-sans font-bold uppercase leading-tight tracking-[.02em] text-white ${large ? 'text-[22px]' : 'text-[14.5px]'}`}>{item.name}</h3>
-        <div className="mt-2 flex min-h-6 items-center gap-2 text-[15px] font-bold text-white">
+      <div className="relative w-full px-4 pb-4 pt-3">
+        <div className={`text-micro font-bold uppercase tracking-caps ${RARITY_CLASS[item.rarity].text}`}>{RARITY_LABELS[item.rarity]} · {SLOT_LABELS[item.slot]}</div>
+        <h3 className={`mt-1 truncate font-sans font-bold uppercase leading-tight tracking-headline text-white ${large ? 'text-section' : 'text-copy'}`}>{item.name}</h3>
+        <div className="mt-2 flex min-h-6 items-center gap-2 text-title font-bold text-white">
           {owned
-            ? <span className="text-[12.5px] font-semibold text-white/80">Anlegen →</span>
-            : forSale(item) ? <Price price={item.price} finalPrice={listing.finalPrice} /> : <span className="text-[12px] font-medium text-white/55">{NOT_FOR_SALE[item.availability] ?? 'Nicht käuflich'}</span>}
+            ? <span className="text-caption font-semibold text-body">Anlegen →</span>
+            : forSale(item) ? <Price price={item.price} finalPrice={listing.finalPrice} /> : <span className="text-caption font-medium text-mute">{NOT_FOR_SALE[item.availability] ?? 'Nicht käuflich'}</span>}
         </div>
       </div>
       <span className="absolute inset-x-0 bottom-0 h-[3px]" style={{ background: tint }} />
@@ -86,8 +87,8 @@ export function StoreCard({ listing, owned, variant, onOpen, className = '', lar
 export function SectionHead({ title, text }: { title: string; text?: string }) {
   return (
     <div className="mb-4">
-      <h2 className="text-[22px] font-semibold leading-tight tracking-tight text-ink">{title}</h2>
-      {text && <p className="mt-1 max-w-[620px] text-[13.5px] text-mute">{text}</p>}
+      <h2 className="text-section font-semibold leading-tight text-ink">{title}</h2>
+      {text && <p className="mt-1 max-w-[620px] text-small text-mute">{text}</p>}
     </div>
   );
 }
@@ -98,11 +99,11 @@ function NextEvent({ events }: { events: ShopEvent[] }) {
   if (!next) return null;
   return (
     // A small block of its own: the info on the left, the link to the season page as a real button on the right.
-    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-[var(--border-control)] bg-surface px-4 py-3">
+    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-box border border-control bg-surface px-4 py-3">
       <EventIcon event={next} size={28} />
       <div className="min-w-0 flex-1 leading-tight">
-        <div className="text-[12px] font-medium text-mute">Nächstes Event</div>
-        <div className="text-[14.5px] text-body"><span className="font-semibold text-ink">{next.name}</span> · {startsIn(next.startsAt, now)}{next.discount > 0 ? ` · −${next.discount} %` : ''}</div>
+        <div className="text-caption font-medium text-mute">Nächstes Event</div>
+        <div className="text-copy text-body"><span className="font-semibold text-ink">{next.name}</span> · {startsIn(next.startsAt, now)}{next.discount > 0 ? ` · −${next.discount} %` : ''}</div>
       </div>
       <Link to="/me/saison" className="btn btn-secondary btn-sm hover:no-underline">Alle Events</Link>
     </div>
@@ -145,31 +146,31 @@ export function Storefront({ listings, bundles, events, upcoming }: { listings: 
   return (
     <>
       {/* Showcase banner: dark in both modes, like a lit shop window. */}
-      <section data-mode="dark" className="@container relative overflow-clip rounded-[24px] border border-white/[.07]">
+      <section data-mode="dark" className="@container relative overflow-clip rounded-panel border border-line">
         <div className="absolute inset-0" style={heroBackground?.slot === 'background' ? backgroundStyle(heroBackground.data) : { background: 'var(--hero-glow), var(--brand-gradient)' }} />
         {/* With an event scene the right side stays dark too, so the scene reads against a calm ground. */}
         <div className={`absolute inset-0 ${theme ? 'bg-[linear-gradient(90deg,rgba(9,9,12,.94)_0%,rgba(9,9,12,.72)_50%,rgba(9,9,12,.5)_100%)]' : 'bg-[linear-gradient(90deg,rgba(9,9,12,.94)_0%,rgba(9,9,12,.7)_45%,rgba(9,9,12,.15)_100%)]'}`} />
         {theme && event && <EventBackdrop theme={theme} discount={event.discount} />}
         {/* Two columns only when the banner itself is wide enough (container query), so the text never gets squeezed. */}
-        <div className={`relative grid items-center gap-6 p-6 @3xl:grid-cols-[minmax(0,1fr)_minmax(0,400px)] @3xl:p-9 ${theme ? SCENE_ROOM : ''}`}>
+        <div className={`relative grid items-center gap-6 p-6 @3xl:grid-cols-[minmax(0,1fr)_minmax(0,400px)] @3xl:p-10 ${theme ? SCENE_ROOM : ''}`}>
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-x-2 text-[13px] text-body">
+            <div className="flex flex-wrap items-center gap-x-2 text-small text-body">
               {event
                 ? <><span className="h-1.5 w-1.5 rounded-full bg-pos shadow-[0_0_8px_var(--pos)]" /> Event läuft · endet in <span className="tabular-nums text-ink">{countdown(event.endsAt, now)}</span></>
                 : <><span className="h-1.5 w-1.5 rounded-full bg-accent" /> Empfohlen für dich</>}
             </div>
-            <h2 className="mt-3 text-[30px] font-semibold leading-[1.1] tracking-tight text-ink @3xl:text-[40px]">{event ? event.name : 'Hol dir den Look'}</h2>
-            <p className="mt-3 max-w-[480px] text-[14.5px] text-body">{event ? event.description : 'Die besten Stücke, die dir noch fehlen – rechts schon auf deiner Karte angelegt.'}</p>
-            {event && event.discount === 0 && <p className="mt-5 text-[13px] text-mute">Läuft bis {formatDate(event.endsAt)}</p>}
+            <h2 className="mt-3 text-page font-semibold leading-tight text-ink @3xl:text-display">{event ? event.name : 'Hol dir den Look'}</h2>
+            <p className="mt-3 max-w-[480px] text-copy text-body">{event ? event.description : 'Die besten Stücke, die dir noch fehlen – rechts schon auf deiner Karte angelegt.'}</p>
+            {event && event.discount === 0 && <p className="mt-5 text-small text-mute">Läuft bis {formatDate(event.endsAt)}</p>}
             {event && event.discount > 0 && (
-              <div className="mt-5 flex max-w-[480px] items-center gap-4 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 backdrop-blur">
-                <span className="shrink-0 whitespace-nowrap text-[24px] font-light leading-none tracking-tight text-ink @md:text-[30px]">−{event.discount} %</span>
-                <span className="min-w-0 text-[12.5px] leading-snug text-mute">auf {event.slots ? event.slots.map((sl) => SLOT_LABELS[sl]).join(', ') : 'alles'}<br />bis {formatDate(event.endsAt)}</span>
+              <div className="mt-5 flex max-w-[480px] items-center gap-4 rounded-box border border-line-strong bg-black/30 px-4 py-3 backdrop-blur">
+                <span className="shrink-0 whitespace-nowrap text-section font-light leading-none text-ink @md:text-page">−{event.discount} %</span>
+                <span className="min-w-0 text-caption leading-snug text-mute">auf {event.slots ? event.slots.map((sl) => SLOT_LABELS[sl]).join(', ') : 'alles'}<br />bis {formatDate(event.endsAt)}</span>
               </div>
             )}
           </div>
           <div className="hidden max-w-[440px] @xl:block">
-            <ProfileCardPreview subject={cardSubject(user, me, null, me.profile.bio)} cosmetics={look} className="card-shape w-full shadow-[0_30px_60px_-20px_rgba(0,0,0,.8)] ring-1 ring-white/10" />
+            <ProfileCardPreview subject={cardSubject(user, me, null, me.profile.bio)} cosmetics={look} className="card-shape w-full shadow-[0_30px_60px_-20px_rgba(0,0,0,.8)] ring-1 ring-line" />
           </div>
         </div>
       </section>
@@ -243,7 +244,7 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
 
   useGSAP(() => {
     if (reducedMotion()) return;
-    gsap.fromTo('.js-item', { y: 16, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.45, stagger: 0.025, ease: 'power3.out', clearProps: 'transform' });
+    gsap.fromTo('.js-item', { y: 16, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: MOTION.slow, stagger: MOTION.step, ease: MOTION.enter, clearProps: 'transform' });
   }, { scope: root, dependencies: [slot, rarity, sort, affordable, deals, listings.length, page], revertOnUpdate: true });
 
   // 20 items per page; a filter change starts at page 1 again (the page clamps when fewer pages remain).
@@ -272,13 +273,12 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
     <div ref={root}>
       {filters && (
         // All filters in one panel, so they read as one control area rather than loose pieces on the page.
-        <div className="mb-4 rounded-2xl border border-[var(--border-control)] bg-surface p-3 sm:p-4">
+        <div className="mb-4 rounded-box border border-control bg-surface p-3 sm:p-4">
           {/* Item kinds as chips that wrap onto a second line, so every kind is one click away (no sideways scrolling).
               Phones get the same choice as a dropdown, where the chips would fill half the screen. */}
           <div className="filter-chips mb-4 max-sm:hidden" role="group" aria-label="Art">
             {kinds.map(([id, label, count]) => (
-              <button key={id} type="button" className={`filter-chip${id === 'event' ? ' filter-chip-event' : ''}${count === 0 && slot !== id ? ' filter-chip-empty' : ''}`} aria-pressed={slot === id} onClick={() => setSlot(id)}
-                title={id === 'event' ? `Gibt es nur während „${label}“` : undefined}>
+              <button key={id} type="button" className={`filter-chip${id === 'event' ? ' filter-chip-event' : ''}${count === 0 && slot !== id ? ' filter-chip-empty' : ''}`} aria-pressed={slot === id} onClick={() => setSlot(id)}>
                 {id === 'event' && event && <EventIcon event={event} size={16} />}{label} <span className="tab-count">{count}</span>
               </button>
             ))}
@@ -294,10 +294,10 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
               <div className="col-span-2 @3xl:col-span-1"><TextInput value={query} onChange={setQuery} placeholder="Artikel suchen …" /></div>
               <div className="col-span-2 @md:col-span-1"><Select value={rarity} onChange={setRarity} options={[{ value: 'all', label: 'Alle Seltenheiten' }, ...RARITIES.map((r) => ({ value: r, label: RARITY_LABELS[r] }))]} /></div>
               <div className="col-span-2 @md:col-span-1"><Select value={sort} onChange={setSort} options={[{ value: 'new', label: 'Neueste zuerst' }, { value: 'price-asc', label: 'Preis aufsteigend' }, { value: 'price-desc', label: 'Preis absteigend' }]} /></div>
-              <label className="col-span-2 flex cursor-pointer items-center gap-2.5 whitespace-nowrap text-[13.5px] text-body @md:col-span-1">
+              <label className="col-span-2 flex cursor-pointer items-center gap-2 whitespace-nowrap text-small text-body @md:col-span-1">
                 <Switch checked={affordable} onChange={setAffordable} label="Nur leistbar" /> Nur leistbar
               </label>
-              <label className="col-span-2 flex cursor-pointer items-center gap-2.5 whitespace-nowrap text-[13.5px] text-body @md:col-span-1">
+              <label className="col-span-2 flex cursor-pointer items-center gap-2 whitespace-nowrap text-small text-body @md:col-span-1">
                 <Switch checked={deals} onChange={setDeals} label="Nur im Angebot" /> Nur im Angebot
               </label>
             </div>
@@ -306,7 +306,7 @@ export function ItemBrowser({ listings, variant, filters = true, dealsFirst = fa
       )}
       {/* How many items the current kind and filters leave, so the chip numbers and the grid always agree. */}
       {filters && (
-        <p className="mb-3 text-[13px] text-mute" aria-live="polite">
+        <p className="mb-3 text-small text-mute" aria-live="polite">
           <span className="font-semibold text-ink">{shown.length}</span> Artikel
           {slot !== 'all' && <> in „{kinds.find(([id]) => id === slot)?.[1]}“</>}
           {narrowed && <> mit den gewählten Filtern</>}
@@ -392,40 +392,40 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
     <>
       <ProductDialog title={item.name} onClose={onClose}
         stage={<ProductStage items={[item]} tint={tint} kicker={`${RARITY_LABELS[item.rarity]} · ${SLOT_LABELS[item.slot]}`} />}>
-        <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 md:p-7">
+        <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 md:p-8">
           {/* The item itself, big, on its rarity light (stacked layouts skip it: the stage above shows it; the gift form needs the room). */}
-          <div className={`game-tile-field relative mx-auto aspect-square w-full max-w-[260px] shrink-0 overflow-hidden rounded-[20px] ring-1 ring-white/10 max-lg:hidden ${giftMode ? 'hidden' : ''}`} style={{ '--tile': tint } as CSSProperties} data-mode="dark">
+          <div className={`game-tile-field relative mx-auto aspect-square w-full max-w-[260px] shrink-0 overflow-hidden rounded-panel ring-1 ring-line max-lg:hidden ${giftMode ? 'hidden' : ''}`} style={{ '--tile': tint } as CSSProperties} data-mode="dark">
             {/* Small items are zoomed in; a whole card (layout) keeps its margin so it reads as a card. */}
             <ItemVisual item={item} className={`h-full w-full rounded-none !bg-transparent ${item.slot === 'layout' ? '' : 'scale-[1.25]'}`} />
           </div>
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[.16em]" style={{ color: `color-mix(in srgb, ${tint} 50%, var(--text-strong))` }}>{RARITY_LABELS[item.rarity]} · {SLOT_LABELS[item.slot]}</p>
-            <h2 className="mt-1.5 text-[26px] font-bold leading-tight tracking-tight">{item.name}</h2>
-            <p className="mt-2 text-[14px] text-body">{item.description}</p>
+            <p className={`text-micro font-bold uppercase tracking-caps ${RARITY_CLASS[item.rarity].text}`}>{RARITY_LABELS[item.rarity]} · {SLOT_LABELS[item.slot]}</p>
+            <h2 className="mt-1.5 text-page font-bold leading-tight">{item.name}</h2>
+            <p className="mt-2 text-copy text-body">{item.description}</p>
           </div>
-          <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[13px] text-mute">
+          <ul className="m-0 flex list-none flex-col gap-2 p-0 text-small text-mute">
             <li className="flex items-center gap-2"><Glyph name="check" size={15} /> Zu sehen auf: {where}</li>
-            {listing.availableUntil && <li className="flex items-center gap-2"><Glyph name="clock" size={15} /> Nur bis {formatDate(listing.availableUntil)}</li>}
+            {listing.availableUntil && <li className="flex items-center gap-2 text-warn"><Glyph name="clock" size={15} /> Nur bis {formatDate(listing.availableUntil)}</li>}
             {owned && <li className="flex items-center gap-2 text-pos"><Glyph name="box" size={15} /> Schon in deinem Inventar</li>}
           </ul>
 
           <div className="mt-auto flex flex-col gap-3">
             {!owned && buyable && (
               <div>
-                <div className="flex items-baseline gap-2 text-[26px] font-bold text-ink">
+                <div className="flex items-baseline gap-2 text-page font-bold text-ink">
                   <Bernis amount={listing.finalPrice} large />
-                  {listing.discount > 0 && <><span className="text-[15px] font-medium text-faint line-through"><Bernis amount={item.price} /></span><span className="text-[15px] font-semibold text-pos">−{listing.discount} %</span></>}
+                  {listing.discount > 0 && <><span className="text-title font-medium text-faint line-through"><Bernis amount={item.price} /></span><span className="text-title font-semibold text-pos">−{listing.discount} %</span></>}
                 </div>
-                <p className="mt-1 text-[12.5px] text-faint">{after >= 0 ? <>Danach hast du noch <Bernis amount={after} />.</> : <>Dir fehlen <Bernis amount={-after} />.</>}</p>
+                <p className="mt-1 text-caption text-faint">{after >= 0 ? <>Danach hast du noch <Bernis amount={after} />.</> : <>Dir fehlen <Bernis amount={-after} />.</>}</p>
               </div>
             )}
-            {!buyable && !owned && <p className="text-[13.5px] text-faint">{NOT_FOR_SALE[item.availability] ?? 'Nicht käuflich'}</p>}
+            {!buyable && !owned && <p className="text-small text-faint">{NOT_FOR_SALE[item.availability] ?? 'Nicht käuflich'}</p>}
             {buyable && after < 0 && !owned && (
               <Notice tone="warn">Hol dir den <Link to="/me">Tagesbonus</Link>, spiel Minispiele oder steig im Level auf.</Notice>
             )}
 
             {giftMode ? (
-              <div className="stack rounded-2xl border border-white/[.08] p-4">
+              <div className="stack rounded-box border border-line p-4">
                 <Field label="Discord-Nutzer-ID" hint="Rechtsklick auf das Profil → „Nutzer-ID kopieren“ (Entwicklermodus)." error={toUserId && !SNOWFLAKE.test(toUserId) ? 'Eine Nutzer-ID hat 17–20 Ziffern.' : null}>
                   <TextInput value={toUserId} onChange={(v) => setToUserId(v.trim())} placeholder="z. B. 401234567890123456" maxLength={20} />
                 </Field>
@@ -441,9 +441,9 @@ export function ItemDetail({ listing, owned, onClose }: { listing: ShopListing; 
             ) : (
               <div className="flex gap-2">
                 {owned
-                  ? <button type="button" className="btn btn-primary min-h-12 flex-1 text-[15px]" disabled={equip.busy || equipped} onClick={putOn}>{equipped ? 'Angelegt' : 'Jetzt anlegen'}</button>
+                  ? <button type="button" className="btn btn-primary min-h-12 flex-1 text-title" disabled={equip.busy || equipped} onClick={putOn}>{equipped ? 'Angelegt' : 'Jetzt anlegen'}</button>
                   : buyable && (
-                    <button type="button" className="btn btn-primary min-h-12 flex-1 text-[15px]" disabled={busy || after < 0} onClick={buy}>
+                    <button type="button" className="btn btn-primary min-h-12 flex-1 text-title" disabled={busy || after < 0} onClick={buy}>
                       {after < 0 ? 'Nicht genug Bernis' : <>Für <Bernis amount={listing.finalPrice} /> kaufen</>}
                     </button>
                   )}

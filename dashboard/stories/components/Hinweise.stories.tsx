@@ -15,7 +15,7 @@ const meta = {
       description: {
         component: [
           '- `Notice`: ein Hinweis im Seitenfluss. Ohne `tone` neutral, `warn` für Achtung, `danger` für Fehler. Mit `onRetry` erscheint „Erneut versuchen“ (für Ladefehler).',
-          '- `Badge`: ein kleiner Zustand neben Titeln oder in Tabellen; `on` färbt ihn in der Akzentfarbe.',
+          '- `Badge`: ein kleiner Zustand neben Titeln oder in Tabellen. `tone` wählt die Farbrolle (siehe Grundlagen/Farbrollen): `neutral` (Standard) für reine Angaben, `accent` für ausgewählt, `pos` für an, läuft oder erledigt, `warn` für braucht Aufmerksamkeit, `neg` für Fehler oder abgelehnt, `off` für aus. `on` ist die Kurzform für An/Aus-Schalter (`pos` oder `off`).',
           '- `Empty`: Platzhalter, wenn eine Liste noch leer ist, mit Titel und einem Satz, was zu tun ist.',
           '- `Spinner`: pulsierende Zeilen, solange Daten laden.',
         ].join('\n'),
@@ -33,8 +33,15 @@ export const Achtung: Story = { args: { tone: 'warn', children: 'Der Kanal ist f
 /** Ladefehler mit „Erneut versuchen“. */
 export const Fehler: Story = { args: { tone: 'danger', children: 'Die Daten konnten nicht geladen werden.', onRetry: fn() } };
 
-/** Zustände als Badge. */
-export const Badges: Story = { render: () => <div style={{ display: 'flex', gap: 8 }}><Badge on>Aktiv</Badge><Badge>Aus</Badge><Badge on>3 neu</Badge></div> };
+/** Zustände als Badge, eine Farbe je Rolle. */
+export const Badges: Story = {
+  render: () => (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      <Badge>Geplant</Badge><Badge tone="accent">Ausgewählt</Badge><Badge on>Aktiv</Badge><Badge tone="warn">Offen</Badge>
+      <Badge tone="neg">Abgelehnt</Badge><Badge on={false}>Aus</Badge>
+    </div>
+  ),
+};
 
 /** Leere Liste. */
 export const Leer: Story = { render: () => <Empty title="Noch keine Tickets">Sobald jemand ein Ticket öffnet, erscheint es hier.</Empty> };

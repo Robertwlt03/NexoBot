@@ -9,6 +9,8 @@ PostgreSQL. Fork of TitanBot (the LICENSE keeps the codebymitch line).
 - Write answers so they can be read aloud: whole German sentences that follow on from each other, with the reasons
   and connections spelled out ("weil", "deshalb", "danach"). No clipped keyword lists or telegram style; use a list
   only for real steps or options, and then each point as a full sentence.
+- Every summary for the user (of a change, a review, a session) also comes as a graphic for a quick second overview
+  (inline visual: the parts, what changed and the status at a glance), next to the full text.
 - Commit footer: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 - PR body footer: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 

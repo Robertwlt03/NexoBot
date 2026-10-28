@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { COSMETIC_SLOTS, MAX_EQUIPPED_BADGES, SLOT_LABELS } from '../../../src/shared/cosmetics';
 import type { CosmeticItem } from '../../../src/shared/cosmetics';
 import type { OwnedItem } from '../../../src/web/dto/profile';
-import { Card, Empty, PageHeader, Stats } from '../components/ui';
+import { Badge, Card, Empty, PageHeader, Stats } from '../components/ui';
 import { equipItem, formatDate, isEquipped, num, unequipItem, useEquip, useMe } from './api';
 import { ItemVisual, RARITY_CLASS, RarityLabel } from './visuals';
 
@@ -38,21 +38,21 @@ export default function InventoryPage() {
       {me.inventory.length === 0 && <Card><Empty title="Noch leer">Im <Link to="/me/shop">Shop</Link> findest du deine ersten Artikel.</Empty></Card>}
       {entries.length > 0 && (
         // One grid for everything, ordered by area: a card per area left mostly single items in wide empty cards.
-        <Card title="Deine Artikel" description={`Bis zu ${MAX_EQUIPPED_BADGES} Abzeichen gleichzeitig, sonst ein Artikel je Bereich.`} right={<span className="badge">{entries.length}</span>}>
+        <Card title="Deine Artikel" description={`Bis zu ${MAX_EQUIPPED_BADGES} Abzeichen gleichzeitig, sonst ein Artikel je Bereich.`} right={<Badge>{entries.length}</Badge>}>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {sorted.map(({ owned, item }) => {
               const on = isEquipped(me.profile.equipped, item);
               const full = !on && item.slot === 'badge' && me.profile.equipped.badges.length >= MAX_EQUIPPED_BADGES;
               return (
-                <div key={item.id} className={`flex flex-col rounded-2xl border bg-white/[.015] p-2.5 ${on ? 'border-accent/50' : RARITY_CLASS[item.rarity].border}`}>
+                <div key={item.id} className={`flex flex-col rounded-box border bg-tint p-3 ${on ? 'border-accent/50' : RARITY_CLASS[item.rarity].border}`}>
                   <ItemVisual item={item} />
-                  <div className="px-1 pb-3 pt-2.5">
-                    <div className="text-[11px] font-medium uppercase tracking-wide text-mute">{SLOT_LABELS[item.slot]}</div>
-                    <h3 className="truncate font-sans text-[14px] font-medium">{item.name}</h3>
-                    <div className="mt-0.5 text-[12px] text-faint"><RarityLabel rarity={item.rarity} /> · {SOURCE_LABELS[owned.source]} am {formatDate(owned.acquiredAt)}</div>
+                  <div className="px-1 pb-3 pt-3">
+                    <div className="text-micro font-medium uppercase tracking-caps text-mute">{SLOT_LABELS[item.slot]}</div>
+                    <h3 className="break-words font-sans text-copy font-medium">{item.name}</h3>
+                    <div className="mt-0.5 text-caption text-faint"><RarityLabel rarity={item.rarity} /> · {SOURCE_LABELS[owned.source]} am {formatDate(owned.acquiredAt)}</div>
                   </div>
-                  <button type="button" className={`btn btn-sm mt-auto ${on ? 'btn-secondary' : 'btn-ghost border-white/10'}`} disabled={equip.busy || full}
-                    title={full ? `Du hast schon ${MAX_EQUIPPED_BADGES} Abzeichen angelegt.` : undefined} onClick={() => toggle(item)}>
+                  {full && <p className="faint mb-2 px-1">Du hast schon {MAX_EQUIPPED_BADGES} Abzeichen angelegt.</p>}
+                  <button type="button" className={`btn btn-sm mt-auto ${on ? 'btn-secondary' : 'btn-ghost border-line-strong'}`} disabled={equip.busy || full} onClick={() => toggle(item)}>
                     {on ? 'Ablegen' : 'Anlegen'}
                   </button>
                 </div>

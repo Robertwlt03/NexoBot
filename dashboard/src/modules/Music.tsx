@@ -48,17 +48,17 @@ export default function MusicPage() {
             ) : (
               <div className="stack">
                 <div>
-                  <div className="text-base font-semibold">
+                  <div className="text-title font-semibold">
                     {data.nowPlaying.uri ? <a href={data.nowPlaying.uri} target="_blank" rel="noreferrer">{data.nowPlaying.title}</a> : data.nowPlaying.title}
                   </div>
                   <div className="muted">{data.nowPlaying.author}</div>
                 </div>
                 <div className="chips">
-                  <span className="badge">{formatTime(data.positionMs)} / {formatTime(data.nowPlaying.lengthMs)}</span>
-                  <span className="badge">{data.queueLength} in der Warteschlange</span>
-                  <span className="badge">Lautstärke {data.volume} %</span>
-                  <span className="badge">Wiederholen: {LOOP_LABELS[data.loop] ?? data.loop}</span>
-                  {voiceChannel && <span className="badge whitespace-nowrap"><Icon name="mic" size={13} />{voiceChannel.name}</span>}
+                  <Badge>{formatTime(data.positionMs)} / {formatTime(data.nowPlaying.lengthMs)}</Badge>
+                  <Badge>{data.queueLength} in der Warteschlange</Badge>
+                  <Badge>Lautstärke {data.volume} %</Badge>
+                  <Badge>Wiederholen: {LOOP_LABELS[data.loop] ?? data.loop}</Badge>
+                  {voiceChannel && <Badge className="whitespace-nowrap"><Icon name="mic" size={13} />{voiceChannel.name}</Badge>}
                 </div>
               </div>
             )}

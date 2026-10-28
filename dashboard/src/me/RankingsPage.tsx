@@ -15,22 +15,22 @@ function RankingCard({ ranking }: { ranking: GuildRanking }) {
     <Card title={RANKING_LABELS[ranking.kind]} description={ranking.kind === 'minigames' ? 'Punkte aus Minispielen' : 'Nachrichten und Sprachzeit'}>
       <div className="flex items-end justify-between gap-3">
         <div>
-          <div className="text-[12.5px] text-mute">Dein Platz</div>
-          <div className="text-[34px] font-light leading-none tracking-[-0.03em] text-ink">{ranking.me.rank ? `#${ranking.me.rank}` : '–'}</div>
+          <div className="text-caption text-mute">Dein Platz</div>
+          <div className="text-display font-light leading-none text-ink">{ranking.me.rank ? `#${ranking.me.rank}` : '–'}</div>
         </div>
-        <div className="text-right text-[13px] text-mute">{num(ranking.me.points)} Punkte</div>
+        <div className="text-right text-small text-mute">{num(ranking.me.points)} Punkte</div>
       </div>
       <ol className="list mt-4 p-0">
         {ranking.top.map((entry) => (
           <li key={entry.userId} className={`list-item !py-2 ${entry.userId === user?.id ? '!border-accent/40' : ''}`}>
-            <span className="w-5 text-center text-[13px] text-faint tabular-nums">{entry.rank}</span>
+            <span className="w-5 text-center text-small text-faint tabular-nums">{entry.rank}</span>
             {entry.avatarUrl ? <img src={entry.avatarUrl} alt="" className="h-7 w-7 rounded-full" /> : <span className="h-7 w-7 rounded-full bg-raised" />}
-            <span className="grow title text-[14px]">{entry.name}{entry.userId === user?.id && <span className="ml-2 text-[12px] font-normal text-mute">(du)</span>}</span>
-            <span className="text-[13px] text-mute tabular-nums">{num(entry.points)}</span>
+            <span className="grow title text-copy">{entry.name}{entry.userId === user?.id && <span className="ml-2 text-caption font-normal text-mute">(du)</span>}</span>
+            <span className="text-small text-mute tabular-nums">{num(entry.points)}</span>
           </li>
         ))}
       </ol>
-      <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-faint">
+      <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-caption text-faint">
         {ranking.rewards.map((amount, i) => <span key={i}>Platz {i + 1}: <Bernis amount={amount} className="text-body" /></span>)}
       </div>
     </Card>
@@ -58,9 +58,9 @@ export default function RankingsPage() {
         return (
           <section key={first.guildId} className="mt-8">
             <div className="mb-3 flex flex-wrap items-center gap-3">
-              <GuildIcon guild={{ name: first.guildName, iconUrl: first.guildIconUrl }} className="h-9 w-9 rounded-xl text-[13px] ring-1 ring-white/10" />
-              <h2 className="min-w-0 flex-1 truncate text-[16px]">{first.guildName}</h2>
-              <span className="basis-full text-[12.5px] text-mute sm:basis-auto">{monthLabel(first.month)} · endet in <span className="text-ink tabular-nums">{countdown(first.endsAt, now)}</span></span>
+              <GuildIcon guild={{ name: first.guildName, iconUrl: first.guildIconUrl }} className="h-9 w-9 rounded-control text-small ring-1 ring-line" />
+              <h2 className="min-w-0 flex-1 break-words text-title">{first.guildName}</h2>
+              <span className="basis-full text-caption text-mute sm:basis-auto">{monthLabel(first.month)} · endet in <span className="text-ink tabular-nums">{countdown(first.endsAt, now)}</span></span>
             </div>
             {!first.eligible && <div className="mb-3"><Notice tone="warn">Dieser Server hat weniger als {MONTHLY_MIN_HUMANS} Menschen – hier gibt es diesen Monat keine Belohnungen.</Notice></div>}
             <div className="grid-2 [&>*]:mt-0 [&>*]:min-w-0">{list.map((r) => <RankingCard key={r.kind} ranking={r} />)}</div>

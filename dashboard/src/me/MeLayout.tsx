@@ -19,6 +19,7 @@ import { CoinFlight, useCoinFlight, useCoinMilestone } from './CoinFlight';
 import { Celebration } from './Celebration';
 import { CoinIcon } from '../components/CoinIcon';
 import type { GlyphName } from './visuals';
+import { MOTION } from '../components/motion';
 
 interface NavEntry { to: string; label: string; icon: GlyphName }
 
@@ -49,7 +50,7 @@ function CoinMilestone({ balance }: { balance: number }) {
   if (!milestone) return null;
   return (
     <Celebration tint={milestone.tint} kicker="Neue Münze" title={milestone.title} text={milestone.text} onClose={close}
-      tile={<span className="game-tile-field grid aspect-square place-items-center rounded-[22px] ring-1 ring-white/10" style={{ '--tile': milestone.tint } as CSSProperties}><CoinIcon tier={milestone.tier} size={128} /></span>}
+      tile={<span className="game-tile-field grid aspect-square place-items-center rounded-panel ring-1 ring-line" style={{ '--tile': milestone.tint } as CSSProperties}><CoinIcon tier={milestone.tier} size={128} /></span>}
       actions={<button type="button" className="btn btn-primary" onClick={close}>Weiter</button>} />
   );
 }
@@ -60,8 +61,8 @@ function WalletPill({ balance }: { balance: number }) {
   const { flight, done } = useCoinFlight(balance, pill);
   return (
     <>
-      <span ref={pill} className="inline-flex items-center gap-1.5 rounded-[999px] border border-white/[.08] bg-white/[.04] px-3 py-1 text-[13px] font-medium text-ink">
-        <Bernis amount={shown} nowrap max={2} />
+      <span ref={pill} className="inline-flex items-center gap-1.5 rounded-pill border border-line bg-tint px-3 py-1 text-small font-medium text-ink">
+        <Bernis amount={shown} nowrap />
       </span>
       <CoinFlight flight={flight} pill={pill} onDone={done} />
     </>
@@ -95,7 +96,7 @@ export function MeLayout() {
 
   useGSAP(() => {
     if (!pageRef.current || reducedMotion()) return;
-    gsap.fromTo(pageRef.current, { y: 14, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.4, ease: 'power2.out', clearProps: 'transform' });
+    gsap.fromTo(pageRef.current, { y: 14, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: MOTION.slow, ease: MOTION.enter, clearProps: 'transform' });
   }, { dependencies: [location.pathname] });
 
   // Same unsaved-changes guard as the guild area: block navigation and shake the save bar.
@@ -105,7 +106,7 @@ export function MeLayout() {
     const bar = document.getElementById('save-bar');
     if (!bar) return;
     bar.classList.add('shake');
-    gsap.fromTo(bar, { x: -8 }, { x: 0, duration: 0.5, ease: 'elastic.out(1.2, 0.3)', onComplete: () => bar.classList.remove('shake') });
+    gsap.fromTo(bar, { x: -8 }, { x: 0, duration: MOTION.slow, ease: MOTION.nudge, onComplete: () => bar.classList.remove('shake') });
   };
 
   const catalog = useApi<CosmeticItem[]>('/me/items');
@@ -123,17 +124,17 @@ export function MeLayout() {
   const isOwnerArea = location.pathname.startsWith('/owner');
   const isOwner = profile.data?.isOwner ?? false;
   const current = [...MEMBER_NAV, ...OWNER_NAV].find((entry) => entry.to === location.pathname.replace(/\/$/, ''));
-  const navLink = 'relative flex items-center gap-3 rounded-xl border px-3 py-2 text-[14px] font-medium transition-colors hover:no-underline';
+  const navLink = 'relative flex items-center gap-3 rounded-control border px-3 py-2 text-copy font-medium transition-colors hover:no-underline';
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `${navLink} ${isActive ? 'border-white/[.06] bg-white/[.05] text-ink nav-marker before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r before:bg-accent' : 'border-transparent text-mute hover:bg-white/[.03] hover:text-ink'}`;
+    `${navLink} ${isActive ? 'border-line bg-tint-strong text-ink nav-marker before:absolute before:-left-3 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-r-tag before:bg-accent' : 'border-transparent text-mute hover:bg-tint hover:text-ink'}`;
 
   return (
     <div className="flex h-full bg-canvas">
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)}>
         <ServerRail guilds={guilds.data ?? []} />
-        <aside className="flex w-[264px] flex-col border-r border-white/[.05] bg-panel">
-          <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/[.05] px-4">
-            <div className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">Mein Profil</div>
+        <aside className="flex w-[264px] flex-col border-r border-line bg-panel">
+          <div className="flex h-16 shrink-0 items-center gap-3 border-b border-line px-4">
+            <div className="min-w-0 flex-1 truncate text-copy font-semibold text-ink">Mein Profil</div>
             {profile.data && <WalletPill balance={profile.data.wallet.balance} />}
           </div>
           <nav ref={navRef} className="nav-scroll flex-1 overflow-y-auto px-3 py-3" onClickCapture={guardClick}>
@@ -142,7 +143,7 @@ export function MeLayout() {
             ))}
             {isOwner && (
               <div className="mt-5">
-                <div className="mb-1 px-3 text-[11.5px] font-medium text-faint">Owner</div>
+                <div className="mb-1 px-3 text-micro font-medium text-faint">Owner</div>
                 {OWNER_NAV.map((entry) => (
                   <NavLink key={entry.to} end to={entry.to} className={navClass}><Glyph name={entry.icon} size={18} /> {entry.label}</NavLink>
                 ))}
@@ -154,16 +155,16 @@ export function MeLayout() {
       </SideMenu>
 
       <main className="relative flex min-w-0 flex-1 flex-col bg-canvas">
-        <header className="flex h-16 shrink-0 items-center gap-3 border-b border-white/[.05] bg-canvas/80 px-4 backdrop-blur-md md:px-8">
+        <header className="flex h-16 shrink-0 items-center gap-3 border-b border-line bg-canvas/80 px-4 backdrop-blur-md md:px-8">
           <button className="icon-btn lg:hidden" onClick={() => setMenuOpen((open) => !open)} aria-label="Menü"><Icon name="menu" /></button>
           {/* Phones show only the page name, so the wallet pill has room. */}
-          <span className="text-sm text-mute max-sm:hidden">{isOwnerArea ? 'Owner' : 'Mein Profil'}</span>
+          <span className="text-copy text-mute max-sm:hidden">{isOwnerArea ? 'Owner' : 'Mein Profil'}</span>
           <span className="text-faint max-sm:hidden">/</span>
-          <span className="truncate text-sm font-medium text-ink">{current?.label ?? 'Übersicht'}</span>
+          <span className="truncate text-copy font-medium text-ink">{current?.label ?? 'Übersicht'}</span>
           {profile.data && <span className="ml-auto lg:hidden"><WalletPill balance={profile.data.wallet.balance} /></span>}
           {profile.data && <CoinMilestone balance={profile.data.wallet.balance} />}
         </header>
-        <div className="relative flex-1 overflow-y-auto px-4 pb-32 pt-9 md:px-10">
+        <div className="relative flex-1 overflow-y-auto px-4 pb-32 pt-10 md:px-10">
           <PageBackdrop art={current && GLYPHS[current.icon]} label={current?.label} column={1100} />
           <div ref={pageRef} className="relative mx-auto max-w-[1100px]">
             {profile.loading && !profile.data && <Spinner />}

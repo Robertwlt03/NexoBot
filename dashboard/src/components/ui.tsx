@@ -4,7 +4,7 @@ import { CHANNEL_TYPES } from '../../../src/web/apiTypes';
 import type { ApiChannel, ApiRole } from '../../../src/web/apiTypes';
 import { useGuild } from '../api';
 import { Icon, IconTile, type IconName } from '../icons';
-import { useEnter } from './motion';
+import { MOTION, useEnter } from './motion';
 import { useLocation } from 'react-router';
 import { MODULES } from '../modules/registry';
 import gsap from 'gsap';
@@ -48,7 +48,7 @@ export function Tabs<T extends string>({ value, onChange, items }: {
     const target = { x: active.offsetLeft, width: active.offsetWidth, autoAlpha: 1 };
     const instant = pill.current.dataset.placed !== '1' || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (instant) gsap.set(pill.current, target);
-    else gsap.to(pill.current, { ...target, duration: 0.35, ease: 'power3.out' });
+    else gsap.to(pill.current, { ...target, duration: MOTION.base, ease: MOTION.enter });
     pill.current.dataset.placed = '1';
   }, { dependencies: [value, items.length] });
   // Snap again when the tab widths change (web font arriving, resize).
@@ -376,8 +376,23 @@ export function TagInput({ value, onChange, placeholder = 'Eintrag hinzufügen u
 
 // ---------- Feedback ----------
 
-export function Badge({ on, children }: { on?: boolean; children: ReactNode }) {
-  return <span className={`badge ${on === undefined ? 'badge-brand' : on ? 'badge-on' : 'badge-off'}`}>{children}</span>;
+export type BadgeTone = 'neutral' | 'accent' | 'pos' | 'warn' | 'neg' | 'off';
+const BADGE_CLASS: Record<BadgeTone, string> = { neutral: '', accent: 'badge-brand', pos: 'badge-on', warn: 'badge-warn', neg: 'badge-neg', off: 'badge-off' };
+
+/** A small state label. `on` is the short form for on/off switches (success or off); `tone` picks any colour role. */
+export function Badge({ on, tone, children, className = '' }: { on?: boolean; tone?: BadgeTone; children: ReactNode; className?: string }) {
+  const role = tone ?? (on === undefined ? 'neutral' : on ? 'pos' : 'off');
+  return <span className={`badge ${BADGE_CLASS[role]} ${className}`}>{children}</span>;
+}
+
+/** Progress bar: accent while running, success once `done`. `label` names it for screen readers. */
+export function Meter({ value, max, done = false, label, className = '' }: { value: number; max: number; done?: boolean; label: string; className?: string }) {
+  const share = max > 0 ? Math.min(1, Math.max(0, value / max)) : 0;
+  return (
+    <div className={`meter${done ? ' done' : ''} ${className}`} role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={max} aria-valuenow={Math.min(value, max)}>
+      <span style={{ width: `${share * 100}%` }} />
+    </div>
+  );
 }
 
 export function Notice({ tone, children, onRetry }: { tone?: 'warn' | 'danger'; children: ReactNode; onRetry?: () => void }) {
@@ -408,8 +423,8 @@ export function Modal({ title, children, footer, onClose, wide = false }: { titl
   useGSAP(() => {
     const mm = gsap.matchMedia();
     mm.add('(prefers-reduced-motion: no-preference)', () => {
-      gsap.from(backdrop.current, { autoAlpha: 0, duration: 0.2 });
-      gsap.from('.modal', { y: 16, scale: 0.95, autoAlpha: 0, duration: 0.35, ease: 'back.out(1.6)' });
+      gsap.from(backdrop.current, { autoAlpha: 0, duration: MOTION.fast });
+      gsap.from('.modal', { y: 16, scale: 0.95, autoAlpha: 0, duration: MOTION.slow, ease: MOTION.pop });
     });
     return () => mm.revert();
   }, { scope: backdrop });
@@ -449,8 +464,8 @@ export function SaveBar({ dirty, saving, onSave, onReset }: { dirty: boolean; sa
     shown.current = true;
     const instant = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     gsap.to(el, dirty
-      ? { y: 0, autoAlpha: 1, duration: instant ? 0 : 0.45, ease: 'back.out(1.7)' }
-      : { y: 40, autoAlpha: 0, duration: instant ? 0 : 0.25, ease: 'power2.in' });
+      ? { y: 0, autoAlpha: 1, duration: instant ? 0 : MOTION.slow, ease: MOTION.pop }
+      : { y: 40, autoAlpha: 0, duration: instant ? 0 : MOTION.base, ease: MOTION.exit });
   }, { dependencies: [dirty] });
   return (
     <div ref={bar} className="save-bar" id="save-bar" aria-hidden={!dirty}>

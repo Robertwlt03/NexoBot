@@ -4,7 +4,7 @@ import type { CosmeticSlot } from '../../../src/shared/cosmetics';
 import type { ShopEvent } from '../../../src/web/dto/profile';
 import { useApi } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
-import { Card, Empty, Field, Modal, Notice, NumberInput, PageHeader, Spinner, Switch, SwitchRow, TextArea, TextInput } from '../components/ui';
+import { Badge, Card, Empty, Field, Modal, Notice, NumberInput, PageHeader, Spinner, Switch, SwitchRow, TextArea, TextInput } from '../components/ui';
 import { Icon } from '../icons';
 import { formatDateTime, useMutation, useNow } from '../me/api';
 
@@ -13,10 +13,10 @@ const toLocalInput = (iso: string) => { const d = new Date(iso); return new Date
 const fromLocalInput = (value: string) => new Date(value).toISOString();
 
 function status(event: ShopEvent, now: number) {
-  if (!event.active) return <span className="badge badge-off">Deaktiviert</span>;
-  if (Date.parse(event.endsAt) <= now) return <span className="badge badge-off">Beendet</span>;
-  if (Date.parse(event.startsAt) <= now) return <span className="badge badge-on">Läuft</span>;
-  return <span className="badge">Geplant</span>;
+  if (!event.active) return <Badge tone="off">Deaktiviert</Badge>;
+  if (Date.parse(event.endsAt) <= now) return <Badge tone="off">Beendet</Badge>;
+  if (Date.parse(event.startsAt) <= now) return <Badge tone="pos">Läuft</Badge>;
+  return <Badge>Geplant</Badge>;
 }
 
 const blankEvent = (): ShopEvent => ({
@@ -57,16 +57,12 @@ function EventEditor({ initial, onClose, onSaved }: { initial: ShopEvent; onClos
           <Field label="Rabatt (%)" hint="0–90 %"><NumberInput value={event.discount} onChange={(discount) => set({ discount })} min={0} max={90} step={5} /></Field>
           <SwitchRow title="Gilt für alle Bereiche" checked={event.slots === null} onChange={(all) => set({ slots: all ? null : [] })} />
           {event.slots !== null && (
-            <div className="flex flex-wrap gap-1.5">
-              {COSMETIC_SLOTS.map((slot) => {
-                const on = event.slots?.includes(slot) ?? false;
-                return (
-                  <button key={slot} type="button" aria-pressed={on} onClick={() => toggleSlot(slot)}
-                    className={`cursor-pointer rounded-full border px-3 py-1 font-[inherit] text-[13px] ${on ? 'border-accent bg-accent/10 text-ink' : 'border-white/[.08] bg-transparent text-mute hover:text-ink'}`}>
-                    {SLOT_LABELS[slot]}
-                  </button>
-                );
-              })}
+            <div className="filter-chips">
+              {COSMETIC_SLOTS.map((slot) => (
+                <button key={slot} type="button" className="filter-chip" aria-pressed={event.slots?.includes(slot) ?? false} onClick={() => toggleSlot(slot)}>
+                  {SLOT_LABELS[slot]}
+                </button>
+              ))}
             </div>
           )}
           <SwitchRow title="Aktiv" checked={event.active} onChange={(active) => set({ active })} />
@@ -103,7 +99,7 @@ export default function EventsPage() {
         : (
           <div className="flex gap-1">
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(event)}>Bearbeiten</button>
-            <button type="button" className="btn btn-ghost btn-sm text-neg" onClick={() => remove(event)}>Löschen</button>
+            <button type="button" className="btn btn-danger btn-sm" onClick={() => remove(event)}>Löschen</button>
           </div>
         )}
     </li>

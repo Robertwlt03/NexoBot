@@ -24,7 +24,8 @@ function PanelPreview({ message, buttonText }: { message: string; buttonText: st
   return (
     <div className="flex flex-col gap-1.5">
       <MessagePreview embed={{ title: 'Server-Verifizierung', description: message, color: '#57F287' }} sample={{}} />
-      <div className="ml-[70px] inline-flex items-center gap-1.5 self-start rounded-(--radius-sm) bg-(--success) px-3.5 py-1.5 text-sm font-medium text-[#fff]"><Icon name="check" size={15} />{buttonText || 'Verifizieren'}</div>
+      {/* design-scale: ignore (lines up with the Discord message above, Discord's own metrics) */}
+      <div className="ml-[70px] inline-flex items-center gap-1.5 self-start rounded-(--radius-sm) bg-(--success) px-4 py-1.5 text-copy font-medium text-[#fff]"><Icon name="check" size={15} />{buttonText || 'Verifizieren'}</div>
     </div>
   );
 }
@@ -71,10 +72,10 @@ export default function VerificationPage() {
                       <a className="btn btn-ghost btn-sm" href={value.panel.url} target="_blank" rel="noreferrer"><Icon name="external" size={14} />Panel ansehen</a>
                     )}
                     <button type="button" className="btn btn-secondary btn-sm ml-auto"
-                      disabled={!value.enabled || !value.channelId || settings.dirty || busy !== null} onClick={repost}
-                      title={settings.dirty ? 'Speichere zuerst deine Änderungen.' : undefined}>
+                      disabled={!value.enabled || !value.channelId || settings.dirty || busy !== null} onClick={repost}>
                       <Icon name="refresh" size={14} />Panel neu posten
                     </button>
+                    {settings.dirty && <span className="faint basis-full text-right">Speichere zuerst deine Änderungen.</span>}
                   </div>
                   <div className="grid-2">
                     <div className="stack">

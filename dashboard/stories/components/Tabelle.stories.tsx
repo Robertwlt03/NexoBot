@@ -9,7 +9,7 @@ const meta = {
   decorators: [withStage],
   parameters: {
     ...componentParameters(['scheme', 'mode', 'device']),
-    docs: { description: { component: 'Jede Tabelle steht in `TableWrap`. Du gibst nur `<thead>` und `<tbody>` hinein, die Komponente baut die Tabelle mit der Klasse `table`. Am Handy wird jede Zeile zu einem Block, und vor jedem Wert steht die Spaltenüberschrift; keine Spalte verschwindet hinter seitlichem Scrollen. Schalte oben auf „Handy“, um das zu sehen.' } },
+    docs: { description: { component: 'Jede Tabelle steht in `TableWrap`. Du gibst nur `<thead>` und `<tbody>` hinein, die Komponente baut die Tabelle mit der Klasse `table`. Jede zweite Zeile liegt auf einem leichten Streifen (`--stripe`), damit das Auge bei breiten Tabellen in der Zeile bleibt; Werte werden nicht abgeschnitten, sondern umbrechen. Am Handy wird jede Zeile zu einem Block, und vor jedem Wert steht die Spaltenüberschrift; keine Spalte verschwindet hinter seitlichem Scrollen. Schalte oben auf „Handy“, um das zu sehen.' } },
   },
   args: {
     children: (

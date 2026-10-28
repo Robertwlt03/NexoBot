@@ -2,7 +2,7 @@ import { Link } from 'react-router';
 import type { OwnerOverview } from '../../../src/web/dto/profile';
 import { useApi } from '../api';
 import { HorizontalBars } from '../components/charts';
-import { Card, Notice, PageHeader, Spinner, Stats } from '../components/ui';
+import { Badge, Card, Notice, PageHeader, Spinner, Stats } from '../components/ui';
 import { countdown, formatDate, num, useNow } from '../me/api';
 import { Bernis } from '../me/visuals';
 
@@ -31,25 +31,25 @@ export default function OwnerOverviewPage() {
           <ol className="list p-0">
             {stats.topHolders.map((h, i) => (
               <li key={h.userId} className="list-item !py-2">
-                <span className="w-5 text-center text-[13px] text-faint tabular-nums">{i + 1}</span>
-                <span className="grow title text-[14px]">{h.name}</span>
-                <Bernis amount={h.balance} className="text-[13px] text-mute" />
+                <span className="w-5 text-center text-small text-faint tabular-nums">{i + 1}</span>
+                <span className="grow title text-copy">{h.name}</span>
+                <Bernis amount={h.balance} className="text-small text-mute" />
               </li>
             ))}
           </ol>
         </Card>
       </div>
       <div className="grid-2 mt-4 [&>*]:mt-0 [&>*]:min-w-0">
-        <Card title="Events" right={<Link to="/owner/events" className="text-[13px]">Verwalten</Link>}>
-          <div className="stack gap-2 text-[13.5px]">
-            {running.map((e) => <div key={e.id}><span className="badge badge-on">Läuft</span> <b className="font-medium text-ink">{e.name}</b>{e.discount > 0 && ` · −${e.discount} %`} · endet in {countdown(e.endsAt, now)}</div>)}
+        <Card title="Events" right={<Link to="/owner/events" className="text-small">Verwalten</Link>}>
+          <div className="stack gap-2 text-small">
+            {running.map((e) => <div key={e.id}><Badge tone="pos">Läuft</Badge> <b className="font-medium text-ink">{e.name}</b>{e.discount > 0 && ` · −${e.discount} %`} · endet in {countdown(e.endsAt, now)}</div>)}
             {!running.length && <span className="muted">Gerade läuft kein Event.</span>}
             {next && <div className="muted">Als Nächstes: <b className="font-medium text-ink">{next.name}</b> am {formatDate(next.startsAt)}</div>}
           </div>
         </Card>
-        <Card title="Black Market" right={<Link to="/owner/blackmarket" className="text-[13px]">Verwalten</Link>}>
-          <p className="text-[13.5px] text-body">{blackMarket.listings.length} Artikel diese Woche · neue Rotation in {countdown(blackMarket.endsAt, now)}</p>
-          <p className="faint mt-1 truncate">{blackMarket.listings.map((l) => l.item.name).join(' · ')}</p>
+        <Card title="Black Market" right={<Link to="/owner/blackmarket" className="text-small">Verwalten</Link>}>
+          <p className="text-small text-body">{blackMarket.listings.length} Artikel diese Woche · neue Rotation in {countdown(blackMarket.endsAt, now)}</p>
+          <p className="faint mt-1">{blackMarket.listings.map((l) => l.item.name).join(' · ')}</p>
         </Card>
       </div>
     </>

@@ -12,7 +12,7 @@ const AREAS = [
   { id: 'übersicht--alle-seiten', title: 'Übersicht', text: `Alle ${PAGES.length} Dashboard-Seiten auf einmal, gruppiert wie die Navigation: Start, Server, Mein Profil und Owner. Jede Vorschau ist die echte Seite mit Beispieldaten. Ein Klick öffnet sie groß, mit dem Regler „Größe“ machst du die Vorschauen größer oder kleiner.` },
   { id: 'vergleich--alle-farbvorlagen', title: 'Vergleich', text: 'Eine Seite in allen Themes nebeneinander, jedes in seinem Modus. Welche Seite, wählst du oben auf der Seite; Desktop oder Handy kommt aus der Leiste.' },
   { id: 'discord--nachrichten', title: 'Discord', text: 'Nexos Antworten im Chat, gebaut mit dem echten Code des Bots (nexoCard, nexoMessage) und gefärbt wie für Mitglieder mit eigenem Dashboard-Design. Unter jeder Nachricht zeigt „Code anzeigen“ den Aufruf, der sie baut.' },
-  { id: 'grundlagen--farben', title: 'Grundlagen', text: 'Farben mit Wert und Kontrast im gewählten Modus, Schrift, Rundungen und Schatten, alle Icons zum Kopieren und die Themes.' },
+  { id: 'grundlagen--farben', title: 'Grundlagen', text: 'Farbrollen, Farben mit Wert und Kontrast im gewählten Modus, die Skalen für Schrift, Rundungen, Abstände und Bewegung, alle Icons zum Kopieren und die Themes.' },
   { id: 'komponenten-aktionen-knöpfe--arten', title: 'Komponenten', text: 'Jeder Baustein des Dashboards mit Anleitung: wann man ihn nimmt, alle Eigenschaften mit Typ, Beispiele mit „Show code“ zum Kopieren. Unten im Bereich „Controls“ änderst du Eigenschaften live, „Accessibility“ prüft Kontrast und Bedienbarkeit.' },
 ];
 

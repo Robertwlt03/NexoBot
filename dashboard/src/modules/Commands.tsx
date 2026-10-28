@@ -21,7 +21,7 @@ function CommandRow({ command, category, busy, onToggle }: {
     <div className="list-item" style={{ marginLeft: command.depth * 24 }}>
       <div className="grow">
         <div className="flex flex-wrap items-center gap-2">
-          <code className="text-(--text-strong)">/{command.name}</code>
+          <code className="text-ink">/{command.name}</code>
           {command.locked && <Badge>Geschützt</Badge>}
           {inherited && <span className="faint">Aus über {category.disabled ? 'die Kategorie' : 'den übergeordneten Befehl'}</span>}
         </div>
@@ -72,9 +72,9 @@ export default function CommandsPage() {
       {categories.length === 0 && <Card><Empty title="Nichts gefunden">Kein Befehl passt zu „{query}“.</Empty></Card>}
 
       {categories.map(({ category, commands }) => (
-        <details key={category.key} className="card group" open={q ? true : undefined}>
-          <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden before:text-xl before:leading-none before:text-(--text-faint) before:transition-transform before:content-['›'] group-open:before:rotate-90">
-            <span className="text-(--text-muted)"><Icon name={CATEGORY_ICONS[category.key] ?? 'commands'} size={20} /></span>
+        <details key={category.key} className="card group" open>
+          <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden before:text-heading before:leading-none before:text-faint before:transition-transform before:content-['›'] group-open:before:rotate-90">
+            <span className="text-mute"><Icon name={CATEGORY_ICONS[category.key] ?? 'commands'} size={20} /></span>
             <div className="min-w-0 flex-1">
               <h3>{category.name}</h3>
               <span className="faint">{category.disabled ? 'Kategorie ist aus' : `${category.enabledCount}/${category.totalCount} aktiv`}</span>

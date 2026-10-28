@@ -5,15 +5,15 @@ import { useAction, useApi, useGuild, useSettings } from '../api';
 import { useConfirm } from '../components/ConfirmDialog';
 import {
   Badge, Card, ChannelSelect, Empty, Field, MessagePreview, Notice, NumberInput, PageHeader, RoleSelect,
-  SettingsPage, Spinner, Stats, SwitchRow, TableWrap, TextArea, TextInput,
+  SettingsPage, Spinner, Stats, SwitchRow, TableWrap, TextArea, TextInput, type BadgeTone,
 } from '../components/ui';
 import { Icon, type IconName } from '../icons';
 
-const PANEL_STATE: Record<TicketPanelState, { label: string; on: boolean; hint: string }> = {
-  active: { label: 'Aktiv', on: true, hint: 'Das Panel ist gepostet. Text- und Button-Änderungen landen beim Speichern direkt im Panel.' },
-  no_channel: { label: 'Nicht eingerichtet', on: false, hint: 'Wähl unten einen Panel-Kanal aus und speichere, dann kannst du das Panel posten.' },
-  channel_missing: { label: 'Kanal fehlt', on: false, hint: 'Der Panel-Kanal wurde gelöscht. Wähl unten einen neuen aus.' },
-  panel_deleted: { label: 'Nicht gepostet', on: false, hint: 'Im Panel-Kanal ist gerade kein Panel. Poste es mit einem Klick.' },
+const PANEL_STATE: Record<TicketPanelState, { label: string; tone: BadgeTone; hint: string }> = {
+  active: { label: 'Aktiv', tone: 'pos', hint: 'Das Panel ist gepostet. Text- und Button-Änderungen landen beim Speichern direkt im Panel.' },
+  no_channel: { label: 'Nicht eingerichtet', tone: 'off', hint: 'Wähl unten einen Panel-Kanal aus und speichere, dann kannst du das Panel posten.' },
+  channel_missing: { label: 'Kanal fehlt', tone: 'warn', hint: 'Der Panel-Kanal wurde gelöscht. Wähl unten einen neuen aus.' },
+  panel_deleted: { label: 'Nicht gepostet', tone: 'warn', hint: 'Im Panel-Kanal ist gerade kein Panel. Poste es mit einem Klick.' },
 };
 
 function formatDuration(ms: number | null) {
@@ -53,14 +53,14 @@ function Overview({ overview, canPost, onPosted, onRefresh }: {
           <div className="stack">
             <div className="row">
               <span className="field-label">Panel</span>
-              <Badge on={PANEL_STATE[data.panel.state].on}>{PANEL_STATE[data.panel.state].label}</Badge>
+              <Badge tone={PANEL_STATE[data.panel.state].tone}>{PANEL_STATE[data.panel.state].label}</Badge>
               {data.panel.url && <a href={data.panel.url} target="_blank" rel="noreferrer">In Discord öffnen <Icon name="external" size={14} /></a>}
               {data.panel.state === 'panel_deleted' && (
-                <button type="button" className="btn btn-primary btn-sm" disabled={!canPost || busy !== null} onClick={post}
-                  title={canPost ? undefined : 'Speichere zuerst deine Änderungen.'}>
+                <button type="button" className="btn btn-primary btn-sm" disabled={!canPost || busy !== null} onClick={post}>
                   <Icon name="send" size={16} />Panel posten
                 </button>
               )}
+              {data.panel.state === 'panel_deleted' && !canPost && <span className="faint">Speichere zuerst deine Änderungen.</span>}
             </div>
             <span className="faint">{PANEL_STATE[data.panel.state].hint}</span>
 
