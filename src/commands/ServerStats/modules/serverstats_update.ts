@@ -1,6 +1,6 @@
 import { PermissionFlagsBits } from 'discord.js';
 import { successEmbed } from '../../../utils/embeds.js';
-import { changeServerCounterType, getCounterEmoji, getCounterTypeLabel } from '../../../services/serverstatsService.js';
+import { changeServerCounterType, getCounterTypeDisplay } from '../../../services/serverstatsService.js';
 import { logger } from '../../../utils/logger.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
@@ -39,7 +39,7 @@ export async function handleUpdate(interaction: ChatInputCommandInteraction, cli
         const finalChannel = guild.channels.cache.get(updatedCounter.channelId);
 
         await InteractionHelper.safeEditReply(interaction, {
-            embeds: [successEmbed(`**Zähler erfolgreich aktualisiert!**\n\n**Zähler-ID:** \`${counterId}\`\n**Typ geändert:** ${getCounterEmoji(oldType)} ${getCounterTypeLabel(oldType)} → ${getCounterEmoji(newType)} ${getCounterTypeLabel(newType)}\n\n**Aktuelle Einstellungen:**\n**Typ:** ${getCounterEmoji(updatedCounter.type)} ${getCounterTypeLabel(updatedCounter.type)}\n**Kanal:** ${finalChannel}\n**Kanalname:** ${finalChannel!.name}\n\nDer Zähler wird automatisch alle 15 Minuten aktualisiert.`)]
+            embeds: [successEmbed(`**Zähler erfolgreich aktualisiert!**\n\n**Zähler-ID:** \`${counterId}\`\n**Typ geändert:** ${getCounterTypeDisplay(oldType)} → ${getCounterTypeDisplay(newType)}\n\n**Aktuelle Einstellungen:**\n**Typ:** ${getCounterTypeDisplay(updatedCounter.type)}\n**Kanal:** ${finalChannel}\n**Kanalname:** ${finalChannel!.name}\n\nDer Zähler wird automatisch alle 15 Minuten aktualisiert.`)]
         }).catch(logger.error);
 
     } catch (error) {

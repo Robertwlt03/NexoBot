@@ -14,6 +14,7 @@ import {
 } from '../../services/loggingService.js';
 import { DASHBOARD_CATEGORIES, DASHBOARD_CATEGORY_LABELS } from '../../utils/logging/loggingUi.js';
 import type { GuildConfig, NexoClient } from '../../types/index.js';
+import { isSnowflake } from '../../utils/validation.js';
 
 const ALL_EVENTS: string[] = Object.values(EVENT_TYPES);
 const DESTINATION_OF: Record<string, LogDestination> = { application: 'applications', report: 'reports' };
@@ -104,8 +105,8 @@ export const loggingModule: DashboardModule = {
       const events = Object.fromEntries(ALL_EVENTS.map((type) => [type, bool(eventsInput[type], EVENT_TITLES[type] ?? type)]));
       const ignoreInput = body(input.ignore);
       if (!Array.isArray(ignoreInput.users) || ignoreInput.users.length > 100) throw badRequest('Ignorierte Nutzer: höchstens 100 Einträge.');
-      const users = [...new Set(ignoreInput.users.map((id) => {
-        if (typeof id !== 'string' || !/^\d{17,20}$/.test(id)) throw badRequest(`Ignorierte Nutzer: „${String(id)}“ ist keine gültige Nutzer-ID.`);
+      const users = [...new Set(ignoreInput.users.map((id): string => {
+        if (!isSnowflake(id)) throw badRequest(`Ignorierte Nutzer: „${String(id)}“ ist keine gültige Nutzer-ID.`);
         return id;
       }))];
       const ignoredChannels = idList(guild, ignoreInput.channels, 'Ignorierte Kanäle', 'channel', 100);

@@ -42,6 +42,7 @@ export {
 } from './database/tickets.js';
 
 import { db, getFromDb, setInDb } from './database/wrapper.js';
+import { unwrapReplitData } from './database/guildConfigStorage.js';
 import {
     getGuildBirthdaysKey,
     getApplicationRolesKey,
@@ -83,25 +84,6 @@ export async function insertVerificationAudit(record: VerificationAuditRecord): 
         logger.error('Error storing verification audit:', error);
         return false;
     }
-}
-
-/** Legacy Replit DB envelope `{ ok, value }`. */
-interface ReplitEnvelope<T> {
-    ok?: unknown;
-    value?: T;
-}
-
-/** Unwraps legacy `{ ok, value }` envelopes; T is the caller's stored payload type. */
-export function unwrapReplitData<T>(data: T): T {
-    if (
-        typeof data === "object" &&
-        data !== null &&
-        (data as ReplitEnvelope<T>).ok !== undefined &&
-        (data as ReplitEnvelope<T>).value !== undefined
-    ) {
-        return unwrapReplitData((data as ReplitEnvelope<T>).value as T);
-    }
-    return data;
 }
 
 // Guild config access: import from services/config/guildConfig.js only.

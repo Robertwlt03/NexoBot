@@ -28,6 +28,7 @@ import { HttpError, isHiddenChannel } from './http.js';
 import { ErrorTypes, NexoBotError } from '../utils/errorHandler.js';
 import type { ErrorType } from '../utils/errorHandler.js';
 import { publicProfileRouter } from './publicProfile.js';
+import { isSnowflake } from '../utils/validation.js';
 
 const CLIENT_ERRORS: ErrorType[] = [ErrorTypes.VALIDATION, ErrorTypes.USER_INPUT, ErrorTypes.CONFIGURATION, ErrorTypes.PERMISSION, ErrorTypes.RATE_LIMIT];
 
@@ -79,7 +80,6 @@ function frontendDir(): string | null {
   return candidates.find((dir) => existsSync(path.join(dir, 'index.html'))) ?? null;
 }
 
-const SNOWFLAKE = /^\d{17,20}$/;
 
 /** The guild arrives over the gateway shortly after the invite; wait up to ~5 s for it. */
 async function waitForGuild(client: NexoClient, guildId: string): Promise<boolean> {
@@ -158,7 +158,7 @@ export function createDashboardRouter(client: NexoClient): Router {
 
   // Invite Nexo and log in at once; `?guild=` preselects the server.
   router.get('/auth/invite', (req, res) => {
-    const guildId = typeof req.query.guild === 'string' && SNOWFLAKE.test(req.query.guild) ? req.query.guild : undefined;
+    const guildId = isSnowflake(req.query.guild) ? req.query.guild : undefined;
     const state = randomToken();
     setSignedCookie(res, STATE_COOKIE, state, config.sessionSecret, { maxAgeSeconds: 600, secure: config.secureCookies });
     res.redirect(authorizeUrl(config, state, { guildId }));
@@ -215,7 +215,7 @@ export function createDashboardRouter(client: NexoClient): Router {
       setSignedCookie(res, SESSION_COOKIE, session.id, config.sessionSecret, { maxAgeSeconds: SESSION_TTL_SECONDS, secure: config.secureCookies });
       logger.info('Dashboard login', { userId: user.id });
       // After an invite Discord sends the chosen server; open it once the bot has received the guild.
-      const invitedGuild = typeof req.query.guild_id === 'string' && SNOWFLAKE.test(req.query.guild_id) ? req.query.guild_id : null;
+      const invitedGuild = isSnowflake(req.query.guild_id) ? req.query.guild_id : null;
       if (invitedGuild && await waitForGuild(client, invitedGuild)) {
         return res.redirect(`/dashboard/servers/${invitedGuild}`);
       }

@@ -2,6 +2,7 @@ import type { Guild, PresenceData } from 'discord.js';
 import { logger } from '../utils/logger.js';
 import { getEnv } from './env.js';
 import { LINKS } from './links.js';
+import { normalizeCategoryKey } from './commands/commandCategories.js';
 
 const env = getEnv();
 
@@ -564,10 +565,6 @@ const COMMAND_CATEGORY_FEATURE_MAP: Record<string, FeatureKey> = {
   verification: "verification",
   welcome: "welcome",
 };
-
-function normalizeCategoryKey(category: string | null | undefined): string {
-  return String(category || "").trim().toLowerCase().replace(/\s+/g, "_");
-}
 
 export function getCommandPrefix(): string {
   return botConfig.commands?.prefix ?? "!";

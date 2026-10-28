@@ -2,6 +2,9 @@
 
 import { logger } from './logger.js';
 
+/** A Discord id: 17–20 digits. Narrows to a digit string, so a plain string that fails stays a string. */
+export const isSnowflake = (value: unknown): value is `${bigint}` => typeof value === 'string' && /^\d{17,20}$/.test(value);
+
 export function validateNumber(value: unknown, fieldName = 'number'): number | null {
   if (typeof value !== 'number' || isNaN(value)) {
     logger.warn(`[VALIDATION] ${fieldName} must be a valid number, got ${value}`);

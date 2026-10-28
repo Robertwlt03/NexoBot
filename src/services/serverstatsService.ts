@@ -395,7 +395,7 @@ export async function changeServerCounterType(
   return { counter, oldType, nameUpdated };
 }
 
-function getCounterTypeDisplay(type: string) {
+export function getCounterTypeDisplay(type: string): string {
   return `${getCounterEmoji(type)} ${getCounterTypeLabel(type)}`;
 }
 

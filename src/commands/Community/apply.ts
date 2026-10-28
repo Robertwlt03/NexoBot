@@ -5,7 +5,7 @@ import type { Command } from '../../types/index.js';
 import { createEmbed, successEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 import { handleInteractionError, withErrorHandling, createError, ErrorTypes, replyUserError } from '../../utils/errorHandler.js';
-import ApplicationService from '../../services/applicationService.js';
+import ApplicationService, { getApplicationStatusPresentation } from '../../services/applicationService.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { logEvent, EVENT_TYPES, resolveApplicationLogChannel } from '../../services/loggingService.js';
 import { formatLogLine, resolveUserAuthor } from '../../utils/logging/logEmbeds.js';
@@ -19,22 +19,6 @@ import {
     getApplicationRoleSettings
 } from '../../utils/database.js';
 import type { ApplicationAnswer, ApplicationSettings } from '../../utils/database.js';
-
-function getApplicationStatusPresentation(statusValue: unknown) {
-    const normalized = typeof statusValue === 'string' ? statusValue.trim().toLowerCase() : 'unknown';
-    const statusLabel =
-        normalized === 'pending' ? 'In Bearbeitung' :
-        normalized === 'approved' ? 'Angenommen' :
-        normalized === 'denied' ? 'Abgelehnt' :
-        'Unbekannt';
-    const statusEmoji =
-        normalized === 'pending' ? '🟡' :
-        normalized === 'approved' ? '🟢' :
-        normalized === 'denied' ? '🔴' :
-        '⚪';
-
-    return { normalized, statusLabel, statusEmoji };
-}
 
 export default {
     slashOnly: true,

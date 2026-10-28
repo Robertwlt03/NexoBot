@@ -2,7 +2,7 @@
 
 import { logger } from './logger.js';
 import { NexoBotError, ErrorTypes } from './errorHandler.js';
-import { unwrapReplitData } from './database.js';
+import { unwrapReplitData } from './database/guildConfigStorage.js';
 import {
     createGiveawayEmbed as createGiveawayEmbedService
 } from '../services/giveawayService.js';
