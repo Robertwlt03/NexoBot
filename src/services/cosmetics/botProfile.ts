@@ -35,7 +35,11 @@ export function eventBio(event: ShopEvent): string {
   return `🎉 ${event.name} läuft${deal}! Gemeinschaftsziel, Tagesaufgaben und Event-Artikel: /profil aufgaben und /profil shop`.slice(0, 190);
 }
 
-/** 960×384 banner (Discord's 5:2): the event colours, scattered symbols and the event name. */
+/**
+ * 960×384 banner (Discord's 5:2): the event colours, scattered symbols and the event name. The profile shows it about
+ * 17:6, cutting ~24px off the top and bottom, and puts the avatar over the lower left; so the text sits in the upper
+ * left and the symbols keep clear of the cut edges.
+ */
 export function renderEventBanner(event: ShopEvent): Buffer {
   const W = 960;
   const H = 384;
@@ -51,17 +55,21 @@ export function renderEventBanner(event: ShopEvent): Buffer {
   for (let i = 0; i < 26; i += 1) {
     ctx.globalAlpha = 0.18 + rng() * 0.35;
     // Right half only, so the name on the left stays clear.
-    drawGlyph(ctx as never, glyph, W * 0.6 + rng() * W * 0.44, rng() * H, 22 + rng() * 46, highlight, (rng() - 0.5) * 0.8);
+    drawGlyph(ctx as never, glyph, W * 0.6 + rng() * W * 0.36, 48 + rng() * (H - 96), 22 + rng() * 46, highlight, (rng() - 0.5) * 0.8);
   }
   ctx.globalAlpha = 1;
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = `700 56px "${PROFILE_FONTS.unbounded}"`;
   ctx.textBaseline = 'alphabetic';
-  ctx.fillText(event.name, 56, H / 2 + 10, W * 0.52);
+  // Long names get a smaller size instead of being squeezed.
+  const nameFont = (size: number) => `700 ${size}px "${PROFILE_FONTS.unbounded}"`;
+  let size = 56;
+  ctx.font = nameFont(size);
+  while (ctx.measureText(event.name).width > W * 0.56 && size > 32) ctx.font = nameFont((size -= 2));
+  ctx.fillText(event.name, 56, 128);
   if (event.discount > 0) {
     ctx.font = `700 32px "${PROFILE_FONTS.inter}"`;
     ctx.fillStyle = highlight;
-    ctx.fillText(`−${event.discount} % im Nexo-Shop`, 58, H / 2 + 64);
+    ctx.fillText(`−${event.discount} % im Nexo-Shop`, 58, 180);
   }
   return canvas.toBuffer('image/png');
 }
