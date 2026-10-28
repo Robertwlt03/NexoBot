@@ -13,3 +13,17 @@ test('event banner is drawn on the walnut at Discord size', async () => {
   const [r, g, b] = ctx.getImageData(480, 300, 1, 1).data;
   assert.ok(r > g && g > b, `expected wood at the centre, got ${r},${g},${b}`);
 });
+
+test('the brush paints the frame and leaves the middle bare', async () => {
+  const { brush } = await import('../src/services/cosmetics/brush.js');
+  const W = 200;
+  const H = 100;
+  const wood = () => Uint8ClampedArray.from({ length: W * H * 4 }, (_, i) => (i % 4 === 3 ? 255 : 90));
+  const data = wood();
+  let seed = 1;
+  brush(W, H, () => ((seed = (seed * 16807) % 2147483647) / 2147483647)).frame(data, '#ff0000');
+  const red = (x: number, y: number) => data[(y * W + x) * 4] - data[(y * W + x) * 4 + 1];
+  const edge = Array.from({ length: W }, (_, x) => red(x, 1)).filter((d) => d > 20).length;
+  assert.ok(edge > W * 0.4, `most of the top edge is painted (${edge}/${W})`);
+  assert.equal(red(W / 2, H / 2), 0, 'the middle stays wood');
+});

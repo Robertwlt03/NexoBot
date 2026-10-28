@@ -15,6 +15,7 @@ import { logger } from '../../utils/logger.js';
 import '../welcomeCardRenderer.js'; // registers the card fonts
 import { loadStoredEvents, runningEvents } from './events.js';
 import { cosmeticsPool } from './db.js';
+import { brush } from './brush.js';
 
 /** Bio text for the event (Discord allows 190 characters). Pure, for tests. */
 export function eventBio(event: ShopEvent): string {
@@ -42,89 +43,40 @@ const WALNUT = 'dashboard/src/assets/wood/walnut.webp';
 // ponytail: a snapshot of Engraving.tsx; render it again if the vine there changes.
 const VINE = 'assets/brand/vine.png';
 
-/** A frame brushed onto the wood in the event colour: a ragged coat, then single bristle strokes over it. */
-function paintFrame(ctx: SKRSContext2D, W: number, H: number, color: string, rng: () => number) {
-  // Thicker at the top and bottom: the profile cuts ~24px off there.
-  const band = { top: 42, bottom: 42, side: 20 };
-  ctx.save();
-  ctx.fillStyle = color;
-  ctx.strokeStyle = color;
-  ctx.lineCap = 'round';
-  // The coat: an even ring with a ragged inner edge.
-  ctx.globalAlpha = 0.5;
-  ctx.beginPath();
-  ctx.rect(0, 0, W, H);
-  const inner: [number, number][] = [];
-  for (let x = band.side; x <= W - band.side; x += 18) inner.push([x, band.top * (0.7 + rng() * 0.5)]);
-  for (let y = band.top; y <= H - band.bottom; y += 18) inner.push([W - band.side * (0.7 + rng() * 0.5), y]);
-  for (let x = W - band.side; x >= band.side; x -= 18) inner.push([x, H - band.bottom * (0.7 + rng() * 0.5)]);
-  for (let y = H - band.bottom; y >= band.top; y -= 18) inner.push([band.side * (0.7 + rng() * 0.5), y]);
-  inner.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
-  ctx.closePath();
-  ctx.fill('evenodd');
-  // Bristles along each edge, with gaps where the brush ran dry.
-  const stroke = (x1: number, y1: number, x2: number, y2: number) => {
-    ctx.globalAlpha = 0.25 + rng() * 0.5;
-    ctx.lineWidth = 2 + rng() * 6;
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.quadraticCurveTo((x1 + x2) / 2 + (rng() - 0.5) * 6, (y1 + y2) / 2 + (rng() - 0.5) * 6, x2, y2);
-    ctx.stroke();
-  };
-  for (let i = 0; i < 110; i += 1) {
-    const from = -20 + rng() * W * 0.6;
-    const to = Math.min(W + 20, from + 120 + rng() * W * 0.6);
-    stroke(from, rng() * band.top, to, rng() * band.top);
-    stroke(W - from, H - rng() * band.bottom, W - to, H - rng() * band.bottom);
-  }
-  for (let i = 0; i < 45; i += 1) {
-    const from = -20 + rng() * H * 0.6;
-    const to = Math.min(H + 20, from + 60 + rng() * H * 0.6);
-    stroke(rng() * band.side, from, rng() * band.side, to);
-    stroke(W - rng() * band.side, H - from, W - rng() * band.side, H - to);
-  }
-  ctx.restore();
-}
-
-/** Text brushed on in `color`: the letters with thin dry streaks scraped out of them, so the wood shows through. */
-function paintText(ctx: SKRSContext2D, text: string, x: number, y: number, font: string, color: string, rng: () => number) {
-  const { width, height } = ctx.canvas;
-  const layer = createCanvas(width, height);
-  const paint = layer.getContext('2d');
-  paint.font = font;
-  paint.textBaseline = 'alphabetic';
-  paint.fillStyle = color;
-  paint.fillText(text, x, y);
-  paint.globalCompositeOperation = 'destination-out';
-  paint.strokeStyle = '#000';
-  const top = y - parseInt(font.match(/(\d+)px/)?.[1] ?? '40', 10);
-  for (let i = 0; i < 26; i += 1) {
-    paint.globalAlpha = 0.25 + rng() * 0.5;
-    paint.lineWidth = 0.8 + rng() * 1.6;
-    const sy = top + rng() * (y - top + 12);
-    paint.beginPath();
-    paint.moveTo(x - 10 + rng() * 40, sy);
-    paint.lineTo(x + paint.measureText(text).width * (0.4 + rng() * 0.7), sy + (rng() - 0.5) * 4);
-    paint.stroke();
-  }
-  ctx.save();
-  ctx.shadowColor = 'rgba(16,11,7,0.7)';
-  ctx.shadowBlur = 10;
-  ctx.globalAlpha = 0.95;
-  ctx.drawImage(layer, 0, 0);
-  ctx.restore();
-}
-
-/** Where the event icons sit (x, y, size), right of the text and below the vine, like the fireflies of the test banner. */
+/** Where the event icons are painted (x, y, size): large and calm in the background, right of the text. */
 const ICON_SPOTS: readonly [number, number, number][] = [
-  [470, 250, 44], [590, 304, 36], [700, 232, 54], [822, 292, 40], [904, 214, 32], [548, 182, 30], [760, 332, 28], [655, 150, 28],
+  [470, 262, 70], [612, 172, 56], [716, 286, 84], [858, 200, 66], [560, 330, 44], [905, 318, 48],
 ];
+/** The test banner's fireflies (x, y on its 680×240 page, radius), placed on this banner's visible 17:6 area. */
+const FIREFLIES: readonly [number, number, number][] = [
+  [612, 64, 3.2], [566, 112, 2.2], [500, 30, 2.6], [452, 128, 1.8], [640, 150, 2.4], [395, 92, 2], [530, 178, 1.6],
+  [300, 40, 1.6], [252, 118, 2], [588, 206, 1.4], [430, 196, 1.3], [660, 104, 1.8], [220, 64, 1.2],
+];
+
+/** A warm glowing dot: a wide faint halo, a brighter glow and a pale core. */
+function firefly(ctx: SKRSContext2D, x: number, y: number, r: number, opacity: number) {
+  const glow = (radius: number, stops: [number, string][]) => {
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    for (const [at, colour] of stops) gradient.addColorStop(at, colour);
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  glow(r * 8, [[0, 'rgba(200,205,100,0.2)'], [1, 'rgba(200,205,100,0)']]);
+  glow(r * 3.5, [[0, 'rgba(240,220,120,0.6)'], [1, 'rgba(240,220,120,0)']]);
+  glow(r * 1.2, [[0, '#fffbe0'], [0.55, '#f0dc7a'], [1, 'rgba(240,220,122,0)']]);
+  ctx.restore();
+}
 
 /**
  * 960×384 banner (Discord's 5:2) in the look of the dashboard and the test bot's banner: walnut washed behind the
  * text, the burnt vine, a frame brushed on in the event colour, "Nexo" in cream with the event name and discount
- * brushed on, and the event's icons from the dashboard. The profile shows it about 17:6, cutting ~24px off the top
- * and bottom, and puts the avatar over the lower left; so all text sits above y≈200 and nothing touches the cut edges.
+ * brushed on, the dashboard's event icons painted onto the wood and the test banner's fireflies glowing above. The
+ * profile shows it about 17:6, cutting ~24px off the top and bottom, and puts the avatar over the lower left; so all
+ * text sits above y≈200 and nothing touches the cut edges.
  */
 export async function renderEventBanner(event: ShopEvent): Promise<Buffer> {
   const W = 960;
@@ -151,38 +103,45 @@ export async function renderEventBanner(event: ShopEvent): Promise<Buffer> {
   ctx.fillRect(0, 0, W, H);
   if (vine) ctx.drawImage(vine, W - vine.width, 0);
   const rng = createRng(seedFrom(event.id));
-  ctx.save();
-  ctx.shadowColor = 'rgba(16,11,7,0.6)';
-  ctx.shadowBlur = 8;
-  for (const [x, y, size] of ICON_SPOTS) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate((rng() - 0.5) * 0.5);
-    ctx.drawImage(icon, -size / 2, -size / 2, size, size);
-    ctx.restore();
+  // The frame and the event's words brushed on in the theme colour, the same recipe as the test banner.
+  const pixels = ctx.getImageData(0, 0, W, H);
+  const paint = brush(W, H, rng);
+  paint.frame(pixels.data, tint, 24);
+  const words = createCanvas(W, H).getContext('2d');
+  words.textBaseline = 'alphabetic';
+  words.font = `700 64px "${PROFILE_FONTS.unbounded}"`;
+  const nexoEnd = 60 + words.measureText('Nexo').width;
+  if (event.discount > 0) {
+    words.font = `700 54px "${PROFILE_FONTS.caveat}"`;
+    words.fillText(`−${event.discount} %`, nexoEnd + 30, 112);
   }
-  ctx.restore();
-  paintFrame(ctx, W, H, tint, rng);
-  // "Nexo" as in the test banner, the event brushed on beside and below it.
-  ctx.save();
+  // Long names get a smaller size instead of being squeezed.
+  let size = 60;
+  words.font = `700 ${size}px "${PROFILE_FONTS.caveat}"`;
+  while (words.measureText(event.name).width > W * 0.5 && size > 34) words.font = `700 ${(size -= 2)}px "${PROFILE_FONTS.caveat}"`;
+  words.fillText(event.name, 62, 186);
+  paint.through(pixels.data, words.getImageData(0, 0, W, H).data, tint);
+  // The dashboard's event icons, painted onto the wood in their own colours.
+  const icons = createCanvas(W, H).getContext('2d');
+  for (const [x, y, size] of ICON_SPOTS) {
+    icons.save();
+    icons.translate(x, y);
+    icons.rotate((rng() - 0.5) * 0.5);
+    icons.drawImage(icon, -size / 2, -size / 2, size, size);
+    icons.restore();
+  }
+  paint.through(pixels.data, icons.getImageData(0, 0, W, H).data);
+  ctx.putImageData(pixels, 0, 0);
+  // The fireflies glow above the paint, as in the test banner.
+  const sx = W / 680;
+  for (const [x, y, r] of FIREFLIES) firefly(ctx, x * sx, 24 + y * ((H - 48) / 240), r * 1.5 * sx, 0.7 + rng() * 0.3);
+  // "Nexo" in the dashboard's cream, as in the test banner.
   ctx.textBaseline = 'alphabetic';
   ctx.font = `700 64px "${PROFILE_FONTS.unbounded}"`;
   ctx.shadowColor = 'rgba(22,17,12,0.9)';
   ctx.shadowBlur = 14;
   ctx.fillStyle = '#F3EBE0';
   ctx.fillText('Nexo', 60, 124);
-  const nexoEnd = 60 + ctx.measureText('Nexo').width;
-  ctx.restore();
-  if (event.discount > 0) paintText(ctx, `−${event.discount} %`, nexoEnd + 30, 112, `700 54px "${PROFILE_FONTS.caveat}"`, tint, rng);
-  // Long names get a smaller size instead of being squeezed.
-  let size = 60;
-  const nameFont = () => `700 ${size}px "${PROFILE_FONTS.caveat}"`;
-  ctx.font = nameFont();
-  while (ctx.measureText(event.name).width > W * 0.5 && size > 34) {
-    size -= 2;
-    ctx.font = nameFont();
-  }
-  paintText(ctx, event.name, 62, 186, nameFont(), tint, rng);
   return canvas.toBuffer('image/png');
 }
 
