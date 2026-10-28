@@ -1,4 +1,4 @@
-import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, AttachmentBuilder, MessageFlags } from 'discord.js';
+import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags } from 'discord.js';
 import { createEmbed, successEmbed } from '../utils/embeds.js';
 import { createTicket, closeTicket, claimTicket, updateTicketPriority } from '../services/ticket.js';
 import { getGuildConfig } from '../services/config/guildConfig.js';
@@ -18,16 +18,6 @@ import type { ButtonHandler, ModalHandler, NexoClient } from '../types/index.js'
 
 type TicketInteraction = ButtonInteraction | ModalSubmitInteraction;
 type TicketPermissionContext = Awaited<ReturnType<typeof getTicketPermissionContext>>;
-
-function escapeHtml(text: unknown): string {
-  if (!text) return '';
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
 
 async function ensureGuildContext(interaction: TicketInteraction): Promise<boolean> {
   if (interaction.inGuild()) {
@@ -91,35 +81,6 @@ async function assertTicketPermission(
       ErrorTypes.PERMISSION,
       `${permissionMessage}\n\nDu darfst ${actionLabel} nicht.`
     );
-  }
-
-  return context;
-}
-
-async function ensureTicketPermission(
-  interaction: TicketInteraction,
-  client: NexoClient,
-  actionLabel: string,
-  options: { allowTicketCreator?: boolean } = {},
-): Promise<TicketPermissionContext | null> {
-  const { allowTicketCreator = false } = options;
-
-  // See assertTicketPermission: only guildId, channelId, member and user are read.
-  const context = await getTicketPermissionContext({ client, interaction });
-
-  if (!context.ticketData) {
-    await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Diese Aktion kannst du nur in einem gültigen Ticket-Kanal nutzen.' });
-    return null;
-  }
-
-  const allowed = allowTicketCreator ? context.canCloseTicket : context.canManageTicket;
-  if (!allowed) {
-    const permissionMessage = allowTicketCreator
-      ? 'Du brauchst die Berechtigung **Kanäle verwalten**, die eingestellte **Ticket-Team-Rolle** oder musst das Ticket **erstellt** haben.'
-      : 'Du brauchst die Berechtigung **Kanäle verwalten** oder die eingestellte **Ticket-Team-Rolle**.';
-
-    await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: `${permissionMessage}\n\nDu darfst ${actionLabel} nicht.` });
-    return null;
   }
 
   return context;
@@ -452,7 +413,7 @@ const reopenTicketHandler = {
       if (!deferSuccess) return;
       
       const { reopenTicket } = await import('../services/ticket.js');
-      const { movedToOpenCategory, openCategoryMoveFailed } = await reopenTicket(interaction.channel as TextChannel, interaction.member as GuildMember);
+      const { openCategoryMoveFailed } = await reopenTicket(interaction.channel as TextChannel, interaction.member as GuildMember);
       let reopenMessage = 'Dieses Ticket wurde wieder geöffnet.';
       if (openCategoryMoveFailed) {
         reopenMessage += ' Hinweis: Der Kanal konnte nicht zurück in die Kategorie für offene Tickets verschoben werden.';

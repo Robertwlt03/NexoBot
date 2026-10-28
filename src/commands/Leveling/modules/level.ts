@@ -1,4 +1,3 @@
-import { getColor } from '../../../config/bot.js';
 import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } from 'discord.js';
 import type { TextChannel } from 'discord.js';
 import { setupDoneEmbed } from '../../../services/leveling/views.js';

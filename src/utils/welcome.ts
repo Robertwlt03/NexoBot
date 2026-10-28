@@ -9,11 +9,6 @@ import type { WelcomeCard } from '../shared/welcomeCard.js';
 import { applyMemberStyle, cardSubjectFromMember, renderWelcomeCard } from '../services/welcomeCardRenderer.js';
 import { getProfileSettings, getResolvedCosmetics } from '../services/cosmetics/store.js';
 
-const DEFAULT_TEMPLATES = {
-    welcome: 'Willkommen {user} auf {server}!',
-    goodbye: '{user.tag} hat den Server verlassen.'
-};
-
 /** Fields read from a (possibly partial) discord.js User. */
 interface WelcomeFormatUser {
     toString?(): string;
@@ -34,13 +29,6 @@ export interface WelcomeFormatData {
     user?: WelcomeFormatUser | null;
     guild?: WelcomeFormatGuild | null;
     [key: string]: unknown;
-}
-
-function replaceAll(message: string, token: string, value: unknown): string {
-    if (value === undefined || value === null) {
-        return message;
-    }
-    return message.split(token).join(String(value));
 }
 
 export function truncateForEmbedField(value: unknown, maxLength = 1024): string {
@@ -87,18 +75,10 @@ export function formatWelcomeMessage(message: unknown, data: WelcomeFormatData |
     let result = message;
     for (const [token, value] of Object.entries(tokens)) {
         if (value === undefined || value === null) continue;
-        result = replaceAll(result, token, String(value));
+        result = result.replaceAll(token, String(value));
     }
 
     return result;
-}
-
-export function getDefaultWelcomeMessage(): string {
-    return DEFAULT_TEMPLATES.welcome;
-}
-
-export function getDefaultGoodbyeMessage(): string {
-    return DEFAULT_TEMPLATES.goodbye;
 }
 
 

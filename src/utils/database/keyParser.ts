@@ -192,7 +192,6 @@ export function getStructuredListPlan(
     tables: { economy: string; user_levels: string; tickets: string },
 ): StructuredListPlan {
     const plan: StructuredListPlan = { queries: [], staticKeys: [] };
-    const canonicalPrefix = canonicalizeKey(prefix.endsWith(':') ? prefix.slice(0, -1) : prefix);
     const normalizedPrefix = prefix.endsWith(':') ? prefix : `${prefix}:`;
 
     const addEconomy = (guildId: string) => {

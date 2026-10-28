@@ -1,6 +1,6 @@
 import type { Command } from '../../../types/index.js';
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, type GuildMember } from 'discord.js';
-import { errorEmbed, successEmbed } from '../../../utils/embeds.js';
+import { successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 import { NexoBotError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { getGuildGiveaways } from '../../../utils/giveaways.js';

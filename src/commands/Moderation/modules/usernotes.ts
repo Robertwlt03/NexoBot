@@ -1,6 +1,6 @@
 import type { Command } from '../../../types/index.js';
-import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, type ChatInputCommandInteraction, type User } from 'discord.js';
-import { createEmbed, successEmbed, infoEmbed, warningEmbed } from '../../../utils/embeds.js';
+import { SlashCommandBuilder, PermissionFlagsBits, type ChatInputCommandInteraction, type User } from 'discord.js';
+import { successEmbed, infoEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 import { sanitizeInput } from '../../../utils/validation.js';
 import { addUserNote, getUserNotes, saveUserNotes, type UserNote } from '../../../services/moderation/userNotesService.js';

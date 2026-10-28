@@ -218,7 +218,7 @@ export async function playQuery(client: NexoClient, interaction: NexoInteraction
         );
     }
 
-    const { player, guildData } = await ensurePlayer(client, interaction);
+    const { player } = await ensurePlayer(client, interaction);
 
     const result = await client.riffy!.resolve({
         query,
@@ -419,12 +419,6 @@ export async function setLoopMode(client: NexoClient, interaction: NexoInteracti
     return successEmbed('Wiederholung aktualisiert', `Wiederholmodus auf **${labels[mode] || mode}** gesetzt.`);
 }
 
-export async function toggleLoop(client: NexoClient, interaction: NexoInteraction): Promise<EmbedBuilder> {
-    const guildData = getGuildMusicData(interaction.guild!.id);
-    const next = guildData.loop === 'none' ? 'track' : guildData.loop === 'track' ? 'queue' : 'none';
-    return setLoopMode(client, interaction, next);
-}
-
 export async function setVolume(client: NexoClient, interaction: NexoInteraction, volume: number): Promise<EmbedBuilder> {
     const player = getPlayer(client, interaction.guild!.id);
     if (!player) {
@@ -437,11 +431,6 @@ export async function setVolume(client: NexoClient, interaction: NexoInteraction
     player.setVolume(guildData.volume);
     await refreshPlayerMessage(client, interaction.guild!.id);
     return successEmbed('Lautstärke aktualisiert', `Lautstärke auf **${guildData.volume}%** gesetzt.`);
-}
-
-export async function adjustVolume(client: NexoClient, interaction: NexoInteraction, delta: number): Promise<EmbedBuilder> {
-    const guildData = getGuildMusicData(interaction.guild!.id);
-    return setVolume(client, interaction, guildData.volume + delta);
 }
 
 export async function seekTrack(client: NexoClient, interaction: NexoInteraction, seconds: number): Promise<EmbedBuilder> {

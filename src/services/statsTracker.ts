@@ -105,9 +105,6 @@ export function insightRangeOf(value: unknown): InsightRange | null {
   return INSIGHT_RANGES.find((range) => String(range) === value) ?? null;
 }
 
-/** A Discord id: 17–20 digits. */
-export const isSnowflake = (value: unknown): boolean => typeof value === 'string' && /^\d{17,20}$/.test(value);
-
 const BERLIN = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Berlin', weekday: 'short', hour: 'numeric', hourCycle: 'h23' });
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 /** Weekday (0 = Monday) and hour in Europe/Berlin for a UTC day and hour (daylight saving time included). */

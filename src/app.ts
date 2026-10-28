@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { Client, Collection, GatewayIntentBits } from 'discord.js';
 import type { Request, Response, NextFunction } from 'express';
-import { REST } from '@discordjs/rest';
+import { REST } from 'discord.js';
 // Side effect: grey buttons get a colour by their action (before any message is built).
 import './utils/buttonColors.js';
 import express from 'express';
@@ -11,7 +11,6 @@ import config from './config/application.js';
 import { initializeDatabase } from './utils/database.js';
 import { db } from './utils/database/wrapper.js';
 import { validateBotEnv } from './config/env.js';
-import { getGuildConfig } from './services/config/guildConfig.js';
 import { getServerCounters, saveServerCounters, updateCounter } from './services/serverstatsService.js';
 import { logger, startupLog, shutdownLog } from './utils/logger.js';
 import { checkBirthdays } from './services/birthdayService.js';

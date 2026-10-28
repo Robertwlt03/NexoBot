@@ -20,8 +20,6 @@ import { logger } from '../../../utils/logger.js';
 import { NexoBotError, ErrorTypes, replyUserError } from '../../../utils/errorHandler.js';
 import { getGuildConfig, setGuildConfig } from '../../../services/config/guildConfig.js';
 import { getWelcomeConfig } from '../../../utils/database.js';
-import { validateAutoVerifyCriteria } from '../../../services/verificationService.js';
-import { botHasPermission } from '../../../utils/permissionGuard.js';
 import type { AutoVerifyConfig } from '../../../services/verificationService.js';
 import type { GuildConfig, NexoClient, SubcommandModule } from '../../../types/index.js';
 

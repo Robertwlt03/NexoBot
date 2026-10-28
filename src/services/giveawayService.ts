@@ -1,6 +1,6 @@
 // giveawayService.js
 
-import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import type { GuildTextBasedChannel } from 'discord.js';
 import type { NexoClient } from '../types/index.js';
 import type { Giveaway } from '../utils/giveaways.js';

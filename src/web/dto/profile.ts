@@ -3,7 +3,7 @@
 // All amounts are Bernis (global, per user).
 
 import type {
-  CosmeticItem, CosmeticSlot, Rarity, RankingKind, UserProfileSettings,
+  CosmeticItem, CosmeticSlot, RankingKind, UserProfileSettings,
 } from '../../shared/cosmetics.js';
 import type { PetCare } from '../../shared/pets.js';
 
@@ -208,11 +208,3 @@ export interface EconomyConfig {
   blackMarketSize: number;
   dailyBonus: { base: number; perStreakDay: number; maxStreakBonus: number };
 }
-
-/** GET /owner/items → CosmeticItem[];  POST /owner/items (create), PUT /owner/items/:id (update), DELETE /owner/items/:id (deactivate). */
-/** GET /owner/events → ShopEvent[];  POST/PUT/DELETE /owner/events[/:id] for custom events (auto events can be toggled via PUT { active }). */
-/** POST /owner/blackmarket/reroll → BlackMarketResponse (new random rotation for the current week);
- *  PUT /owner/blackmarket { itemIds } → pin this week's rotation. */
-/** POST /owner/grant { userId, amount, note } → WalletSummary (logged as owner_grant; for testing and support). */
-
-export interface ItemFilter { slot: CosmeticSlot | null; rarity: Rarity | null }

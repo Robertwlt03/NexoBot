@@ -12,8 +12,6 @@ export interface UserNote {
   timestamp: string;
 }
 
-export const NOTE_TYPES = ['warning', 'positive', 'neutral', 'alert'] as const;
-
 export async function getUserNotes(guildId: string, userId: string): Promise<UserNote[]> {
   return getFromDb<UserNote[]>(getUserNotesKey(guildId, userId), []);
 }

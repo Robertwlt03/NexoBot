@@ -2,10 +2,7 @@
 
 import {
     getJoinToCreateConfig,
-    saveJoinToCreateConfig,
-    updateJoinToCreateConfig,
-    getTemporaryChannelInfo,
-    formatChannelName as formatChannelNameUtil
+    saveJoinToCreateConfig
 } from '../utils/database.js';
 import { logger } from '../utils/logger.js';
 import { NexoBotError, ErrorTypes } from '../utils/errorHandler.js';
@@ -14,20 +11,13 @@ import { formatLogLine } from '../utils/logging/logEmbeds.js';
 import { ChannelType, PermissionFlagsBits } from 'discord.js';
 import type { Guild, GuildBasedChannel, GuildMember, VoiceChannel } from 'discord.js';
 import type { NexoClient } from '../types/index.js';
-import type { ChannelNameVariables, JoinToCreateChannelOptions, JoinToCreateConfig } from '../utils/database.js';
+import type { JoinToCreateChannelOptions, JoinToCreateConfig } from '../utils/database.js';
 
 export interface JoinToCreateInitOptions {
     nameTemplate?: string;
     userLimit?: number;
     bitrate?: number;
     categoryId?: string | null;
-}
-
-export interface TemporaryChannelOptions {
-    nameTemplate?: string;
-    userLimit?: number;
-    bitrate?: number;
-    parentId?: string | null;
 }
 
 /** Per-trigger options as actually stored (JoinToCreateChannelOptions plus bookkeeping fields). */
@@ -38,7 +28,6 @@ type StoredChannelOptions = JoinToCreateChannelOptions & {
 };
 
 const CHANNEL_NAME_MAX_LENGTH = 100;
-const CHANNEL_VARIABLE_MAX_LENGTH = 32;
 const CONTROL_AND_INVISIBLE_CHARS_REGEX = /[\x00-\x1F\x7F\u200B-\u200D\uFEFF]/g;
 const ALLOWED_TEMPLATE_PLACEHOLDERS = new Set([
     '{username}',
@@ -134,72 +123,6 @@ export function validateUserLimit(limit: string | number): boolean {
     }
 
     return true;
-}
-
-export function formatChannelName(template: string, variables: ChannelNameVariables | null | undefined): string {
-    try {
-        const safeTemplate = template.normalize('NFKC').replace(CONTROL_AND_INVISIBLE_CHARS_REGEX, '').trim();
-        validateChannelNameTemplate(safeTemplate);
-
-        if (!variables || typeof variables !== 'object') {
-            throw new NexoBotError(
-                'Invalid variables object for channel formatting',
-                ErrorTypes.VALIDATION
-            );
-        }
-
-        const sanitized: Record<string, string> = {};
-        const entries: [string, unknown][] = Object.entries(variables);
-        for (const [key, value] of entries) {
-            if (value === null || value === undefined) {
-                sanitized[key] = 'Unbekannt';
-            } else {
-                
-                sanitized[key] = String(value)
-                    .normalize('NFKC')
-                    .replace(CONTROL_AND_INVISIBLE_CHARS_REGEX, '')
-                    .replace(/[@#:`\n\r\t]/g, '') 
-                    .trim()
-                    .substring(0, CHANNEL_VARIABLE_MAX_LENGTH);
-            }
-        }
-
-        const replacements = {
-            '{username}': sanitized.username || 'Nutzer',
-            '{user_tag}': sanitized.userTag || 'Nutzer#0000',
-            '{displayName}': sanitized.displayName || 'Nutzer',
-            '{display_name}': sanitized.displayName || 'Nutzer',
-            '{guildName}': sanitized.guildName || 'Server',
-            '{guild_name}': sanitized.guildName || 'Server',
-            '{channelName}': sanitized.channelName || 'Sprachkanal',
-            '{channel_name}': sanitized.channelName || 'Sprachkanal',
-        };
-
-        let formatted = safeTemplate;
-        for (const [placeholder, value] of Object.entries(replacements)) {
-            formatted = formatted.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), value);
-        }
-
-        formatted = formatted
-            .normalize('NFKC')
-            .replace(CONTROL_AND_INVISIBLE_CHARS_REGEX, '')
-            .replace(/[@#:`\n\r\t]/g, '') 
-            .replace(/\s+/g, ' ')
-            .trim();
-
-        if (formatted.length === 0) {
-            formatted = 'Sprachkanal';
-        } else if (formatted.length > CHANNEL_NAME_MAX_LENGTH) {
-            formatted = formatted.substring(0, CHANNEL_NAME_MAX_LENGTH);
-        }
-
-        logger.debug(`Formatted channel name: "${formatted}" from template "${template}"`);
-        return formatted;
-
-    } catch (error) {
-        logger.error('Error formatting channel name:', error);
-        throw error;
-    }
 }
 
 export async function initializeJoinToCreate(
@@ -445,16 +368,6 @@ export async function getConfiguration(client: NexoClient, guildId: string): Pro
     }
 }
 
-export async function isTriggerChannel(client: NexoClient, guildId: string, channelId: string): Promise<boolean> {
-    try {
-        const config = await getConfiguration(client, guildId);
-        return config.triggerChannels.includes(channelId);
-    } catch (error) {
-        logger.error(`Error checking if channel is trigger: ${(error as Error).message}`);
-        return false;
-    }
-}
-
 export async function getChannelConfiguration(client: NexoClient, guildId: string, channelId: string) {
     try {
         const config = await getConfiguration(client, guildId);
@@ -513,81 +426,6 @@ export async function logConfigurationChange(client: NexoClient, guildId: string
         });
     } catch (error) {
         logger.warn(`Failed to log Join to Create configuration change: ${(error as Error).message}`);
-    }
-}
-
-export async function createTemporaryChannel(
-    guild: Guild,
-    member: GuildMember,
-    options: TemporaryChannelOptions = {},
-): Promise<{ id: string; name: string; ownerId: string }> {
-    try {
-        if (!guild || !member) {
-            throw new NexoBotError(
-                'Invalid guild or member',
-                ErrorTypes.VALIDATION
-            );
-        }
-
-        const {
-            nameTemplate,
-            userLimit,
-            bitrate,
-            parentId
-        } = options;
-
-        if (nameTemplate) {
-            validateChannelNameTemplate(nameTemplate);
-        }
-        if (userLimit !== undefined) {
-            validateUserLimit(userLimit);
-        }
-        if (bitrate !== undefined) {
-            validateBitrate(bitrate / 1000);
-        }
-
-        const channelName = formatChannelName(nameTemplate || 'Raum von {username}', {
-            username: member.user.username,
-            displayName: member.displayName,
-            userTag: member.user.tag,
-            guildName: guild.name
-        });
-
-        const tempChannel = await guild.channels.create({
-            name: channelName,
-            type: ChannelType.GuildVoice,
-            parent: parentId,
-            userLimit: userLimit === 0 ? undefined : userLimit,
-            bitrate: bitrate || 64000,
-            permissionOverwrites: [
-                {
-                    id: member.id,
-                    allow: [PermissionFlagsBits.Connect, PermissionFlagsBits.Speak, PermissionFlagsBits.PrioritySpeaker, PermissionFlagsBits.MoveMembers]
-                },
-                {
-                    id: guild.id,
-                    allow: [PermissionFlagsBits.Connect, PermissionFlagsBits.Speak]
-                }
-            ]
-        });
-
-        logger.info(`Created temporary voice channel ${tempChannel.name} (${tempChannel.id}) for user ${member.user.tag}`);
-
-        return {
-            id: tempChannel.id,
-            name: tempChannel.name,
-            ownerId: member.id
-        };
-
-    } catch (error) {
-        if (error instanceof NexoBotError) {
-            throw error;
-        }
-        throw new NexoBotError(
-            `Failed to create temporary channel: ${(error as Error).message}`,
-            ErrorTypes.DISCORD_API,
-            'Dein temporärer Sprachkanal konnte nicht erstellt werden. Bitte wende dich an einen Administrator.'
-        );
     }
 }
 
@@ -703,21 +541,3 @@ export async function removeJoinToCreateTrigger(client: NexoClient, guild: Guild
     }
     return { channelDeleted };
 }
-
-export default {
-    validateChannelNameTemplate,
-    validateBitrate,
-    validateUserLimit,
-    formatChannelName,
-    initializeJoinToCreate,
-    updateChannelConfig,
-    removeTriggerChannel,
-    getConfiguration,
-    isTriggerChannel,
-    getChannelConfiguration,
-    hasManageGuildPermission,
-    logConfigurationChange,
-    createTemporaryChannel,
-    createJoinToCreateTrigger,
-    removeJoinToCreateTrigger
-};

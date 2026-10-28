@@ -1,9 +1,19 @@
 // Helpers for dashboard modules that call bot services (giveaways, birthdays, join-to-create, server stats, music).
 
 import { PermissionFlagsBits } from 'discord.js';
-import type { Guild, GuildBasedChannel } from 'discord.js';
+import type { Guild, GuildBasedChannel, GuildMember } from 'discord.js';
 import type { NexoClient } from '../types/index.js';
 import { badRequest } from './http.js';
+import { isSnowflake } from '../utils/validation.js';
+
+/** The member behind a user id from the request; German 400 when the id is invalid or not on this server. */
+export async function fetchMember(guild: Guild, value: unknown): Promise<GuildMember> {
+  const id = typeof value === 'string' ? value.trim() : value;
+  if (!isSnowflake(id)) throw badRequest('Bitte gib eine gültige Nutzer-ID ein.');
+  const member = await guild.members.fetch(id).catch(() => null);
+  if (!member) throw badRequest('Der angegebene Nutzer ist nicht auf diesem Server.');
+  return member;
+}
 
 /** Display names for user ids: member/user cache first, then at most `maxFetches` API lookups; falls back to the id. */
 export async function resolveNames(client: NexoClient, guild: Guild, ids: string[], maxFetches = 25): Promise<Record<string, string>> {

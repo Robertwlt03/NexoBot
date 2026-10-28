@@ -1,55 +1,13 @@
-import { spawnSync } from 'node:child_process';
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { logger } from '../utils/logger.js';
+import { ensureCommand, parseArgs, runCommand } from './cli.js';
 import { getEnv } from '../config/env.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
-
-type CliArgs = Record<string, string | true>;
-
-function parseArgs(argv: string[]): CliArgs {
-  const args: CliArgs = {};
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const token = argv[index];
-    if (!token.startsWith('--')) {
-      continue;
-    }
-
-    const [rawKey, inlineValue] = token.slice(2).split('=');
-    if (typeof inlineValue !== 'undefined') {
-      args[rawKey] = inlineValue;
-      continue;
-    }
-
-    const nextToken = argv[index + 1];
-    if (!nextToken || nextToken.startsWith('--')) {
-      args[rawKey] = true;
-      continue;
-    }
-
-    args[rawKey] = nextToken;
-    index += 1;
-  }
-
-  return args;
-}
-
-function ensureCommand(command: string): void {
-  const result = spawnSync(command, ['--version'], {
-    encoding: 'utf8',
-    stdio: 'pipe',
-    shell: process.platform === 'win32'
-  });
-
-  if (result.status !== 0) {
-    throw new Error(`${command} is required but was not found in PATH.`);
-  }
-}
 
 async function resolveLatestBackup(backupDir: string): Promise<string> {
   const entries = await readdir(backupDir, { withFileTypes: true });
@@ -63,18 +21,6 @@ async function resolveLatestBackup(backupDir: string): Promise<string> {
   }
 
   return path.join(backupDir, dumpFiles[0]);
-}
-
-function runCommand(command: string, args: string[]): void {
-  const result = spawnSync(command, args, {
-    encoding: 'utf8',
-    stdio: 'pipe',
-    shell: process.platform === 'win32'
-  });
-
-  if (result.status !== 0) {
-    throw new Error(`${command} failed: ${result.stderr || result.stdout || 'Unknown error'}`);
-  }
 }
 
 async function run() {

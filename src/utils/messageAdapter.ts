@@ -13,17 +13,13 @@ import type {
 import { mapArgumentsToOptions } from './prefixParser.js';
 import type { PrefixCommandData, PrefixCommandJson, PrefixValidationResult } from './prefixParser.js';
 import type { Command, GuildConfig, NexoClient } from '../types/index.js';
-import { createEmbed } from './embeds.js';
 import { handleInteractionError } from './errorHandler.js';
-import { logger } from './logger.js';
 import { InteractionHelper } from './interactionHelper.js';
 import { SLASH_ONLY_COMMANDS } from '../config/commands/prefixRestrictions.js';
 import { getCommandPrefix } from '../config/bot.js';
-import { ResponseCoordinator, buildPrefixUsage } from './responseCoordinator.js';
+import { ResponseCoordinator } from './responseCoordinator.js';
 import type { ResponsePayload } from './responseCoordinator.js';
 import { enforceDefaultCommandPermissions } from './permissionGuard.js';
-
-export { buildPrefixUsage };
 
 /** Placeholder returned by getUser when the mentioned user is not cached. */
 interface UncachedUserStub {

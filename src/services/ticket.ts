@@ -21,10 +21,10 @@ import type {
 } from 'discord.js';
 import { buildStandardLogEmbed, formatLogLine } from '../utils/logging/logEmbeds.js';
 import { getGuildConfig } from './config/guildConfig.js';
-import { getTicketData, saveTicketData, deleteTicketData, getOpenTicketCountForUser, incrementTicketCounter } from '../utils/database.js';
+import { getTicketData, saveTicketData, getOpenTicketCountForUser, incrementTicketCounter } from '../utils/database.js';
 import type { TicketData } from '../utils/database/tickets.js';
 import { logger } from '../utils/logger.js';
-import { createEmbed, errorEmbed } from '../utils/embeds.js';
+import { createEmbed } from '../utils/embeds.js';
 import { logTicketEvent } from '../utils/ticket/ticketLogging.js';
 import { createError, ErrorTypes } from '../utils/errorHandler.js';
 import type { ErrorContext, ErrorLike, ErrorType } from '../utils/errorHandler.js';
@@ -639,16 +639,6 @@ export async function reopenTicket(
   } catch (error) {
     rethrowTicketError(error, 'reopenTicket', 'Das Ticket konnte nicht wieder geöffnet werden. Bitte versuch es gleich noch mal.', { guildId: channel?.guild?.id, channelId: channel?.id, reopenerId: reopener?.id });
   }
-}
-
-function escapeHtml(text: unknown): string {
-  if (!text) return '';
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 }
 
 async function generateTranscript(channel: TextChannel): Promise<AttachmentBuilder | null> {
