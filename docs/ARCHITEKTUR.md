@@ -43,8 +43,9 @@ Sammeldatei Schritt für Schritt, bis sie am Ende verschwindet.
 
 - [x] `chore/cleanup` pushen, PR öffnen und mergen (toter Code, Duplikate; enthält schon Teile, die der Umbau braucht)
 - [x] PR #32 (Leveling-Pilot) mit dem Test-Bot prüfen und mergen; Konflikte mit `chore/cleanup` stehen im PR-Text
-- [ ] Architektur-Test anlegen, der die Regeln prüft: Services ohne Wert-Import aus `discord.js`/`express`, Controller
-      ohne direkten Datenbankzugriff. Bereits umgebaute Features stehen auf einer Liste, die mit jedem PR wächst
+- [x] Architektur-Test anlegen, der die Regeln prüft: Services ohne Wert-Import aus `discord.js`/`express`, Controller
+      ohne direkten Datenbankzugriff (`tests/architecture.test.ts`). Noch nicht umgebaute Dateien stehen auf einer
+      Ausnahmeliste, die mit jedem PR schrumpft
 
 ### Welle 1: kleine Features mit Daten in `utils/database.ts`
 
