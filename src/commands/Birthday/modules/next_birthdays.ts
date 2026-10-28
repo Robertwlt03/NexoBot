@@ -21,6 +21,7 @@ export default {
             });
         }
 
+        let birthdayList = `🎂 **Die nächsten 5 Geburtstage**\n\nDas sind die nächsten 5 Geburtstage auf ${interaction.guild!.name}:\n\n`;
         let displayIndex = 0;
         for (const birthday of next5) {
             const member = await interaction.guild!.members.fetch(birthday.userId).catch(() => null);
@@ -38,6 +39,8 @@ export default {
             } else {
                 timeUntil = `In ${birthday.daysUntil} Tag${birthday.daysUntil > 1 ? 'en' : ''}`;
             }
+
+            birthdayList += `${displayIndex}. **${member.displayName}**\n<@${birthday.userId}>\n📅 **Datum:** ${birthday.day}. ${birthday.monthName}\n⏰ **Wann:** ${timeUntil}\n\n`;
         }
 
         if (displayIndex === 0) {
@@ -48,27 +51,6 @@ export default {
             return await InteractionHelper.safeEditReply(interaction, {
                 embeds: [embed]
             });
-        }
-
-        let birthdayList = `🎂 **Die nächsten 5 Geburtstage**\n\nDas sind die nächsten 5 Geburtstage auf ${interaction.guild!.name}:\n\n`;
-        displayIndex = 0;
-        for (const birthday of next5) {
-            const member = await interaction.guild!.members.fetch(birthday.userId).catch(() => null);
-            if (!member) {
-                continue;
-            }
-            displayIndex++;
-
-            let timeUntil = '';
-            if (birthday.daysUntil === 0) {
-                timeUntil = '🎉 **Heute!**';
-            } else if (birthday.daysUntil === 1) {
-                timeUntil = '📅 **Morgen!**';
-            } else {
-                timeUntil = `In ${birthday.daysUntil} Tag${birthday.daysUntil > 1 ? 'en' : ''}`;
-            }
-
-            birthdayList += `${displayIndex}. **${member.displayName}**\n<@${birthday.userId}>\n📅 **Datum:** ${birthday.day}. ${birthday.monthName}\n⏰ **Wann:** ${timeUntil}\n\n`;
         }
 
         birthdayList += `Nutze /birthday set, um deinen Geburtstag einzutragen!`;

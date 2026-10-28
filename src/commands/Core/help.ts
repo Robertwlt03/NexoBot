@@ -129,8 +129,6 @@ export default {
         .setDescription("Zeigt das Hilfemenü mit allen verfügbaren Commands"),
 
     async execute(interaction, guildConfig, client) {
-        
-        const { MessageFlags } = await import('discord.js');
         await InteractionHelper.safeDefer(interaction);
         
         const { embeds, components } = await createInitialHelpMenu(client);

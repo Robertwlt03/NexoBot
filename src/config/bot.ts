@@ -2,6 +2,7 @@ import type { Guild, PresenceData } from 'discord.js';
 import { logger } from '../utils/logger.js';
 import { getEnv } from './env.js';
 import { LINKS } from './links.js';
+import { normalizeCategoryKey } from './commands/commandCategories.js';
 
 const env = getEnv();
 
@@ -565,10 +566,6 @@ const COMMAND_CATEGORY_FEATURE_MAP: Record<string, FeatureKey> = {
   welcome: "welcome",
 };
 
-function normalizeCategoryKey(category: string | null | undefined): string {
-  return String(category || "").trim().toLowerCase().replace(/\s+/g, "_");
-}
-
 export function getCommandPrefix(): string {
   return botConfig.commands?.prefix ?? "!";
 }
@@ -657,13 +654,6 @@ export function getColor(path: string | number, fallback: string = "#99AAB5"): n
   }
   // Non-hex results (a color group or a non-hex fallback) are passed through unchanged, as before.
   return result as number;
-}
-
-export function getRandomColor(): string {
-  const colors = Object.values(botConfig.embeds.colors).flatMap((color) =>
-    typeof color === "string" ? color : Object.values(color),
-  );
-  return colors[Math.floor(Math.random() * colors.length)];
 }
 
 export default botConfig;

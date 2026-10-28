@@ -13,7 +13,7 @@ import {
   Badge, ColorInput, Empty, Field, Modal, Notice, NumberInput, PageHeader, Select, Spinner, Switch, SwitchRow, TableWrap, TextArea, TextInput,
 } from '../components/ui';
 import { Icon } from '../icons';
-import { equipItem, num, resolveCosmetics, useMutation } from '../me/api';
+import { equipItem, resolveCosmetics, useMutation } from '../me/api';
 import { ItemVisual, Bernis, RarityLabel } from '../me/visuals';
 
 // ---------- Labels ----------

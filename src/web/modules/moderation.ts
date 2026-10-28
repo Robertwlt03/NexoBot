@@ -3,7 +3,6 @@
 
 import express from 'express';
 import type { Request } from 'express';
-import type { Guild } from 'discord.js';
 import type { DashboardModule } from './index.js';
 import type { CasesPage, NoteType, NotesPage, UserNoteDto, WarningsPage } from '../dto/moderation.js';
 import { NOTE_MAX_LENGTH, NOTE_TYPE_LABELS } from '../dto/moderation.js';
@@ -12,13 +11,14 @@ import { HttpError, badRequest, body, str } from '../http.js';
 import { ACTION_LABELS, getModerationCases } from '../../utils/moderation.js';
 import { WarningService } from '../../services/moderation/warningService.js';
 import { addUserNote, getGuildUserNotes, getUserNotes, saveUserNotes } from '../../services/moderation/userNotesService.js';
-import type { NexoClient } from '../../types/index.js';
+import { isSnowflake } from '../../utils/validation.js';
+import { resolveNames } from '../moduleSupport.js';
 
 const PAGE_SIZE = 25;
 const ALL = 10_000;
 
 function userId(value: unknown, field = 'Nutzer'): string {
-  if (typeof value !== 'string' || !/^\d{17,20}$/.test(value)) throw badRequest(`${field}: gültige Nutzer-ID erwartet.`);
+  if (!isSnowflake(value)) throw badRequest(`${field}: gültige Nutzer-ID erwartet.`);
   return value;
 }
 
@@ -31,17 +31,6 @@ function paginate<T>(items: T[], req: Request): { items: T[]; total: number; pag
   const pages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
   const page = Math.min(pages, Math.max(1, Number.parseInt(String(req.query.page ?? '1'), 10) || 1));
   return { items: items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), total: items.length, page, pageSize: PAGE_SIZE };
-}
-
-/** Display names for the ids on one page (at most PAGE_SIZE * 2 lookups, in parallel), falling back to the id. */
-async function resolveNames(client: NexoClient, guild: Guild, ids: string[]): Promise<Map<string, string>> {
-  const entries = await Promise.all([...new Set(ids)].slice(0, PAGE_SIZE * 2).map(async (id): Promise<[string, string]> => {
-    const member = guild.members.cache.get(id);
-    if (member) return [id, member.displayName];
-    const user = client.users.cache.get(id) ?? await client.users.fetch(id).catch(() => null);
-    return [id, user ? (user.globalName ?? user.username) : id];
-  }));
-  return new Map(entries);
 }
 
 const noteType = (type: string): NoteType => (Object.hasOwn(NOTE_TYPE_LABELS, type) ? type as NoteType : 'neutral');
@@ -88,15 +77,15 @@ export const moderationModule: DashboardModule = {
       const warnings = (await WarningService.getGuildWarnings(guild.id, { moderatorId: queryId(req, 'moderatorId', 'Moderator'), limit: ALL }))
         .filter((warning) => !filterUser || warning.userId === filterUser);
       const { items, ...paging } = paginate(warnings, req);
-      const names = await resolveNames(client, guild, items.flatMap((w) => [w.userId, w.moderatorId]));
+      const names = await resolveNames(client, guild, items.flatMap((w) => [w.userId, w.moderatorId]), PAGE_SIZE * 2);
       const result: WarningsPage = {
         ...paging,
         warnings: items.map((w) => ({
           id: w.id,
           userId: w.userId,
-          userName: names.get(w.userId) ?? w.userId,
+          userName: names[w.userId],
           moderatorId: w.moderatorId,
-          moderatorName: names.get(w.moderatorId) ?? w.moderatorId,
+          moderatorName: names[w.moderatorId],
           reason: w.reason,
           timestamp: w.timestamp,
         })),
@@ -133,13 +122,13 @@ export const moderationModule: DashboardModule = {
         .flatMap(([id, list]) => list.map((note) => ({ ...note, userId: id })))
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       const { items, ...paging } = paginate(notes, req);
-      const names = await resolveNames(client, guild, items.map((note) => note.userId));
+      const names = await resolveNames(client, guild, items.map((note) => note.userId), PAGE_SIZE * 2);
       const result: NotesPage = {
         ...paging,
         notes: items.map((note): UserNoteDto => ({
           id: note.id,
           userId: note.userId,
-          userName: names.get(note.userId) ?? note.userId,
+          userName: names[note.userId],
           content: note.content,
           type: noteType(note.type),
           author: note.author,

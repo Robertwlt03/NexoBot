@@ -1,14 +1,8 @@
 // giveaways.js
 
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { logger } from './logger.js';
 import { NexoBotError, ErrorTypes } from './errorHandler.js';
-import { unwrapReplitData } from './database.js';
-import { 
-    createGiveawayEmbed as createGiveawayEmbedService,
-    createGiveawayButtons as createGiveawayButtonsService,
-    selectWinners as selectWinnersService
-} from '../services/giveawayService.js';
+import { unwrapReplitData } from './database/guildConfigStorage.js';
 import type { NexoClient } from '../types/index.js';
 
 /** Stored giveaway record (`guild:{guildId}:giveaways`, keyed by messageId). */
@@ -141,72 +135,8 @@ export async function deleteGiveaway(client: NexoClient, guildId: string, messag
     }
 }
 
-export function createGiveawayEmbed(giveaway: Giveaway, status: string, winners: string[] = []) {
-    try {
-        return createGiveawayEmbedService(giveaway, status, winners);
-    } catch (error) {
-        logger.error('Error creating giveaway embed:', error);
-        throw error;
-    }
-}
-
 export function isGiveawayEnded(giveaway: Giveaway | null | undefined): boolean {
     if (!giveaway) return true;
     const endTime = giveaway.endsAt || giveaway.endTime;
     return Date.now() > endTime!;
-}
-
-export function pickWinners(entrants: string[], count: number): string[] {
-    try {
-        return selectWinnersService(entrants, count);
-    } catch (error) {
-        logger.error('Error picking winners:', error);
-        
-        if (!entrants || entrants.length === 0) return [];
-        const requested = Math.min(count, entrants.length);
-        const shuffled = [...entrants];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        return shuffled.slice(0, requested);
-    }
-}
-
-export function giveawayEmbed(giveaway: Giveaway, status: string, winners: string[] = []) {
-    return createGiveawayEmbed(giveaway, status, winners);
-}
-
-export function giveawayButtons(ended = false) {
-    try {
-        return createGiveawayButtonsService(ended);
-    } catch (error) {
-        logger.error('Error creating giveaway buttons:', error);
-        
-        const row = new ActionRowBuilder<ButtonBuilder>();
-        if (ended) {
-            row.addComponents(
-                new ButtonBuilder()
-                    .setCustomId('giveaway_reroll')
-                    .setLabel('🎲 Neu auslosen')
-                    .setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder()
-                    .setCustomId('giveaway_view')
-                    .setLabel('👁️ Gewinner anzeigen')
-                    .setStyle(ButtonStyle.Primary)
-            );
-        } else {
-            row.addComponents(
-                new ButtonBuilder()
-                    .setCustomId('giveaway_join')
-                    .setLabel('🎉 Teilnehmen')
-                    .setStyle(ButtonStyle.Success),
-                new ButtonBuilder()
-                    .setCustomId('giveaway_end')
-                    .setLabel('🛑 Beenden')
-                    .setStyle(ButtonStyle.Danger)
-            );
-        }
-        return row;
-    }
 }

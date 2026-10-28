@@ -3,7 +3,6 @@ import {
     ActionRowBuilder,
     StringSelectMenuBuilder,
     StringSelectMenuOptionBuilder,
-    ChannelType,
     MessageFlags,
     ComponentType,
     EmbedBuilder,
@@ -14,11 +13,10 @@ import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import { successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 import { NexoBotError, ErrorTypes, replyUserError } from '../../../utils/errorHandler.js';
-import { 
-    getJoinToCreateConfig, 
+import {
+    getJoinToCreateConfig,
     updateJoinToCreateConfig,
-    removeJoinToCreateTrigger,
-    addJoinToCreateTrigger
+    removeJoinToCreateTrigger
 } from '../../../utils/database.js';
 import type { JoinToCreateChannelOptions, JoinToCreateConfig } from '../../../utils/database.js';
 import type { GuildTextBasedChannel, StringSelectMenuInteraction, VoiceChannel } from 'discord.js';

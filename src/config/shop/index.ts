@@ -1,16 +1,6 @@
-import { shopItems, getItemById, getItemsByType, getItemPrice, validatePurchase } from './items.js';
-import type { ShopItem, ShopUserData } from './items.js';
 import { botConfig } from '../bot.js';
 
 const { currency } = botConfig.economy;
-
-export interface ShopCategory {
-    id: string;
-    name: string;
-    description: string;
-    icon: string;
-    itemTypes: string[];
-}
 
 export const shopConfig = {
     name: 'Nexo Shop',
@@ -121,63 +111,3 @@ discount: 0.2,
         }
     }
 };
-
-export {
-    shopItems,
-    getItemById,
-    getItemsByType,
-    getItemPrice,
-    validatePurchase
-};
-
-export function getCurrentPrice(
-    itemId: string,
-    { quantity = 1, userData = null }: { quantity?: number; userData?: ShopUserData | null } = {},
-): number {
-    const basePrice = getItemPrice(itemId) * quantity;
-    
-    let discount = 0;
-    
-    const now = new Date();
-    if (shopConfig.events.sales.enabled) {
-        const today = now.getDay();
-        const sale = shopConfig.events.sales.schedule.find(s => s.day === today);
-        if (sale) {
-            discount += sale.discount;
-        }
-    }
-    
-    if (userData) {
-        if (userData.roles?.includes('premium')) {
-            discount += 0.1;
-        }
-        
-        if (quantity >= 10) {
-discount += 0.1;
-        }
-    }
-    
-    discount = Math.max(0, Math.min(1, discount));
-    
-    return Math.floor(basePrice * (1 - discount));
-}
-
-export function getCategoryForItem(itemType: string): Omit<ShopCategory, 'itemTypes'> & { itemTypes?: string[] } {
-    return shopConfig.categories.find(cat => 
-        cat.itemTypes.includes(itemType)
-    ) || {
-        id: 'other',
-        name: 'Sonstiges',
-        description: 'Verschiedene Items',
-        icon: '📦'
-    };
-}
-
-export function getItemsInCategory(categoryId: string): ShopItem[] {
-    const category = shopConfig.categories.find(cat => cat.id === categoryId);
-    if (!category) return [];
-    
-    return shopItems.filter(item => 
-        category.itemTypes.includes(item.type)
-    );
-}

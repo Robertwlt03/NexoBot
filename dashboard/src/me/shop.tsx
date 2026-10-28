@@ -1,10 +1,10 @@
 // Shop building blocks shared by the shop and the black market: filters, item grid, detail modal with buy/gift.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties } from 'react';
 import { Link } from 'react-router';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { COSMETIC_SLOTS, RARITIES, RARITY_LABELS, SLOT_LABELS, levelUpReward } from '../../../src/shared/cosmetics';
+import { COSMETIC_SLOTS, RARITIES, RARITY_LABELS, SLOT_LABELS } from '../../../src/shared/cosmetics';
 import type { CosmeticItem, CosmeticSlot, Rarity } from '../../../src/shared/cosmetics';
 import type { PurchaseResult, ShopBundle, ShopEvent, ShopListing } from '../../../src/web/dto/profile';
 import { useUser } from '../api';
@@ -15,13 +15,12 @@ import { Empty, Field, Notice, Pager, Select, Switch, TextInput } from '../compo
 import {
   cardSubject, countdown, equipItem, formatDate, isEquipped, reducedMotion, resolveCosmetics, startsIn, useEquip, useMe, useMutation, useNow, useWalletUpdate,
 } from './api';
-import { Glyph, ItemVisual, Bernis, Price, RARITY_CLASS, RARITY_TILE, RarityLabel, backgroundStyle } from './visuals';
+import { Glyph, ItemVisual, Bernis, Price, RARITY_CLASS, RARITY_TILE, backgroundStyle } from './visuals';
 import { ProductDialog } from './ProductDialog';
 import { BundleSection } from './bundles';
 import { Celebration } from './Celebration';
 import { EventBackdrop, SCENE_ROOM, eventTheme } from './EventScene';
 import { EventIcon } from './EventIcon';
-import { Icon } from '../icons';
 import { MOTION } from '../components/motion';
 
 export type ShopVariant = 'shop' | 'blackmarket';

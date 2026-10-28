@@ -93,8 +93,6 @@ export default {
             const subcommand = interaction.options.getSubcommand();
             await InteractionHelper.safeDefer(interaction, { flags: MessageFlags.Ephemeral });
 
-            let responseEmbed: unknown;
-
             if (subcommand === "setup") {
                 await handleSetupSubcommand(interaction, client);
                 return;

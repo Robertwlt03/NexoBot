@@ -1,6 +1,6 @@
 import type { Command } from '../../../types/index.js';
-import { getColor, botConfig } from '../../../config/bot.js';
-import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, type TextChannel } from 'discord.js';
+import { botConfig } from '../../../config/bot.js';
+import { SlashCommandBuilder, MessageFlags, type TextChannel } from 'discord.js';
 import { successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 import { replyUserError, ErrorTypes } from '../../../utils/errorHandler.js';

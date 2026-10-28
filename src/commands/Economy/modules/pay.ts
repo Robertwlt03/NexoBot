@@ -1,7 +1,7 @@
 import type { Command } from '../../../types/index.js';
 import { SlashCommandBuilder } from 'discord.js';
-import { createEmbed, errorEmbed, successEmbed, infoEmbed, warningEmbed } from '../../../utils/embeds.js';
-import { getEconomyData, addMoney, removeMoney, setEconomyData } from '../../../utils/economy.js';
+import { createEmbed, successEmbed } from '../../../utils/embeds.js';
+import { getEconomyData } from '../../../utils/economy.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { logger } from '../../../utils/logger.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
@@ -91,7 +91,7 @@ export default {
                 );
             }
 
-            const result = await EconomyService.transferMoney(
+            await EconomyService.transferMoney(
                 client, 
                 guildId, 
                 senderId, 

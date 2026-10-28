@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { TransactionPage } from '../../../src/web/dto/profile';
 import { useApi } from '../api';
 import { Card, Empty, Notice, PageHeader, Pager, Spinner, Stats, TableWrap } from '../components/ui';
-import { formatDateTime, num, useMe } from './api';
+import { formatDateTime, useMe } from './api';
 import { Bernis } from './visuals';
 
 export default function HistoryPage() {

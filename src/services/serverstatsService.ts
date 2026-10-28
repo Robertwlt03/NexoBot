@@ -84,19 +84,6 @@ export function formatCounterChannelName(type: string, count: number | string): 
     .replaceAll('{count}', String(count));
 }
 
-export function getCounterActionMessage(action: string, values: Record<string, unknown> = {}): string | null {
-  const messages: Record<string, string | undefined> | undefined = botConfig.counters?.messages;
-  const template = messages?.[action];
-  if (!template) {
-    return null;
-  }
-
-  return Object.entries(values).reduce(
-    (message, [key, value]) => message.replaceAll(`{${key}}`, String(value)),
-    template,
-  );
-}
-
 export async function getGuildCounterStats(guild: Guild): Promise<{ totalCount: number; botCount: number; humanCount: number }> {
   let memberCollection = guild.members.cache;
 
@@ -408,7 +395,7 @@ export async function changeServerCounterType(
   return { counter, oldType, nameUpdated };
 }
 
-function getCounterTypeDisplay(type: string) {
+export function getCounterTypeDisplay(type: string): string {
   return `${getCounterEmoji(type)} ${getCounterTypeLabel(type)}`;
 }
 

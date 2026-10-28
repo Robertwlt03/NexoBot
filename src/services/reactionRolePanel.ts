@@ -14,9 +14,6 @@ import { messageEmbed } from '../utils/embedCard.js';
 
 /** Select-menu panel: `roles` is a list of role ids (the legacy emoji -> role mapping is never edited). */
 export type SelectMenuPanel = ReactionRoleMessage & { roles: string[] };
-
-export const MAX_REACTION_ROLE_PANELS = 5;
-export const MAX_REACTION_ROLES_PER_PANEL = 25;
 const ROLE_FIELD = 'Verfügbare Rollen';
 
 export interface PanelActor {

@@ -1,10 +1,9 @@
-import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, ComponentType, LabelBuilder, RoleSelectMenuBuilder } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, ComponentType, LabelBuilder, RoleSelectMenuBuilder } from 'discord.js';
 import type { ChatInputCommandInteraction, GuildMember } from 'discord.js';
 import type { Command } from '../../types/index.js';
 import { createEmbed, successEmbed } from '../../utils/embeds.js';
-import { getColor } from '../../config/bot.js';
 import { logger } from '../../utils/logger.js';
-import { withErrorHandling, createError, ErrorTypes, replyUserError } from '../../utils/errorHandler.js';
+import { withErrorHandling, ErrorTypes, replyUserError } from '../../utils/errorHandler.js';
 import ApplicationService, { createApplicationRole, getApplicationStatusPresentation, reviewApplicationWithEffects } from '../../services/applicationService.js';
 import {
     getApplication,

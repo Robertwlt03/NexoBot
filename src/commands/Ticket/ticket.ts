@@ -1,7 +1,6 @@
 import type { Command } from '../../types/index.js';
-import { getColor } from '../../config/bot.js';
-import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, MessageFlags, type GuildMember, type TextChannel } from 'discord.js';
-import { createEmbed, successEmbed, infoEmbed, warningEmbed } from '../../utils/embeds.js';
+import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags, type GuildMember, type TextChannel } from 'discord.js';
+import { successEmbed } from '../../utils/embeds.js';
 import { getGuildConfig, setGuildConfig } from '../../services/config/guildConfig.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { logger } from '../../utils/logger.js';
@@ -210,55 +209,6 @@ const dmOnClose = interaction.options.getBoolean("dm_on_close") !== false;
                     dmOnClose: dmOnClose,
                     commandName: 'ticket_setup'
                 });
-
-                const logEmbed = createEmbed({
-                    title: "Einrichtung des Ticket-Systems (Konfigurations-Log)",
-                    description: `Das Ticket-Panel wurde von ${interaction.user} in ${panelChannel} eingerichtet.`,
-                    color: getColor('warning')
-                })
-                    .addFields(
-                        {
-                            name: "Panel-Kanal",
-                            value: panelChannel.toString(),
-                            inline: true,
-                        },
-                        {
-                            name: "Ticket-Kategorie",
-                            value: categoryChannel
-                                ? categoryChannel.toString()
-                                : "Keine angegeben.",
-                            inline: true,
-                        },
-                        {
-                            name: "Kategorie für geschlossene Tickets",
-                            value: closedCategoryChannel
-                                ? closedCategoryChannel.toString()
-                                : "Keine angegeben.",
-                            inline: true,
-                        },
-                        {
-                            name: "Team-Rolle",
-                            value: staffRole
-                                ? staffRole.toString()
-                                : "Keine angegeben.",
-                            inline: true,
-                        },
-                        {
-                            name: "Max. Tickets pro Nutzer",
-                            value: maxTicketsPerUser.toString(),
-                            inline: true,
-                        },
-                        {
-                            name: "DM beim Schließen",
-                            value: dmOnClose ? 'Aktiviert' : 'Deaktiviert',
-                            inline: true,
-                        },
-                        {
-                            name: "Moderator",
-                            value: `${interaction.user.tag} (${interaction.user.id})`,
-                            inline: false,
-                        },
-                    );
 
             } catch (error) {
                 logger.error('Ticket setup error', {

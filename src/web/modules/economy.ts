@@ -15,6 +15,7 @@ import { getGuildConfig, updateGuildConfig } from '../../services/config/guildCo
 import { BotConfig } from '../../config/bot.js';
 import { logger } from '../../utils/logger.js';
 import type { NexoClient } from '../../types/index.js';
+import { fetchMember } from '../moduleSupport.js';
 
 async function readSettings(client: NexoClient, guildId: string): Promise<EconomySettings> {
   const config = await getGuildConfig(client, guildId);
@@ -38,10 +39,8 @@ async function resolveAccount(client: NexoClient, guild: Guild, userId: string, 
 }
 
 /** Same checks as the add/remove modals in /economy dashboard. */
-async function fetchMember(guild: Guild, value: unknown): Promise<GuildMember> {
-  if (typeof value !== 'string' || !/^\d{17,20}$/.test(value.trim())) throw badRequest('Bitte gib eine gültige Nutzer-ID ein.');
-  const member = await guild.members.fetch(value.trim()).catch(() => null);
-  if (!member) throw badRequest('Der angegebene Nutzer ist nicht auf diesem Server.');
+async function fetchAccountMember(guild: Guild, value: unknown): Promise<GuildMember> {
+  const member = await fetchMember(guild, value);
   if (member.user.bot) throw badRequest('Bots haben kein Wirtschaftskonto.');
   return member;
 }
@@ -91,13 +90,13 @@ export const economyModule: DashboardModule = {
 
     router.get('/members/:userId', async (req, res) => {
       const { guild } = locals(res);
-      res.json(await readMember(client, guild, await fetchMember(guild, req.params.userId)));
+      res.json(await readMember(client, guild, await fetchAccountMember(guild, req.params.userId)));
     });
 
     router.post('/members/:userId', async (req, res) => {
       const { guild, member: admin } = locals(res);
       const input = body(req.body);
-      const member = await fetchMember(guild, req.params.userId);
+      const member = await fetchAccountMember(guild, req.params.userId);
       const amount = int(input.amount, 'Betrag', 1, ECONOMY_MAX_AMOUNT);
       if (input.type !== 'wallet' && input.type !== 'bank') throw badRequest('Der Typ muss entweder „wallet“ oder „bank“ sein.');
       if (input.action === 'add') {

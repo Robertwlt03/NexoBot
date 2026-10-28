@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { berlinSlot, buildHeatmap, insightRangeOf, isSnowflake, retentionCutoff } from '../src/services/statsTracker.js';
+import { berlinSlot, buildHeatmap, insightRangeOf, retentionCutoff } from '../src/services/statsTracker.js';
+import { isSnowflake } from '../src/utils/validation.js';
 import { DETAIL_RETENTION_DAYS } from '../src/web/dto/insightsDetail.js';
 
 test('UTC hours map to Berlin weekday (0 = Monday) and hour, DST included', () => {

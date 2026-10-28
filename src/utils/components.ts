@@ -2,7 +2,6 @@
 
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } from 'discord.js';
 import type { APISelectMenuOption, SelectMenuComponentOptionData, StringSelectMenuOptionBuilder } from 'discord.js';
-import { getColor } from '../config/bot.js';
 
 export function getConfirmationButtons(customIdPrefix: string = 'confirm'): ActionRowBuilder<ButtonBuilder> {
     return new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -98,71 +97,4 @@ export function createButton(customId: string, label: string, style: string = 'p
     }
     
     return button;
-}
-
-export function createLinkButton(label: string, url: string, emoji: string | null = null): ButtonBuilder {
-    
-    if (!label || typeof label !== 'string') {
-        throw new Error('label must be a non-empty string');
-    }
-    if (!url || typeof url !== 'string') {
-        throw new Error('url must be a non-empty string');
-    }
-    
-    const validLabel = label.substring(0, 80);
-    
-    const button = new ButtonBuilder()
-        .setLabel(validLabel)
-        .setURL(url)
-        .setStyle(ButtonStyle.Link);
-    
-    if (emoji && typeof emoji === 'string' && emoji.length > 0) {
-        try {
-            button.setEmoji(emoji);
-        } catch (error) {
-            
-        }
-    }
-    
-    return button;
-}
-
-export interface ButtonRowItem {
-    customId?: string;
-    label: string;
-    url?: string;
-    style?: string;
-    emoji?: string | null;
-    disabled?: boolean;
-}
-
-export function createButtonRow(buttons: (ButtonRowItem | null | undefined)[]): ActionRowBuilder<ButtonBuilder> {
-    const row = new ActionRowBuilder<ButtonBuilder>();
-    
-    if (!Array.isArray(buttons) || buttons.length === 0) {
-        return row;
-    }
-
-    for (const button of buttons.slice(0, 5)) {
-        if (!button) continue;
-        
-        try {
-            if (button.url) {
-                row.addComponents(createLinkButton(button.label, button.url, button.emoji));
-            } else {
-                row.addComponents(createButton(
-                    button.customId!,
-                    button.label,
-                    button.style || 'primary',
-                    button.emoji,
-                    button.disabled || false
-                ));
-            }
-        } catch (error) {
-            
-            continue;
-        }
-    }
-    
-    return row;
 }

@@ -218,13 +218,3 @@ export async function setInDb(key: string, value: unknown, ttl: number | null = 
         return false;
     }
 }
-
-export async function deleteFromDb(key: string): Promise<boolean> {
-    try {
-        await db.delete(key);
-        return true;
-    } catch (error) {
-        logger.error(`Error deleting key ${key}:`, error);
-        return false;
-    }
-}

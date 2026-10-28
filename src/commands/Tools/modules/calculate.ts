@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, type MessageComponentInteraction } from 'discord.js';
-import { createEmbed, successEmbed, infoEmbed, warningEmbed } from '../../../utils/embeds.js';
+import { successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 import { replyUserError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
@@ -23,10 +23,6 @@ interface CalculationHistoryEntry {
 }
 
 const calculationContexts = new Map<string, CalculationContext>();
-
-function evaluate(expression: string) {
-    return evaluateMathExpression(expression);
-}
 
 const calculationHistory = new Map<string, CalculationHistoryEntry[]>();
 const MAX_HISTORY = 5;
@@ -92,7 +88,7 @@ export default {
 
         let result;
         try {
-            result = evaluate(expression);
+            result = evaluateMathExpression(expression);
 
             let formattedResult;
             if (typeof result === "number") {
