@@ -2,7 +2,7 @@ import { Events } from 'discord.js';
 import { getWelcomeConfig, getUserApplications, deleteApplication } from '../utils/database.js';
 import { sendGreeting } from '../utils/welcome.js';
 import { logEvent, EVENT_TYPES } from '../services/loggingService.js';
-import { getServerCounters, updateCounter } from '../services/serverstatsService.js';
+import { refreshCounters } from '../services/serverstats/serverstats.js';
 import { backUpBirthdayOnLeave } from '../services/birthdays/birthdays.js';
 import { deleteUserLevelData } from '../services/leveling/leveling.js';
 import { logger } from '../utils/logger.js';
@@ -52,12 +52,7 @@ export default {
         }
 
         try {
-            const counters = await getServerCounters(member.client, guild.id);
-            for (const counter of counters) {
-                if (counter && counter.type && counter.channelId && counter.enabled !== false) {
-                    await updateCounter(member.client, guild, counter);
-                }
-            }
+            await refreshCounters(member.client, guild);
         } catch (error) {
             logger.debug('Error updating counters on member leave:', error);
         }

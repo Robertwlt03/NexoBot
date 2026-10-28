@@ -12,7 +12,7 @@ import { HttpError, badRequest, body, channel } from '../http.js';
 import { requireBotPermissions } from '../moduleSupport.js';
 import {
   changeServerCounterType, createServerCounter, getServerCounters, performDeletionByCounterId,
-} from '../../services/serverstatsService.js';
+} from '../../services/serverstats/serverstats.js';
 import type { NexoClient } from '../../types/index.js';
 
 async function readState(client: NexoClient, guild: Guild): Promise<ServerStatsState> {

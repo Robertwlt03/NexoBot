@@ -11,7 +11,7 @@ import config from './config/application.js';
 import { initializeDatabase } from './utils/database.js';
 import { db } from './utils/database/wrapper.js';
 import { validateBotEnv } from './config/env.js';
-import { getServerCounters, saveServerCounters, updateCounter } from './services/serverstatsService.js';
+import { refreshCounters } from './services/serverstats/serverstats.js';
 import { logger, startupLog, shutdownLog } from './utils/logger.js';
 import { checkBirthdays } from './services/birthdays/birthdays.js';
 import { checkGiveaways } from './services/giveawayService.js';
@@ -22,7 +22,6 @@ import { initializeMusic } from './services/music/riffySetup.js';
 import { shutdownMusic } from './services/music/playerHandler.js';
 import { readFileSync } from 'node:fs';
 import { EXPECTED_SCHEMA_VERSION, EXPECTED_SCHEMA_LABEL } from './config/database/schemaVersion.js';
-import type { ServerCounter } from './services/serverstatsService.js';
 import type { NexoClient } from './types/index.js';
 import { createDashboardRouter } from './web/dashboard.js';
 import { startStatsTracker, stopStatsTracker } from './services/statsTracker.js';
@@ -296,29 +295,7 @@ class NexoBot extends Client {
     
     for (const [guildId, guild] of this.guilds.cache) {
       try {
-        const counters = await getServerCounters(this.ready, guildId);
-        const validCounters: ServerCounter[] = [];
-        const orphanedCounters: ServerCounter[] = [];
-        
-        for (const counter of counters) {
-          if (counter && counter.type && counter.channelId && counter.enabled !== false) {
-            const channel = guild.channels.cache.get(counter.channelId);
-            if (channel) {
-              validCounters.push(counter);
-              await updateCounter(this.ready, guild, counter);
-            } else {
-              orphanedCounters.push(counter);
-              logger.info(`Removing orphaned counter ${counter.id} (type: ${counter.type}, deleted channel: ${counter.channelId}) from guild ${guildId}`);
-            }
-          }
-        }
-        
-        // Save cleaned counters if any were orphaned
-        // Save cleaned counters if any were orphaned
-        if (orphanedCounters.length > 0) {
-          await saveServerCounters(this.ready, guildId, validCounters);
-          logger.info(`Cleaned up ${orphanedCounters.length} orphaned counter(s) from guild ${guildId} during scheduled update`);
-        }
+        await refreshCounters(this.ready, guild);
       } catch (error) {
         logger.error(`Error updating counters for guild ${guildId}:`, error);
       }

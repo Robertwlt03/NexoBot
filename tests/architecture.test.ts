@@ -36,7 +36,6 @@ const SERVICES_WITH_DISCORD_VALUES = new Set<string>([
   'src/services/music/riffySetup.ts',
   'src/services/profileCardRenderer.ts',
   'src/services/reactionRolePanel.ts',
-  'src/services/serverstatsService.ts',
   'src/services/statsTracker.ts',
   'src/services/ticket.ts',
   'src/services/ticketPanel.ts',

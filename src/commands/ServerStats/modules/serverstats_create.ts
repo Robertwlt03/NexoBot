@@ -1,6 +1,6 @@
 import { PermissionFlagsBits, ChannelType } from 'discord.js';
-import { successEmbed } from '../../../utils/embeds.js';
-import { createServerCounter, getCounterTypeLabel } from '../../../services/serverstatsService.js';
+import { createServerCounter } from '../../../services/serverstats/serverstats.js';
+import { createdEmbed } from '../../../services/serverstats/views.js';
 import { logger } from '../../../utils/logger.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
@@ -44,7 +44,7 @@ export async function handleCreate(interaction: ChatInputCommandInteraction, cli
         }
 
         await InteractionHelper.safeEditReply(interaction, {
-            embeds: [successEmbed(`**Zähler erfolgreich erstellt!**\n\n**Typ:** ${getCounterTypeLabel(type)}\n**Kanaltyp:** ${targetChannel.type === ChannelType.GuildVoice ? 'Sprachkanal' : 'Textkanal'}\n**Kategorie:** ${category}\n**Kanal:** ${targetChannel}\n**Kanalname:** ${targetChannel.name}\n**Zähler-ID:** \`${newCounter.id}\`\n\nDer Zähler wird automatisch alle 15 Minuten aktualisiert.\n\nNutze \`/serverstats list\`, um alle Zähler anzusehen.`)]
+            embeds: [createdEmbed(type, targetChannel.type === ChannelType.GuildVoice, `<#${category.id}>`, targetChannel, newCounter.id)]
         }).catch(logger.error);
 
     } catch (error) {
