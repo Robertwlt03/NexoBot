@@ -50,7 +50,7 @@ Sammeldatei Schritt für Schritt, bis sie am Ende verschwindet.
 ### Welle 1: kleine Features mit Daten in `utils/database.ts`
 
 - [x] Leveling (Pilot, PR #32): Kern, Store mit einer Ranglisten-Abfrage, Views
-- [ ] Geburtstage: `birthdayService.ts`, Commands `Birthday/`, Web `birthdays.ts`; Daten aus `utils/database.ts`
+- [x] Geburtstage: `birthdayService.ts`, Commands `Birthday/`, Web `birthdays.ts`; Daten aus `utils/database.ts`
       (`getGuildBirthdays`, `setBirthday`, `deleteBirthday`); `/birthday next` holt Mitglieder einzeln
 - [ ] Server-Statistiken: `serverstatsService.ts`, Commands `ServerStats/`, Buttons `counter`, Web `serverstats.ts`
 - [ ] Gewinnspiele: `giveawayService.ts`, `giveawayActions.ts`, `utils/giveaways.ts`, Buttons `giveaway`; der Service

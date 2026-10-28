@@ -16,8 +16,6 @@ export {
 } from './database/wrapper.js';
 
 export {
-    getGuildBirthdaysKey,
-    getBirthdayTrackingKey,
     getEconomyKey,
     getEconomyPrefix,
     getAFKKey,
@@ -44,7 +42,6 @@ export {
 import { db, getFromDb, setInDb } from './database/wrapper.js';
 import { unwrapReplitData } from './database/guildConfigStorage.js';
 import {
-    getGuildBirthdaysKey,
     getApplicationRolesKey,
     getApplicationSettingsKey,
     getUserApplicationsKey,
@@ -104,74 +101,6 @@ export const getColor = (path: string, fallback = "#000000"): string => {
 
     return typeof current === "string" ? current : fallback;
 };
-
-export interface BirthdayEntry {
-    month: number;
-    day: number;
-}
-
-export async function getGuildBirthdays(client: NexoClient, guildId: string): Promise<Record<string, BirthdayEntry>> {
-    const key = getGuildBirthdaysKey(guildId);
-    try {
-        if (!client.db || typeof client.db.get !== "function") {
-            logger.error("Database client is not available for getGuildBirthdays.");
-            return {};
-        }
-
-        const rawData = await client.db.get<Record<string, BirthdayEntry>>(key, {});
-        return unwrapReplitData(rawData) || {};
-    } catch (error) {
-        logger.error(`Error retrieving birthdays for guild ${guildId}:`, error);
-        return {};
-    }
-}
-
-export async function setBirthday(client: NexoClient, guildId: string, userId: string, month: number, day: number): Promise<boolean> {
-    try {
-        if (!client.db || typeof client.db.set !== "function") {
-            logger.error("Database client is not available for setBirthday.");
-            return false;
-        }
-
-        const key = getGuildBirthdaysKey(guildId);
-        const birthdays = await getGuildBirthdays(client, guildId);
-        birthdays[userId] = { month, day };
-        await client.db.set(key, birthdays);
-        return true;
-    } catch (error) {
-        logger.error(`Error setting birthday for user ${userId} in guild ${guildId}:`, error);
-        return false;
-    }
-}
-
-export async function deleteBirthday(client: NexoClient, guildId: string, userId: string): Promise<boolean> {
-    try {
-        if (!client.db || typeof client.db.set !== "function") {
-            logger.error("Database client is not available for deleteBirthday.");
-            return false;
-        }
-
-        const key = getGuildBirthdaysKey(guildId);
-        const birthdays = await getGuildBirthdays(client, guildId);
-        if (birthdays[userId]) {
-            delete birthdays[userId];
-            await client.db.set(key, birthdays);
-        }
-        return true;
-    } catch (error) {
-        logger.error(`Error deleting birthday for user ${userId} in guild ${guildId}:`, error);
-        return false;
-    }
-}
-
-export function getMonthName(monthNum: number): string {
-    const months = [
-        'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
-        'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
-    ];
-    const index = Math.max(0, Math.min(monthNum - 1, 11));
-    return monthNum >= 1 && monthNum <= 12 ? months[index] : 'Ungültiger Monat';
-}
 
 function isPostgresSqlReady(dbWrapper: NexoClient['db'] | undefined): boolean {
     return Boolean(

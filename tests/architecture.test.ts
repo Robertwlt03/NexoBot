@@ -46,8 +46,6 @@ const SERVICES_WITH_DISCORD_VALUES = new Set<string>([
 
 // Controllers go through a service; they never touch the database themselves.
 const CONTROLLERS_WITH_DB_ACCESS = new Set<string>([
-  'src/commands/Birthday/modules/birthday_list.ts',
-  'src/commands/Birthday/modules/next_birthdays.ts',
   'src/commands/Community/app-admin.ts',
   'src/commands/Community/apply.ts',
   'src/commands/Community/modules/app_dashboard.ts',

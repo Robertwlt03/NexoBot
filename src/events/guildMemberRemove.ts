@@ -3,11 +3,10 @@ import { getWelcomeConfig, getUserApplications, deleteApplication } from '../uti
 import { sendGreeting } from '../utils/welcome.js';
 import { logEvent, EVENT_TYPES } from '../services/loggingService.js';
 import { getServerCounters, updateCounter } from '../services/serverstatsService.js';
-import { getGuildBirthdays, deleteBirthday } from '../utils/database.js';
+import { backUpBirthdayOnLeave } from '../services/birthdays/birthdays.js';
 import { deleteUserLevelData } from '../services/leveling/leveling.js';
 import { logger } from '../utils/logger.js';
 import { recordLeave } from '../services/statsTracker.js';
-import type { BirthdayEntry } from '../utils/database.js';
 import type { BotEvent } from '../types/index.js';
 
 export default {
@@ -64,15 +63,7 @@ export default {
         }
 
         try {
-            const birthdays = await getGuildBirthdays(member.client, guild.id);
-            if (birthdays[user.id]) {
-                const backupKey = `guild:${guild.id}:birthdays:left`;
-                const backup = (await member.client.db.get<Record<string, BirthdayEntry>>(backupKey)) || {};
-                backup[user.id] = birthdays[user.id];
-                await member.client.db.set(backupKey, backup);
-                await deleteBirthday(member.client, guild.id, user.id);
-                logger.debug(`Birthday backed up and removed for user ${user.id} in guild ${guild.id}`);
-            }
+            await backUpBirthdayOnLeave(member.client, guild.id, user.id);
         } catch (error) {
             logger.debug('Error handling birthday on member leave:', error);
         }
