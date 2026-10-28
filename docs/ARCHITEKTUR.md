@@ -55,7 +55,7 @@ Sammeldatei Schritt für Schritt, bis sie am Ende verschwindet.
 - [x] Server-Statistiken: `serverstatsService.ts`, Commands `ServerStats/`, Buttons `counter`, Web `serverstats.ts`
 - [x] Gewinnspiele: `giveawayService.ts`, `giveawayActions.ts`, `utils/giveaways.ts`, Buttons `giveaway`; der Service
       baut heute Embeds und Buttons (in die View verschieben)
-- [ ] Join-to-Create: `joinToCreateService.ts`, Event `voiceStateUpdate.ts`, Web `jointocreate.ts`; Daten aus
+- [x] Join-to-Create: `joinToCreateService.ts`, Event `voiceStateUpdate.ts`, Web `jointocreate.ts`; Daten aus
       `utils/database.ts` (Konfiguration, temporäre Kanäle)
 
 ### Welle 2: Features mit großen Dashboards in Discord
