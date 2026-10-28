@@ -1,7 +1,7 @@
 import { getColor } from '../../../config/bot.js';
 import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } from 'discord.js';
 import type { TextChannel } from 'discord.js';
-import { createEmbed } from '../../../utils/embeds.js';
+import { setupDoneEmbed } from '../../../services/leveling/views.js';
 import { getLevelingConfig, saveLevelingConfig } from '../../../services/leveling/leveling.js';
 import { botHasPermission } from '../../../utils/permissionGuard.js';
 import { NexoBotError, ErrorTypes, replyUserError } from '../../../utils/errorHandler.js';
@@ -134,17 +134,7 @@ export default {
 
             return await InteractionHelper.safeEditReply(interaction, {
                 embeds: [
-                    createEmbed({
-                        title: 'Leveling-System eingerichtet',
-                        description:
-                            `Das Leveling-System ist jetzt **aktiviert** und einsatzbereit.\n\n` +
-                            `**Level-up-Kanal:** ${channel}\n` +
-                            `**XP pro Nachricht:** ${xpMin} – ${xpMax}\n` +
-                            `**XP-Cooldown:** ${xpCooldown}s\n` +
-                            `**Level-up-Nachricht:** \`${message}\`\n\n` +
-                            `Mit \`/level dashboard\` kannst du diese Einstellungen jederzeit anpassen.`,
-                        color: 'success',
-                    }),
+                    setupDoneEmbed(channel, xpMin, xpMax, xpCooldown, message),
                 ],
             });
         }
