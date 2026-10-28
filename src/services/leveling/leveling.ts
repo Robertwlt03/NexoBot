@@ -1,69 +1,24 @@
-// leveling.js
+// Leveling service: the only entry point controllers (commands, events, web routes) use for leveling data.
+// Pure rules live in core.ts, storage in store.ts, Discord messages in views.ts.
 
-import type { GuildMember } from 'discord.js';
 import type { NexoClient } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
-import { getGuildConfig, setGuildConfig } from '../config/guildConfig.js';
 import { NexoBotError, ErrorTypes } from '../../utils/errorHandler.js';
-import { getUserLevelKey } from '../../utils/database/keys.js';
-const MAX_LEVEL = 1000;
-const MIN_LEVEL = 0;
+import { MAX_LEVEL, MIN_LEVEL, calculateTotalXp, defaultLevelingConfig, normalizeLevelData } from './core.js';
+import type { GuildLevelingConfig, LevelData } from './core.js';
+import * as store from './store.js';
 
-/** Leveling settings stored under `guildConfig.leveling`. */
-export interface GuildLevelingConfig {
-  enabled: boolean;
-  xpPerMessage: { min: number; max: number };
-  xpCooldown: number;
-  levelUpMessage: string;
-  levelUpChannel: string | null;
-  ignoredChannels: string[];
-  ignoredRoles: string[];
-  blacklistedUsers: string[];
-  roleRewards: Record<string, string>;
-  announceLevelUp: boolean;
-  xpMultiplier: number;
-  xpRange?: { min: number; max: number };
-  configured?: boolean;
-  [key: string]: unknown;
-}
+export { MAX_LEVEL, calculateTotalXp, getXpForLevel } from './core.js';
+export type { GuildLevelingConfig, LevelData } from './core.js';
+export { readMemberLevels as getMemberLevels, readMemberGuildIds as getMemberGuildIds } from './store.js';
 
-/** Stored per-user level record (`guild:{guildId}:leveling:users:{userId}`). */
-export interface LevelData {
-  xp: number;
-  level: number;
-  totalXp: number;
-  lastMessage: number;
+export interface LeaderboardEntry extends store.LeaderboardRow {
   rank: number;
 }
 
-export interface LeaderboardEntry extends LevelData {
-  userId: string;
-  username: string;
-  discriminator: string;
-}
-
-export function getXpForLevel(level: number): number {
-  if (!Number.isInteger(level) || level < 0 || level > MAX_LEVEL) {
-    throw new NexoBotError(
-      `Invalid level: ${level}. Must be between ${MIN_LEVEL} and ${MAX_LEVEL}`,
-      ErrorTypes.VALIDATION,
-      'Das Level muss eine gültige Zahl sein.'
-    );
-  }
-  return 5 * Math.pow(level, 2) + 50 * level + 50;
-}
-
-export function calculateTotalXp(level: number, currentXp = 0): number {
-  let total = currentXp;
-  for (let i = 0; i < level; i++) {
-    total += getXpForLevel(i);
-  }
-  return total;
-}
-
+/** The guild's top `limit` (1–100) members by total XP, ranked from 1. */
 export async function getLeaderboard(client: NexoClient, guildId: string, limit = 10): Promise<LeaderboardEntry[]> {
   try {
-    
     if (!guildId || typeof guildId !== 'string') {
       throw new NexoBotError(
         'Invalid guild ID',
@@ -72,45 +27,8 @@ export async function getLeaderboard(client: NexoClient, guildId: string, limit 
       );
     }
 
-    if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
-      limit = Math.min(Math.max(limit, 1), 100);
-    }
-
-    const guild = client.guilds.cache.get(guildId);
-    if (!guild) {
-      logger.warn(`Guild ${guildId} not found in cache`);
-      return [];
-    }
-    
-    const members = await guild.members.fetch().catch(error => {
-      logger.error(`Failed to fetch members for guild ${guildId}:`, error);
-      return new Map<string, GuildMember>();
-    });
-
-    const leaderboard: LeaderboardEntry[] = [];
-    
-    for (const [userId, member] of members) {
-      if (member.user.bot) continue;
-      
-      const data = await getUserLevelData(client, guildId, userId);
-      if (data && (data.totalXp > 0 || data.level > 0)) {
-        leaderboard.push({
-          userId,
-          username: member.user.username,
-          discriminator: member.user.discriminator,
-          ...data
-        });
-      }
-    }
-    
-    leaderboard.sort((a, b) => b.totalXp - a.totalXp);
-    
-    leaderboard.forEach((entry, index) => {
-      entry.rank = index + 1;
-    });
-    
-    return leaderboard.slice(0, limit);
-    
+    const rows = await store.readLeaderboard(client, guildId, Math.min(Math.max(Math.floor(limit) || 1, 1), 100));
+    return rows.map((row, index) => ({ ...row, rank: index + 1 }));
   } catch (error) {
     logger.error('Error getting leaderboard:', error);
     if (error instanceof NexoBotError) throw error;
@@ -122,37 +40,20 @@ export async function getLeaderboard(client: NexoClient, guildId: string, limit 
   }
 }
 
+/** The member's position in the leaderboard order, or null when they have no XP (errors count as null). */
+export async function getRank(client: NexoClient, guildId: string, userId: string): Promise<number | null> {
+  return store.readRank(client, guildId, userId).catch((error) => {
+    logger.warn(`Could not read rank of ${userId} in guild ${guildId}:`, error);
+    return null;
+  });
+}
+
 export async function getLevelingConfig(client: NexoClient, guildId: string): Promise<GuildLevelingConfig> {
   try {
-    const guildConfig = await getGuildConfig(client, guildId);
-    return (guildConfig.leveling as GuildLevelingConfig | undefined) || {
-      enabled: true,
-      xpPerMessage: { min: 15, max: 25 },
-      xpCooldown: 20,
-      levelUpMessage: '{user} ist auf Level {level} aufgestiegen!',
-      levelUpChannel: null,
-      ignoredChannels: [],
-      ignoredRoles: [],
-      blacklistedUsers: [],
-      roleRewards: {},
-      announceLevelUp: true,
-      xpMultiplier: 1
-    };
+    return (await store.readLevelingConfig(client, guildId)) || defaultLevelingConfig();
   } catch (error) {
     logger.error(`Error getting leveling config for guild ${guildId}:`, error);
-    return {
-      enabled: true,
-      xpPerMessage: { min: 15, max: 25 },
-      xpCooldown: 20,
-      levelUpMessage: '{user} ist auf Level {level} aufgestiegen!',
-      levelUpChannel: null,
-      ignoredChannels: [],
-      ignoredRoles: [],
-      blacklistedUsers: [],
-      roleRewards: {},
-      announceLevelUp: true,
-      xpMultiplier: 1
-    };
+    return defaultLevelingConfig();
   }
 }
 
@@ -165,26 +66,7 @@ export async function getUserLevelData(client: NexoClient, guildId: string, user
       );
     }
 
-    const key = getUserLevelKey(guildId, userId);
-    const data = await client.db.get<Partial<LevelData>>(key);
-    
-    if (!data) {
-      return {
-        xp: 0,
-        level: 0,
-        totalXp: 0,
-        lastMessage: 0,
-        rank: 0
-      };
-    }
-    
-    return {
-      xp: Math.max(0, data.xp || 0),
-      level: Math.max(0, Math.min(data.level || 0, MAX_LEVEL)),
-      totalXp: Math.max(0, data.totalXp || 0),
-      lastMessage: data.lastMessage || 0,
-      rank: data.rank || 0
-    };
+    return normalizeLevelData(await store.readUserLevel(client, guildId, userId));
   } catch (error) {
     logger.error(`Error getting user level data for ${userId}:`, error);
     if (error instanceof NexoBotError) throw error;
@@ -212,16 +94,7 @@ export async function saveUserLevelData(client: NexoClient, guildId: string, use
       );
     }
 
-    const sanitizedData = {
-      xp: Math.max(0, Number(data.xp) || 0),
-      level: Math.max(0, Math.min(Number(data.level) || 0, MAX_LEVEL)),
-      totalXp: Math.max(0, Number(data.totalXp) || 0),
-      lastMessage: Number(data.lastMessage) || 0,
-      rank: Number(data.rank) || 0
-    };
-
-    const key = getUserLevelKey(guildId, userId);
-    await client.db.set(key, sanitizedData);
+    await store.writeUserLevel(client, guildId, userId, normalizeLevelData(data));
   } catch (error) {
     logger.error(`Error saving user level data for ${userId}:`, error);
     if (error instanceof NexoBotError) throw error;
@@ -242,8 +115,6 @@ export async function saveLevelingConfig(client: NexoClient, guildId: string, co
       );
     }
 
-    const guildConfig = await getGuildConfig(client, guildId);
-
     if (config.xpCooldown && (config.xpCooldown < 0 || config.xpCooldown > 3600)) {
       throw new NexoBotError(
         'XP cooldown must be between 0 and 3600 seconds',
@@ -260,8 +131,7 @@ export async function saveLevelingConfig(client: NexoClient, guildId: string, co
       );
     }
 
-    guildConfig.leveling = config;
-    await setGuildConfig(client, guildId, guildConfig);
+    await store.writeLevelingConfig(client, guildId, config);
     
     logger.info(`Leveling config updated for guild ${guildId}`);
   } catch (error) {
@@ -423,8 +293,7 @@ export async function deleteUserLevelData(client: NexoClient, guildId: string, u
       );
     }
 
-    const key = getUserLevelKey(guildId, userId);
-    await client.db.delete(key);
+    await store.deleteUserLevel(client, guildId, userId);
     
     logger.debug(`Deleted level data for user ${userId} in guild ${guildId}`);
   } catch (error) {

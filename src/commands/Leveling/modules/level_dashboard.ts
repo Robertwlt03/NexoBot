@@ -1,21 +1,17 @@
-import { getColor } from '../../../config/bot.js';
 import {
     ActionRowBuilder,
     StringSelectMenuBuilder,
-    StringSelectMenuOptionBuilder,
     ModalBuilder,
     TextInputBuilder,
     TextInputStyle,
     ChannelSelectMenuBuilder,
     RoleSelectMenuBuilder,
     LabelBuilder,
-    ButtonBuilder,
-    ButtonStyle,
     ChannelType,
     MessageFlags,
-    EmbedBuilder,
+    ComponentType,
 } from 'discord.js';
-import type { ChatInputCommandInteraction, Guild, SelectMenuModalData, StringSelectMenuInteraction } from 'discord.js';
+import type { ChatInputCommandInteraction, SelectMenuModalData, StringSelectMenuInteraction } from 'discord.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import { successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
@@ -24,113 +20,8 @@ import { getLevelingConfig, saveLevelingConfig } from '../../../services/levelin
 import { botHasPermission } from '../../../utils/permissionGuard.js';
 import { startDashboardSession } from '../../../utils/dashboardSession.js';
 import type { GuildLevelingConfig } from '../../../services/leveling/leveling.js';
+import { buildButtonRow, buildDashboardEmbed, buildSelectMenu } from '../../../services/leveling/views.js';
 import type { NexoClient, SubcommandModule } from '../../../types/index.js';
-
-function buildDashboardEmbed(cfg: GuildLevelingConfig, guild: Guild) {
-    const channel = cfg.levelUpChannel ? `<#${cfg.levelUpChannel}>` : '`Nicht gesetzt`';
-    const xpMin = cfg.xpRange?.min ?? cfg.xpPerMessage?.min ?? 15;
-    const xpMax = cfg.xpRange?.max ?? cfg.xpPerMessage?.max ?? 25;
-    const cooldown = cfg.xpCooldown ?? 60;
-    const rawMsg = cfg.levelUpMessage || '{user} ist auf Level {level} aufgestiegen!';
-    const msgPreview = `\`${rawMsg.length > 60 ? rawMsg.substring(0, 60) + '…' : rawMsg}\``;
-
-    const rewards = cfg.roleRewards ?? {};
-    const rewardEntries = Object.entries(rewards).sort(([a], [b]) => Number(a) - Number(b));
-    const rewardsValue = rewardEntries.length > 0
-        ? rewardEntries.map(([lvl, roleId]) => `Level **${lvl}** → <@&${roleId}>`).join('\n')
-        : '`Keine eingerichtet`';
-
-    const ignoredChannels = cfg.ignoredChannels ?? [];
-    const ignoredRoles = cfg.ignoredRoles ?? [];
-    const ignoredChValue = ignoredChannels.length > 0 ? ignoredChannels.map(id => `<#${id}>`).join(',') : '`Keine`';
-    const ignoredRoValue = ignoredRoles.length > 0 ? ignoredRoles.map(id => `<@&${id}>`).join(',') : '`Keine`';
-
-    return new EmbedBuilder()
-        .setTitle('⚡ Leveling-Dashboard')
-        .setDescription(`Verwalte die Leveling-Einstellungen für **${guild.name}**.\nWähle unten eine Option, um eine Einstellung zu ändern.`)
-        .setColor(getColor('info'))
-        .addFields(
-            { name: 'Level-up-Kanal', value: channel, inline: true },
-            { name: 'Systemstatus', value: cfg.enabled ? '**Aktiviert**' : '**Deaktiviert**', inline: true },
-            { name: 'Ankündigungen', value: cfg.announceLevelUp !== false ? '**Aktiviert**' : '**Deaktiviert**', inline: true },
-            { name: 'XP pro Nachricht', value: `\`${xpMin} – ${xpMax}\``, inline: true },
-            { name: 'XP-Cooldown', value: `\`${cooldown}s\``, inline: true },
-            { name: '\u200B', value: '\u200B', inline: true },
-            { name: 'Level-up-Nachricht', value: msgPreview, inline: false },
-            { name: 'Rollen-Belohnungen', value: rewardsValue, inline: false },
-            { name: 'Ignorierte Kanäle', value: ignoredChValue, inline: true },
-            { name: 'Ignorierte Rollen', value: ignoredRoValue, inline: true },
-        )
-        .setFooter({ text: 'Das Dashboard schließt sich nach 10 Minuten Inaktivität' })
-        .setTimestamp();
-}
-
-function buildSelectMenu(guildId: string) {
-    return new StringSelectMenuBuilder()
-        .setCustomId(`level_cfg_${guildId}`)
-        .setPlaceholder('Wähle eine Einstellung...')
-        .addOptions(
-            new StringSelectMenuOptionBuilder()
-                .setLabel('Level-up-Kanal ändern')
-                .setDescription('Lege fest, in welchem Kanal Level-up-Benachrichtigungen gesendet werden')
-                .setValue('channel')
-                .setEmoji('📢'),
-            new StringSelectMenuOptionBuilder()
-                .setLabel('Level-up-Nachricht bearbeiten')
-                .setDescription('Passe die Nachricht an, die beim Level-up eines Nutzers erscheint')
-                .setValue('message')
-                .setEmoji('💬'),
-            new StringSelectMenuOptionBuilder()
-                .setLabel('XP-Bereich festlegen')
-                .setDescription('Lege die minimalen und maximalen XP pro Nachricht fest')
-                .setValue('xp_range')
-                .setEmoji('🎲'),
-            new StringSelectMenuOptionBuilder()
-                .setLabel('XP-Cooldown festlegen')
-                .setDescription('Sekunden zwischen XP-Vergaben für denselben Nutzer')
-                .setValue('xp_cooldown')
-                .setEmoji('⏱️'),
-            new StringSelectMenuOptionBuilder()
-                .setLabel('Rollen-Belohnung hinzufügen')
-                .setDescription('Vergib eine Rolle, wenn ein Nutzer ein bestimmtes Level erreicht')
-                .setValue('role_reward_add')
-                .setEmoji('🏆'),
-            new StringSelectMenuOptionBuilder()
-                .setLabel('Rollen-Belohnung entfernen')
-                .setDescription('Entferne die Rollen-Belohnung eines bestimmten Levels')
-                .setValue('role_reward_remove')
-                .setEmoji('\ud83d\uddd1\ufe0f'),
-            new StringSelectMenuOptionBuilder()
-                .setLabel('Ignorierte Kanäle')
-                .setDescription('Kanäle umschalten, in denen keine XP vergeben werden')
-                .setValue('ignore_channels')
-                .setEmoji('\ud83d\udeab'),
-            new StringSelectMenuOptionBuilder()
-                .setLabel('Ignorierte Rollen')
-                .setDescription('Rollen umschalten, die keine XP erhalten')
-                .setValue('ignore_roles')
-                .setEmoji('\ud83d\udeab'),
-        );
-}
-
-function buildButtonRow(cfg: GuildLevelingConfig, guildId: string, disabled = false) {
-    const announceOn = cfg.announceLevelUp !== false;
-    const systemOn = cfg.enabled !== false;
-    return new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-            .setCustomId(`level_cfg_toggle_announce_${guildId}`)
-            .setLabel('Ankündigungen')
-            .setStyle(announceOn ? ButtonStyle.Success : ButtonStyle.Danger)
-            .setEmoji('📣')
-            .setDisabled(disabled),
-        new ButtonBuilder()
-            .setCustomId(`level_cfg_toggle_system_${guildId}`)
-            .setLabel('Leveling')
-            .setStyle(systemOn ? ButtonStyle.Success : ButtonStyle.Danger)
-            .setEmoji('⚡')
-            .setDisabled(disabled),
-    );
-}
 
 async function refreshDashboard(rootInteraction: ChatInputCommandInteraction, cfg: GuildLevelingConfig, guildId: string) {
     const selectMenu = buildSelectMenu(guildId);

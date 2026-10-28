@@ -12,7 +12,7 @@ import {
 } from '../shared/profileCard.js';
 import { getBalance, getProfileSettings, getResolvedCosmetics } from './cosmetics/store.js';
 import { getEquippedPetLook } from './cosmetics/pets.js';
-import { getLeaderboard, getUserLevelData, getXpForLevel } from './leveling/leveling.js';
+import { getRank, getUserLevelData, getXpForLevel } from './leveling/leveling.js';
 import { loadRemoteImage } from './welcomeCardRenderer.js';
 import { logger } from '../utils/logger.js';
 import type { NexoClient } from '../types/index.js';
@@ -67,16 +67,6 @@ export async function yearCardAttachment(client: NexoClient, member: GuildMember
   }
 }
 
-// ponytail: rank = position in the top 100 (same source as /rank leaderboard); members below that show "–".
-async function findRank(client: NexoClient, guildId: string, userId: string): Promise<number | null> {
-  try {
-    const board = await getLeaderboard(client, guildId, 100);
-    return board.find((entry) => entry.userId === userId)?.rank ?? null;
-  } catch {
-    return null;
-  }
-}
-
 /** Everything the cards need for `member` on its server (level data, rank, global cosmetics and wallet). */
 export async function loadProfileCardData(client: NexoClient, member: GuildMember, withRank = true): Promise<{ subject: ProfileCardSubject; cosmetics: ResolvedCosmetics }> {
   const [levelData, settings, cosmetics, balance, rank, pet] = await Promise.all([
@@ -84,7 +74,7 @@ export async function loadProfileCardData(client: NexoClient, member: GuildMembe
     getProfileSettings(member.id),
     getResolvedCosmetics(member.id),
     getBalance(member.id),
-    withRank ? findRank(client, member.guild.id, member.id) : Promise.resolve(null),
+    withRank ? getRank(client, member.guild.id, member.id) : Promise.resolve(null),
     getEquippedPetLook(member.id),
   ]);
   return {

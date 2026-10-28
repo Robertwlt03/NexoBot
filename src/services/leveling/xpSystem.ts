@@ -1,10 +1,11 @@
-// xpSystem.js
+// XP awarding: message XP, level-ups, role rewards and the level-up announcement.
 
-import type { Guild, GuildMember } from 'discord.js';
+import type { Guild, GuildMember, Message } from 'discord.js';
 import type { NexoClient } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
-import { getLevelingConfig, getXpForLevel, getUserLevelData, saveUserLevelData } from './leveling.js';
-import type { GuildLevelingConfig, LevelData } from './leveling.js';
+import { getLevelingConfig, getUserLevelData, saveUserLevelData } from './leveling.js';
+import { applyXp, getXpForLevel, isOnCooldown, rollMessageXp } from './core.js';
+import type { GuildLevelingConfig, LevelData } from './core.js';
 import { logEvent, EVENT_TYPES } from '../loggingService.js';
 import { formatLogLine } from '../../utils/logging/logEmbeds.js';
 import { Mutex } from '../../utils/mutex.js';
@@ -37,26 +38,16 @@ export const addXp = wrapServiceBoundary(async function addXp(client: NexoClient
       return null;
     }
 
-    const levelData = await getUserLevelData(client, guild.id, member.user.id);
+    const before = await getUserLevelData(client, guild.id, member.user.id);
+    const { data: levelData, reached } = applyXp(before, xpToAdd, Date.now());
+    const didLevelUp = reached.length > 0;
+    const initialLevel = before.level;
 
-    levelData.xp += xpToAdd;
-    levelData.totalXp += xpToAdd;
-    levelData.lastMessage = Date.now();
+    for (const level of reached) {
+      logger.info(`🎉 ${member.user.tag} leveled up to level ${level} in ${guild.name}`);
 
-    let xpNeededForNextLevel = getXpForLevel(levelData.level);
-    let didLevelUp = false;
-    const initialLevel = levelData.level;
-
-    while (levelData.xp >= xpNeededForNextLevel && levelData.level < 1000) {
-      levelData.xp -= xpNeededForNextLevel;
-      levelData.level += 1;
-      didLevelUp = true;
-      xpNeededForNextLevel = getXpForLevel(levelData.level);
-
-      logger.info(`🎉 ${member.user.tag} leveled up to level ${levelData.level} in ${guild.name}`);
-
-      if (config.roleRewards && config.roleRewards[levelData.level]) {
-        await awardRoleReward(guild, member, config.roleRewards[levelData.level], levelData.level);
+      if (config.roleRewards && config.roleRewards[level]) {
+        await awardRoleReward(guild, member, config.roleRewards[level], level);
       }
     }
 
@@ -109,6 +100,26 @@ export const addXp = wrapServiceBoundary(async function addXp(client: NexoClient
   operation: 'addXp',
   userMessage: 'XP konnten nicht vergeben werden. Bitte versuch es erneut.',
 });
+
+/** XP for a guild message when leveling is on and none of the ignore rules or the cooldown apply. */
+export async function awardMessageXp(client: NexoClient, message: Message<true>): Promise<AddXpResult | null> {
+  const config = await getLevelingConfig(client, message.guild.id);
+  if (!config?.enabled) return null;
+  if (config.ignoredChannels?.includes(message.channel.id)) return null;
+
+  if (config.ignoredRoles?.length > 0) {
+    const member = await message.guild.members.fetch(message.author.id).catch(() => null);
+    if (member && member.roles.cache.some(role => config.ignoredRoles.includes(role.id))) return null;
+  }
+
+  if (config.blacklistedUsers?.includes(message.author.id)) return null;
+  if (!message.content || message.content.trim().length === 0) return null;
+
+  const { lastMessage } = await getUserLevelData(client, message.guild.id, message.author.id);
+  if (isOnCooldown(config, lastMessage, Date.now())) return null;
+
+  return addXp(client, message.guild, message.member!, rollMessageXp(config));
+}
 
 async function awardRoleReward(guild: Guild, member: GuildMember, roleId: string, level: number): Promise<void> {
   try {

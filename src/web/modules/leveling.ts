@@ -10,6 +10,7 @@ import {
   type LevelingLeaderboard, type LevelingMember, type LevelingSettings, type LevelRoleReward, type LevelRoleSyncResult,
 } from '../dto/leveling.js';
 import { locals } from '../dashboard.js';
+import { resolveNames } from '../moduleSupport.js';
 import { badRequest, body, bool, channel, idList, int, role, str } from '../http.js';
 import {
   addLevels, getLeaderboard, getLevelingConfig, getUserLevelData, removeLevels, saveLevelingConfig, setUserLevel,
@@ -55,7 +56,7 @@ function parseRewards(guild: Guild, value: unknown): LevelRoleReward[] {
   });
 }
 
-function toMember(guild: Guild, userId: string, data: LevelData, fallbackName?: string): LevelingMember {
+function toMember(guild: Guild, userId: string, data: Pick<LevelData, 'level' | 'xp' | 'totalXp'>, fallbackName?: string): LevelingMember {
   const member = guild.members.cache.get(userId);
   return {
     userId,
@@ -123,10 +124,13 @@ export const levelingModule: DashboardModule = {
       const ranked = await getLeaderboard(client, guild.id, LEVELING_LEADERBOARD_MAX);
       const pages = Math.max(1, Math.ceil(ranked.length / LEVELING_PAGE_SIZE));
       const page = Math.min(Math.max(1, Math.floor(Number(req.query.page)) || 1), pages);
+      const slice = ranked.slice((page - 1) * LEVELING_PAGE_SIZE, page * LEVELING_PAGE_SIZE);
+      // Names and avatars only for the shown page: one member fetch, users who left fall back to their user name.
+      const ids = slice.map((entry) => entry.userId).filter((id) => !guild.members.cache.has(id));
+      if (ids.length) await guild.members.fetch({ user: ids }).catch(() => null);
+      const names = await resolveNames(client, guild, slice.map((entry) => entry.userId));
       const result: LevelingLeaderboard = {
-        entries: ranked
-          .slice((page - 1) * LEVELING_PAGE_SIZE, page * LEVELING_PAGE_SIZE)
-          .map((entry) => ({ ...toMember(guild, entry.userId, entry, entry.username), rank: entry.rank })),
+        entries: slice.map((entry) => ({ ...toMember(guild, entry.userId, entry, names[entry.userId]), rank: entry.rank })),
         page,
         pages,
         total: ranked.length,

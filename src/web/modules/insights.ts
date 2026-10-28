@@ -27,7 +27,7 @@ import { listGuildTickets } from '../../utils/database/tickets.js';
 import { ACTION_LABELS, getModerationCases } from '../../utils/moderation.js';
 import { WarningService } from '../../services/moderation/warningService.js';
 import { getGuildTicketStats } from '../../utils/database/tickets.js';
-import { getLeaderboard, getUserLevelData } from '../../services/leveling/leveling.js';
+import { getLeaderboard, getRank, getUserLevelData } from '../../services/leveling/leveling.js';
 import { getEconomyLeaderboard } from '../../utils/economy.js';
 import { getGuildGiveaways } from '../../utils/giveaways.js';
 import { getUpcomingBirthdays } from '../../services/birthdayService.js';
@@ -163,7 +163,7 @@ async function readInsights(client: NexoClient, guild: Guild, range: InsightRang
     tickets: tickets && { open: tickets.openCount, closed: tickets.closedCount, avgCloseTimeMs: tickets.avgCloseTimeMs, avgRating: tickets.avgRating },
     leveling: leaderboard && {
       rankedMembers: leaderboard.length,
-      top: leaderTop.map((e) => ({ userId: e.userId, name: names[e.userId] ?? e.username, level: e.level, totalXp: e.totalXp })),
+      top: leaderTop.map((e) => ({ userId: e.userId, name: names[e.userId] ?? e.userId, level: e.level, totalXp: e.totalXp })),
     },
     economy: economy && { accounts: economy.length, inCirculation: economy.reduce((sum, e) => sum + e.net_worth, 0) },
     giveaways: giveaways && { active: giveaways.filter((g) => g.ended !== true && g.isEnded !== true).length },
@@ -353,9 +353,7 @@ async function readProfile(client: NexoClient, guild: Guild, userId: string, ran
     section('Leveling', async () => {
       const data = await getUserLevelData(client, guild.id, userId);
       if (!data.totalXp && !data.level) return null;
-      const board = await getLeaderboard(client, guild.id, LEVELING_LEADERBOARD_MAX);
-      const index = board.findIndex((entry) => entry.userId === userId);
-      return { level: data.level, xp: data.xp, totalXp: data.totalXp, rank: index === -1 ? null : index + 1 };
+      return { level: data.level, xp: data.xp, totalXp: data.totalXp, rank: await getRank(client, guild.id, userId) };
     }),
     section('Economy', () => client.db.get<{ wallet?: number; bank?: number }>(getEconomyKey(guild.id, userId))),
     section('Moderation', () => getModerationCases(guild.id, { userId, limit: SCAN_LIMIT })),

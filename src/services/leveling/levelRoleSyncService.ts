@@ -2,30 +2,7 @@ import type { Guild, GuildMember } from 'discord.js';
 import type { NexoClient } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 import { getLevelingConfig, getUserLevelData, saveLevelingConfig } from './leveling.js';
-
-import { getUserLevelPrefix } from '../../utils/database/keys.js';
-
-async function listLevelUserIds(client: NexoClient, guildId: string): Promise<string[]> {
-    if (!client.db?.list) return [];
-
-    const prefixes = [getUserLevelPrefix(guildId), `${guildId}:leveling:users:`];
-    const userIds = new Set<string>();
-
-    for (const prefix of prefixes) {
-        let keys: unknown = await client.db.list(prefix).catch((): string[] => []);
-        if (!Array.isArray(keys)) {
-            keys = typeof keys === 'object' && keys !== null ? Object.keys(keys) : [];
-        }
-
-        for (const key of keys as string[]) {
-            if (!key.startsWith(prefix)) continue;
-            const userId = key.slice(prefix.length);
-            if (/^\d{17,19}$/.test(userId)) userIds.add(userId);
-        }
-    }
-
-    return [...userIds];
-}
+import { listLevelUserIds } from './store.js';
 
 async function tryAwardRole(member: GuildMember, roleId: string, level: number): Promise<boolean> {
     const role = member.guild.roles.cache.get(roleId) || (await member.guild.roles.fetch(roleId).catch(() => null));

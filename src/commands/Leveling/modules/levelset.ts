@@ -1,9 +1,9 @@
-import { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import { logger } from '../../../utils/logger.js';
 import { NexoBotError, ErrorTypes } from '../../../utils/errorHandler.js';
 import { checkUserPermissions } from '../../../utils/permissionGuard.js';
 import { setUserLevel, getLevelingConfig } from '../../../services/leveling/leveling.js';
-import { createEmbed } from '../../../utils/embeds.js';
+import { disabledEmbed, levelSetEmbed } from '../../../services/leveling/views.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import type { Command } from '../../../types/index.js';
@@ -41,11 +41,7 @@ export default {
     const levelingConfig = await getLevelingConfig(client, interaction.guildId!);
     if (!levelingConfig?.enabled) {
       await InteractionHelper.safeEditReply(interaction, {
-        embeds: [
-          new EmbedBuilder()
-            .setColor('#f1c40f')
-            .setDescription('Das Leveling-System ist auf diesem Server derzeit deaktiviert.')
-        ],
+        embeds: [disabledEmbed()],
         flags: MessageFlags.Ephemeral
       });
       return;
@@ -66,13 +62,7 @@ export default {
     const userData = await setUserLevel(client, interaction.guildId!, targetUser.id, newLevel);
 
     await InteractionHelper.safeEditReply(interaction, {
-      embeds: [
-        createEmbed({
-          title: 'Level gesetzt',
-          description: `Das Level von ${targetUser.tag} ist jetzt **${newLevel}**.\n**Gesamt-XP:** ${userData.totalXp}`,
-          color: 'success'
-        })
-      ]
+      embeds: [levelSetEmbed(targetUser, newLevel, userData)]
     });
 
     logger.info(
