@@ -44,7 +44,7 @@ Dringlichkeit sortiert; erledigte Punkte werden abgehakt.
       Alles mit rund 30 px Abstand zum oberen und unteren Rand, damit Discords Zuschnitt nichts abschneidet. Lange
       Namen kleiner setzen statt stauchen. Nach dem Umbau alle Events als Vorschau mit Profilbild prüfen (wie in
       dieser Prüfung).
-- [ ] **Event-Banner im gleichen Stil wie das Dashboard.** Die Event-Banner sind heute Farbverläufe mit verstreuten
+- [x] **Event-Banner im gleichen Stil wie das Dashboard.** Die Event-Banner sind heute Farbverläufe mit verstreuten
       Symbolen. Vorschlag: das Walnussholz mit der eingebrannten Ranke als Grund nehmen (wie die Seitenköpfe im
       Dashboard und das neue Profil-Banner) und das Event nur über Farbe, Symbole und Namen zeigen.
 - [ ] **Event-Look überdeckt das Test-Banner.** Der Test-Bot läuft gegen dieselbe Datenbank und setzt während eines
