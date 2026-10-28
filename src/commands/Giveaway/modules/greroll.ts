@@ -1,10 +1,9 @@
 import type { Command } from '../../../types/index.js';
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, type GuildMember } from 'discord.js';
-import { successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 import { NexoBotError, ErrorTypes } from '../../../utils/errorHandler.js';
-import { getGuildGiveaways } from '../../../utils/giveaways.js';
-import { rerollGiveaway } from '../../../services/giveawayActions.js';
+import { getGiveaway, rerollGiveaway } from '../../../services/giveaways/giveaways.js';
+import { rerolledEmbed } from '../../../services/giveaways/views.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 
 export default {
@@ -51,12 +50,7 @@ export default {
             );
         }
 
-        const giveaways = await getGuildGiveaways(
-            interaction.client,
-            interaction.guildId,
-        );
-
-        const giveaway = giveaways.find(g => g.messageId === messageId);
+        const giveaway = await getGiveaway(interaction.client, interaction.guildId, messageId);
 
         if (!giveaway) {
             throw new NexoBotError(
@@ -67,44 +61,10 @@ export default {
             );
         }
 
-        const { winners: newWinners, channel, messageFound } = await rerollGiveaway(
-            interaction.client,
-            interaction.guildId,
-            giveaway,
-            interaction.user.id
-        );
-
-        if (!channel) {
-            return InteractionHelper.safeReply(interaction, {
-                embeds: [
-                    successEmbed(
-                        "Neu gezogen",
-                        "Die neuen Gewinner wurden gezogen und gespeichert. Der Kanal für die Ankündigung wurde nicht gefunden.",
-                    ),
-                ],
-                flags: MessageFlags.Ephemeral,
-            });
-        }
-
-        if (!messageFound) {
-            return InteractionHelper.safeReply(interaction, {
-                embeds: [
-                    successEmbed(
-                        "Neu gezogen",
-                        `Die neuen Gewinner wurden in ${channel} bekannt gegeben. (Ursprüngliche Nachricht nicht gefunden.)`,
-                    ),
-                ],
-                flags: MessageFlags.Ephemeral,
-            });
-        }
+        const { giveaway: rerolled, channel, messageFound } = await rerollGiveaway(interaction.client, interaction.guildId, messageId, interaction.user.id);
 
         return InteractionHelper.safeReply(interaction, {
-            embeds: [
-                successEmbed(
-                    "Erfolgreich neu gezogen ✅",
-                    `Für das Giveaway **${giveaway.prize}** in ${channel} wurden ${newWinners.length} neue Gewinner gezogen.`,
-                ),
-            ],
+            embeds: [rerolledEmbed(rerolled, channel ? `<#${channel.id}>` : null, messageFound)],
             flags: MessageFlags.Ephemeral,
         });
     },

@@ -1,10 +1,9 @@
 import type { Command } from '../../../types/index.js';
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, type GuildMember } from 'discord.js';
-import { successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 import { NexoBotError, ErrorTypes } from '../../../utils/errorHandler.js';
-import { getGuildGiveaways } from '../../../utils/giveaways.js';
-import { removeGiveaway } from '../../../services/giveawayActions.js';
+import { getGiveaway, removeGiveaway } from '../../../services/giveaways/giveaways.js';
+import { deletedEmbed } from '../../../services/giveaways/views.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 export default {
@@ -53,8 +52,7 @@ export default {
             );
         }
 
-        const giveaways = await getGuildGiveaways(interaction.client, interaction.guildId);
-        const giveaway = giveaways.find(g => g.messageId === messageId);
+        const giveaway = await getGiveaway(interaction.client, interaction.guildId, messageId);
 
         if (!giveaway) {
             throw new NexoBotError(
@@ -67,33 +65,13 @@ export default {
 
         const { deletedMessage, channelName } = await removeGiveaway(
             interaction.client,
-            interaction.guild,
             interaction.guildId,
             giveaway,
             interaction.user.id,
         );
 
-        const statusMsg = deletedMessage
-            ? ` und die Nachricht wurde aus #${channelName} entfernt`
-            : `, die Nachricht war aber bereits gelöscht oder der Kanal war nicht erreichbar`;
-
-        const winnerIds = Array.isArray(giveaway.winnerIds) ? giveaway.winnerIds : [];
-        const hasWinners = winnerIds.length > 0;
-        const wasEnded = giveaway.ended === true || giveaway.isEnded === true || hasWinners;
-
-        const winnerStatusMsg = hasWinners
-            ? `Für dieses Giveaway wurden bereits ${winnerIds.length} Gewinner gezogen.`
-            : wasEnded
-                ? 'Dieses Giveaway wurde ohne gültige Gewinner beendet.'
-                : 'Vor dem Löschen wurde kein Gewinner gezogen.';
-
         return InteractionHelper.safeReply(interaction, {
-            embeds: [
-                successEmbed(
-                    "Giveaway gelöscht",
-                    `Das Giveaway für **${giveaway.prize}** wurde gelöscht${statusMsg}. ${winnerStatusMsg}`,
-                ),
-            ],
+            embeds: [deletedEmbed(giveaway, deletedMessage, channelName)],
             flags: MessageFlags.Ephemeral,
         });
     },

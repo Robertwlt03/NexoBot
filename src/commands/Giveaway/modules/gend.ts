@@ -1,10 +1,9 @@
 import type { Command } from '../../../types/index.js';
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, type GuildMember } from 'discord.js';
-import { successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 import { NexoBotError, ErrorTypes } from '../../../utils/errorHandler.js';
-import { getGuildGiveaways } from '../../../utils/giveaways.js';
-import { finishGiveaway } from '../../../services/giveawayActions.js';
+import { endGiveaway, getGiveaway } from '../../../services/giveaways/giveaways.js';
+import { endedEmbed } from '../../../services/giveaways/views.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 
 export default {
@@ -53,8 +52,7 @@ export default {
             );
         }
 
-        const giveaways = await getGuildGiveaways(interaction.client, interaction.guildId);
-        const giveaway = giveaways.find(g => g.messageId === messageId);
+        const giveaway = await getGiveaway(interaction.client, interaction.guildId, messageId);
 
         if (!giveaway) {
             throw new NexoBotError(
@@ -65,22 +63,12 @@ export default {
             );
         }
 
-        const { giveaway: updatedGiveaway, winners, participantCount, channel } = await finishGiveaway(
-            interaction.client,
-            interaction.guildId,
-            giveaway,
-            interaction.user.id
-        );
+        const { giveaway: ended, channel } = await endGiveaway(interaction.client, interaction.guildId, messageId, interaction.user.id);
 
         logger.info(`Giveaway successfully ended by ${interaction.user.tag}: ${messageId}`);
 
         return InteractionHelper.safeReply(interaction, {
-            embeds: [
-                successEmbed(
-                    "Giveaway beendet ✅",
-                    `Das Giveaway für **${updatedGiveaway.prize}** in ${channel} wurde beendet. ${winners.length} Gewinner aus ${participantCount} Teilnahmen gezogen.`,
-                ),
-            ],
+            embeds: [endedEmbed(ended, `<#${channel.id}>`)],
             flags: MessageFlags.Ephemeral,
         });
     },

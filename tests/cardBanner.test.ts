@@ -60,9 +60,9 @@ test('Nexo cards open with the banner unless they start with a picture', () => {
 });
 
 test('giveaways carry the gift banner, running and ended', async () => {
-  const { createGiveawayEmbed } = await import('../src/services/giveawayService.js');
-  const giveaway = { prize: 'Nitro', hostId: '1', winnerCount: 1, participants: [], endsAt: Date.now() + 60_000 } as never;
-  const url = (status: string) => (withDashboard('https://nexo.example', () => embedToCard(createGiveawayEmbed(giveaway, status)).toJSON()) as never as Json).components[0].items![0].media.url;
+  const { giveawayMessage } = await import('../src/services/giveaways/views.js');
+  const giveaway = { messageId: '1', prize: 'Nitro', hostId: '1', winnerCount: 1, participants: [], endsAt: Date.now() + 60_000 };
+  const url = (status: 'active' | 'ended') => (withDashboard('https://nexo.example', () => embedToCard(giveawayMessage(giveaway, status).embeds[0]).toJSON()) as never as Json).components[0].items![0].media.url;
   assert.match(url('active'), /banners\/gift\.png/);
   assert.match(url('ended'), /banners\/giftEnded\.png/);
 });
