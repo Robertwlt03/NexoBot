@@ -11,8 +11,8 @@ import type {
 import { locals, sendError } from '../dashboard.js';
 import { HttpError, badRequest, body } from '../http.js';
 import { isBotOwner } from '../../config/bot.js';
-import { getXpForLevel } from '../../services/leveling/leveling.js';
-import { NO_DB_MESSAGE, T, cosmeticsPool, isSnowflake, requirePool } from '../../services/cosmetics/db.js';
+import { getMemberGuildIds, getMemberLevels, getXpForLevel } from '../../services/leveling/leveling.js';
+import { NO_DB_MESSAGE, cosmeticsPool, isSnowflake } from '../../services/cosmetics/db.js';
 import { HIDDEN_ACHIEVEMENTS, loadCatalog } from '../../services/cosmetics/catalog.js';
 import { parseProfileSettings, readDashboardTheme, readProfileSettings, writeDashboardTheme, writeProfileSettings } from '../../services/cosmetics/profile.js';
 import { forgetPalette } from '../../services/messageTheme.js';
@@ -32,16 +32,10 @@ import { feedPet, getPetOverview } from '../../services/cosmetics/pets.js';
 import { pendingCommunity, pendingQuestCounts } from '../../services/cosmetics/activity.js';
 
 async function levels(client: NexoClient, userId: string): Promise<ProfileLevel[]> {
-  const result = await requirePool().query<{ guild_id: string; level: number; xp: string; rank: string }>(
-    `SELECT u.guild_id, u.level, u.xp,
-       (SELECT COUNT(*) + 1 FROM ${T.user_levels} o WHERE o.guild_id = u.guild_id AND o.total_xp > u.total_xp) AS rank
-     FROM ${T.user_levels} u WHERE u.user_id = $1 ORDER BY u.level DESC, u.total_xp DESC LIMIT 50`,
-    [userId],
-  );
-  return result.rows.flatMap((row) => {
-    const guild = client.guilds.cache.get(row.guild_id);
+  return (await getMemberLevels(userId)).flatMap((row) => {
+    const guild = client.guilds.cache.get(row.guildId);
     if (!guild) return [];
-    return [{ guildId: guild.id, guildName: guild.name, level: row.level, xp: Number(row.xp), xpNeeded: getXpForLevel(row.level), rank: Number(row.rank) }];
+    return [{ guildId: guild.id, guildName: guild.name, level: row.level, xp: row.xp, xpNeeded: getXpForLevel(row.level), rank: row.rank }];
   });
 }
 
@@ -106,9 +100,8 @@ export function meRouter(client: NexoClient): Router {
   // Shared goals of the running events on the member's servers (servers where they have XP and Nexo is present).
   router.get('/community', async (_req, res) => {
     const { userId } = locals(res).session;
-    const rows = await requirePool().query<{ guild_id: string }>(`SELECT guild_id FROM ${T.user_levels} WHERE user_id = $1`, [userId]);
-    const guilds = rows.rows.flatMap((row) => {
-      const guild = client.guilds.cache.get(row.guild_id);
+    const guilds = (await getMemberGuildIds(userId)).flatMap((guildId) => {
+      const guild = client.guilds.cache.get(guildId);
       return guild ? [{ id: guild.id, name: guild.name, iconUrl: guild.iconURL({ size: 64 }) }] : [];
     });
     const result: CommunityResponse = { goals: await communityGoals(userId, guilds, pendingCommunity(userId)) };
