@@ -29,7 +29,7 @@ import { WarningService } from '../../services/moderation/warningService.js';
 import { getGuildTicketStats } from '../../utils/database/tickets.js';
 import { getLeaderboard, getRank, getUserLevelData } from '../../services/leveling/leveling.js';
 import { getEconomyLeaderboard } from '../../utils/economy.js';
-import { getGuildGiveaways } from '../../utils/giveaways.js';
+import { getGuildGiveaways } from '../../services/giveaways/giveaways.js';
 import { getUpcomingBirthdays } from '../../services/birthdays/birthdays.js';
 import { getApplications } from '../../utils/database.js';
 import { getCountingGameConfig } from '../../services/countingGameService.js';

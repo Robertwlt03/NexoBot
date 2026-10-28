@@ -1,9 +1,9 @@
 import type { Command } from '../../../types/index.js';
 import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags, type GuildMember, type GuildBasedChannel } from 'discord.js';
-import { successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 import { NexoBotError, ErrorTypes } from '../../../utils/errorHandler.js';
-import { startGiveaway } from '../../../services/giveawayActions.js';
+import { startGiveaway } from '../../../services/giveaways/giveaways.js';
+import { startedEmbed } from '../../../services/giveaways/views.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 
 import { botConfig } from '../../../config/bot.js';
@@ -75,7 +75,7 @@ export default {
         const prize = interaction.options.getString("prize");
         const targetChannel = (interaction.options.getChannel("channel") || interaction.channel) as GuildBasedChannel;
 
-        const { prize: prizeName } = await startGiveaway(interaction.client, interaction.guildId, targetChannel, {
+        const giveaway = await startGiveaway(interaction.client, interaction.guildId, targetChannel, {
             duration: durationString,
             winnerCount,
             prize,
@@ -83,12 +83,7 @@ export default {
         });
 
         await InteractionHelper.safeReply(interaction, {
-            embeds: [
-                successEmbed(
-                    `Giveaway gestartet! 🎉`,
-                    `Ein neues Giveaway für **${prizeName}** läuft jetzt in ${targetChannel} und endet in **${durationString}**.`,
-                ),
-            ],
+            embeds: [startedEmbed(giveaway.prize!, `<#${targetChannel.id}>`, durationString)],
             flags: MessageFlags.Ephemeral,
         });
     },

@@ -26,7 +26,6 @@ const SERVICES_WITH_DISCORD_VALUES = new Set<string>([
   'src/services/cosmetics/linkedRoles.ts',
   'src/services/cosmetics/presence.ts',
   'src/services/cosmetics/reminders.ts',
-  'src/services/giveawayService.ts',
   'src/services/joinToCreateService.ts',
   'src/services/loggingService.ts',
   'src/services/moderation/moderationService.ts',

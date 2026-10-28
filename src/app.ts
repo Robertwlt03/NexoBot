@@ -14,7 +14,7 @@ import { validateBotEnv } from './config/env.js';
 import { refreshCounters } from './services/serverstats/serverstats.js';
 import { logger, startupLog, shutdownLog } from './utils/logger.js';
 import { checkBirthdays } from './services/birthdays/birthdays.js';
-import { checkGiveaways } from './services/giveawayService.js';
+import { checkGiveaways } from './services/giveaways/giveaways.js';
 import { loadCommands, registerCommands as registerSlashCommands } from './handlers/loaders/commandLoader.js';
 import { runSafeTask, handleTaskError, ErrorCodes } from './utils/errorHandler.js';
 import type { ErrorLike } from './utils/errorHandler.js';
