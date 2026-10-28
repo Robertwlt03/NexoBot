@@ -7,8 +7,6 @@ import {
     TextInputStyle,
     UserSelectMenuBuilder,
     LabelBuilder,
-    ButtonBuilder,
-    ButtonStyle,
     MessageFlags,
     ComponentType,
     EmbedBuilder,
@@ -23,7 +21,7 @@ import { successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 import { NexoBotError, ErrorTypes, replyUserError } from '../../../utils/errorHandler.js';
 import { getEconomyPrefix } from '../../../utils/database.js';
-import { getEconomyData, addMoney, removeMoney, getMaxBankCapacity } from '../../../utils/economy.js';
+import { addMoney, removeMoney } from '../../../utils/economy.js';
 import type { EconomyData } from '../../../utils/economy.js';
 import type { Command, NexoClient, SubcommandModule } from '../../../types/index.js';
 import fs from 'fs/promises';

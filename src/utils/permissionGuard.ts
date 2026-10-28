@@ -225,27 +225,6 @@ export async function enforceDefaultCommandPermissions(
   return false;
 }
 
-export function isAdmin(member: PermissionMember): boolean {
-  if (!member) return false;
-  return member.permissions.has(PermissionFlagsBits.Administrator);
-}
-
-export function isModerator(member: PermissionMember, guildConfig: ModeratorRoleConfig = null): boolean {
-  if (!member) return false;
-  if (memberHasConfiguredModeratorRole(member, guildConfig)) {
-    return true;
-  }
-  return member.permissions.has([
-    PermissionFlagsBits.Administrator,
-    PermissionFlagsBits.ManageGuild
-  ]);
-}
-
-export function hasPermission(member: PermissionMember, permissions: PermissionResolvable): boolean {
-  if (!member) return false;
-  return member.permissions.has(permissions);
-}
-
 export function botHasPermission(channel: GuildBasedChannel | null | undefined, permissions: PermissionResolvable): boolean {
   if (!channel || !channel.guild) return false;
   const botMember = channel.guild.members.me;
@@ -329,42 +308,3 @@ export async function checkBotPermissions(
 
   return true;
 }
-
-function hashUserId(userId: string): string {
-
-  let hash = 0;
-  for (let i = 0; i < userId.length; i++) {
-    const char = userId.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash).toString(16).substring(0, 8);
-}
-
-export function auditPermissionCheck(userId: string, action: string, allowed: boolean, reason: string | null = null): void {
-
-  const userHash = hashUserId(userId);
-
-  if (allowed) {
-    logger.debug('[PERMISSION_AUDIT] Permission granted', { action, userHash });
-  } else {
-    const denyReason = reason || 'insufficient_permissions';
-    logger.warn('[PERMISSION_AUDIT] Permission denied', { action, userHash, reason: denyReason });
-  }
-}
-
-export default {
-  isAdmin,
-  isModerator,
-  hasPermission,
-  botHasPermission,
-  getCommandDefaultPermissions,
-  memberHasConfiguredModeratorRole,
-  memberHasModerationCommandAccess,
-  memberMeetsCommandPermissions,
-  checkModerationPermissions,
-  enforceDefaultCommandPermissions,
-  checkUserPermissions,
-  checkBotPermissions,
-  auditPermissionCheck
-};

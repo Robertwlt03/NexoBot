@@ -59,12 +59,8 @@ export function getTraceContext(): TraceContext | null {
   return traceStorage.getStore() || null;
 }
 
-export function getTraceId(): string | null {
-  return getTraceContext()?.traceId || null;
-}
-
 const { createLogger, format, transports } = winston;
-const { combine, timestamp, printf, colorize, errors, json } = format;
+const { combine, timestamp, printf, colorize, errors } = format;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -281,5 +277,3 @@ function shutdownLog(message: string): void {
 }
 
 export { logger, startupLog, shutdownLog };
-
-export default logger;

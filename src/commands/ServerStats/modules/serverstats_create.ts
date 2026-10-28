@@ -1,5 +1,5 @@
 import { PermissionFlagsBits, ChannelType } from 'discord.js';
-import { createEmbed, successEmbed } from '../../../utils/embeds.js';
+import { successEmbed } from '../../../utils/embeds.js';
 import { createServerCounter, getCounterTypeLabel } from '../../../services/serverstatsService.js';
 import { logger } from '../../../utils/logger.js';
 

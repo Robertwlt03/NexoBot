@@ -1,8 +1,7 @@
 import type { Command } from '../../../types/index.js';
 import { SlashCommandBuilder } from 'discord.js';
-import { createEmbed, errorEmbed, successEmbed, infoEmbed, warningEmbed } from '../../../utils/embeds.js';
+import { successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
-import { NexoBotError, ErrorTypes } from '../../../utils/errorHandler.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import { rewardMinigame } from '../../../services/cosmetics/hooks.js';

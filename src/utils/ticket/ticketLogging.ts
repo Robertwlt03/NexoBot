@@ -1,13 +1,9 @@
 // ticketLogging.js
 
-import { ChannelType } from 'discord.js';
 import type {
   Guild,
-  GuildBasedChannel,
-  GuildMember,
   GuildTextBasedChannel,
   MessageCreateOptions,
-  PermissionsString,
 } from 'discord.js';
 import type { NexoClient } from '../../types/index.js';
 import { getGuildConfig } from '../../services/config/guildConfig.js';
@@ -46,12 +42,6 @@ export interface TicketEvent {
 interface TicketLogConfig {
   ticketLogsChannelId?: string | null;
   ticketTranscriptChannelId?: string | null;
-}
-
-export interface TicketLoggingConfig {
-  enabled: boolean;
-  lifecycleChannelId: string | null;
-  transcriptChannelId: string | null;
 }
 
 export async function logTicketEvent({ client, guildId, event }: {
@@ -303,40 +293,5 @@ async function createTicketLogEmbed(guild: Guild, event: TicketEvent) {
     author,
     footer,
   });
-}
-
-export async function getTicketLoggingConfig(client: NexoClient, guildId: string): Promise<TicketLoggingConfig> {
-  const config: TicketLogConfig = await getGuildConfig(client, guildId);
-  return {
-    enabled: !!(config.ticketLogsChannelId || config.ticketTranscriptChannelId),
-    lifecycleChannelId: config.ticketLogsChannelId || null,
-    transcriptChannelId: config.ticketTranscriptChannelId || null,
-  };
-}
-
-export function validateLogChannel(
-  channel: GuildBasedChannel | null | undefined,
-  botMember: GuildMember
-): { valid: boolean; error?: string } {
-  if (!channel || channel.type !== ChannelType.GuildText) {
-    return {
-      valid: false,
-      error: 'Der Kanal muss ein Textkanal sein.',
-    };
-  }
-
-  const permissions = channel.permissionsFor(botMember);
-  const requiredPermissions: PermissionsString[] = ['SendMessages', 'EmbedLinks'];
-
-  const missing = requiredPermissions.filter((perm) => !permissions.has(perm));
-
-  if (missing.length > 0) {
-    return {
-      valid: false,
-      error: `Fehlende Berechtigungen: ${missing.join(', ')}`,
-    };
-  }
-
-  return { valid: true };
 }
 

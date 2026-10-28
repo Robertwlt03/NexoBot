@@ -5,7 +5,7 @@ import type { Guild, GuildMember, PermissionsString, Role } from 'discord.js';
 import type { GuildConfig, NexoClient } from '../types/index.js';
 import { botConfig } from '../config/bot.js';
 import { logger } from '../utils/logger.js';
-import { getGuildConfig, setGuildConfig } from './config/guildConfig.js';
+import { getGuildConfig } from './config/guildConfig.js';
 import { createError, ErrorTypes } from '../utils/errorHandler.js';
 import { insertVerificationAudit } from '../utils/database.js';
 import { ensureTypedServiceError } from '../utils/serviceErrorBoundary.js';

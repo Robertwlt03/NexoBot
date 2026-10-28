@@ -131,10 +131,6 @@ function getCounterTypeDisplay(type: string) {
     return `${getCounterTypeEmoji(type)} ${getCounterTypeLabel(type)}`;
 }
 
-function getCounterEmoji(type: string) {
-    return getCounterTypeEmoji(type);
-}
-
 function getCurrentCount(stats: Awaited<ReturnType<typeof getGuildCounterStats>>, type: string) {
     switch (type) {
         case "members":

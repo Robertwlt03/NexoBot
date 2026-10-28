@@ -1,6 +1,6 @@
 import type { Command } from '../../../types/index.js';
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { createEmbed, errorEmbed, successEmbed, infoEmbed, warningEmbed } from '../../../utils/embeds.js';
+import { SlashCommandBuilder } from 'discord.js';
+import { createEmbed } from '../../../utils/embeds.js';
 import { shopItems } from '../../../config/shop/items.js';
 import { getEconomyData } from '../../../utils/economy.js';
 import { withErrorHandling, createError, ErrorTypes } from '../../../utils/errorHandler.js';

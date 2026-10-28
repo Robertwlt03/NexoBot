@@ -11,7 +11,6 @@ function evaluate(expression: string) {
 
 async function calculateModalHandler(interaction: ModalSubmitInteraction, client: NexoClient, args: string[]): Promise<unknown> {
     try {
-        const operation = args[0];
         // JS called interaction.fields.first(), which does not exist on ModalSubmitFields (always threw); the field Collection is .fields.
         const operandInput = interaction.fields.fields.first();
         const contextKey = operandInput?.customId?.split(':')[1];
@@ -35,7 +34,7 @@ async function calculateModalHandler(interaction: ModalSubmitInteraction, client
             return await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'Bitte gib eine gültige Zahl ein.' });
         }
 
-        const { expression, formattedResult, operator } = context;
+        const { expression, operator } = context;
         const newExpression = `(${expression}) ${operator} (${operand})`;
 
         let newResult;

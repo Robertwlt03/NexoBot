@@ -66,7 +66,6 @@ export {
 
 import { db, getFromDb, setInDb } from './database/wrapper.js';
 import {
-    getGuildConfigKey,
     getGuildBirthdaysKey,
     getLevelingKey,
     getUserLevelKey,
@@ -75,10 +74,7 @@ import {
     getUserApplicationsKey,
     getApplicationKey,
     getJoinToCreateConfigKey,
-    getJoinToCreateChannelsKey,
     getWelcomeConfigKey,
-    getEconomyKey,
-    getAFKKey,
     getUserLevelPrefix,
 } from './database/keys.js';
 
@@ -1436,8 +1432,4 @@ export function formatChannelName(template: string, variables: ChannelNameVariab
 formatted = formatted.substring(0, 100);
     
     return formatted || 'Sprachkanal';
-}
-
-function generateCaseId(): string {
-    return `${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 4)}`;
 }

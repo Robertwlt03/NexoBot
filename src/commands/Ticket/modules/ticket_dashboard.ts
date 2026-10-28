@@ -9,7 +9,6 @@ import {
     TextInputStyle,
     RoleSelectMenuBuilder,
     ChannelSelectMenuBuilder,
-    UserSelectMenuBuilder,
     ButtonBuilder,
     ButtonStyle,
     ChannelType,
@@ -28,7 +27,6 @@ import { logger } from '../../../utils/logger.js';
 import { NexoBotError, ErrorTypes, replyUserError, type ErrorLike } from '../../../utils/errorHandler.js';
 import { getGuildConfig, setGuildConfig } from '../../../services/config/guildConfig.js';
 import { getGuildTicketStats, type GuildTicketStats } from '../../../utils/database/tickets.js';
-import { getUserTicketCount } from '../../../services/ticket.js';
 import {
     getTicketPanelStatus,
     formatPanelStatusField,
@@ -752,71 +750,6 @@ async function handleTranscriptChannel(selectInteraction: StringSelectMenuIntera
             replyUserError(selectInteraction, {
                 type: ErrorTypes.RATE_LIMIT,
                 message: 'Kein Kanal ausgewählt. Es wurde nichts geändert.',
-            }).catch(() => {});
-        }
-    });
-}
-
-async function handleCheckUser(selectInteraction: StringSelectMenuInteraction, rootInteraction: ChatInputCommandInteraction, guildConfig: GuildConfig, guildId: string, client: NexoClient) {
-    await selectInteraction.deferUpdate();
-
-    const userSelect = new UserSelectMenuBuilder()
-        .setCustomId('ticket_cfg_check_user')
-        .setPlaceholder('Nutzer zum Prüfen auswählen...')
-        .setMaxValues(1);
-
-    const row = new ActionRowBuilder<UserSelectMenuBuilder>().addComponents(userSelect);
-
-    await selectInteraction.followUp({
-        embeds: [
-            new EmbedBuilder()
-                .setTitle('Tickets eines Nutzers prüfen')
-                .setDescription('Wähl einen Nutzer, um seine aktuell offenen Tickets zu sehen.')
-                .setColor(getColor('info')),
-        ],
-        components: [row],
-        flags: MessageFlags.Ephemeral,
-    });
-
-    const userCollector = rootInteraction.channel!.createMessageComponentCollector({
-        componentType: ComponentType.UserSelect,
-        filter: i =>
-            i.user.id === selectInteraction.user.id && i.customId === 'ticket_cfg_check_user',
-        time: 60_000,
-        max: 1,
-    });
-
-    userCollector.on('collect', async userInteraction => {
-        await userInteraction.deferUpdate();
-        const targetUser = userInteraction.users.first()!;
-        const maxTickets = guildConfig.maxTicketsPerUser || 3;
-        const openCount = await getUserTicketCount(guildId, targetUser.id);
-        const atLimit = openCount >= maxTickets;
-
-        await userInteraction.followUp({
-            embeds: [
-                new EmbedBuilder()
-                    .setTitle(`Ticket-Check – ${targetUser.username}`)
-                    .setDescription(
-                        `**Offene Tickets:** ${openCount} / ${maxTickets}\n` +
-                            `**Verbleibend:** ${Math.max(0, maxTickets - openCount)}\n\n` +
-                            (atLimit
-                                ? '⚠️ Dieser Nutzer hat sein Ticket-Limit erreicht.'
-                                : '✅ Dieser Nutzer kann noch weitere Tickets öffnen.'),
-                    )
-                    .setColor(atLimit ? getColor('error') : getColor('success'))
-                    .setThumbnail(targetUser.displayAvatarURL({ size: 64 }))
-                    .setTimestamp(),
-            ],
-            flags: MessageFlags.Ephemeral,
-        });
-    });
-
-    userCollector.on('end', (collected, reason) => {
-        if (reason === 'time' && collected.size === 0) {
-            replyUserError(selectInteraction, {
-                type: ErrorTypes.RATE_LIMIT,
-                message: 'Es wurde kein Nutzer ausgewählt.',
             }).catch(() => {});
         }
     });

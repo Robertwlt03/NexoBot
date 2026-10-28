@@ -1,6 +1,6 @@
 import type { Command } from '../../../types/index.js';
-import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, MessageFlags, type GuildMember } from 'discord.js';
-import { createEmbed, errorEmbed, successEmbed, infoEmbed, warningEmbed } from '../../../utils/embeds.js';
+import { SlashCommandBuilder, PermissionFlagsBits, type GuildMember } from 'discord.js';
+import { successEmbed } from '../../../utils/embeds.js';
 import { logModerationAction } from '../../../utils/moderation.js';
 import { logger } from '../../../utils/logger.js';
 import { WarningService } from '../../../services/moderation/warningService.js';

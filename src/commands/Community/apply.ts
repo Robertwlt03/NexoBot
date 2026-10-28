@@ -1,4 +1,4 @@
-import { getColor, getDefaultApplicationQuestions } from '../../config/bot.js';
+import { getDefaultApplicationQuestions } from '../../config/bot.js';
 import { SlashCommandBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import type { ChatInputCommandInteraction, ModalSubmitInteraction } from 'discord.js';
 import type { Command } from '../../types/index.js';
@@ -10,10 +10,9 @@ import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { logEvent, EVENT_TYPES, resolveApplicationLogChannel } from '../../services/loggingService.js';
 import { formatLogLine, resolveUserAuthor } from '../../utils/logging/logEmbeds.js';
 import { getGuildConfig } from '../../services/config/guildConfig.js';
-import { 
-    getApplicationSettings, 
-    getUserApplications, 
-    createApplication, 
+import {
+    getApplicationSettings,
+    getUserApplications,
     getApplication,
     getApplicationRoles,
     updateApplication,
@@ -78,7 +77,7 @@ export default {
             return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Dieser Command kann nur auf einem Server genutzt werden.' });
         }
 
-        const { options, guild, member } = interaction;
+        const { options, guild } = interaction;
         const subcommand = options.getSubcommand();
 
         if (subcommand !== "submit") {
@@ -271,7 +270,6 @@ async function handleList(interaction: ChatInputCommandInteraction) {
 
 async function handleSubmit(interaction: ChatInputCommandInteraction, settings: ApplicationSettings) {
     const applicationName = interaction.options.getString("application");
-    const member = interaction.member;
 
     const applicationRoles = await getApplicationRoles(interaction.client, interaction.guild!.id);
     

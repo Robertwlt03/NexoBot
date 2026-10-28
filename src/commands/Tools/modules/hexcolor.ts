@@ -1,7 +1,5 @@
 import { SlashCommandBuilder, MessageFlags, type HexColorString } from 'discord.js';
-import { createEmbed, successEmbed, infoEmbed, warningEmbed } from '../../../utils/embeds.js';
-import { logger } from '../../../utils/logger.js';
-import { getColor } from '../../../config/bot.js';
+import { successEmbed } from '../../../utils/embeds.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import { replyUserError, ErrorTypes } from '../../../utils/errorHandler.js';

@@ -1,4 +1,4 @@
-import { getColor, getDefaultApplicationQuestions, botConfig } from '../../../config/bot.js';
+import { getColor, getDefaultApplicationQuestions } from '../../../config/bot.js';
 import {
     ActionRowBuilder,
     StringSelectMenuBuilder,
@@ -209,60 +209,6 @@ export default {
         }
     },
 };
-
-async function showApplicationSelector(interaction: AppDashboardInteraction, roles: ApplicationRole[], settings: ApplicationSettings, guildId: string, client: NexoClient) {
-    const selectMenu = new StringSelectMenuBuilder()
-        .setCustomId(`app_select_${guildId}`)
-        .setPlaceholder('Bewerbung zum Konfigurieren auswählen...')
-        .addOptions(
-            roles.map(role =>
-                new StringSelectMenuOptionBuilder()
-                    .setLabel(role.name)
-                    .setDescription(`Bewerbung ${role.name} konfigurieren`)
-                    .setValue(role.roleId)
-                    .setEmoji('📋'),
-            ),
-        );
-
-    const embed = new EmbedBuilder()
-        .setTitle('Bewerbung auswählen')
-        .setDescription('Wähle, welche Bewerbungsrolle du konfigurieren möchtest.')
-        .setColor(getColor('info'));
-
-    await InteractionHelper.safeEditReply(interaction, {
-        embeds: [embed],
-        components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu)],
-    });
-
-    const collector = interaction.channel!.createMessageComponentCollector({
-        componentType: ComponentType.StringSelect,
-        filter: i =>
-            i.user.id === interaction.user.id && i.customId === `app_select_${guildId}`,
-        time: 600_000,
-        max: 1,
-    });
-
-    collector.on('collect', async selectInteraction => {
-        const deferred = await safeDeferInteraction(selectInteraction);
-        if (!deferred) return;
-        
-        const selectedRoleId = selectInteraction.values[0];
-        const selectedRole = roles.find(r => r.roleId === selectedRoleId);
-
-        if (selectedRole) {
-            await showApplicationDashboard(interaction, selectedRole, settings, roles, guildId, client);
-        }
-    });
-
-    collector.on('end', (collected, reason) => {
-        if (reason === 'time' && collected.size === 0) {
-            replyUserError(interaction, {
-                type: ErrorTypes.RATE_LIMIT,
-                message: 'Es wurde nichts ausgewählt. Das Dashboard wurde geschlossen.',
-            }).catch(() => {});
-        }
-    });
-}
 
 async function showGlobalDashboard(interaction: AppDashboardInteraction, settings: ApplicationSettings, roles: ApplicationRole[], guildId: string, client: NexoClient) {
     const selectMenu = buildSelectMenu(guildId);
@@ -690,12 +636,6 @@ function buildApplicationSelectMenu(guildId: string, roleId: string) {
 }
 
 async function handleLogChannel(selectInteraction: StringSelectMenuInteraction, rootInteraction: AppDashboardInteraction, settings: ApplicationSettings, roles: ApplicationRole[], guildId: string, client: NexoClient, selectedRoleId: string | null) {
-    let currentChannel = settings.logChannelId;
-    if (selectedRoleId) {
-        const roleSettings = await getApplicationRoleSettings(client, guildId, selectedRoleId);
-        currentChannel = roleSettings.logChannelId || settings.logChannelId;
-    }
-
     const modal = new ModalBuilder()
         .setCustomId(`app_cfg_log_channel_modal_${guildId}_${selectedRoleId || 'global'}`)
         .setTitle('Log-Kanal konfigurieren');

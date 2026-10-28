@@ -546,26 +546,6 @@ async function handleWelcomeImage(selectInteraction: StringSelectMenuInteraction
     await refreshDashboard(rootInteraction, cfg, guildId);
 }
 
-async function handleWelcomePing(selectInteraction: StringSelectMenuInteraction, rootInteraction: ChatInputCommandInteraction, cfg: WelcomeConfig, guildId: string, client: NexoClient) {
-    if (!await deferComponent(selectInteraction)) {
-        return;
-    }
-
-    cfg.welcomePing = !cfg.welcomePing;
-    await saveWelcomeConfig(client, guildId, cfg);
-
-    await sendEphemeralFollowUp(selectInteraction, {
-        embeds: [
-            successEmbed(
-                '✅ Willkommen-Ping aktualisiert',
-                `Neue Nutzer werden in der Willkommensnachricht${cfg.welcomePing ? '' : ' **nicht**'} gepingt.`,
-            ),
-        ],
-    });
-
-    await refreshDashboard(rootInteraction, cfg, guildId);
-}
-
 async function handleGoodbyeChannel(selectInteraction: StringSelectMenuInteraction, rootInteraction: ChatInputCommandInteraction, cfg: WelcomeConfig, guildId: string, client: NexoClient) {
     if (!await deferComponent(selectInteraction)) {
         return;
@@ -755,26 +735,6 @@ async function handleGoodbyeImage(selectInteraction: StringSelectMenuInteraction
     await submitted.reply({
         embeds: [successEmbed('Abschiedsbild aktualisiert', `Bild erfolgreich ${imageUrl ? 'aktualisiert' : 'entfernt'}.`)],
         flags: MessageFlags.Ephemeral,
-    });
-
-    await refreshDashboard(rootInteraction, cfg, guildId);
-}
-
-async function handleGoodbyePing(selectInteraction: StringSelectMenuInteraction, rootInteraction: ChatInputCommandInteraction, cfg: WelcomeConfig, guildId: string, client: NexoClient) {
-    if (!await deferComponent(selectInteraction)) {
-        return;
-    }
-
-    cfg.goodbyePing = !cfg.goodbyePing;
-    await saveWelcomeConfig(client, guildId, cfg);
-
-    await sendEphemeralFollowUp(selectInteraction, {
-        embeds: [
-            successEmbed(
-                '✅ Abschied-Ping aktualisiert',
-                `Gehende Nutzer werden in der Abschiedsnachricht${cfg.goodbyePing ? '' : ' **nicht**'} gepingt.`,
-            ),
-        ],
     });
 
     await refreshDashboard(rootInteraction, cfg, guildId);

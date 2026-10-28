@@ -659,11 +659,4 @@ export function getColor(path: string | number, fallback: string = "#99AAB5"): n
   return result as number;
 }
 
-export function getRandomColor(): string {
-  const colors = Object.values(botConfig.embeds.colors).flatMap((color) =>
-    typeof color === "string" ? color : Object.values(color),
-  );
-  return colors[Math.floor(Math.random() * colors.length)];
-}
-
 export default botConfig;

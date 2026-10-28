@@ -1,8 +1,7 @@
 import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, type ColorResolvable, type MessageComponentInteraction } from 'discord.js';
-import { createEmbed, successEmbed, infoEmbed, warningEmbed } from '../../../utils/embeds.js';
+import { successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 import { replyUserError, ErrorTypes } from '../../../utils/errorHandler.js';
-import { getColor } from '../../../config/bot.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import type { Command } from '../../../types/index.js';
 
@@ -82,7 +81,6 @@ export default {
         const selectedMember = memberArray[randomIndex];
 
         const user = selectedMember.user;
-        const joinDate = selectedMember.joinedAt;
         const roles = selectedMember.roles.cache
             .filter(role => role.id !== interaction.guild!.id)
             .sort((a, b) => b.position - a.position)

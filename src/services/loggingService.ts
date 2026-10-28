@@ -497,11 +497,6 @@ export async function setLogChannel(client: NexoClient, guildId: string, destina
   }
 }
 
-/** @deprecated Use setLogChannel(client, guildId, 'audit', channelId) */
-export async function setLoggingChannel(client: NexoClient, guildId: string, channelId: string | null): Promise<boolean> {
-  return setLogChannel(client, guildId, 'audit', channelId);
-}
-
 export async function setLoggingEnabled(client: NexoClient, guildId: string, enabled: boolean): Promise<boolean> {
   try {
     const config = await getGuildConfig(client, guildId);

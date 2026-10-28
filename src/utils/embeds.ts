@@ -116,7 +116,6 @@ function isImportantFooter(footerText: string): boolean {
 
 const originalSetDescription = EmbedBuilder.prototype.setDescription;
 const originalSetFooter: LegacySetter<FooterInput> = EmbedBuilder.prototype.setFooter;
-const originalSetTimestamp = EmbedBuilder.prototype.setTimestamp;
 
 EmbedBuilder.prototype.setDescription = function(this: TaggedEmbedBuilder, description: string | null = '') {
   const descString = sanitizeEmbedText(description || '');

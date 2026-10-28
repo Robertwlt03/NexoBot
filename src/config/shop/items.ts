@@ -23,18 +23,6 @@ export interface ShopItem {
     effect: ShopItemEffect;
 }
 
-/** Subset of the user's economy data that purchase validation looks at. */
-export interface ShopUserData {
-    inventory?: Record<string, number>;
-    upgrades?: Record<string, unknown>;
-    roles?: string[];
-}
-
-export interface PurchaseValidation {
-    valid: boolean;
-    reason?: string;
-}
-
 export const shopItems: ShopItem[] = [
     {
         id: 'extra_work',
@@ -173,68 +161,3 @@ roleId: null,
         }
     }
 ];
-
-export function getItemById(itemId: string): ShopItem | undefined {
-    return shopItems.find(item => item.id === itemId);
-}
-
-export function getItemsByType(type: string): ShopItem[] {
-    return shopItems.filter(item => item.type === type);
-}
-
-export function getItemPrice(itemId: string): number {
-    const item = getItemById(itemId);
-    return item ? item.price : 0;
-}
-
-export function validatePurchase(itemId: string, userData: ShopUserData): PurchaseValidation {
-    const item = getItemById(itemId);
-    if (!item) {
-        return { valid: false, reason: 'Item nicht gefunden' };
-    }
-
-    const inventory: Record<string, number> = userData.inventory || {};
-    const upgrades: Record<string, unknown> = userData.upgrades || {};
-
-    if (item.type === 'consumable' && item.maxQuantity) {
-        const currentQuantity = inventory[itemId] || 0;
-        if (currentQuantity >= item.maxQuantity) {
-            return { 
-                valid: false, 
-                reason: `Du kannst höchstens ${item.maxQuantity}× ${item.name} besitzen` 
-            };
-        }
-    }
-
-    if (item.type === 'upgrade' && item.maxLevel) {
-        
-        if (upgrades[itemId]) {
-            return { 
-                valid: false, 
-                reason: `Du hast ${item.name} bereits gekauft` 
-            };
-        }
-    }
-
-    if (item.type === 'tool') {
-        
-        const currentQuantity = inventory[itemId] || 0;
-        if (itemId !== 'bank_note' && currentQuantity > 0) {
-            return { 
-                valid: false, 
-                reason: `Du besitzt bereits: ${item.name}` 
-            };
-        }
-    }
-
-    if (item.type === 'role' && item.roleId) {
-        if (userData.roles?.includes(item.roleId)) {
-            return { 
-                valid: false, 
-                reason: `Du hast die Rolle ${item.name} bereits` 
-            };
-        }
-    }
-
-    return { valid: true };
-}

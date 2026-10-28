@@ -198,7 +198,7 @@ export function canonicalizeKey(key: string): string {
 export function getLegacyVariantsForCanonical(canonicalKey: string): string[] {
     const variants: string[] = [];
 
-    for (const { pattern, toCanonical } of LEGACY_KEY_RESOLVERS) {
+    for (const { toCanonical } of LEGACY_KEY_RESOLVERS) {
         const sample = canonicalKey;
         const match = sample.match(/^guild:([^:]+):economy:([^:]+)$/);
         if (match && toCanonical(['', match[1], match[2]]) === canonicalKey) {

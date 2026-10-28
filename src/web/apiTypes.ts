@@ -46,10 +46,6 @@ export interface ApiGuildDetail {
   roles: ApiRole[];
 }
 
-export interface ApiError {
-  error: string;
-}
-
 /** Channel type values used by the frontend pickers (mirrors discord.js ChannelType). */
 export const CHANNEL_TYPES = {
   text: 0,

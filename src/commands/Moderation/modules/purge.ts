@@ -1,9 +1,8 @@
 import type { Command } from '../../../types/index.js';
-import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, MessageFlags, type GuildTextBasedChannel } from 'discord.js';
-import { createEmbed, successEmbed } from '../../../utils/embeds.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, type GuildTextBasedChannel } from 'discord.js';
+import { successEmbed } from '../../../utils/embeds.js';
 import { logEvent } from '../../../utils/moderation.js';
 import { logger } from '../../../utils/logger.js';
-import { getColor } from '../../../config/bot.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import { replyUserError, ErrorTypes } from '../../../utils/errorHandler.js';

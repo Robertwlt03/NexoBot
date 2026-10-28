@@ -1,5 +1,5 @@
-import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, type GuildTextBasedChannel } from 'discord.js';
-import { createEmbed, errorEmbed, successEmbed } from '../../../utils/embeds.js';
+import { SlashCommandBuilder, PermissionFlagsBits, type GuildTextBasedChannel } from 'discord.js';
+import { successEmbed } from '../../../utils/embeds.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import { logger } from '../../../utils/logger.js';
 import type { Command } from '../../../types/index.js';

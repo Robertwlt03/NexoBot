@@ -64,7 +64,6 @@ export interface SafeExecuteOptions {
 }
 
 const INTERACTION_TIMEOUT_MS = 15 * 60 * 1000;
-const DEFAULT_DEFER_OPTIONS = { flags: MessageFlags.Ephemeral };
 const INTERACTION_UNAVAILABLE_CODES: ReadonlySet<unknown> = new Set([10062, 40060, 50027]);
 
 function isInteractionUnavailableError(error: unknown): boolean {

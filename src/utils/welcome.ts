@@ -9,11 +9,6 @@ import type { WelcomeCard } from '../shared/welcomeCard.js';
 import { applyMemberStyle, cardSubjectFromMember, renderWelcomeCard } from '../services/welcomeCardRenderer.js';
 import { getProfileSettings, getResolvedCosmetics } from '../services/cosmetics/store.js';
 
-const DEFAULT_TEMPLATES = {
-    welcome: 'Willkommen {user} auf {server}!',
-    goodbye: '{user.tag} hat den Server verlassen.'
-};
-
 /** Fields read from a (possibly partial) discord.js User. */
 interface WelcomeFormatUser {
     toString?(): string;
@@ -91,14 +86,6 @@ export function formatWelcomeMessage(message: unknown, data: WelcomeFormatData |
     }
 
     return result;
-}
-
-export function getDefaultWelcomeMessage(): string {
-    return DEFAULT_TEMPLATES.welcome;
-}
-
-export function getDefaultGoodbyeMessage(): string {
-    return DEFAULT_TEMPLATES.goodbye;
 }
 
 
